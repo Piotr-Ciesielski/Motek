@@ -1,0 +1,13 @@
+{
+  "name": "motek",
+  "version": "1.0.2",
+  "private": true,
+  "description": "Aplikacja do dopasowywania wzorów dziewiarskich do zapasu włóczek.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "sql.js": "^1.13.0"
+  }
+}
