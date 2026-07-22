@@ -20,6 +20,27 @@ const MAX_TEXT_LENGTH = {
 const MAX_MEASUREMENT = 1_000_000;
 const ALLOWED_MATERIALS = new Set(["wełna", "bawełna", "akryl", "alpaka", "mieszanka"]);
 const ALLOWED_WEIGHT_CLASSES = new Set(["lace", "fingering", "sport", "dk", "worsted", "bulky"]);
+const SECURITY_HEADERS = Object.freeze({
+  "Content-Security-Policy": [
+    "default-src 'self'",
+    "script-src 'self'",
+    "style-src 'self' https://fonts.googleapis.com",
+    "font-src 'self' https://fonts.gstatic.com",
+    "img-src 'self' data:",
+    "connect-src 'self' https://fonts.googleapis.com https://fonts.gstatic.com",
+    "object-src 'none'",
+    "base-uri 'none'",
+    "frame-ancestors 'none'",
+    "form-action 'self'",
+  ].join("; "),
+  "Cross-Origin-Opener-Policy": "same-origin",
+  "Cross-Origin-Resource-Policy": "same-origin",
+  "Permissions-Policy": "camera=(), microphone=(), geolocation=()",
+  "Referrer-Policy": "no-referrer",
+  "X-Content-Type-Options": "nosniff",
+  "X-Frame-Options": "DENY",
+  "X-Permitted-Cross-Domain-Policies": "none",
+});
 
 class ApiError extends Error {
   constructor(status, message) {
@@ -135,14 +156,18 @@ function persist() {
 
 function sendJson(res, status, payload) {
   res.writeHead(status, {
+    ...SECURITY_HEADERS,
     "Content-Type": "application/json; charset=utf-8",
+    "Cache-Control": "no-store",
   });
   res.end(JSON.stringify(payload));
 }
 
 function sendText(res, status, text, contentType = "text/plain; charset=utf-8") {
   res.writeHead(status, {
+    ...SECURITY_HEADERS,
     "Content-Type": contentType,
+    "Cache-Control": "no-store",
   });
   res.end(text);
 }
@@ -216,7 +241,11 @@ function sendFile(res, filePath) {
     ".svg": "image/svg+xml",
   };
   return fsPromises.readFile(filePath).then((buf) => {
-    res.writeHead(200, { "Content-Type": types[ext] || "application/octet-stream" });
+    res.writeHead(200, {
+      ...SECURITY_HEADERS,
+      "Content-Type": types[ext] || "application/octet-stream",
+      "Cache-Control": "no-cache",
+    });
     res.end(buf);
   });
 }
@@ -340,16 +369,12 @@ async function handleApi(req, res, url) {
   }
 
   if (req.method === "GET" && url.pathname === "/api/matches") {
-    try {
-      const yarns = getYarns();
-      const scored = getPatterns()
-        .map((pattern) => ({ pattern, ...scorePattern(pattern, yarns) }))
-        .filter((item) => item.doable)
-        .sort((a, b) => b.total - a.total);
-      return sendJson(res, 200, scored);
-    } catch (error) {
-      return sendJson(res, 500, { error: error.message });
-    }
+    const yarns = getYarns();
+    const scored = getPatterns()
+      .map((pattern) => ({ pattern, ...scorePattern(pattern, yarns) }))
+      .filter((item) => item.doable)
+      .sort((a, b) => b.total - a.total);
+    return sendJson(res, 200, scored);
   }
 
   sendJson(res, 404, { error: "Nieznany endpoint" });
@@ -402,8 +427,10 @@ async function main() {
   persist();
 
   server = http.createServer(async (req, res) => {
+    let url;
+
     try {
-      const url = new URL(req.url, "http://localhost");
+      url = new URL(req.url, "http://localhost");
 
       if (url.pathname.startsWith("/api/")) {
         return await handleApi(req, res, url);
@@ -427,7 +454,18 @@ async function main() {
       if (error instanceof ApiError) {
         return sendJson(res, error.status, { error: error.message });
       }
-      return sendText(res, 500, error.message);
+
+      console.error(`Błąd obsługi ${req.method} ${req.url}:`, error);
+
+      if (res.headersSent) {
+        return res.end();
+      }
+
+      if (url?.pathname.startsWith("/api/") || String(req.url).startsWith("/api/")) {
+        return sendJson(res, 500, { error: "Wewnętrzny błąd serwera." });
+      }
+
+      return sendText(res, 500, "Wewnętrzny błąd serwera.");
     }
   });
 
