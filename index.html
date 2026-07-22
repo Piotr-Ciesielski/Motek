@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="pl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Motek - dobierz wzór do włóczek</title>
+    <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="shell">
+      <section class="hero">
+        <div>
+          <p class="eyebrow">Motek</p>
+          <h1>Dobierz wzór do zapasu włóczek</h1>
+          <p class="lead">
+            Wpisz parametry swoich motków, a aplikacja podpowie wzory, które
+            da się wykonać z tego, co masz w magazynie.
+          </p>
+        </div>
+        <div class="hero-card">
+          <div class="hero-card__label">Jak to działa</div>
+          <ol>
+            <li>Dodaj włóczki z długością, wagą, kolorem i materiałem.</li>
+            <li>Wzory są porównywane z wymaganiami projektu.</li>
+            <li>Dostajesz ranking najlepiej dopasowanych udziergów.</li>
+          </ol>
+        </div>
+      </section>
+
+      <section class="grid">
+        <article class="panel">
+          <div class="panel__header">
+            <div>
+              <h2>Twoje włóczki</h2>
+              <p>Dodaj tyle pozycji, ile chcesz. Możesz mieszać motki.</p>
+            </div>
+            <button id="addYarnBtn" class="button button--ghost" type="button">
+              + Dodaj motek
+            </button>
+          </div>
+          <div id="yarnList" class="yarn-list"></div>
+        </article>
+
+        <article class="panel panel--sticky">
+          <div class="panel__header">
+            <div>
+              <h2>Wynik dopasowania</h2>
+              <p>Najpierw zobaczysz wzory możliwe do wykonania.</p>
+            </div>
+            <button id="findBtn" class="button" type="button">
+              Szukaj wzoru
+            </button>
+          </div>
+          <div id="summary" class="summary"></div>
+          <div id="results" class="results"></div>
+        </article>
+      </section>
+    </main>
+
+    <template id="yarnTemplate">
+      <div class="yarn-card">
+        <div class="yarn-card__row">
+          <label>
+            Nazwa
+            <input type="text" data-field="name" placeholder="np. Merino Soft" />
+          </label>
+          <label>
+            Kolor
+            <input type="text" data-field="color" placeholder="np. ecru" />
+          </label>
+        </div>
+        <div class="yarn-card__row">
+          <label>
+            Materiał
+            <select data-field="material">
+              <option value="wełna">Wełna</option>
+              <option value="bawełna">Bawełna</option>
+              <option value="akryl">Akryl</option>
+              <option value="alpaka">Alpaka</option>
+              <option value="mieszanka">Mieszanka</option>
+            </select>
+          </label>
+          <label>
+            Grubość
+            <select data-field="weightClass">
+              <option value="lace">Lace</option>
+              <option value="fingering">Fingering</option>
+              <option value="sport">Sport</option>
+              <option value="dk" selected>DK</option>
+              <option value="worsted">Worsted</option>
+              <option value="bulky">Bulky</option>
+            </select>
+          </label>
+        </div>
+        <div class="yarn-card__row">
+          <label>
+            Długość (m)
+            <input type="number" min="0" step="1" data-field="length" value="200" />
+          </label>
+          <label>
+            Waga (g)
+            <input type="number" min="0" step="1" data-field="weight" value="50" />
+          </label>
+          <button class="button button--danger yarn-remove" type="button">
+            Usuń
+          </button>
+        </div>
+      </div>
+    </template>
+
+    <template id="resultTemplate">
+      <article class="result-card">
+        <div class="result-card__top">
+          <div>
+            <h3></h3>
+            <p class="result-card__meta"></p>
+          </div>
+          <div class="score-pill"></div>
+        </div>
+        <p class="result-card__desc"></p>
+        <ul class="requirements"></ul>
+      </article>
+    </template>
+
+    <script src="app.js"></script>
+  </body>
+</html>
