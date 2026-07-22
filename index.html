@@ -69,11 +69,11 @@
         <div class="yarn-card__row">
           <label>
             Nazwa
-            <input type="text" data-field="name" placeholder="np. Merino Soft" />
+            <input type="text" data-field="name" maxlength="100" placeholder="np. Merino Soft" />
           </label>
           <label>
             Kolor
-            <input type="text" data-field="color" placeholder="np. ecru" />
+            <input type="text" data-field="color" maxlength="50" placeholder="np. ecru" />
           </label>
         </div>
         <div class="yarn-card__row">
@@ -102,11 +102,11 @@
         <div class="yarn-card__row">
           <label>
             Długość (m)
-            <input type="number" min="0" step="1" data-field="length" value="200" />
+            <input type="number" min="0" max="1000000" step="1" data-field="length" value="200" />
           </label>
           <label>
             Waga (g)
-            <input type="number" min="0" step="1" data-field="weight" value="50" />
+            <input type="number" min="0" max="1000000" step="1" data-field="weight" value="50" />
           </label>
           <button class="button button--danger yarn-remove" type="button">
             Usuń

@@ -12,6 +12,22 @@ let SQL;
 let db;
 let server;
 
+const MAX_JSON_BODY_BYTES = 16 * 1024;
+const MAX_TEXT_LENGTH = {
+  name: 100,
+  color: 50,
+};
+const MAX_MEASUREMENT = 1_000_000;
+const ALLOWED_MATERIALS = new Set(["wełna", "bawełna", "akryl", "alpaka", "mieszanka"]);
+const ALLOWED_WEIGHT_CLASSES = new Set(["lace", "fingering", "sport", "dk", "worsted", "bulky"]);
+
+class ApiError extends Error {
+  constructor(status, message) {
+    super(message);
+    this.status = status;
+  }
+}
+
 function toJson(value) {
   return JSON.stringify(value);
 }
@@ -147,10 +163,48 @@ function scorePattern(pattern, yarns) {
 }
 
 async function readBody(req) {
+  const contentType = String(req.headers["content-type"] || "")
+    .split(";", 1)[0]
+    .trim()
+    .toLowerCase();
+
+  if (contentType !== "application/json") {
+    throw new ApiError(415, "Oczekiwano danych w formacie application/json.");
+  }
+
+  const declaredLength = Number(req.headers["content-length"]);
+  if (Number.isFinite(declaredLength) && declaredLength > MAX_JSON_BODY_BYTES) {
+    throw new ApiError(413, "Przesłane dane są zbyt duże.");
+  }
+
   const chunks = [];
-  for await (const chunk of req) chunks.push(chunk);
+  let receivedBytes = 0;
+
+  for await (const chunk of req) {
+    receivedBytes += chunk.length;
+    if (receivedBytes > MAX_JSON_BODY_BYTES) {
+      throw new ApiError(413, "Przesłane dane są zbyt duże.");
+    }
+    chunks.push(chunk);
+  }
+
   const raw = Buffer.concat(chunks).toString("utf8");
-  return raw ? JSON.parse(raw) : {};
+  if (!raw.trim()) {
+    throw new ApiError(400, "Treść żądania nie może być pusta.");
+  }
+
+  let body;
+  try {
+    body = JSON.parse(raw);
+  } catch {
+    throw new ApiError(400, "Przesłano nieprawidłowy JSON.");
+  }
+
+  if (!body || typeof body !== "object" || Array.isArray(body)) {
+    throw new ApiError(400, "Treść żądania musi być obiektem JSON.");
+  }
+
+  return body;
 }
 
 function sendFile(res, filePath) {
@@ -190,17 +244,65 @@ function getPatterns() {
   return rows;
 }
 
-function insertYarn(body) {
+function normalizeText(value, field, fallback) {
+  if (value === undefined || value === null || value === "") {
+    return fallback;
+  }
+  if (typeof value !== "string") {
+    throw new ApiError(400, `Pole ${field} musi być tekstem.`);
+  }
+
+  const normalized = value.trim();
+  if (!normalized) return fallback;
+  if (normalized.length > MAX_TEXT_LENGTH[field]) {
+    throw new ApiError(400, `Pole ${field} jest zbyt długie.`);
+  }
+  return normalized;
+}
+
+function normalizeEnum(value, field, fallback, allowedValues) {
+  const normalized = value === undefined || value === null || value === "" ? fallback : value;
+  if (typeof normalized !== "string" || !allowedValues.has(normalized)) {
+    throw new ApiError(400, `Pole ${field} ma niedozwoloną wartość.`);
+  }
+  return normalized;
+}
+
+function normalizeMeasurement(value, field) {
+  const normalized = value === undefined || value === null || value === "" ? 0 : value;
+  if (
+    typeof normalized !== "number" ||
+    !Number.isInteger(normalized) ||
+    normalized < 0 ||
+    normalized > MAX_MEASUREMENT
+  ) {
+    throw new ApiError(400, `Pole ${field} musi być liczbą całkowitą od 0 do ${MAX_MEASUREMENT}.`);
+  }
+  return normalized;
+}
+
+function validateYarn(body) {
+  return {
+    name: normalizeText(body.name, "name", "Bez nazwy"),
+    color: normalizeText(body.color, "color", "nieokreślony"),
+    material: normalizeEnum(body.material, "material", "mieszanka", ALLOWED_MATERIALS),
+    weightClass: normalizeEnum(body.weightClass, "weightClass", "dk", ALLOWED_WEIGHT_CLASSES),
+    length: normalizeMeasurement(body.length, "length"),
+    weight: normalizeMeasurement(body.weight, "weight"),
+  };
+}
+
+function insertYarn(yarn) {
   const stmt = db.prepare(
     "INSERT INTO yarns (name, color, material, weightClass, length, weight) VALUES (?, ?, ?, ?, ?, ?)"
   );
   stmt.run([
-    body.name || "Bez nazwy",
-    body.color || "nieokreślony",
-    body.material || "mieszanka",
-    body.weightClass || "dk",
-    Number(body.length) || 0,
-    Number(body.weight) || 0,
+    yarn.name,
+    yarn.color,
+    yarn.material,
+    yarn.weightClass,
+    yarn.length,
+    yarn.weight,
   ]);
   stmt.free();
   persist();
@@ -213,16 +315,22 @@ async function handleApi(req, res, url) {
 
   if (req.method === "POST" && url.pathname === "/api/yarns") {
     const body = await readBody(req);
-    insertYarn(body);
+    insertYarn(validateYarn(body));
     const inserted = getYarns().at(-1);
     return sendJson(res, 201, inserted);
   }
 
   if (req.method === "DELETE" && url.pathname.startsWith("/api/yarns/")) {
     const id = Number(url.pathname.split("/").pop());
+    if (!Number.isInteger(id) || id < 1) {
+      throw new ApiError(400, "Identyfikator włóczki musi być dodatnią liczbą całkowitą.");
+    }
     const stmt = db.prepare("DELETE FROM yarns WHERE id = ?");
     stmt.run([id]);
     stmt.free();
+    if (db.getRowsModified() === 0) {
+      throw new ApiError(404, "Nie znaleziono włóczki o podanym identyfikatorze.");
+    }
     persist();
     return sendJson(res, 204, {});
   }
@@ -316,6 +424,9 @@ async function main() {
 
       return sendText(res, 404, "Nie znaleziono zasobu");
     } catch (error) {
+      if (error instanceof ApiError) {
+        return sendJson(res, error.status, { error: error.message });
+      }
       return sendText(res, 500, error.message);
     }
   });
