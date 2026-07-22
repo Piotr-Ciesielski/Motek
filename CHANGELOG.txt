@@ -1,0 +1,15 @@
+Motek - log zmian
+
+Wersja 1.0.2
+- Odświeżono kolorystykę aplikacji na bardziej nasyconą i wielobarwną.
+- Wzmocniono gradienty tła, przycisków i kart bez zmiany układu.
+
+Wersja 1.0.1
+- Naprawiono przycisk "+ Dodaj motek" w widoku "Twoje włóczki".
+- Dodano automatyczny zapis nowych motków i zmian pól do bazy.
+- Utrzymano synchronizację identyfikatorów rekordów po autosave.
+
+Wersja 1.0.0
+- Pierwotna wersja aplikacji.
+- Ręczne dodawanie, usuwanie i wyszukiwanie dopasowanych wzorów.
+- Lokalny backend HTTP z bazą SQLite.
