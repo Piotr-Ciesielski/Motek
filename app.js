@@ -152,6 +152,19 @@ async function api(path, options = {}) {
   return response.status === 204 ? null : response.json();
 }
 
+function showMessage(container, message) {
+  const element = document.createElement("div");
+  element.className = "empty-state";
+  element.textContent = message;
+  container.replaceChildren(element);
+}
+
+function createRequirement(text) {
+  const item = document.createElement("li");
+  item.textContent = text;
+  return item;
+}
+
 function scheduleAutosave() {
   clearTimeout(autosaveTimer);
   autosaveTimer = setTimeout(async () => {
@@ -293,14 +306,13 @@ async function loadMatches() {
 
 async function renderResults() {
   const matches = await loadMatches();
-  results.innerHTML = "";
+  results.replaceChildren();
 
   if (!matches.length) {
-    results.innerHTML = `
-      <div class="empty-state">
-        Brak pełnego dopasowania. Spróbuj dodać więcej metrów, większą wagę lub inny materiał.
-      </div>
-    `;
+    showMessage(
+      results,
+      "Brak pełnego dopasowania. Spróbuj dodać więcej metrów, większą wagę lub inny materiał."
+    );
     return;
   }
 
@@ -311,11 +323,13 @@ async function renderResults() {
       `${item.pattern.yarnsNeeded} motek/motki, min. ${item.pattern.metersNeeded} m, ${item.pattern.gramsNeeded} g`;
     card.querySelector(".result-card__desc").textContent = item.pattern.description;
     card.querySelector(".score-pill").textContent = `Dopasowanie ${item.total}%`;
-    card.querySelector(".requirements").innerHTML = `
-      <li>Materiały: ${item.pattern.materials.join(", ")}</li>
-      <li>Grubości: ${item.pattern.weightClasses.join(", ")}</li>
-      <li>Pasujące włóczki w Twoim zestawie: ${item.matchedYarns}</li>
-    `;
+    card
+      .querySelector(".requirements")
+      .replaceChildren(
+        createRequirement(`Materiały: ${item.pattern.materials.join(", ")}`),
+        createRequirement(`Grubości: ${item.pattern.weightClasses.join(", ")}`),
+        createRequirement(`Pasujące włóczki w Twoim zestawie: ${item.matchedYarns}`)
+      );
     results.appendChild(card);
   });
 }
@@ -329,15 +343,26 @@ async function renderSummary() {
       ? "Zestaw jest przechowywany w backendzie."
       : "Zestaw jest przechowywany lokalnie w przeglądarce.";
 
-  summary.innerHTML = `
-    <strong>${yarns.length}</strong> motków, <strong>${totalLength} m</strong> i <strong>${totalWeight} g</strong> łącznie.
-    ${storageText}
-  `;
+  const yarnCount = document.createElement("strong");
+  yarnCount.textContent = String(yarns.length);
+  const length = document.createElement("strong");
+  length.textContent = `${totalLength} m`;
+  const weight = document.createElement("strong");
+  weight.textContent = `${totalWeight} g`;
+
+  summary.replaceChildren(
+    yarnCount,
+    document.createTextNode(" motków, "),
+    length,
+    document.createTextNode(" i "),
+    weight,
+    document.createTextNode(` łącznie. ${storageText}`)
+  );
 }
 
 async function refresh() {
   const yarns = await loadYarns();
-  yarnList.innerHTML = "";
+  yarnList.replaceChildren();
   yarns.forEach(addYarnCard);
   await renderSummary();
   await renderResults();
@@ -354,12 +379,12 @@ findBtn.addEventListener("click", async () => {
   try {
     findBtn.disabled = true;
     findBtn.textContent = "Szukam...";
-    results.innerHTML = `<div class="empty-state">Zapisuję włóczki...</div>`;
+    showMessage(results, "Zapisuję włóczki...");
     await saveYarns();
-    results.innerHTML = `<div class="empty-state">Pobieram dopasowane wzory...</div>`;
+    showMessage(results, "Pobieram dopasowane wzory...");
     await refresh();
   } catch (error) {
-    results.innerHTML = `<div class="empty-state">${error.message}</div>`;
+    showMessage(results, error.message);
   } finally {
     findBtn.disabled = false;
     findBtn.textContent = "Szukaj wzoru";
@@ -371,5 +396,5 @@ detectRuntimeMode()
     await refresh();
   })
   .catch((error) => {
-    results.innerHTML = `<div class="empty-state">${error.message}</div>`;
+    showMessage(results, error.message);
   });
