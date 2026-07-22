@@ -5,12 +5,16 @@ const fsPromises = require("fs/promises");
 const initSqlJs = require("sql.js");
 
 const rootDir = __dirname;
-const dbDir = path.join(rootDir, "data");
-const dbFile = path.join(dbDir, "motek.sqlite");
+const configuredDbFile = process.env.DATABASE_FILE?.trim();
+const dbFile = configuredDbFile
+  ? path.resolve(rootDir, configuredDbFile)
+  : path.join(rootDir, "data", "motek.sqlite");
+const dbDir = path.dirname(dbFile);
 
 let SQL;
 let db;
 let server;
+let shuttingDown = false;
 
 const MAX_JSON_BODY_BYTES = 16 * 1024;
 const MAX_TEXT_LENGTH = {
@@ -389,8 +393,10 @@ function listen(httpServer, port, host) {
 
     const onListening = () => {
       httpServer.removeListener("error", onError);
-      console.log(`Motek backend działa na http://${host}:${port}`);
-      resolve();
+      const address = httpServer.address();
+      const boundPort = typeof address === "object" && address ? address.port : port;
+      console.log(`Motek backend działa na http://${host}:${boundPort}`);
+      resolve(boundPort);
     };
 
     httpServer.once("error", onError);
@@ -404,7 +410,7 @@ function getRuntimeConfig() {
   const rawPort = process.env.PORT?.trim() || "3000";
   const port = Number(rawPort);
 
-  if (!Number.isInteger(port) || port < 1 || port > 65535) {
+  if (!Number.isInteger(port) || port < 0 || port > 65535) {
     throw new Error(`Nieprawidłowa wartość PORT: ${rawPort}`);
   }
 
@@ -431,6 +437,10 @@ async function main() {
 
     try {
       url = new URL(req.url, "http://localhost");
+
+      if (req.method === "GET" && url.pathname === "/health") {
+        return sendJson(res, 200, { status: "ok" });
+      }
 
       if (url.pathname.startsWith("/api/")) {
         return await handleApi(req, res, url);
@@ -470,10 +480,51 @@ async function main() {
   });
 
   const { host, port } = getRuntimeConfig();
-  await listen(server, port, host);
+  const boundPort = await listen(server, port, host);
+  return { host, port: boundPort };
 }
 
-main().catch((error) => {
-  console.error(error);
-  process.exit(1);
-});
+async function shutdown(signal = "shutdown") {
+  if (shuttingDown) return;
+  shuttingDown = true;
+  console.log(`Zatrzymywanie Motka (${signal})...`);
+
+  if (server?.listening) {
+    await new Promise((resolve, reject) => {
+      server.close((error) => (error ? reject(error) : resolve()));
+    });
+  }
+  server = null;
+
+  if (db) {
+    persist();
+    db.close();
+    db = null;
+  }
+
+  console.log("Motek został bezpiecznie zatrzymany.");
+}
+
+function registerShutdownHandlers() {
+  for (const signal of ["SIGINT", "SIGTERM"]) {
+    process.once(signal, () => {
+      shutdown(signal).then(
+        () => process.exit(0),
+        (error) => {
+          console.error("Nie udało się bezpiecznie zatrzymać Motka:", error);
+          process.exit(1);
+        }
+      );
+    });
+  }
+}
+
+if (require.main === module) {
+  registerShutdownHandlers();
+  main().catch((error) => {
+    console.error(error);
+    process.exit(1);
+  });
+}
+
+module.exports = { main, shutdown };
