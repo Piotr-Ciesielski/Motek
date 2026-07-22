@@ -120,9 +120,6 @@ function persist() {
 function sendJson(res, status, payload) {
   res.writeHead(status, {
     "Content-Type": "application/json; charset=utf-8",
-    "Access-Control-Allow-Origin": "*",
-    "Access-Control-Allow-Headers": "Content-Type",
-    "Access-Control-Allow-Methods": "GET,POST,DELETE,OPTIONS",
   });
   res.end(JSON.stringify(payload));
 }
@@ -130,9 +127,6 @@ function sendJson(res, status, payload) {
 function sendText(res, status, text, contentType = "text/plain; charset=utf-8") {
   res.writeHead(status, {
     "Content-Type": contentType,
-    "Access-Control-Allow-Origin": "*",
-    "Access-Control-Allow-Headers": "Content-Type",
-    "Access-Control-Allow-Methods": "GET,POST,DELETE,OPTIONS",
   });
   res.end(text);
 }
@@ -213,10 +207,6 @@ function insertYarn(body) {
 }
 
 async function handleApi(req, res, url) {
-  if (req.method === "OPTIONS") {
-    return sendText(res, 204, "");
-  }
-
   if (req.method === "GET" && url.pathname === "/api/yarns") {
     return sendJson(res, 200, getYarns());
   }
@@ -257,35 +247,35 @@ async function handleApi(req, res, url) {
   sendJson(res, 404, { error: "Nieznany endpoint" });
 }
 
-function listenWithFallback(httpServer, startPort) {
-  const maxAttempts = 25;
-
+function listen(httpServer, port, host) {
   return new Promise((resolve, reject) => {
-    const attempt = (port, remaining) => {
-      const onError = (error) => {
-        httpServer.removeListener("listening", onListening);
-
-        if (error.code === "EADDRINUSE" && remaining > 0) {
-          attempt(port + 1, remaining - 1);
-          return;
-        }
-
-        reject(error);
-      };
-
-      const onListening = () => {
-        httpServer.removeListener("error", onError);
-        console.log(`Motek backend działa na http://localhost:${port}`);
-        resolve(port);
-      };
-
-      httpServer.once("error", onError);
-      httpServer.once("listening", onListening);
-      httpServer.listen(port);
+    const onError = (error) => {
+      httpServer.removeListener("listening", onListening);
+      reject(error);
     };
 
-    attempt(startPort, maxAttempts);
+    const onListening = () => {
+      httpServer.removeListener("error", onError);
+      console.log(`Motek backend działa na http://${host}:${port}`);
+      resolve();
+    };
+
+    httpServer.once("error", onError);
+    httpServer.once("listening", onListening);
+    httpServer.listen(port, host);
   });
+}
+
+function getRuntimeConfig() {
+  const host = process.env.HOST?.trim() || "127.0.0.1";
+  const rawPort = process.env.PORT?.trim() || "3000";
+  const port = Number(rawPort);
+
+  if (!Number.isInteger(port) || port < 1 || port > 65535) {
+    throw new Error(`Nieprawidłowa wartość PORT: ${rawPort}`);
+  }
+
+  return { host, port };
 }
 
 async function main() {
@@ -330,8 +320,8 @@ async function main() {
     }
   });
 
-  const startPort = Number(process.env.PORT) || 3000;
-  await listenWithFallback(server, startPort);
+  const { host, port } = getRuntimeConfig();
+  await listen(server, port, host);
 }
 
 main().catch((error) => {
