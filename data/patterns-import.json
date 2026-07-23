@@ -1,7 +1,7 @@
 {
   "metadata": {
     "record_count": 116,
-    "manual_override_count": 17,
+    "manual_override_count": 18,
     "needs_review_count": 110,
     "complete_material_count": 77,
     "complete_ratio_count": 46
@@ -70,8 +70,8 @@
       "needs_review": true
     },
     {
-      "name": "48121b 76193f9fc7a34173bf81ea1ae1c28b28",
-      "description": "Instrukcja wykonania projektu: kardigan, z ażurowymi detalami, konstrukcją od góry. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "name": "Jak prosto zrobić dekolt V na drutach",
+      "description": "Instrukcja formowania dekoltu V w swetrze lub kardiganie wykonywanym od góry, wraz z obliczeniami i kształtowaniem raglanów.",
       "materials": [],
       "meters_per_100g": null,
       "yarn_requirements": [],
@@ -2813,12 +2813,14 @@
     },
     {
       "source_filename": "48121b_76193f9fc7a34173bf81ea1ae1c28b28.pdf",
-      "manual_override": false,
+      "manual_override": true,
       "review_reasons": [
         "material_not_found",
         "meters_per_100g_not_found"
       ],
-      "review_notes": []
+      "review_notes": [
+        "Dokument opisuje technikę dziewiarską i nie wskazuje jednej wymaganej włóczki ani parametru m/100 g."
+      ]
     },
     {
       "source_filename": "[PL] Black Lodge Socks - wzór dziewiarski.pdf",

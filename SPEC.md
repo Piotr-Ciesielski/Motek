@@ -189,6 +189,12 @@ komputera i aplikacja będzie przygotowana do dalszego rozwoju w chmurze.
 - aplikacja weryfikuje konfigurację i połączenie podczas uruchamiania
 
 ## 16. Stan przejściowy
-Do czasu utworzenia i podłączenia tabeli `patterns` aplikacja zachowuje
-dotychczasowe działanie na SQLite. Pozwala to rozwijać wersję 2.0.0 etapami
-bez przerywania pracy obecnej wersji 1.0.2.
+Tabela `patterns` jest podłączona do backendu i służy jako źródło katalogu
+wzorów widocznego na froncie. Katalog pozwala wyszukiwać rekordy i filtrować je
+według statusu weryfikacji.
+
+Magazyn włóczek oraz dotychczasowy mechanizm dopasowania pozostają tymczasowo
+w SQLite. Nowe rekordy wzorów nie zawierają jeszcze całkowitego zużycia włóczki
+dla konkretnego rozmiaru, dlatego nie są jeszcze używane przez ranking
+dopasowania. Pozwala to niezależnie przetestować katalog przed drugim etapem
+migracji.

@@ -13,7 +13,45 @@ const { main, shutdown } = require("../server");
 
 test("serwer Motek działa bezpiecznie", async (t) => {
   await fs.mkdir(tempDir, { recursive: true });
-  const runtime = await main();
+  const supabasePatterns = [
+    {
+      id: 21,
+      name: "Testowy wzór Supabase",
+      description: "Opis wzoru pobranego ze zdalnej bazy.",
+      materials: ["wełna", "jedwab"],
+      meters_per_100g: 400,
+      yarn_requirements: [
+        {
+          role: "główna",
+          materials: ["wełna"],
+          meters_per_100g: 400,
+        },
+      ],
+      source_language: "pl",
+      needs_review: false,
+    },
+  ];
+  const fakeSupabaseConnection = {
+    verify: async () => {},
+    client: {
+      from(table) {
+        assert.equal(table, "patterns");
+        return {
+          select(columns) {
+            assert.match(columns, /meters_per_100g/);
+            return {
+              async order(field, options) {
+                assert.equal(field, "name");
+                assert.deepEqual(options, { ascending: true });
+                return { data: supabasePatterns, error: null };
+              },
+            };
+          },
+        };
+      },
+    },
+  };
+  const runtime = await main({ supabaseConnection: fakeSupabaseConnection });
   const baseUrl = `http://${runtime.host}:${runtime.port}`;
 
   try {
@@ -52,6 +90,30 @@ test("serwer Motek działa bezpiecznie", async (t) => {
 
       const deleteResponse = await fetch(`${baseUrl}/api/yarns/${created.id}`, { method: "DELETE" });
       assert.equal(deleteResponse.status, 204);
+    });
+
+    await t.test("pobiera katalog wzorów z Supabase bez ujawniania sekretów", async () => {
+      const response = await fetch(`${baseUrl}/api/patterns`);
+      assert.equal(response.status, 200);
+      const patterns = await response.json();
+      assert.equal(patterns.length, 1);
+      assert.deepEqual(patterns[0], {
+        id: 21,
+        name: "Testowy wzór Supabase",
+        description: "Opis wzoru pobranego ze zdalnej bazy.",
+        materials: ["wełna", "jedwab"],
+        metersPer100g: 400,
+        yarnRequirements: [
+          {
+            role: "główna",
+            materials: ["wełna"],
+            meters_per_100g: 400,
+          },
+        ],
+        sourceLanguage: "pl",
+        needsReview: false,
+      });
+      assert.equal(JSON.stringify(patterns).includes("sb_secret_"), false);
     });
 
     await t.test("odrzuca nieprawidłowe i zbyt duże dane", async () => {

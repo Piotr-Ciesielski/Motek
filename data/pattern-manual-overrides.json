@@ -1,4 +1,16 @@
 {
+  "48121b_76193f9fc7a34173bf81ea1ae1c28b28.pdf": {
+    "name": "Jak prosto zrobić dekolt V na drutach",
+    "description": "Instrukcja formowania dekoltu V w swetrze lub kardiganie wykonywanym od góry, wraz z obliczeniami i kształtowaniem raglanów.",
+    "materials": [],
+    "meters_per_100g": null,
+    "yarn_requirements": [],
+    "source_language": "pl",
+    "needs_review": true,
+    "review_notes": [
+      "Dokument opisuje technikę dziewiarską i nie wskazuje jednej wymaganej włóczki ani parametru m/100 g."
+    ]
+  },
   "Bone vest by Rowan.pdf": {
     "name": "Bone",
     "description": "Ażurowa kamizelka bez rękawów dostępna w wersji krótkiej lub dłuższej.",

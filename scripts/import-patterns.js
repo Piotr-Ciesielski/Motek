@@ -6,6 +6,9 @@ const { createSupabaseConnection } = require("../supabase");
 const PROJECT_DIR = path.resolve(__dirname, "..");
 const IMPORT_PATH = path.join(PROJECT_DIR, "data", "patterns-import.json");
 const EXECUTE = process.argv.includes("--execute");
+const SOURCE_FILTER = process.argv
+  .find((argument) => argument.startsWith("--source="))
+  ?.slice("--source=".length);
 const BATCH_SIZE = 50;
 
 function readImportData() {
@@ -20,7 +23,20 @@ function readImportData() {
     throw new Error("Plik importu zawiera powtórzone nazwy plików źródłowych.");
   }
 
-  return document.records;
+  if (!SOURCE_FILTER) {
+    return document.records;
+  }
+
+  const filteredRecords = document.records.filter(
+    (record) => record.source_filename === SOURCE_FILTER
+  );
+  if (filteredRecords.length === 0) {
+    throw new Error(
+      `Nie znaleziono rekordu źródłowego wskazanego przez --source.`
+    );
+  }
+
+  return filteredRecords;
 }
 
 function splitIntoBatches(items, size) {
