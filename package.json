@@ -6,8 +6,8 @@
   "main": "server.js",
   "scripts": {
     "start": "node --env-file-if-exists=.env server.js",
-    "test": "node --test",
-    "check": "node --check server.js && node --check app.js && node --test",
+    "test": "node --test --test-isolation=none",
+    "check": "node --check server.js && node --check app.js && npm test",
     "patterns:check": "node --env-file-if-exists=.env scripts/import-patterns.js",
     "patterns:import": "node --env-file-if-exists=.env scripts/import-patterns.js --execute"
   },
