@@ -1,5 +1,20 @@
 Motek - log zmian
 
+Wersja 2.0.0 (w przygotowaniu) - etap 1: katalog wzorów w Supabase
+- Dodano bezpieczne połączenie backendu z Supabase przez zmienne środowiskowe.
+- Klucz typu secret pozostaje wyłącznie po stronie backendu i nie jest udostępniany frontendowi.
+- Dodano migrację tworzącą tabelę `patterns` wraz z ograniczeniami, uprawnieniami i RLS.
+- Utworzono 116 rekordów wzorów na podstawie lokalnych dokumentów PDF.
+- Każdy plik PDF otrzymał osobny rekord, także w przypadku identycznych kopii dokumentów.
+- Dodano obsługę wielu wymaganych lub alternatywnych włóczek w polu `yarn_requirements`.
+- Niepewne lub nieobecne dane pozostają puste i są oznaczane flagą `needs_review`.
+- Dodano narzędzia do audytu PDF, przygotowania danych, kontroli importu i selektywnej aktualizacji rekordów.
+- Endpoint `GET /api/patterns` pobiera katalog wzorów z Supabase.
+- Dodano na froncie sekcję „Baza wzorów” z wyszukiwaniem i filtrowaniem według statusu weryfikacji.
+- Dodano prezentację materiałów, parametru m/100 g oraz wielu włóczek wymaganych przez wzór.
+- Rozszerzono automatyczne testy backendu i zabezpieczeń integracji Supabase.
+- Magazyn włóczek i dotychczasowy mechanizm dopasowania pozostają tymczasowo w SQLite.
+
 Wersja 1.0.2
 - Odświeżono kolorystykę aplikacji na bardziej nasyconą i wielobarwną.
 - Wzmocniono gradienty tła, przycisków i kart bez zmiany układu.

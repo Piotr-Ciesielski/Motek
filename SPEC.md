@@ -1,4 +1,11 @@
-# Motek Specyfikacja v1.0.0
+# Motek — specyfikacja produktu
+
+## Status wersji
+
+- bieżąca wydana wersja aplikacji: `1.0.2`
+- rozwijana wersja: `2.0.0`
+- zrealizowany zakres wersji 2.0.0: etap pierwszy — tabela i katalog wzorów
+- następny zakres: etap drugi — przeniesienie magazynu włóczek do Supabase
 
 ## 1. Cel produktu
 Motek to prosta aplikacja webowa dla dziewiarzy i dziewiarek, która pomaga dopasować dostępny zapas włóczek do wzorów udziergów.
@@ -198,3 +205,133 @@ w SQLite. Nowe rekordy wzorów nie zawierają jeszcze całkowitego zużycia wł�
 dla konkretnego rozmiaru, dlatego nie są jeszcze używane przez ranking
 dopasowania. Pozwala to niezależnie przetestować katalog przed drugim etapem
 migracji.
+
+## 17. Zrealizowany etap pierwszy — katalog wzorów w Supabase
+
+### 17.1 Źródło danych
+
+Katalog został przygotowany na podstawie 116 lokalnych dokumentów PDF z folderu
+`Wzory`. Folder jest roboczy, nie trafia do Git i nie jest udostępniany przez
+aplikację.
+
+Każdy plik PDF odpowiada jednemu rekordowi w tabeli `patterns`. Zasada ta
+obowiązuje również dla identycznych kopii plików, ponieważ każdy dokument jest
+traktowany jako osobna pozycja źródłowa.
+
+### 17.2 Model rekordu `patterns`
+
+Rekord katalogu zawiera:
+
+- `id` — identyfikator nadawany przez bazę
+- `name` — nazwa wzoru lub instrukcji
+- `description` — krótki opis w języku polskim
+- `materials` — lista rozpoznanych materiałów
+- `meters_per_100g` — parametr głównej włóczki, jeśli można go jednoznacznie ustalić
+- `yarn_requirements` — lista wszystkich wymaganych lub alternatywnych włóczek
+- `source_filename` — unikalna nazwa źródłowego pliku PDF
+- `source_language` — język dokumentu źródłowego
+- `needs_review` — informacja, czy dane wymagają dodatkowej weryfikacji
+- `created_at` — data utworzenia rekordu
+
+Pole `yarn_requirements` może przechowywać oddzielne parametry włóczki głównej,
+dodatkowej, kontrastowej albo alternatywnych wariantów. Dzięki temu wzory
+wykorzystujące kilka nitek nie są upraszczane do jednego parametru.
+
+### 17.3 Zasada jakości danych
+
+System nie uzupełnia brakujących informacji na podstawie przypuszczeń. Jeżeli
+dokument nie podaje składu lub nie pozwala obliczyć metrów na 100 gramów,
+wartość pozostaje pusta, a rekord otrzymuje `needs_review=true`.
+
+Aktualny zestaw zawiera:
+
+- 116 rekordów
+- 77 rekordów z rozpoznanym materiałem
+- 46 rekordów z pojedynczym parametrem głównej włóczki
+- 110 rekordów oznaczonych do przeglądu
+- 18 rekordów z ręcznie sprawdzonymi poprawkami po analizie wizualnej
+
+Flaga `needs_review` nie oznacza, że cały rekord jest błędny. Informuje, że co
+najmniej jeden element powinien zostać potwierdzony przed wykorzystaniem go w
+automatycznym dopasowaniu.
+
+### 17.4 Proces przygotowania i importu
+
+Proces jest powtarzalny i składa się z:
+
+1. audytu dokumentów PDF,
+2. automatycznego odczytu kandydatów,
+3. ręcznych poprawek dla skanów i przypadków niejednoznacznych,
+4. walidacji kompletnego zestawu,
+5. kontrolnego podglądu zmian w Supabase,
+6. importu lub selektywnej aktualizacji rekordów.
+
+Importer wykorzystuje `source_filename` jako stabilny klucz konfliktu. Ponowne
+uruchomienie aktualizuje istniejący rekord zamiast tworzyć duplikat tej samej
+pozycji źródłowej.
+
+## 18. Katalog wzorów na froncie
+
+Frontend zawiera sekcję „Baza wzorów”, która:
+
+- pobiera dane przez backendowy endpoint `GET /api/patterns`
+- nie otrzymuje sekretnego klucza Supabase
+- prezentuje nazwę i opis wzoru
+- pokazuje materiały i parametr m/100 g
+- pokazuje wiele wymaganych włóczek, jeśli występują
+- odróżnia rekordy zweryfikowane od wymagających sprawdzenia
+- umożliwia wyszukiwanie po nazwie, opisie i materiale
+- umożliwia filtrowanie według statusu weryfikacji
+
+Katalog jest funkcją informacyjną. Na obecnym etapie nie zastępuje jeszcze
+wyników dopasowania do magazynu użytkownika.
+
+## 19. Aktualna architektura przejściowa
+
+| Obszar | Źródło danych | Stan |
+| --- | --- | --- |
+| katalog wzorów na froncie | Supabase `patterns` | aktywny |
+| magazyn włóczek | lokalna baza SQLite | aktywny przejściowo |
+| ranking dopasowania | przykładowe wzory i włóczki w SQLite | aktywny przejściowo |
+| dokumenty PDF | lokalny ignorowany folder `Wzory` | tylko źródło importu |
+| dane logowania | jeszcze niewdrożone | planowany kolejny etap |
+
+Backend weryfikuje połączenie z Supabase przy starcie. Gdy konfiguracja
+Supabase nie jest dostępna, aplikacja może nadal uruchomić się w ograniczonym
+trybie lokalnym.
+
+## 20. Bezpieczeństwo wdrożonego etapu
+
+- sekret Supabase jest przechowywany wyłącznie w lokalnym pliku `.env`
+- `.env` i folder `Wzory` są ignorowane przez Git
+- frontend komunikuje się wyłącznie z backendem Motka
+- backend wybiera jawnie pola zwracane przez API
+- błędy połączenia nie ujawniają wartości sekretnego klucza
+- klient serwerowy nie zapisuje sesji logowania
+- tabela ma włączone RLS, a operacje importu używają roli serwerowej
+- przed importem można sprawdzić liczbę nowych i aktualizowanych rekordów
+
+## 21. Kryteria odbioru etapu pierwszego
+
+Etap pierwszy uznaje się za ukończony, jeżeli:
+
+- aplikacja uruchamia się z prawidłową konfiguracją Supabase
+- tabela `patterns` zawiera 116 rekordów
+- `GET /api/patterns` pobiera katalog z Supabase
+- frontend pokazuje 116 wzorów
+- wyszukiwanie i filtrowanie działają bez przeładowania strony
+- rekordy niepełne są widocznie oznaczone
+- klucz secret nie znajduje się w kodzie, odpowiedzi API ani repozytorium
+- testy backendu, API i zabezpieczeń przechodzą poprawnie
+- dotychczasowa obsługa włóczek w SQLite nadal działa
+
+## 22. Następny etap — tabela włóczek
+
+Kolejny etap wersji 2.0.0 obejmie:
+
+1. zaprojektowanie tabeli `yarns` w Supabase,
+2. migrację endpointów dodawania, odczytu i usuwania włóczek,
+3. przygotowanie danych do rozróżniania użytkowników po wdrożeniu logowania,
+4. rozszerzenie modelu wzorów o całkowite zużycie włóczki dla rozmiarów,
+5. dostosowanie algorytmu dopasowania do danych Supabase,
+6. usunięcie SQLite i zależności `sql.js` po zakończeniu migracji.
