@@ -1,0 +1,3767 @@
+{
+  "metadata": {
+    "record_count": 116,
+    "manual_override_count": 17,
+    "needs_review_count": 110,
+    "complete_material_count": 77,
+    "complete_ratio_count": 46
+  },
+  "records": [
+    {
+      "name": "HINTERLAND",
+      "description": "Instrukcja wykonania projektu: sweter, z wzorem wielokolorowym, ażurowymi detalami. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "materials": [
+        "wełna"
+      ],
+      "meters_per_100g": 366.0,
+      "yarn_requirements": [
+        {
+          "role": "główna",
+          "materials": [
+            "wełna"
+          ],
+          "meters_per_100g": 366.0
+        }
+      ],
+      "source_filename": "--HINTERLAND--.pdf",
+      "source_language": "en",
+      "needs_review": true
+    },
+    {
+      "name": "suncatcher-square-neck-intarsia-tee",
+      "description": "Instrukcja wykonania projektu: skarpetki, z intarsją, ażurowymi detalami. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "materials": [
+        "bawełna"
+      ],
+      "meters_per_100g": null,
+      "yarn_requirements": [
+        {
+          "role": "główna",
+          "materials": [
+            "bawełna"
+          ],
+          "meters_per_100g": null
+        }
+      ],
+      "source_filename": "1719901849_suncatcher-square-neck-intarsia-tee-us.pdf",
+      "source_language": "en",
+      "needs_review": true
+    },
+    {
+      "name": "rosmarino-eyelet-ankle-socks",
+      "description": "Instrukcja wykonania projektu: skarpetki, z ażurowymi detalami, konstrukcją od góry. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "materials": [
+        "wełna",
+        "poliamid"
+      ],
+      "meters_per_100g": null,
+      "yarn_requirements": [
+        {
+          "role": "główna",
+          "materials": [
+            "wełna",
+            "poliamid"
+          ],
+          "meters_per_100g": null
+        }
+      ],
+      "source_filename": "1720189120_rosmarino-eyelet-ankle-socks-us.pdf",
+      "source_language": "en",
+      "needs_review": true
+    },
+    {
+      "name": "48121b 76193f9fc7a34173bf81ea1ae1c28b28",
+      "description": "Instrukcja wykonania projektu: kardigan, z ażurowymi detalami, konstrukcją od góry. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "materials": [],
+      "meters_per_100g": null,
+      "yarn_requirements": [],
+      "source_filename": "48121b_76193f9fc7a34173bf81ea1ae1c28b28.pdf",
+      "source_language": "pl",
+      "needs_review": true
+    },
+    {
+      "name": "Black Lodge Socks - wzór dziewiarski",
+      "description": "Instrukcja wykonania projektu: skarpetki. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "materials": [],
+      "meters_per_100g": 400.0,
+      "yarn_requirements": [
+        {
+          "role": "główna",
+          "materials": [],
+          "meters_per_100g": 400.0
+        }
+      ],
+      "source_filename": "[PL] Black Lodge Socks - wzór dziewiarski.pdf",
+      "source_language": "pl",
+      "needs_review": true
+    },
+    {
+      "name": "White Lodge Socks - wzór dziewiarski",
+      "description": "Instrukcja wykonania projektu: skarpetki, z ażurowymi detalami. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "materials": [
+        "wełna",
+        "moher",
+        "jedwab"
+      ],
+      "meters_per_100g": null,
+      "yarn_requirements": [
+        {
+          "role": "dodatkowa",
+          "materials": [
+            "wełna",
+            "moher",
+            "jedwab"
+          ],
+          "meters_per_100g": 400.0
+        },
+        {
+          "role": "dodatkowa",
+          "materials": [
+            "wełna",
+            "moher",
+            "jedwab"
+          ],
+          "meters_per_100g": 420.0
+        },
+        {
+          "role": "dodatkowa",
+          "materials": [
+            "wełna",
+            "moher",
+            "jedwab"
+          ],
+          "meters_per_100g": 840.0
+        }
+      ],
+      "source_filename": "[PL] White Lodge Socks - wzór dziewiarski.pdf",
+      "source_language": "pl",
+      "needs_review": true
+    },
+    {
+      "name": "Diamond Fade Socks 2025",
+      "description": "Instrukcja wykonania projektu: skarpetki, z ażurowymi detalami. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "materials": [
+        "wełna",
+        "poliamid"
+      ],
+      "meters_per_100g": 400.0,
+      "yarn_requirements": [
+        {
+          "role": "główna",
+          "materials": [
+            "wełna",
+            "poliamid"
+          ],
+          "meters_per_100g": 400.0
+        }
+      ],
+      "source_filename": "[poprawiona wersja] Diamond Fade Socks 2025 PL.pdf",
+      "source_language": "pl",
+      "needs_review": true
+    },
+    {
+      "name": "Teddy Bear Socks - wzór PL (ang skróty)",
+      "description": "Instrukcja wykonania projektu: skarpetki. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "materials": [
+        "wełna",
+        "poliamid"
+      ],
+      "meters_per_100g": 200.0,
+      "yarn_requirements": [
+        {
+          "role": "główna",
+          "materials": [
+            "wełna",
+            "poliamid"
+          ],
+          "meters_per_100g": 200.0
+        }
+      ],
+      "source_filename": "[poprawiona wersja] Teddy Bear Socks - wzór PL (ang skróty).pdf",
+      "source_language": "pl",
+      "needs_review": true
+    },
+    {
+      "name": "Alice in Wonderland July 2013",
+      "description": "Instrukcja wykonania projektu: skarpetki, z ażurowymi detalami, warkoczami. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "materials": [
+        "wełna",
+        "kaszmir"
+      ],
+      "meters_per_100g": 402.34,
+      "yarn_requirements": [
+        {
+          "role": "główna",
+          "materials": [
+            "wełna",
+            "kaszmir"
+          ],
+          "meters_per_100g": 402.34
+        }
+      ],
+      "source_filename": "Alice_in_Wonderland_July_2013.pdf",
+      "source_language": "en",
+      "needs_review": true
+    },
+    {
+      "name": "ALTA socks (PL) dla WÅÃ³czkomaniaczki (poprawione)",
+      "description": "Instrukcja wykonania projektu: skarpetki, z wzorem wielokolorowym, konstrukcją od góry. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "materials": [],
+      "meters_per_100g": 400.0,
+      "yarn_requirements": [
+        {
+          "role": "dodatkowa",
+          "materials": [],
+          "meters_per_100g": 400.0
+        }
+      ],
+      "source_filename": "ALTA socks (PL) dla WÅÃ³czkomaniaczki (poprawione).pdf",
+      "source_language": "pl",
+      "needs_review": true
+    },
+    {
+      "name": "Autumn s Letter Cardigan by Amina Ali",
+      "description": "Instrukcja wykonania projektu: kardigan, z ażurowymi detalami, warkoczami. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "materials": [
+        "wełna",
+        "jedwab"
+      ],
+      "meters_per_100g": null,
+      "yarn_requirements": [
+        {
+          "role": "główna",
+          "materials": [
+            "jedwab"
+          ],
+          "meters_per_100g": 340.0
+        },
+        {
+          "role": "dodatkowa",
+          "materials": [
+            "jedwab"
+          ],
+          "meters_per_100g": 420.0
+        }
+      ],
+      "source_filename": "Autumn_s_Letter_Cardigan_by_Amina_Ali.pdf",
+      "source_language": "pl",
+      "needs_review": true
+    },
+    {
+      "name": "b2b-pdf 2106-07abc-eng 1",
+      "description": "Instrukcja wykonania projektu: skarpetki, z konstrukcją raglanową. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "materials": [
+        "bawełna"
+      ],
+      "meters_per_100g": 360.0,
+      "yarn_requirements": [
+        {
+          "role": "główna",
+          "materials": [
+            "bawełna"
+          ],
+          "meters_per_100g": 360.0
+        }
+      ],
+      "source_filename": "b2b-pdf_2106-07abc-eng_1_kopia.pdf",
+      "source_language": "en",
+      "needs_review": true
+    },
+    {
+      "name": "BABUSHKA SCARF",
+      "description": "Instrukcja wykonania projektu: szal. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "materials": [
+        "wełna"
+      ],
+      "meters_per_100g": 432.0,
+      "yarn_requirements": [
+        {
+          "role": "główna",
+          "materials": [
+            "wełna"
+          ],
+          "meters_per_100g": 432.0
+        }
+      ],
+      "source_filename": "BABUSHKA_SCARF.pdf",
+      "source_language": "pl",
+      "needs_review": true
+    },
+    {
+      "name": "Basic Kardigan Kod Dostępu",
+      "description": "Instrukcja wykonania projektu: kardigan. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "materials": [],
+      "meters_per_100g": null,
+      "yarn_requirements": [],
+      "source_filename": "Basic Kardigan Kod Dostępu.pdf",
+      "source_language": "pl",
+      "needs_review": true
+    },
+    {
+      "name": "bevelled-tank-sleeveless-intarsia-top",
+      "description": "Instrukcja wykonania projektu: skarpetki, z wzorem wielokolorowym, intarsją. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "materials": [
+        "bawełna"
+      ],
+      "meters_per_100g": null,
+      "yarn_requirements": [
+        {
+          "role": "główna",
+          "materials": [
+            "bawełna"
+          ],
+          "meters_per_100g": null
+        }
+      ],
+      "source_filename": "bevelled-tank-sleeveless-intarsia-top-us.pdf",
+      "source_language": "en",
+      "needs_review": true
+    },
+    {
+      "name": "BIG-BIG-BUBBLES-WZOR-INSTRUKCJA-WYKONANIA06.23-tbto93",
+      "description": "Instrukcja wykonania projektu: kardigan. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "materials": [
+        "wełna"
+      ],
+      "meters_per_100g": null,
+      "yarn_requirements": [
+        {
+          "role": "główna",
+          "materials": [
+            "wełna"
+          ],
+          "meters_per_100g": null
+        }
+      ],
+      "source_filename": "BIG-BIG-BUBBLES-WZOR-INSTRUKCJA-WYKONANIA06.23-tbto93.pdf",
+      "source_language": "pl",
+      "needs_review": true
+    },
+    {
+      "name": "Big-Big-BuBBles06.23-licnfm",
+      "description": "Instrukcja wykonania projektu: kardigan. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "materials": [
+        "wełna"
+      ],
+      "meters_per_100g": null,
+      "yarn_requirements": [
+        {
+          "role": "główna",
+          "materials": [
+            "wełna"
+          ],
+          "meters_per_100g": null
+        }
+      ],
+      "source_filename": "Big-Big-BuBBles06.23-licnfm.pdf",
+      "source_language": "pl",
+      "needs_review": true
+    },
+    {
+      "name": "Blush Basic Socks Listopad 2023 Wydanie pierwsze",
+      "description": "Instrukcja wykonania projektu: skarpetki, z konstrukcją od góry. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "materials": [
+        "wełna"
+      ],
+      "meters_per_100g": 425.0,
+      "yarn_requirements": [
+        {
+          "role": "główna",
+          "materials": [
+            "wełna"
+          ],
+          "meters_per_100g": 425.0
+        }
+      ],
+      "source_filename": "Blush Basic Socks_Listopad 2023_Wydanie pierwsze.pdf",
+      "source_language": "pl",
+      "needs_review": true
+    },
+    {
+      "name": "bluzka saranda tee knitolog",
+      "description": "Instrukcja wykonania projektu: sweter. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "materials": [
+        "bawełna",
+        "len",
+        "wiskoza"
+      ],
+      "meters_per_100g": 220.0,
+      "yarn_requirements": [
+        {
+          "role": "główna",
+          "materials": [
+            "bawełna",
+            "len",
+            "wiskoza"
+          ],
+          "meters_per_100g": 220.0
+        }
+      ],
+      "source_filename": "bluzka_saranda_tee_knitolog.pdf",
+      "source_language": "pl",
+      "needs_review": true
+    },
+    {
+      "name": "bluzka Skuletant Iwona Eriksson",
+      "description": "Instrukcja wykonania projektu: sweter, z ażurowymi detalami, warkoczami. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "materials": [],
+      "meters_per_100g": 240.0,
+      "yarn_requirements": [
+        {
+          "role": "główna",
+          "materials": [],
+          "meters_per_100g": 240.0
+        }
+      ],
+      "source_filename": "bluzka_Skuletant_Iwona_Eriksson.pdf",
+      "source_language": "pl",
+      "needs_review": true
+    },
+    {
+      "name": "Bone",
+      "description": "Ażurowa kamizelka bez rękawów dostępna w wersji krótkiej lub dłuższej.",
+      "materials": [],
+      "meters_per_100g": null,
+      "yarn_requirements": [
+        {
+          "role": "główna",
+          "yarn_name": "Summerlite DK",
+          "materials": [],
+          "meters_per_100g": null
+        }
+      ],
+      "source_filename": "Bone vest by Rowan.pdf",
+      "source_language": "en",
+      "needs_review": true
+    },
+    {
+      "name": "Bubble",
+      "description": "Kardigan o wyrazistej fakturze tworzonej przez dekoracyjne bąbelki.",
+      "materials": [],
+      "meters_per_100g": null,
+      "yarn_requirements": [
+        {
+          "role": "główna",
+          "yarn_name": "Kid Silk Haze",
+          "strand_count": 3,
+          "materials": [],
+          "meters_per_100g": null
+        }
+      ],
+      "source_filename": "Bubble by Rowan.pdf",
+      "source_language": "en",
+      "needs_review": true
+    },
+    {
+      "name": "Canada",
+      "description": "Instrukcja wykonania projektu: kardigan, z wzorem wielokolorowym, intarsją. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "materials": [],
+      "meters_per_100g": 187.45,
+      "yarn_requirements": [
+        {
+          "role": "główna",
+          "materials": [],
+          "meters_per_100g": 187.45
+        }
+      ],
+      "source_filename": "Canada .pdf",
+      "source_language": "en",
+      "needs_review": true
+    },
+    {
+      "name": "Capucharpe EN",
+      "description": "Instrukcja wykonania projektu: top lub bluzkę, z ażurowymi detalami. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "materials": [],
+      "meters_per_100g": 450.0,
+      "yarn_requirements": [
+        {
+          "role": "główna",
+          "materials": [],
+          "meters_per_100g": 450.0
+        }
+      ],
+      "source_filename": "Capucharpe_EN.pdf",
+      "source_language": "en",
+      "needs_review": true
+    },
+    {
+      "name": "Chaussettes PERCY final EN",
+      "description": "Instrukcja wykonania projektu: skarpetki, z wzorem wielokolorowym, ażurowymi detalami. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "materials": [
+        "wełna",
+        "poliamid"
+      ],
+      "meters_per_100g": 400.0,
+      "yarn_requirements": [
+        {
+          "role": "główna",
+          "materials": [
+            "wełna",
+            "poliamid"
+          ],
+          "meters_per_100g": 400.0
+        }
+      ],
+      "source_filename": "Chaussettes_PERCY_final_EN.pdf",
+      "source_language": "en",
+      "needs_review": true
+    },
+    {
+      "name": "Chusta Erin kotek i motek",
+      "description": "Instrukcja wykonania projektu: top lub bluzkę, z konstrukcją od góry. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "materials": [],
+      "meters_per_100g": null,
+      "yarn_requirements": [
+        {
+          "role": "główna",
+          "materials": [],
+          "meters_per_100g": 300.0
+        },
+        {
+          "role": "dodatkowa",
+          "materials": [],
+          "meters_per_100g": 260.0
+        },
+        {
+          "role": "dodatkowa",
+          "materials": [],
+          "meters_per_100g": 150.0
+        }
+      ],
+      "source_filename": "Chusta_Erin_kotek_i_motek.pdf",
+      "source_language": "pl",
+      "needs_review": true
+    },
+    {
+      "name": "Cirro",
+      "description": "Sweter wykonywany od góry, z ażurowym karczkiem i modelowaniem krótkimi rzędami.",
+      "materials": [
+        "wełna",
+        "moher",
+        "jedwab"
+      ],
+      "meters_per_100g": 496,
+      "yarn_requirements": [
+        {
+          "role": "główna",
+          "yarn_name": "Biches & Buches Le Petit Lambswool",
+          "materials": [
+            "wełna"
+          ],
+          "meters_per_100g": 496
+        },
+        {
+          "role": "dodatkowa",
+          "yarn_name": "Biches & Buches Le Petit Silk & Mohair",
+          "materials": [
+            "moher",
+            "jedwab"
+          ],
+          "meters_per_100g": 840
+        }
+      ],
+      "source_filename": "Cirro sweater.pdf",
+      "source_language": "en",
+      "needs_review": false
+    },
+    {
+      "name": "Climb every Mountain socks Final Edit141122",
+      "description": "Instrukcja wykonania projektu: skarpetki, z ażurowymi detalami, warkoczami. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "materials": [
+        "wełna",
+        "poliamid"
+      ],
+      "meters_per_100g": null,
+      "yarn_requirements": [
+        {
+          "role": "główna",
+          "materials": [
+            "wełna",
+            "poliamid"
+          ],
+          "meters_per_100g": 424.28
+        },
+        {
+          "role": "główna",
+          "materials": [
+            "wełna",
+            "poliamid"
+          ],
+          "meters_per_100g": 425.2
+        },
+        {
+          "role": "główna",
+          "materials": [
+            "wełna",
+            "poliamid"
+          ],
+          "meters_per_100g": 420.62
+        },
+        {
+          "role": "główna",
+          "materials": [
+            "wełna",
+            "poliamid"
+          ],
+          "meters_per_100g": 426.72
+        }
+      ],
+      "source_filename": "Climb_every_Mountain_socks_Final_Edit141122.pdf",
+      "source_language": "en",
+      "needs_review": true
+    },
+    {
+      "name": "Cloudberry Sweater",
+      "description": "Instrukcja wykonania projektu: sweter, z ażurowymi detalami. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "materials": [],
+      "meters_per_100g": 200.0,
+      "yarn_requirements": [
+        {
+          "role": "główna",
+          "materials": [],
+          "meters_per_100g": 200.0
+        }
+      ],
+      "source_filename": "Cloudberry Sweater ENGLISH.pdf",
+      "source_language": "en",
+      "needs_review": true
+    },
+    {
+      "name": "Clue 1 Color Popportunity Socks",
+      "description": "Instrukcja wykonania projektu: skarpetki, z ażurowymi detalami, warkoczami. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "materials": [
+        "wełna",
+        "poliamid"
+      ],
+      "meters_per_100g": null,
+      "yarn_requirements": [
+        {
+          "role": "główna",
+          "materials": [
+            "wełna",
+            "poliamid"
+          ],
+          "meters_per_100g": 420.0
+        },
+        {
+          "role": "dodatkowa",
+          "materials": [
+            "wełna",
+            "poliamid"
+          ],
+          "meters_per_100g": 425.0
+        }
+      ],
+      "source_filename": "Clue_1_Color_Popportunity_Socks.pdf",
+      "source_language": "en",
+      "needs_review": true
+    },
+    {
+      "name": "Cotton",
+      "description": "Koszulka z krótkim rękawem i dekoltem w serek.",
+      "materials": [],
+      "meters_per_100g": null,
+      "yarn_requirements": [
+        {
+          "role": "główna",
+          "yarn_name": "Summerlite DK",
+          "materials": [],
+          "meters_per_100g": null
+        }
+      ],
+      "source_filename": "Cotton t-shirt by Rowan.pdf",
+      "source_language": "en",
+      "needs_review": true
+    },
+    {
+      "name": "Craigh Na Dun Shawl - Anna Kania (2)",
+      "description": "Instrukcja wykonania projektu: chustę, z warkoczami. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "materials": [
+        "wełna"
+      ],
+      "meters_per_100g": null,
+      "yarn_requirements": [
+        {
+          "role": "główna",
+          "materials": [
+            "wełna"
+          ],
+          "meters_per_100g": 200.0
+        },
+        {
+          "role": "dodatkowa",
+          "materials": [
+            "wełna"
+          ],
+          "meters_per_100g": 166.0
+        },
+        {
+          "role": "dodatkowa",
+          "materials": [
+            "wełna"
+          ],
+          "meters_per_100g": 212.0
+        }
+      ],
+      "source_filename": "Craigh Na Dun Shawl - Anna Kania (2).pdf",
+      "source_language": "pl",
+      "needs_review": true
+    },
+    {
+      "name": "Diamond Fade Socks",
+      "description": "Instrukcja wykonania projektu: skarpetki, z ażurowymi detalami. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "materials": [
+        "wełna",
+        "poliamid"
+      ],
+      "meters_per_100g": 400.0,
+      "yarn_requirements": [
+        {
+          "role": "główna",
+          "materials": [
+            "wełna",
+            "poliamid"
+          ],
+          "meters_per_100g": 400.0
+        }
+      ],
+      "source_filename": "Diamond Fade Socks.pdf",
+      "source_language": "pl",
+      "needs_review": true
+    },
+    {
+      "name": "diaphane-top-buttoned-shirt",
+      "description": "Instrukcja wykonania projektu: kardigan, z intarsją, ażurowymi detalami. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "materials": [
+        "alpaka"
+      ],
+      "meters_per_100g": null,
+      "yarn_requirements": [
+        {
+          "role": "główna",
+          "materials": [
+            "alpaka"
+          ],
+          "meters_per_100g": null
+        }
+      ],
+      "source_filename": "diaphane-top-buttoned-shirt-us.pdf",
+      "source_language": "en",
+      "needs_review": true
+    },
+    {
+      "name": "Fallandenforestsocks",
+      "description": "Instrukcja wykonania projektu: skarpetki, z ażurowymi detalami. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "materials": [
+        "wełna",
+        "poliamid"
+      ],
+      "meters_per_100g": null,
+      "yarn_requirements": [
+        {
+          "role": "główna",
+          "materials": [
+            "wełna",
+            "poliamid"
+          ],
+          "meters_per_100g": 365.0
+        },
+        {
+          "role": "główna",
+          "materials": [
+            "wełna",
+            "poliamid"
+          ],
+          "meters_per_100g": 366.67
+        },
+        {
+          "role": "główna",
+          "materials": [
+            "poliamid"
+          ],
+          "meters_per_100g": 200.0
+        }
+      ],
+      "source_filename": "Fallandenforestsocks.pdf",
+      "source_language": "en",
+      "needs_review": true
+    },
+    {
+      "name": "Fiorellino ENG1",
+      "description": "Instrukcja wykonania projektu: sweter, z ażurowymi detalami, konstrukcją raglanową. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "materials": [],
+      "meters_per_100g": 400.0,
+      "yarn_requirements": [
+        {
+          "role": "główna",
+          "materials": [],
+          "meters_per_100g": 400.0
+        }
+      ],
+      "source_filename": "Fiorellino_ENG1.pdf",
+      "source_language": "en",
+      "needs_review": true
+    },
+    {
+      "name": "floreale-top-lace-back-tee",
+      "description": "Instrukcja wykonania projektu: top lub bluzkę, z ażurowymi detalami, warkoczami. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "materials": [
+        "wełna",
+        "bawełna",
+        "moher",
+        "wiskoza",
+        "bambus"
+      ],
+      "meters_per_100g": null,
+      "yarn_requirements": [
+        {
+          "role": "główna",
+          "materials": [
+            "wełna",
+            "bawełna",
+            "moher",
+            "wiskoza",
+            "bambus"
+          ],
+          "meters_per_100g": null
+        }
+      ],
+      "source_filename": "floreale-top-lace-back-tee-us.pdf",
+      "source_language": "en",
+      "needs_review": true
+    },
+    {
+      "name": "Forest Light",
+      "description": "Instrukcja wykonania projektu: sweter, z wzorem wielokolorowym, ażurowymi detalami. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "materials": [
+        "wełna"
+      ],
+      "meters_per_100g": null,
+      "yarn_requirements": [
+        {
+          "role": "główna",
+          "materials": [
+            "wełna"
+          ],
+          "meters_per_100g": 286.0
+        },
+        {
+          "role": "główna",
+          "materials": [
+            "wełna"
+          ],
+          "meters_per_100g": 366.0
+        }
+      ],
+      "source_filename": "Forest_Light.pdf",
+      "source_language": "en",
+      "needs_review": true
+    },
+    {
+      "name": "Forever Autumn Sock Set Final",
+      "description": "Instrukcja wykonania projektu: skarpetki, z wzorem wielokolorowym, ażurowymi detalami. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "materials": [
+        "wełna",
+        "poliamid"
+      ],
+      "meters_per_100g": null,
+      "yarn_requirements": [
+        {
+          "role": "główna",
+          "materials": [
+            "wełna",
+            "poliamid"
+          ],
+          "meters_per_100g": 425.2
+        },
+        {
+          "role": "główna",
+          "materials": [
+            "wełna",
+            "poliamid"
+          ],
+          "meters_per_100g": 424.28
+        },
+        {
+          "role": "główna",
+          "materials": [
+            "wełna",
+            "poliamid"
+          ],
+          "meters_per_100g": 426.72
+        }
+      ],
+      "source_filename": "Forever_Autumn_Sock_Set_Final_.pdf",
+      "source_language": "en",
+      "needs_review": true
+    },
+    {
+      "name": "Gingerbreads Socks",
+      "description": "Instrukcja wykonania projektu: skarpetki, z wzorem wielokolorowym, konstrukcją od góry. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "materials": [
+        "wełna",
+        "poliamid"
+      ],
+      "meters_per_100g": null,
+      "yarn_requirements": [
+        {
+          "role": "główna",
+          "materials": [
+            "wełna",
+            "poliamid"
+          ],
+          "meters_per_100g": 1060.0
+        },
+        {
+          "role": "dodatkowa",
+          "materials": [
+            "wełna",
+            "poliamid"
+          ],
+          "meters_per_100g": 400.0
+        }
+      ],
+      "source_filename": "Gingerbreads Socks PL.pdf",
+      "source_language": "pl",
+      "needs_review": true
+    },
+    {
+      "name": "Grassland Tee",
+      "description": "Bezszwowa koszulka wykonywana od góry, z krótkimi rękawami i ażurowym panelem z przodu.",
+      "materials": [
+        "wełna",
+        "jedwab",
+        "moher"
+      ],
+      "meters_per_100g": 480,
+      "yarn_requirements": [
+        {
+          "role": "główna",
+          "yarn_name": "Gepard Wild & Soft",
+          "materials": [
+            "wełna",
+            "jedwab"
+          ],
+          "meters_per_100g": 480
+        },
+        {
+          "role": "dodatkowa",
+          "yarn_name": "Gepard Kid Seta",
+          "materials": [
+            "moher",
+            "jedwab"
+          ],
+          "meters_per_100g": 840
+        }
+      ],
+      "source_filename": "Grassland tee.pdf",
+      "source_language": "en",
+      "needs_review": false
+    },
+    {
+      "name": "Greenbay",
+      "description": "Teksturowany top bez rękawów, z rozcięciami po bokach.",
+      "materials": [],
+      "meters_per_100g": null,
+      "yarn_requirements": [
+        {
+          "role": "główna",
+          "yarn_name": "Summerlite 4ply",
+          "materials": [],
+          "meters_per_100g": null
+        }
+      ],
+      "source_filename": "Greenbay top by Rowan.pdf",
+      "source_language": "en",
+      "needs_review": true
+    },
+    {
+      "name": "Handasa Top AminaAliHandmade",
+      "description": "Instrukcja wykonania projektu: top lub bluzkę. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "materials": [
+        "wełna",
+        "bawełna"
+      ],
+      "meters_per_100g": null,
+      "yarn_requirements": [
+        {
+          "role": "główna",
+          "materials": [
+            "bawełna"
+          ],
+          "meters_per_100g": 320.0
+        },
+        {
+          "role": "dodatkowa",
+          "materials": [
+            "wełna",
+            "bawełna"
+          ],
+          "meters_per_100g": 360.0
+        },
+        {
+          "role": "dodatkowa",
+          "materials": [
+            "wełna",
+            "bawełna"
+          ],
+          "meters_per_100g": 340.0
+        }
+      ],
+      "source_filename": "Handasa_Top_AminaAliHandmade.pdf",
+      "source_language": "pl",
+      "needs_review": true
+    },
+    {
+      "name": "HAPPY-TRIO-SWEATER-Tkane-na-okraglo-Wzor-na-druty-exxadt(1)",
+      "description": "Instrukcja wykonania projektu: sweter, z konstrukcją od góry. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "materials": [
+        "wełna"
+      ],
+      "meters_per_100g": 200.0,
+      "yarn_requirements": [
+        {
+          "role": "główna",
+          "materials": [
+            "wełna"
+          ],
+          "meters_per_100g": 200.0
+        }
+      ],
+      "source_filename": "HAPPY-TRIO-SWEATER-Tkane-na-okraglo-Wzor-na-druty-exxadt(1).pdf",
+      "source_language": "pl",
+      "needs_review": true
+    },
+    {
+      "name": "HAPPY-TRIO-SWEATER-Tkane-na-okraglo-Wzor-na-druty-exxadt",
+      "description": "Instrukcja wykonania projektu: sweter, z konstrukcją od góry. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "materials": [
+        "wełna"
+      ],
+      "meters_per_100g": 200.0,
+      "yarn_requirements": [
+        {
+          "role": "główna",
+          "materials": [
+            "wełna"
+          ],
+          "meters_per_100g": 200.0
+        }
+      ],
+      "source_filename": "HAPPY-TRIO-SWEATER-Tkane-na-okraglo-Wzor-na-druty-exxadt.pdf",
+      "source_language": "pl",
+      "needs_review": true
+    },
+    {
+      "name": "Happy Haunts Socks",
+      "description": "Skarpetki wykonywane od palców, ozdobione wielokolorowym motywem duchów.",
+      "materials": [],
+      "meters_per_100g": null,
+      "yarn_requirements": [
+        {
+          "role": "główna",
+          "yarn_weight": "fingering",
+          "materials": [],
+          "meters_per_100g": null
+        },
+        {
+          "role": "kontrastowa",
+          "yarn_weight": "fingering",
+          "materials": [],
+          "meters_per_100g": null
+        }
+      ],
+      "source_filename": "Happy_Haunts_Socks.pdf",
+      "source_language": "en",
+      "needs_review": true
+    },
+    {
+      "name": "Highland Cardi",
+      "description": "Instrukcja wykonania projektu: kardigan, z konstrukcją od góry. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "materials": [
+        "wełna"
+      ],
+      "meters_per_100g": null,
+      "yarn_requirements": [
+        {
+          "role": "główna",
+          "materials": [
+            "wełna"
+          ],
+          "meters_per_100g": null
+        }
+      ],
+      "source_filename": "Highland Cardi.pdf",
+      "source_language": "pl",
+      "needs_review": true
+    },
+    {
+      "name": "HollyBerryCharitySocks",
+      "description": "Instrukcja wykonania projektu: skarpetki, z wzorem wielokolorowym, ażurowymi detalami. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "materials": [],
+      "meters_per_100g": 365.76,
+      "yarn_requirements": [
+        {
+          "role": "główna",
+          "materials": [],
+          "meters_per_100g": 365.76
+        }
+      ],
+      "source_filename": "HollyBerryCharitySocks.pdf",
+      "source_language": "en",
+      "needs_review": true
+    },
+    {
+      "name": "Hot chocolat finishing sugar EN",
+      "description": "Instrukcja wykonania projektu: skarpetki, z ażurowymi detalami. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "materials": [
+        "poliamid"
+      ],
+      "meters_per_100g": null,
+      "yarn_requirements": [
+        {
+          "role": "główna",
+          "materials": [
+            "poliamid"
+          ],
+          "meters_per_100g": null
+        }
+      ],
+      "source_filename": "Hot_chocolat_finishing_sugar_EN.pdf",
+      "source_language": "en",
+      "needs_review": true
+    },
+    {
+      "name": "Hunt-Hand-Knits Turtle-Town-Cowl",
+      "description": "Instrukcja wykonania projektu: top lub bluzkę, z wzorem wielokolorowym, ażurowymi detalami. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "materials": [],
+      "meters_per_100g": null,
+      "yarn_requirements": [],
+      "source_filename": "Hunt-Hand-Knits_Turtle-Town-Cowl.pdf",
+      "source_language": "en",
+      "needs_review": true
+    },
+    {
+      "name": "I m Batty for Halloween single pattern",
+      "description": "Instrukcja wykonania projektu: skarpetki, z ażurowymi detalami, konstrukcją od góry. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "materials": [
+        "wełna"
+      ],
+      "meters_per_100g": 402.0,
+      "yarn_requirements": [
+        {
+          "role": "główna",
+          "materials": [
+            "wełna"
+          ],
+          "meters_per_100g": 402.0
+        }
+      ],
+      "source_filename": "I_m_Batty_for_Halloween_single_pattern.pdf",
+      "source_language": "en",
+      "needs_review": true
+    },
+    {
+      "name": "ingrid-summer-sweater-A4",
+      "description": "Instrukcja wykonania projektu: sweter, z ażurowymi detalami, warkoczami. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "materials": [
+        "bawełna",
+        "len",
+        "jedwab",
+        "wiskoza"
+      ],
+      "meters_per_100g": 220.0,
+      "yarn_requirements": [
+        {
+          "role": "główna",
+          "materials": [
+            "bawełna",
+            "len",
+            "jedwab",
+            "wiskoza"
+          ],
+          "meters_per_100g": 220.0
+        }
+      ],
+      "source_filename": "ingrid-summer-sweater-A4-ENG_kopia.pdf",
+      "source_language": "en",
+      "needs_review": true
+    },
+    {
+      "name": "ingrid-top-A4",
+      "description": "Instrukcja wykonania projektu: top lub bluzkę, z ażurowymi detalami, warkoczami. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "materials": [
+        "bawełna",
+        "len",
+        "jedwab",
+        "wiskoza"
+      ],
+      "meters_per_100g": 220.0,
+      "yarn_requirements": [
+        {
+          "role": "główna",
+          "materials": [
+            "bawełna",
+            "len",
+            "jedwab",
+            "wiskoza"
+          ],
+          "meters_per_100g": 220.0
+        }
+      ],
+      "source_filename": "ingrid-top-A4-ENG_kopia.pdf",
+      "source_language": "en",
+      "needs_review": true
+    },
+    {
+      "name": "JOAN FEST tee",
+      "description": "Instrukcja wykonania projektu: top lub bluzkę, z ażurowymi detalami, konstrukcją raglanową. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "materials": [
+        "wełna",
+        "bawełna",
+        "alpaka",
+        "moher",
+        "len",
+        "jedwab",
+        "wiskoza"
+      ],
+      "meters_per_100g": null,
+      "yarn_requirements": [
+        {
+          "role": "główna",
+          "materials": [
+            "bawełna",
+            "alpaka",
+            "len",
+            "wiskoza"
+          ],
+          "meters_per_100g": 440.0
+        },
+        {
+          "role": "dodatkowa",
+          "materials": [
+            "bawełna",
+            "alpaka",
+            "len",
+            "wiskoza"
+          ],
+          "meters_per_100g": 800.0
+        },
+        {
+          "role": "dodatkowa",
+          "materials": [
+            "wełna",
+            "moher",
+            "jedwab"
+          ],
+          "meters_per_100g": 470.0
+        },
+        {
+          "role": "dodatkowa",
+          "materials": [
+            "wełna",
+            "moher",
+            "jedwab"
+          ],
+          "meters_per_100g": 848.0
+        },
+        {
+          "role": "dodatkowa",
+          "materials": [
+            "wełna",
+            "moher",
+            "jedwab"
+          ],
+          "meters_per_100g": 460.0
+        },
+        {
+          "role": "dodatkowa",
+          "materials": [
+            "wełna",
+            "moher",
+            "jedwab"
+          ],
+          "meters_per_100g": 840.0
+        }
+      ],
+      "source_filename": "JOAN_FEST_tee_PL.pdf",
+      "source_language": "pl",
+      "needs_review": true
+    },
+    {
+      "name": "Kardigan All Day Long Kod Dostępu",
+      "description": "Instrukcja wykonania projektu: kardigan. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "materials": [],
+      "meters_per_100g": null,
+      "yarn_requirements": [],
+      "source_filename": "Kardigan All Day Long Kod Dostępu.pdf",
+      "source_language": "pl",
+      "needs_review": true
+    },
+    {
+      "name": "kardigan Hobbii",
+      "description": "Instrukcja wykonania projektu: kardigan, z konstrukcją raglanową, konstrukcją od góry. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "materials": [
+        "moher",
+        "akryl",
+        "poliamid"
+      ],
+      "meters_per_100g": null,
+      "yarn_requirements": [
+        {
+          "role": "główna",
+          "materials": [
+            "moher",
+            "akryl",
+            "poliamid"
+          ],
+          "meters_per_100g": null
+        }
+      ],
+      "source_filename": "kardigan Hobbii.pdf",
+      "source_language": "pl",
+      "needs_review": true
+    },
+    {
+      "name": "Kardigan Simple as That Kod Dostępu",
+      "description": "Instrukcja wykonania projektu: kardigan. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "materials": [],
+      "meters_per_100g": null,
+      "yarn_requirements": [],
+      "source_filename": "Kardigan Simple as That Kod Dostępu.pdf",
+      "source_language": "pl",
+      "needs_review": true
+    },
+    {
+      "name": "Kardigan 20no 201 20Kod 20Dost C4 99pu",
+      "description": "Instrukcja wykonania projektu: kardigan. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "materials": [],
+      "meters_per_100g": null,
+      "yarn_requirements": [],
+      "source_filename": "Kardigan_20no_201_20Kod_20Dost_C4_99pu.pdf",
+      "source_language": "pl",
+      "needs_review": true
+    },
+    {
+      "name": "na pole wzor",
+      "description": "Instrukcja wykonania projektu dziewiarskiego. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "materials": [],
+      "meters_per_100g": null,
+      "yarn_requirements": [],
+      "source_filename": "Kopia pliku na_pole_wzor.pdf",
+      "source_language": "pl",
+      "needs_review": true
+    },
+    {
+      "name": "SweetTreatsSocks NBielińska(1)",
+      "description": "Instrukcja wykonania projektu: skarpetki, z wzorem wielokolorowym, warkoczami. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "materials": [
+        "wełna",
+        "poliamid"
+      ],
+      "meters_per_100g": 424.0,
+      "yarn_requirements": [
+        {
+          "role": "główna",
+          "materials": [
+            "wełna",
+            "poliamid"
+          ],
+          "meters_per_100g": 424.0
+        }
+      ],
+      "source_filename": "Kopia pliku SweetTreatsSocks_NBielińska(1).pdf",
+      "source_language": "pl",
+      "needs_review": true
+    },
+    {
+      "name": "SweetTreatsSocks NBielińska",
+      "description": "Instrukcja wykonania projektu: skarpetki, z wzorem wielokolorowym, warkoczami. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "materials": [
+        "wełna",
+        "poliamid"
+      ],
+      "meters_per_100g": 424.0,
+      "yarn_requirements": [
+        {
+          "role": "główna",
+          "materials": [
+            "wełna",
+            "poliamid"
+          ],
+          "meters_per_100g": 424.0
+        }
+      ],
+      "source_filename": "Kopia pliku SweetTreatsSocks_NBielińska.pdf",
+      "source_language": "pl",
+      "needs_review": true
+    },
+    {
+      "name": "Leafstream Socks - wzór PL (ang skróty)",
+      "description": "Instrukcja wykonania projektu: skarpetki, z ażurowymi detalami, warkoczami. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "materials": [
+        "alpaka",
+        "poliamid"
+      ],
+      "meters_per_100g": 390.0,
+      "yarn_requirements": [
+        {
+          "role": "główna",
+          "materials": [
+            "alpaka",
+            "poliamid"
+          ],
+          "meters_per_100g": 390.0
+        }
+      ],
+      "source_filename": "Leafstream Socks - wzór PL (ang skróty).pdf",
+      "source_language": "pl",
+      "needs_review": true
+    },
+    {
+      "name": "Lento",
+      "description": "Prosty sweter raglanowy wykonywany od góry, z dwiema włóczkami przerabianymi razem.",
+      "materials": [
+        "wełna",
+        "alpaka",
+        "jedwab"
+      ],
+      "meters_per_100g": 366,
+      "yarn_requirements": [
+        {
+          "role": "główna",
+          "yarn_name": "La Bien Aimée Merino Singles",
+          "materials": [
+            "wełna"
+          ],
+          "meters_per_100g": 366
+        },
+        {
+          "role": "dodatkowa",
+          "yarn_name": "La Bien Aimée Kumo",
+          "materials": [
+            "alpaka",
+            "jedwab"
+          ],
+          "meters_per_100g": 600
+        }
+      ],
+      "source_filename": "Lento.pdf",
+      "source_language": "en",
+      "needs_review": false
+    },
+    {
+      "name": "LinearisSocksSet",
+      "description": "Instrukcja wykonania projektu: skarpetki, z konstrukcją od góry. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "materials": [],
+      "meters_per_100g": null,
+      "yarn_requirements": [
+        {
+          "role": "główna",
+          "materials": [],
+          "meters_per_100g": 400.0
+        },
+        {
+          "role": "dodatkowa",
+          "materials": [],
+          "meters_per_100g": 800.0
+        }
+      ],
+      "source_filename": "LinearisSocksSet.pdf",
+      "source_language": "pl",
+      "needs_review": true
+    },
+    {
+      "name": "Lola Cardin gruby",
+      "description": "Instrukcja wykonania projektu: kardigan, z konstrukcją raglanową, konstrukcją od góry. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "materials": [
+        "wełna",
+        "akryl",
+        "wiskoza"
+      ],
+      "meters_per_100g": null,
+      "yarn_requirements": [
+        {
+          "role": "główna",
+          "materials": [
+            "wełna",
+            "akryl",
+            "wiskoza"
+          ],
+          "meters_per_100g": null
+        }
+      ],
+      "source_filename": "Lola Cardin gruby.pdf",
+      "source_language": "pl",
+      "needs_review": true
+    },
+    {
+      "name": "Lyon Sweater",
+      "description": "Instrukcja wykonania projektu: sweter, z ażurowymi detalami, konstrukcją raglanową. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "materials": [
+        "moher",
+        "jedwab"
+      ],
+      "meters_per_100g": null,
+      "yarn_requirements": [
+        {
+          "role": "główna",
+          "materials": [],
+          "meters_per_100g": 470.0
+        },
+        {
+          "role": "główna",
+          "materials": [
+            "moher",
+            "jedwab"
+          ],
+          "meters_per_100g": 470.0
+        },
+        {
+          "role": "główna",
+          "materials": [
+            "moher",
+            "jedwab"
+          ],
+          "meters_per_100g": 848.0
+        }
+      ],
+      "source_filename": "Lyon_Sweater_ENGLISH.pdf",
+      "source_language": "en",
+      "needs_review": true
+    },
+    {
+      "name": "Made Me Puff Top",
+      "description": "Dopasowany top z odkrytymi ramionami i bardzo bufiastymi, moherowymi rękawami.",
+      "materials": [
+        "moher"
+      ],
+      "meters_per_100g": 200,
+      "yarn_requirements": [
+        {
+          "role": "główna",
+          "yarn_name": "Drops Muskat lub włóczka o podobnych parametrach",
+          "materials": [],
+          "meters_per_100g": 200
+        },
+        {
+          "role": "rękawy",
+          "yarn_name": "dowolna włóczka moherowa",
+          "materials": [
+            "moher"
+          ],
+          "meters_per_100g": 840
+        }
+      ],
+      "source_filename": "MADE_ME_PUFF_TOP_mademeknit.pdf",
+      "source_language": "pl",
+      "needs_review": true
+    },
+    {
+      "name": "Magic Toadstool socks update 2023",
+      "description": "Instrukcja wykonania projektu: skarpetki, z ażurowymi detalami, konstrukcją od góry. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "materials": [
+        "wełna",
+        "poliamid"
+      ],
+      "meters_per_100g": null,
+      "yarn_requirements": [
+        {
+          "role": "główna",
+          "materials": [
+            "wełna",
+            "poliamid"
+          ],
+          "meters_per_100g": 420.62
+        },
+        {
+          "role": "główna",
+          "materials": [
+            "wełna",
+            "poliamid"
+          ],
+          "meters_per_100g": 360.0
+        },
+        {
+          "role": "główna",
+          "materials": [
+            "wełna",
+            "poliamid"
+          ],
+          "meters_per_100g": 420.0
+        }
+      ],
+      "source_filename": "Magic_Toadstool_socks_update_2023.pdf",
+      "source_language": "en",
+      "needs_review": true
+    },
+    {
+      "name": "Mikkeli Sweater Easter",
+      "description": "Instrukcja wykonania projektu: sweter, z ażurowymi detalami. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "materials": [],
+      "meters_per_100g": 200.0,
+      "yarn_requirements": [
+        {
+          "role": "główna",
+          "materials": [],
+          "meters_per_100g": 200.0
+        }
+      ],
+      "source_filename": "Mikkeli Sweater Easter ENGLISH.pdf",
+      "source_language": "en",
+      "needs_review": true
+    },
+    {
+      "name": "Mineral",
+      "description": "Top z krótkim rękawem, teksturowanym wzorem i zaokrąglonym dołem.",
+      "materials": [],
+      "meters_per_100g": null,
+      "yarn_requirements": [
+        {
+          "role": "główna",
+          "yarn_name": "Cotton Glace",
+          "materials": [],
+          "meters_per_100g": null
+        }
+      ],
+      "source_filename": "Mineral by Rowan.pdf",
+      "source_language": "en",
+      "needs_review": true
+    },
+    {
+      "name": "Mountain Pine socks",
+      "description": "Instrukcja wykonania projektu: skarpetki, z ażurowymi detalami. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "materials": [
+        "wełna",
+        "poliamid"
+      ],
+      "meters_per_100g": null,
+      "yarn_requirements": [
+        {
+          "role": "główna",
+          "materials": [
+            "wełna",
+            "poliamid"
+          ],
+          "meters_per_100g": 365.0
+        },
+        {
+          "role": "główna",
+          "materials": [
+            "wełna",
+            "poliamid"
+          ],
+          "meters_per_100g": 400.0
+        },
+        {
+          "role": "główna",
+          "materials": [
+            "wełna",
+            "poliamid"
+          ],
+          "meters_per_100g": 362.5
+        },
+        {
+          "role": "główna",
+          "materials": [
+            "wełna",
+            "poliamid"
+          ],
+          "meters_per_100g": 363.93
+        }
+      ],
+      "source_filename": "Mountain_Pine_socks.pdf",
+      "source_language": "en",
+      "needs_review": true
+    },
+    {
+      "name": "NBIELINKA LinearisHat Kokonki",
+      "description": "Instrukcja wykonania projektu: kardigan. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "materials": [
+        "wełna",
+        "alpaka",
+        "moher",
+        "jedwab",
+        "kaszmir"
+      ],
+      "meters_per_100g": null,
+      "yarn_requirements": [
+        {
+          "role": "dodatkowa",
+          "materials": [
+            "wełna",
+            "alpaka",
+            "kaszmir"
+          ],
+          "meters_per_100g": 350.0
+        },
+        {
+          "role": "dodatkowa",
+          "materials": [
+            "wełna",
+            "alpaka",
+            "moher",
+            "jedwab",
+            "kaszmir"
+          ],
+          "meters_per_100g": 448.0
+        },
+        {
+          "role": "dodatkowa",
+          "materials": [
+            "wełna",
+            "alpaka",
+            "moher",
+            "jedwab",
+            "kaszmir"
+          ],
+          "meters_per_100g": 384.0
+        },
+        {
+          "role": "dodatkowa",
+          "materials": [
+            "wełna",
+            "alpaka",
+            "moher",
+            "jedwab",
+            "kaszmir"
+          ],
+          "meters_per_100g": 306.0
+        },
+        {
+          "role": "dodatkowa",
+          "materials": [
+            "wełna",
+            "alpaka",
+            "moher",
+            "jedwab",
+            "kaszmir"
+          ],
+          "meters_per_100g": 400.0
+        },
+        {
+          "role": "dodatkowa",
+          "materials": [
+            "wełna",
+            "alpaka",
+            "moher",
+            "jedwab",
+            "kaszmir"
+          ],
+          "meters_per_100g": 800.0
+        },
+        {
+          "role": "dodatkowa",
+          "materials": [
+            "wełna",
+            "moher",
+            "jedwab",
+            "kaszmir"
+          ],
+          "meters_per_100g": 848.0
+        }
+      ],
+      "source_filename": "NBIELINKA_LinearisHat_Kokonki.pdf",
+      "source_language": "pl",
+      "needs_review": true
+    },
+    {
+      "name": "Nova Skirt",
+      "description": "Prążkowana spódnica dostępna w wersji krótkiej lub długiej.",
+      "materials": [
+        "wełna"
+      ],
+      "meters_per_100g": 410,
+      "yarn_requirements": [
+        {
+          "role": "główna",
+          "yarn_name": "Tynn Peer Gynt",
+          "materials": [
+            "wełna"
+          ],
+          "meters_per_100g": 410
+        }
+      ],
+      "source_filename": "Nova Skirt Sandnes Garn 2311vol2.pdf",
+      "source_language": "en",
+      "needs_review": false
+    },
+    {
+      "name": "Oslohuen 2.0 ENGELSK",
+      "description": "Instrukcja wykonania projektu: top lub bluzkę, z ażurowymi detalami. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "materials": [],
+      "meters_per_100g": null,
+      "yarn_requirements": [
+        {
+          "role": "główna",
+          "materials": [],
+          "meters_per_100g": 420.0
+        },
+        {
+          "role": "dodatkowa",
+          "materials": [],
+          "meters_per_100g": 470.0
+        }
+      ],
+      "source_filename": "Oslohuen_2.0_ENGELSK.pdf",
+      "source_language": "en",
+      "needs_review": true
+    },
+    {
+      "name": "Pani-Wiosna wzor HeartofCotton",
+      "description": "Instrukcja wykonania projektu: sweter. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "materials": [
+        "bawełna"
+      ],
+      "meters_per_100g": 340.0,
+      "yarn_requirements": [
+        {
+          "role": "główna",
+          "materials": [
+            "bawełna"
+          ],
+          "meters_per_100g": 340.0
+        }
+      ],
+      "source_filename": "Pani-Wiosna__wzor_HeartofCotton.pdf",
+      "source_language": "pl",
+      "needs_review": true
+    },
+    {
+      "name": "Pearl",
+      "description": "Top bez rękawów z dekoltem w serek.",
+      "materials": [],
+      "meters_per_100g": null,
+      "yarn_requirements": [
+        {
+          "role": "główna",
+          "yarn_name": "Summerlite DK",
+          "materials": [],
+          "meters_per_100g": null
+        }
+      ],
+      "source_filename": "Pearl top by Rowan.pdf",
+      "source_language": "en",
+      "needs_review": true
+    },
+    {
+      "name": "penguono 7",
+      "description": "Instrukcja wykonania projektu: top lub bluzkę, z ażurowymi detalami, warkoczami. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "materials": [],
+      "meters_per_100g": null,
+      "yarn_requirements": [],
+      "source_filename": "penguono_7.pdf",
+      "source_language": "en",
+      "needs_review": true
+    },
+    {
+      "name": "Picot Headband Knitting Pattern - The Obsessed final",
+      "description": "Instrukcja wykonania projektu: top lub bluzkę, z ażurowymi detalami. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "materials": [
+        "bawełna",
+        "len"
+      ],
+      "meters_per_100g": null,
+      "yarn_requirements": [
+        {
+          "role": "główna",
+          "materials": [
+            "bawełna",
+            "len"
+          ],
+          "meters_per_100g": null
+        }
+      ],
+      "source_filename": "Picot_Headband_Knitting_Pattern_-_The_Obsessed_final.pdf",
+      "source_language": "en",
+      "needs_review": true
+    },
+    {
+      "name": "PisankiSocks",
+      "description": "Instrukcja wykonania projektu: skarpetki, z ażurowymi detalami. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "materials": [
+        "wełna"
+      ],
+      "meters_per_100g": null,
+      "yarn_requirements": [
+        {
+          "role": "główna",
+          "materials": [],
+          "meters_per_100g": 400.0
+        },
+        {
+          "role": "dodatkowa",
+          "materials": [
+            "wełna"
+          ],
+          "meters_per_100g": 402.0
+        },
+        {
+          "role": "dodatkowa",
+          "materials": [
+            "wełna"
+          ],
+          "meters_per_100g": 400.0
+        }
+      ],
+      "source_filename": "PisankiSocks_PL.pdf",
+      "source_language": "pl",
+      "needs_review": true
+    },
+    {
+      "name": "PL I AM THE GIFT WZOR 1.1",
+      "description": "Instrukcja wykonania projektu: opaskę. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "materials": [
+        "jedwab"
+      ],
+      "meters_per_100g": null,
+      "yarn_requirements": [
+        {
+          "role": "główna",
+          "materials": [
+            "jedwab"
+          ],
+          "meters_per_100g": 140.0
+        },
+        {
+          "role": "dodatkowa",
+          "materials": [
+            "jedwab"
+          ],
+          "meters_per_100g": 275.0
+        },
+        {
+          "role": "dodatkowa",
+          "materials": [
+            "jedwab"
+          ],
+          "meters_per_100g": 220.0
+        }
+      ],
+      "source_filename": "PL_I_AM_THE_GIFT_WZOR_1.1.pdf",
+      "source_language": "pl",
+      "needs_review": true
+    },
+    {
+      "name": "polski HAVFRUESHAWL",
+      "description": "Instrukcja wykonania projektu: chustę. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "materials": [],
+      "meters_per_100g": null,
+      "yarn_requirements": [],
+      "source_filename": "polski_HAVFRUESHAWL.pdf",
+      "source_language": "pl",
+      "needs_review": true
+    },
+    {
+      "name": "POLSKI Venke skirt",
+      "description": "Instrukcja wykonania projektu: spódnicę. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "materials": [
+        "wełna"
+      ],
+      "meters_per_100g": 200.0,
+      "yarn_requirements": [
+        {
+          "role": "główna",
+          "materials": [
+            "wełna"
+          ],
+          "meters_per_100g": 200.0
+        }
+      ],
+      "source_filename": "POLSKI_Venke_skirt_.pdf",
+      "source_language": "pl",
+      "needs_review": true
+    },
+    {
+      "name": "POLY-SWEATER-kingacrafts",
+      "description": "Instrukcja wykonania projektu: sweter. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "materials": [
+        "moher",
+        "jedwab"
+      ],
+      "meters_per_100g": null,
+      "yarn_requirements": [
+        {
+          "role": "dodatkowa",
+          "materials": [
+            "moher",
+            "jedwab"
+          ],
+          "meters_per_100g": 848.0
+        },
+        {
+          "role": "dodatkowa",
+          "materials": [
+            "moher",
+            "jedwab"
+          ],
+          "meters_per_100g": 470.0
+        }
+      ],
+      "source_filename": "POLY-SWEATER-kingacrafts.pdf",
+      "source_language": "pl",
+      "needs_review": true
+    },
+    {
+      "name": "Poppy Tee",
+      "description": "Instrukcja wykonania projektu: kardigan, z ażurowymi detalami, konstrukcją raglanową. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "materials": [
+        "wełna",
+        "moher",
+        "jedwab",
+        "kaszmir"
+      ],
+      "meters_per_100g": null,
+      "yarn_requirements": [
+        {
+          "role": "dodatkowa",
+          "materials": [
+            "wełna",
+            "moher",
+            "jedwab",
+            "kaszmir"
+          ],
+          "meters_per_100g": 448.0
+        },
+        {
+          "role": "dodatkowa",
+          "materials": [
+            "wełna",
+            "moher",
+            "jedwab",
+            "kaszmir"
+          ],
+          "meters_per_100g": 460.0
+        },
+        {
+          "role": "dodatkowa",
+          "materials": [
+            "wełna",
+            "moher",
+            "jedwab",
+            "kaszmir"
+          ],
+          "meters_per_100g": 500.0
+        },
+        {
+          "role": "dodatkowa",
+          "materials": [
+            "wełna",
+            "moher",
+            "jedwab",
+            "kaszmir"
+          ],
+          "meters_per_100g": 848.0
+        },
+        {
+          "role": "dodatkowa",
+          "materials": [
+            "wełna",
+            "moher",
+            "jedwab",
+            "kaszmir"
+          ],
+          "meters_per_100g": 900.0
+        },
+        {
+          "role": "dodatkowa",
+          "materials": [
+            "wełna",
+            "moher",
+            "jedwab"
+          ],
+          "meters_per_100g": 848.0
+        }
+      ],
+      "source_filename": "Poppy_Tee_ENGLISH.pdf",
+      "source_language": "en",
+      "needs_review": true
+    },
+    {
+      "name": "Pull Iconic Leaf Sweater EN",
+      "description": "Instrukcja wykonania projektu: sweter, z intarsją, ażurowymi detalami. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "materials": [
+        "wełna",
+        "poliamid"
+      ],
+      "meters_per_100g": null,
+      "yarn_requirements": [
+        {
+          "role": "główna",
+          "materials": [
+            "wełna",
+            "poliamid"
+          ],
+          "meters_per_100g": null
+        }
+      ],
+      "source_filename": "Pull_Iconic_Leaf_Sweater_EN.pdf",
+      "source_language": "en",
+      "needs_review": true
+    },
+    {
+      "name": "Queen of Hearts Socks",
+      "description": "Instrukcja wykonania projektu: skarpetki, z konstrukcją od góry. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "materials": [
+        "wełna"
+      ],
+      "meters_per_100g": 420.0,
+      "yarn_requirements": [
+        {
+          "role": "dodatkowa",
+          "materials": [
+            "wełna"
+          ],
+          "meters_per_100g": 420.0
+        }
+      ],
+      "source_filename": "Queen_of_Hearts_Socks.pdf",
+      "source_language": "en",
+      "needs_review": true
+    },
+    {
+      "name": "Sheep socks 1 1 1",
+      "description": "Instrukcja wykonania projektu: skarpetki, z wzorem wielokolorowym. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "materials": [],
+      "meters_per_100g": null,
+      "yarn_requirements": [],
+      "source_filename": "Sheep_socks__1___1___1_.pdf",
+      "source_language": "en",
+      "needs_review": true
+    },
+    {
+      "name": "Silk",
+      "description": "Prążkowana sukienka bez rękawów dostępna w wersji krótkiej lub długiej.",
+      "materials": [],
+      "meters_per_100g": null,
+      "yarn_requirements": [
+        {
+          "role": "główna",
+          "yarn_name": "Cotton Glace",
+          "materials": [],
+          "meters_per_100g": null
+        }
+      ],
+      "source_filename": "Silk dress by Rowan.pdf",
+      "source_language": "en",
+      "needs_review": true
+    },
+    {
+      "name": "SkarpetkiTuby Czempik.knitwear",
+      "description": "Instrukcja wykonania projektu: skarpetki, z konstrukcją od góry. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "materials": [
+        "wełna"
+      ],
+      "meters_per_100g": null,
+      "yarn_requirements": [
+        {
+          "role": "główna",
+          "materials": [
+            "wełna"
+          ],
+          "meters_per_100g": null
+        }
+      ],
+      "source_filename": "SkarpetkiTuby_Czempik.knitwear.pdf",
+      "source_language": "pl",
+      "needs_review": true
+    },
+    {
+      "name": "Skyward",
+      "description": "Sweter wykonywany od góry, z warkoczowym karczkiem i korpusem przerabianym ściegiem lewym.",
+      "materials": [
+        "wełna"
+      ],
+      "meters_per_100g": null,
+      "yarn_requirements": [
+        {
+          "role": "główna",
+          "option": "wariant 1",
+          "yarn_name": "De Rerum Natura Gilliatt",
+          "materials": [
+            "wełna"
+          ],
+          "meters_per_100g": 250
+        },
+        {
+          "role": "główna",
+          "option": "wariant 2",
+          "yarn_name": "Urth Yarns Harvest Worsted",
+          "materials": [
+            "wełna"
+          ],
+          "meters_per_100g": 206
+        }
+      ],
+      "source_filename": "Skyward sweater.pdf",
+      "source_language": "en",
+      "needs_review": false
+    },
+    {
+      "name": "Sophie Scarf PL.Petiteknit",
+      "description": "Instrukcja wykonania projektu: kardigan. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "materials": [
+        "kaszmir"
+      ],
+      "meters_per_100g": null,
+      "yarn_requirements": [
+        {
+          "role": "główna",
+          "materials": [
+            "kaszmir"
+          ],
+          "meters_per_100g": 460.0
+        },
+        {
+          "role": "dodatkowa",
+          "materials": [
+            "kaszmir"
+          ],
+          "meters_per_100g": 748.0
+        }
+      ],
+      "source_filename": "Sophie_Scarf_PL.Petiteknit.pdf",
+      "source_language": "pl",
+      "needs_review": true
+    },
+    {
+      "name": "The I’m So Basic Sock",
+      "description": "Podstawowy wzór skarpet wykonywanych metodą magic loop, przeznaczony również dla osób uczących się tej konstrukcji.",
+      "materials": [
+        "wełna",
+        "poliamid"
+      ],
+      "meters_per_100g": null,
+      "yarn_requirements": [
+        {
+          "role": "główna",
+          "yarn_weight": "sock/fingering",
+          "materials": [
+            "wełna",
+            "poliamid"
+          ],
+          "meters_per_100g": null
+        },
+        {
+          "role": "kontrastowa",
+          "materials": [],
+          "meters_per_100g": null
+        }
+      ],
+      "source_filename": "SOS_Basic_Sock.pdf",
+      "source_language": "en",
+      "needs_review": true
+    },
+    {
+      "name": "Space Feet Socks PL-lno7ucan",
+      "description": "Instrukcja wykonania projektu: skarpetki, z wzorem wielokolorowym, ażurowymi detalami. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "materials": [],
+      "meters_per_100g": 410.0,
+      "yarn_requirements": [
+        {
+          "role": "dodatkowa",
+          "materials": [],
+          "meters_per_100g": 410.0
+        }
+      ],
+      "source_filename": "Space_Feet_Socks_PL-lno7ucan.pdf",
+      "source_language": "pl",
+      "needs_review": true
+    },
+    {
+      "name": "Spooky sock set final",
+      "description": "Instrukcja wykonania projektu: skarpetki, z wzorem wielokolorowym, ażurowymi detalami. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "materials": [
+        "wełna",
+        "wiskoza",
+        "poliamid"
+      ],
+      "meters_per_100g": null,
+      "yarn_requirements": [
+        {
+          "role": "główna",
+          "materials": [
+            "wełna",
+            "poliamid"
+          ],
+          "meters_per_100g": 420.62
+        },
+        {
+          "role": "główna",
+          "materials": [
+            "wełna",
+            "poliamid"
+          ],
+          "meters_per_100g": 373.33
+        },
+        {
+          "role": "główna",
+          "materials": [
+            "wełna",
+            "poliamid"
+          ],
+          "meters_per_100g": 420.0
+        },
+        {
+          "role": "główna",
+          "materials": [
+            "wełna",
+            "wiskoza",
+            "poliamid"
+          ],
+          "meters_per_100g": 425.2
+        },
+        {
+          "role": "główna",
+          "materials": [
+            "wełna",
+            "wiskoza",
+            "poliamid"
+          ],
+          "meters_per_100g": 440.0
+        }
+      ],
+      "source_filename": "Spooky_sock_set_final.pdf",
+      "source_language": "en",
+      "needs_review": true
+    },
+    {
+      "name": "Starry Night Hat PL-ljvt8ze9",
+      "description": "Instrukcja wykonania projektu: czapkę, z wzorem wielokolorowym. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "materials": [],
+      "meters_per_100g": 150.0,
+      "yarn_requirements": [
+        {
+          "role": "główna",
+          "materials": [],
+          "meters_per_100g": 150.0
+        }
+      ],
+      "source_filename": "Starry_Night_Hat_PL-ljvt8ze9.pdf",
+      "source_language": "pl",
+      "needs_review": true
+    },
+    {
+      "name": "Starry Night Mittens PL-lo9p3u7q",
+      "description": "Instrukcja wykonania projektu: top lub bluzkę, z wzorem wielokolorowym. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "materials": [
+        "wełna",
+        "alpaka"
+      ],
+      "meters_per_100g": 224.0,
+      "yarn_requirements": [
+        {
+          "role": "główna",
+          "materials": [
+            "wełna",
+            "alpaka"
+          ],
+          "meters_per_100g": 224.0
+        }
+      ],
+      "source_filename": "Starry_Night_Mittens_PL-lo9p3u7q.pdf",
+      "source_language": "pl",
+      "needs_review": true
+    },
+    {
+      "name": "Starry Night Socks PL-ljvt91ie",
+      "description": "Instrukcja wykonania projektu: skarpetki, z wzorem wielokolorowym, ażurowymi detalami. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "materials": [],
+      "meters_per_100g": null,
+      "yarn_requirements": [
+        {
+          "role": "główna",
+          "materials": [],
+          "meters_per_100g": 410.0
+        },
+        {
+          "role": "dodatkowa",
+          "materials": [],
+          "meters_per_100g": 350.0
+        }
+      ],
+      "source_filename": "Starry_Night_Socks_PL-ljvt91ie.pdf",
+      "source_language": "pl",
+      "needs_review": true
+    },
+    {
+      "name": "Summer",
+      "description": "Prążkowana spódnica wykonywana od góry.",
+      "materials": [],
+      "meters_per_100g": null,
+      "yarn_requirements": [
+        {
+          "role": "główna",
+          "yarn_name": "Summerlite 4ply",
+          "materials": [],
+          "meters_per_100g": null
+        }
+      ],
+      "source_filename": "Summer by Rowan spódnica.pdf",
+      "source_language": "en",
+      "needs_review": true
+    },
+    {
+      "name": "SWAN TOP",
+      "description": "Instrukcja wykonania projektu: kardigan, z ażurowymi detalami. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "materials": [
+        "bawełna"
+      ],
+      "meters_per_100g": null,
+      "yarn_requirements": [
+        {
+          "role": "główna",
+          "materials": [
+            "bawełna"
+          ],
+          "meters_per_100g": null
+        }
+      ],
+      "source_filename": "SWAN TOP.pdf",
+      "source_language": "pl",
+      "needs_review": true
+    },
+    {
+      "name": "SWEATERNO9.LIGHT.ENG (2)",
+      "description": "Instrukcja wykonania projektu: sweter, z ażurowymi detalami, konstrukcją raglanową. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "materials": [],
+      "meters_per_100g": 230.0,
+      "yarn_requirements": [
+        {
+          "role": "główna",
+          "materials": [],
+          "meters_per_100g": 230.0
+        }
+      ],
+      "source_filename": "SWEATERNO9.LIGHT.ENG (2).pdf",
+      "source_language": "en",
+      "needs_review": true
+    },
+    {
+      "name": "SweetTreatsSocks NBielińska",
+      "description": "Instrukcja wykonania projektu: skarpetki, z wzorem wielokolorowym, warkoczami. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "materials": [
+        "wełna",
+        "poliamid"
+      ],
+      "meters_per_100g": 424.0,
+      "yarn_requirements": [
+        {
+          "role": "główna",
+          "materials": [
+            "wełna",
+            "poliamid"
+          ],
+          "meters_per_100g": 424.0
+        }
+      ],
+      "source_filename": "SweetTreatsSocks_NBielińska.pdf",
+      "source_language": "pl",
+      "needs_review": true
+    },
+    {
+      "name": "Sweter Kikimora Moracraft(1)",
+      "description": "Instrukcja wykonania projektu: sweter. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "materials": [
+        "wełna",
+        "akryl"
+      ],
+      "meters_per_100g": 100.0,
+      "yarn_requirements": [
+        {
+          "role": "główna",
+          "materials": [
+            "wełna",
+            "akryl"
+          ],
+          "meters_per_100g": 100.0
+        }
+      ],
+      "source_filename": "Sweter_Kikimora_Moracraft(1).pdf",
+      "source_language": "pl",
+      "needs_review": true
+    },
+    {
+      "name": "Sweter Kikimora Moracraft",
+      "description": "Instrukcja wykonania projektu: sweter. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "materials": [
+        "wełna",
+        "akryl"
+      ],
+      "meters_per_100g": 100.0,
+      "yarn_requirements": [
+        {
+          "role": "główna",
+          "materials": [
+            "wełna",
+            "akryl"
+          ],
+          "meters_per_100g": 100.0
+        }
+      ],
+      "source_filename": "Sweter_Kikimora_Moracraft.pdf",
+      "source_language": "pl",
+      "needs_review": true
+    },
+    {
+      "name": "sweterek z golfem Bobbie",
+      "description": "Instrukcja wykonania projektu: sweter, z konstrukcją raglanową, konstrukcją od góry. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "materials": [
+        "wełna",
+        "moher",
+        "jedwab"
+      ],
+      "meters_per_100g": null,
+      "yarn_requirements": [
+        {
+          "role": "dodatkowa",
+          "materials": [
+            "wełna",
+            "moher",
+            "jedwab"
+          ],
+          "meters_per_100g": 200.0
+        },
+        {
+          "role": "dodatkowa",
+          "materials": [
+            "wełna",
+            "moher",
+            "jedwab"
+          ],
+          "meters_per_100g": 800.0
+        }
+      ],
+      "source_filename": "sweterek z golfem Bobbie.pdf",
+      "source_language": "pl",
+      "needs_review": true
+    },
+    {
+      "name": "Szal Queen of Spades Kokonki Pure",
+      "description": "Instrukcja wykonania projektu: top lub bluzkę, z ażurowymi detalami. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "materials": [
+        "wełna"
+      ],
+      "meters_per_100g": 500.0,
+      "yarn_requirements": [
+        {
+          "role": "główna",
+          "materials": [
+            "wełna"
+          ],
+          "meters_per_100g": 500.0
+        }
+      ],
+      "source_filename": "Szal_Queen_of_Spades_Kokonki_Pure.pdf",
+      "source_language": "pl",
+      "needs_review": true
+    },
+    {
+      "name": "Teddy Bear Socks - wzór PL (ang skróty).pdf",
+      "description": "Instrukcja wykonania projektu: skarpetki. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "materials": [
+        "wełna",
+        "poliamid"
+      ],
+      "meters_per_100g": 200.0,
+      "yarn_requirements": [
+        {
+          "role": "główna",
+          "materials": [
+            "wełna",
+            "poliamid"
+          ],
+          "meters_per_100g": 200.0
+        }
+      ],
+      "source_filename": "Teddy Bear Socks - wzór PL (ang skróty).pdf.pdf",
+      "source_language": "pl",
+      "needs_review": true
+    },
+    {
+      "name": "TEXTURE VEST hi UK-rm07er",
+      "description": "Instrukcja wykonania projektu: top lub bluzkę, z ażurowymi detalami. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "materials": [
+        "alpaka"
+      ],
+      "meters_per_100g": null,
+      "yarn_requirements": [
+        {
+          "role": "główna",
+          "materials": [
+            "alpaka"
+          ],
+          "meters_per_100g": null
+        }
+      ],
+      "source_filename": "TEXTURE_VEST_hi_UK-rm07er.pdf",
+      "source_language": "en",
+      "needs_review": true
+    },
+    {
+      "name": "The truth is out there Final edit",
+      "description": "Instrukcja wykonania projektu: skarpetki, z ażurowymi detalami, konstrukcją od góry. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "materials": [
+        "wełna",
+        "poliamid"
+      ],
+      "meters_per_100g": null,
+      "yarn_requirements": [
+        {
+          "role": "główna",
+          "materials": [
+            "wełna",
+            "poliamid"
+          ],
+          "meters_per_100g": 384.05
+        },
+        {
+          "role": "główna",
+          "materials": [
+            "wełna",
+            "poliamid"
+          ],
+          "meters_per_100g": 301.43
+        },
+        {
+          "role": "główna",
+          "materials": [
+            "wełna",
+            "poliamid"
+          ],
+          "meters_per_100g": 384.0
+        }
+      ],
+      "source_filename": "The_truth_is_out_there_Final_edit.pdf",
+      "source_language": "en",
+      "needs_review": true
+    },
+    {
+      "name": "Tromsø Hoodie NORSK",
+      "description": "Instrukcja wykonania projektu: top lub bluzkę. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "materials": [],
+      "meters_per_100g": null,
+      "yarn_requirements": [
+        {
+          "role": "główna",
+          "materials": [],
+          "meters_per_100g": 260.0
+        },
+        {
+          "role": "dodatkowa",
+          "materials": [],
+          "meters_per_100g": 350.0
+        }
+      ],
+      "source_filename": "Tromsø Hoodie NORSK.pdf",
+      "source_language": "unknown",
+      "needs_review": true
+    },
+    {
+      "name": "Tropfen",
+      "description": "Sweter z okrągłym karczkiem i wielokolorowym wzorem, o swobodnym fasonie.",
+      "materials": [
+        "wełna"
+      ],
+      "meters_per_100g": 400,
+      "yarn_requirements": [
+        {
+          "role": "główna",
+          "yarn_name": "Annabel Williams Bluff Cove 4ply",
+          "materials": [
+            "wełna"
+          ],
+          "meters_per_100g": 400
+        }
+      ],
+      "source_filename": "Tropfen sweater.pdf",
+      "source_language": "en",
+      "needs_review": false
+    },
+    {
+      "name": "UNDER THE SEA SOCKS PL-ljvt9559",
+      "description": "Instrukcja wykonania projektu: skarpetki, z wzorem wielokolorowym, ażurowymi detalami. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "materials": [],
+      "meters_per_100g": null,
+      "yarn_requirements": [
+        {
+          "role": "dodatkowa",
+          "materials": [],
+          "meters_per_100g": 410.0
+        },
+        {
+          "role": "dodatkowa",
+          "materials": [],
+          "meters_per_100g": 350.0
+        }
+      ],
+      "source_filename": "UNDER_THE_SEA_SOCKS_PL-ljvt9559.pdf",
+      "source_language": "pl",
+      "needs_review": true
+    },
+    {
+      "name": "Urth Yarns skarpetki",
+      "description": "Instrukcja wykonania projektu: skarpetki, z ażurowymi detalami, konstrukcją od góry. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "materials": [],
+      "meters_per_100g": null,
+      "yarn_requirements": [],
+      "source_filename": "Urth Yarns skarpetki.pdf",
+      "source_language": "en",
+      "needs_review": true
+    },
+    {
+      "name": "Warm-Knit-Klara-wzor-dziewiarski-zulknh",
+      "description": "Instrukcja wykonania projektu: sweter, z ażurowymi detalami, konstrukcją od góry. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "materials": [
+        "jedwab"
+      ],
+      "meters_per_100g": null,
+      "yarn_requirements": [
+        {
+          "role": "główna",
+          "materials": [
+            "jedwab"
+          ],
+          "meters_per_100g": null
+        }
+      ],
+      "source_filename": "Warm-Knit-Klara-wzor-dziewiarski-zulknh.pdf",
+      "source_language": "pl",
+      "needs_review": true
+    },
+    {
+      "name": "You Make Me (W)hole Cardigan - opis",
+      "description": "Instrukcja wykonania projektu: kardigan, z ażurowymi detalami. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "materials": [
+        "wełna",
+        "bawełna",
+        "alpaka"
+      ],
+      "meters_per_100g": 250.0,
+      "yarn_requirements": [
+        {
+          "role": "główna",
+          "materials": [
+            "wełna",
+            "bawełna",
+            "alpaka"
+          ],
+          "meters_per_100g": 250.0
+        }
+      ],
+      "source_filename": "You Make Me (W)hole Cardigan - opis.pdf",
+      "source_language": "pl",
+      "needs_review": true
+    },
+    {
+      "name": "You Make Me (W)hole Cardigan - Schematy",
+      "description": "Instrukcja wykonania projektu: kardigan. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "materials": [],
+      "meters_per_100g": null,
+      "yarn_requirements": [],
+      "source_filename": "You Make Me (W)hole Cardigan - Schematy.pdf",
+      "source_language": "pl",
+      "needs_review": true
+    },
+    {
+      "name": "YouthVibeJumper nana.makes.it.all",
+      "description": "Instrukcja wykonania projektu: sweter. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "materials": [
+        "alpaka",
+        "moher",
+        "jedwab"
+      ],
+      "meters_per_100g": null,
+      "yarn_requirements": [
+        {
+          "role": "główna",
+          "materials": [
+            "alpaka",
+            "moher",
+            "jedwab"
+          ],
+          "meters_per_100g": null
+        }
+      ],
+      "source_filename": "YouthVibeJumper_nana.makes.it.all.pdf",
+      "source_language": "pl",
+      "needs_review": true
+    }
+  ],
+  "audit": [
+    {
+      "source_filename": "--HINTERLAND--.pdf",
+      "manual_override": false,
+      "review_reasons": [],
+      "review_notes": []
+    },
+    {
+      "source_filename": "1719901849_suncatcher-square-neck-intarsia-tee-us.pdf",
+      "manual_override": false,
+      "review_reasons": [
+        "meters_per_100g_not_found"
+      ],
+      "review_notes": []
+    },
+    {
+      "source_filename": "1720189120_rosmarino-eyelet-ankle-socks-us.pdf",
+      "manual_override": false,
+      "review_reasons": [
+        "meters_per_100g_not_found"
+      ],
+      "review_notes": []
+    },
+    {
+      "source_filename": "48121b_76193f9fc7a34173bf81ea1ae1c28b28.pdf",
+      "manual_override": false,
+      "review_reasons": [
+        "material_not_found",
+        "meters_per_100g_not_found"
+      ],
+      "review_notes": []
+    },
+    {
+      "source_filename": "[PL] Black Lodge Socks - wzór dziewiarski.pdf",
+      "manual_override": false,
+      "review_reasons": [
+        "material_not_found"
+      ],
+      "review_notes": []
+    },
+    {
+      "source_filename": "[PL] White Lodge Socks - wzór dziewiarski.pdf",
+      "manual_override": false,
+      "review_reasons": [
+        "multiple_meter_ratios"
+      ],
+      "review_notes": []
+    },
+    {
+      "source_filename": "[poprawiona wersja] Diamond Fade Socks 2025 PL.pdf",
+      "manual_override": false,
+      "review_reasons": [],
+      "review_notes": []
+    },
+    {
+      "source_filename": "[poprawiona wersja] Teddy Bear Socks - wzór PL (ang skróty).pdf",
+      "manual_override": false,
+      "review_reasons": [],
+      "review_notes": []
+    },
+    {
+      "source_filename": "Alice_in_Wonderland_July_2013.pdf",
+      "manual_override": false,
+      "review_reasons": [],
+      "review_notes": []
+    },
+    {
+      "source_filename": "ALTA socks (PL) dla WÅÃ³czkomaniaczki (poprawione).pdf",
+      "manual_override": false,
+      "review_reasons": [
+        "material_not_found"
+      ],
+      "review_notes": []
+    },
+    {
+      "source_filename": "Autumn_s_Letter_Cardigan_by_Amina_Ali.pdf",
+      "manual_override": false,
+      "review_reasons": [
+        "multiple_meter_ratios"
+      ],
+      "review_notes": []
+    },
+    {
+      "source_filename": "b2b-pdf_2106-07abc-eng_1_kopia.pdf",
+      "manual_override": false,
+      "review_reasons": [],
+      "review_notes": []
+    },
+    {
+      "source_filename": "BABUSHKA_SCARF.pdf",
+      "manual_override": false,
+      "review_reasons": [],
+      "review_notes": []
+    },
+    {
+      "source_filename": "Basic Kardigan Kod Dostępu.pdf",
+      "manual_override": false,
+      "review_reasons": [
+        "material_not_found",
+        "meters_per_100g_not_found"
+      ],
+      "review_notes": []
+    },
+    {
+      "source_filename": "bevelled-tank-sleeveless-intarsia-top-us.pdf",
+      "manual_override": false,
+      "review_reasons": [
+        "meters_per_100g_not_found"
+      ],
+      "review_notes": []
+    },
+    {
+      "source_filename": "BIG-BIG-BUBBLES-WZOR-INSTRUKCJA-WYKONANIA06.23-tbto93.pdf",
+      "manual_override": false,
+      "review_reasons": [
+        "meters_per_100g_not_found"
+      ],
+      "review_notes": []
+    },
+    {
+      "source_filename": "Big-Big-BuBBles06.23-licnfm.pdf",
+      "manual_override": false,
+      "review_reasons": [
+        "meters_per_100g_not_found"
+      ],
+      "review_notes": []
+    },
+    {
+      "source_filename": "Blush Basic Socks_Listopad 2023_Wydanie pierwsze.pdf",
+      "manual_override": false,
+      "review_reasons": [],
+      "review_notes": []
+    },
+    {
+      "source_filename": "bluzka_saranda_tee_knitolog.pdf",
+      "manual_override": false,
+      "review_reasons": [],
+      "review_notes": []
+    },
+    {
+      "source_filename": "bluzka_Skuletant_Iwona_Eriksson.pdf",
+      "manual_override": false,
+      "review_reasons": [
+        "material_not_found"
+      ],
+      "review_notes": []
+    },
+    {
+      "source_filename": "Bone vest by Rowan.pdf",
+      "manual_override": true,
+      "review_reasons": [
+        "requires_ocr",
+        "material_not_found",
+        "meters_per_100g_not_found",
+        "language_unknown"
+      ],
+      "review_notes": [
+        "Dokument podaje motki 50 g, ale nie podaje składu ani długości włóczki."
+      ]
+    },
+    {
+      "source_filename": "Bubble by Rowan.pdf",
+      "manual_override": true,
+      "review_reasons": [
+        "requires_ocr",
+        "material_not_found",
+        "meters_per_100g_not_found",
+        "language_unknown"
+      ],
+      "review_notes": [
+        "Włóczka jest przerabiana trzema nitkami jednocześnie.",
+        "Dokument podaje motki 25 g, ale nie podaje składu ani długości włóczki."
+      ]
+    },
+    {
+      "source_filename": "Canada .pdf",
+      "manual_override": false,
+      "review_reasons": [
+        "material_not_found"
+      ],
+      "review_notes": []
+    },
+    {
+      "source_filename": "Capucharpe_EN.pdf",
+      "manual_override": false,
+      "review_reasons": [
+        "material_not_found"
+      ],
+      "review_notes": []
+    },
+    {
+      "source_filename": "Chaussettes_PERCY_final_EN.pdf",
+      "manual_override": false,
+      "review_reasons": [],
+      "review_notes": []
+    },
+    {
+      "source_filename": "Chusta_Erin_kotek_i_motek.pdf",
+      "manual_override": false,
+      "review_reasons": [
+        "material_not_found",
+        "multiple_meter_ratios"
+      ],
+      "review_notes": []
+    },
+    {
+      "source_filename": "Cirro sweater.pdf",
+      "manual_override": true,
+      "review_reasons": [
+        "requires_ocr",
+        "material_not_found",
+        "meters_per_100g_not_found",
+        "language_unknown"
+      ],
+      "review_notes": []
+    },
+    {
+      "source_filename": "Climb_every_Mountain_socks_Final_Edit141122.pdf",
+      "manual_override": false,
+      "review_reasons": [
+        "multiple_meter_ratios"
+      ],
+      "review_notes": []
+    },
+    {
+      "source_filename": "Cloudberry Sweater ENGLISH.pdf",
+      "manual_override": false,
+      "review_reasons": [
+        "material_not_found"
+      ],
+      "review_notes": []
+    },
+    {
+      "source_filename": "Clue_1_Color_Popportunity_Socks.pdf",
+      "manual_override": false,
+      "review_reasons": [
+        "multiple_meter_ratios"
+      ],
+      "review_notes": []
+    },
+    {
+      "source_filename": "Cotton t-shirt by Rowan.pdf",
+      "manual_override": true,
+      "review_reasons": [
+        "requires_ocr",
+        "material_not_found",
+        "meters_per_100g_not_found",
+        "language_unknown"
+      ],
+      "review_notes": [
+        "Nazwa wzoru nie jest dowodem składu włóczki.",
+        "Dokument podaje motki 50 g, ale nie podaje składu ani długości włóczki."
+      ]
+    },
+    {
+      "source_filename": "Craigh Na Dun Shawl - Anna Kania (2).pdf",
+      "manual_override": false,
+      "review_reasons": [
+        "multiple_meter_ratios"
+      ],
+      "review_notes": []
+    },
+    {
+      "source_filename": "Diamond Fade Socks.pdf",
+      "manual_override": false,
+      "review_reasons": [],
+      "review_notes": []
+    },
+    {
+      "source_filename": "diaphane-top-buttoned-shirt-us.pdf",
+      "manual_override": false,
+      "review_reasons": [
+        "meters_per_100g_not_found"
+      ],
+      "review_notes": []
+    },
+    {
+      "source_filename": "Fallandenforestsocks.pdf",
+      "manual_override": false,
+      "review_reasons": [
+        "multiple_meter_ratios"
+      ],
+      "review_notes": []
+    },
+    {
+      "source_filename": "Fiorellino_ENG1.pdf",
+      "manual_override": false,
+      "review_reasons": [
+        "material_not_found"
+      ],
+      "review_notes": []
+    },
+    {
+      "source_filename": "floreale-top-lace-back-tee-us.pdf",
+      "manual_override": false,
+      "review_reasons": [
+        "meters_per_100g_not_found"
+      ],
+      "review_notes": []
+    },
+    {
+      "source_filename": "Forest_Light.pdf",
+      "manual_override": false,
+      "review_reasons": [
+        "multiple_meter_ratios"
+      ],
+      "review_notes": []
+    },
+    {
+      "source_filename": "Forever_Autumn_Sock_Set_Final_.pdf",
+      "manual_override": false,
+      "review_reasons": [
+        "multiple_meter_ratios"
+      ],
+      "review_notes": []
+    },
+    {
+      "source_filename": "Gingerbreads Socks PL.pdf",
+      "manual_override": false,
+      "review_reasons": [
+        "multiple_meter_ratios"
+      ],
+      "review_notes": []
+    },
+    {
+      "source_filename": "Grassland tee.pdf",
+      "manual_override": true,
+      "review_reasons": [
+        "requires_ocr",
+        "material_not_found",
+        "meters_per_100g_not_found",
+        "language_unknown"
+      ],
+      "review_notes": [
+        "Obie włóczki są przerabiane razem."
+      ]
+    },
+    {
+      "source_filename": "Greenbay top by Rowan.pdf",
+      "manual_override": true,
+      "review_reasons": [
+        "requires_ocr",
+        "material_not_found",
+        "meters_per_100g_not_found",
+        "language_unknown"
+      ],
+      "review_notes": [
+        "Dokument podaje motki 50 g, ale nie podaje składu ani długości włóczki."
+      ]
+    },
+    {
+      "source_filename": "Handasa_Top_AminaAliHandmade.pdf",
+      "manual_override": false,
+      "review_reasons": [
+        "multiple_meter_ratios"
+      ],
+      "review_notes": []
+    },
+    {
+      "source_filename": "HAPPY-TRIO-SWEATER-Tkane-na-okraglo-Wzor-na-druty-exxadt(1).pdf",
+      "manual_override": false,
+      "review_reasons": [],
+      "review_notes": []
+    },
+    {
+      "source_filename": "HAPPY-TRIO-SWEATER-Tkane-na-okraglo-Wzor-na-druty-exxadt.pdf",
+      "manual_override": false,
+      "review_reasons": [],
+      "review_notes": []
+    },
+    {
+      "source_filename": "Happy_Haunts_Socks.pdf",
+      "manual_override": true,
+      "review_reasons": [
+        "requires_ocr",
+        "material_not_found",
+        "meters_per_100g_not_found",
+        "language_unknown"
+      ],
+      "review_notes": [
+        "Dokument nie podaje składu ani przelicznika długości na masę."
+      ]
+    },
+    {
+      "source_filename": "Highland Cardi.pdf",
+      "manual_override": false,
+      "review_reasons": [
+        "meters_per_100g_not_found"
+      ],
+      "review_notes": []
+    },
+    {
+      "source_filename": "HollyBerryCharitySocks.pdf",
+      "manual_override": false,
+      "review_reasons": [
+        "material_not_found"
+      ],
+      "review_notes": []
+    },
+    {
+      "source_filename": "Hot_chocolat_finishing_sugar_EN.pdf",
+      "manual_override": false,
+      "review_reasons": [
+        "meters_per_100g_not_found"
+      ],
+      "review_notes": []
+    },
+    {
+      "source_filename": "Hunt-Hand-Knits_Turtle-Town-Cowl.pdf",
+      "manual_override": false,
+      "review_reasons": [
+        "material_not_found",
+        "meters_per_100g_not_found"
+      ],
+      "review_notes": []
+    },
+    {
+      "source_filename": "I_m_Batty_for_Halloween_single_pattern.pdf",
+      "manual_override": false,
+      "review_reasons": [],
+      "review_notes": []
+    },
+    {
+      "source_filename": "ingrid-summer-sweater-A4-ENG_kopia.pdf",
+      "manual_override": false,
+      "review_reasons": [],
+      "review_notes": []
+    },
+    {
+      "source_filename": "ingrid-top-A4-ENG_kopia.pdf",
+      "manual_override": false,
+      "review_reasons": [],
+      "review_notes": []
+    },
+    {
+      "source_filename": "JOAN_FEST_tee_PL.pdf",
+      "manual_override": false,
+      "review_reasons": [
+        "multiple_meter_ratios"
+      ],
+      "review_notes": []
+    },
+    {
+      "source_filename": "Kardigan All Day Long Kod Dostępu.pdf",
+      "manual_override": false,
+      "review_reasons": [
+        "material_not_found",
+        "meters_per_100g_not_found"
+      ],
+      "review_notes": []
+    },
+    {
+      "source_filename": "kardigan Hobbii.pdf",
+      "manual_override": false,
+      "review_reasons": [
+        "meters_per_100g_not_found"
+      ],
+      "review_notes": []
+    },
+    {
+      "source_filename": "Kardigan Simple as That Kod Dostępu.pdf",
+      "manual_override": false,
+      "review_reasons": [
+        "material_not_found",
+        "meters_per_100g_not_found"
+      ],
+      "review_notes": []
+    },
+    {
+      "source_filename": "Kardigan_20no_201_20Kod_20Dost_C4_99pu.pdf",
+      "manual_override": false,
+      "review_reasons": [
+        "material_not_found",
+        "meters_per_100g_not_found"
+      ],
+      "review_notes": []
+    },
+    {
+      "source_filename": "Kopia pliku na_pole_wzor.pdf",
+      "manual_override": false,
+      "review_reasons": [
+        "material_not_found",
+        "meters_per_100g_not_found"
+      ],
+      "review_notes": []
+    },
+    {
+      "source_filename": "Kopia pliku SweetTreatsSocks_NBielińska(1).pdf",
+      "manual_override": false,
+      "review_reasons": [],
+      "review_notes": []
+    },
+    {
+      "source_filename": "Kopia pliku SweetTreatsSocks_NBielińska.pdf",
+      "manual_override": false,
+      "review_reasons": [],
+      "review_notes": []
+    },
+    {
+      "source_filename": "Leafstream Socks - wzór PL (ang skróty).pdf",
+      "manual_override": false,
+      "review_reasons": [],
+      "review_notes": []
+    },
+    {
+      "source_filename": "Lento.pdf",
+      "manual_override": true,
+      "review_reasons": [
+        "requires_ocr",
+        "material_not_found",
+        "meters_per_100g_not_found",
+        "language_unknown"
+      ],
+      "review_notes": [
+        "Obie włóczki są przerabiane razem."
+      ]
+    },
+    {
+      "source_filename": "LinearisSocksSet.pdf",
+      "manual_override": false,
+      "review_reasons": [
+        "material_not_found",
+        "multiple_meter_ratios"
+      ],
+      "review_notes": []
+    },
+    {
+      "source_filename": "Lola Cardin gruby.pdf",
+      "manual_override": false,
+      "review_reasons": [
+        "meters_per_100g_not_found"
+      ],
+      "review_notes": []
+    },
+    {
+      "source_filename": "Lyon_Sweater_ENGLISH.pdf",
+      "manual_override": false,
+      "review_reasons": [
+        "multiple_meter_ratios"
+      ],
+      "review_notes": []
+    },
+    {
+      "source_filename": "MADE_ME_PUFF_TOP_mademeknit.pdf",
+      "manual_override": true,
+      "review_reasons": [
+        "requires_ocr",
+        "material_not_found",
+        "meters_per_100g_not_found",
+        "language_unknown"
+      ],
+      "review_notes": [
+        "Dokument określa główną włóczkę jako merceryzowaną, ale nie podaje wprost rodzaju włókna."
+      ]
+    },
+    {
+      "source_filename": "Magic_Toadstool_socks_update_2023.pdf",
+      "manual_override": false,
+      "review_reasons": [
+        "multiple_meter_ratios"
+      ],
+      "review_notes": []
+    },
+    {
+      "source_filename": "Mikkeli Sweater Easter ENGLISH.pdf",
+      "manual_override": false,
+      "review_reasons": [
+        "material_not_found"
+      ],
+      "review_notes": []
+    },
+    {
+      "source_filename": "Mineral by Rowan.pdf",
+      "manual_override": true,
+      "review_reasons": [
+        "requires_ocr",
+        "material_not_found",
+        "meters_per_100g_not_found",
+        "language_unknown"
+      ],
+      "review_notes": [
+        "Dokument podaje motki 50 g, ale nie podaje wprost składu ani długości włóczki."
+      ]
+    },
+    {
+      "source_filename": "Mountain_Pine_socks.pdf",
+      "manual_override": false,
+      "review_reasons": [
+        "multiple_meter_ratios"
+      ],
+      "review_notes": []
+    },
+    {
+      "source_filename": "NBIELINKA_LinearisHat_Kokonki.pdf",
+      "manual_override": false,
+      "review_reasons": [
+        "multiple_meter_ratios"
+      ],
+      "review_notes": []
+    },
+    {
+      "source_filename": "Nova Skirt Sandnes Garn 2311vol2.pdf",
+      "manual_override": true,
+      "review_reasons": [
+        "requires_ocr",
+        "material_not_found",
+        "meters_per_100g_not_found",
+        "language_unknown"
+      ],
+      "review_notes": []
+    },
+    {
+      "source_filename": "Oslohuen_2.0_ENGELSK.pdf",
+      "manual_override": false,
+      "review_reasons": [
+        "material_not_found",
+        "multiple_meter_ratios"
+      ],
+      "review_notes": []
+    },
+    {
+      "source_filename": "Pani-Wiosna__wzor_HeartofCotton.pdf",
+      "manual_override": false,
+      "review_reasons": [],
+      "review_notes": []
+    },
+    {
+      "source_filename": "Pearl top by Rowan.pdf",
+      "manual_override": true,
+      "review_reasons": [
+        "requires_ocr",
+        "material_not_found",
+        "meters_per_100g_not_found",
+        "language_unknown"
+      ],
+      "review_notes": [
+        "Dokument podaje motki 50 g, ale nie podaje składu ani długości włóczki."
+      ]
+    },
+    {
+      "source_filename": "penguono_7.pdf",
+      "manual_override": false,
+      "review_reasons": [
+        "material_not_found",
+        "meters_per_100g_not_found"
+      ],
+      "review_notes": []
+    },
+    {
+      "source_filename": "Picot_Headband_Knitting_Pattern_-_The_Obsessed_final.pdf",
+      "manual_override": false,
+      "review_reasons": [
+        "meters_per_100g_not_found"
+      ],
+      "review_notes": []
+    },
+    {
+      "source_filename": "PisankiSocks_PL.pdf",
+      "manual_override": false,
+      "review_reasons": [
+        "multiple_meter_ratios"
+      ],
+      "review_notes": []
+    },
+    {
+      "source_filename": "PL_I_AM_THE_GIFT_WZOR_1.1.pdf",
+      "manual_override": false,
+      "review_reasons": [
+        "multiple_meter_ratios"
+      ],
+      "review_notes": []
+    },
+    {
+      "source_filename": "polski_HAVFRUESHAWL.pdf",
+      "manual_override": false,
+      "review_reasons": [
+        "material_not_found",
+        "meters_per_100g_not_found"
+      ],
+      "review_notes": []
+    },
+    {
+      "source_filename": "POLSKI_Venke_skirt_.pdf",
+      "manual_override": false,
+      "review_reasons": [],
+      "review_notes": []
+    },
+    {
+      "source_filename": "POLY-SWEATER-kingacrafts.pdf",
+      "manual_override": false,
+      "review_reasons": [
+        "multiple_meter_ratios"
+      ],
+      "review_notes": []
+    },
+    {
+      "source_filename": "Poppy_Tee_ENGLISH.pdf",
+      "manual_override": false,
+      "review_reasons": [
+        "multiple_meter_ratios"
+      ],
+      "review_notes": []
+    },
+    {
+      "source_filename": "Pull_Iconic_Leaf_Sweater_EN.pdf",
+      "manual_override": false,
+      "review_reasons": [
+        "meters_per_100g_not_found"
+      ],
+      "review_notes": []
+    },
+    {
+      "source_filename": "Queen_of_Hearts_Socks.pdf",
+      "manual_override": false,
+      "review_reasons": [],
+      "review_notes": []
+    },
+    {
+      "source_filename": "Sheep_socks__1___1___1_.pdf",
+      "manual_override": false,
+      "review_reasons": [
+        "material_not_found",
+        "meters_per_100g_not_found"
+      ],
+      "review_notes": []
+    },
+    {
+      "source_filename": "Silk dress by Rowan.pdf",
+      "manual_override": true,
+      "review_reasons": [
+        "requires_ocr",
+        "material_not_found",
+        "meters_per_100g_not_found",
+        "language_unknown"
+      ],
+      "review_notes": [
+        "Nazwa wzoru nie jest dowodem składu włóczki.",
+        "Dokument podaje motki 50 g, ale nie podaje wprost składu ani długości włóczki."
+      ]
+    },
+    {
+      "source_filename": "SkarpetkiTuby_Czempik.knitwear.pdf",
+      "manual_override": false,
+      "review_reasons": [
+        "meters_per_100g_not_found"
+      ],
+      "review_notes": []
+    },
+    {
+      "source_filename": "Skyward sweater.pdf",
+      "manual_override": true,
+      "review_reasons": [
+        "requires_ocr",
+        "material_not_found",
+        "meters_per_100g_not_found",
+        "language_unknown"
+      ],
+      "review_notes": [
+        "Dokument podaje dwie alternatywne włóczki; nie należy używać ich jednocześnie."
+      ]
+    },
+    {
+      "source_filename": "Sophie_Scarf_PL.Petiteknit.pdf",
+      "manual_override": false,
+      "review_reasons": [
+        "multiple_meter_ratios"
+      ],
+      "review_notes": []
+    },
+    {
+      "source_filename": "SOS_Basic_Sock.pdf",
+      "manual_override": true,
+      "review_reasons": [
+        "requires_ocr",
+        "material_not_found",
+        "meters_per_100g_not_found",
+        "language_unknown"
+      ],
+      "review_notes": [
+        "Dokument zaleca typową włóczkę skarpetkową, ale nie wskazuje jednej obowiązkowej mieszanki.",
+        "Podano długość w jardach bez masy motka, więc nie można rzetelnie obliczyć metrów na 100 g."
+      ]
+    },
+    {
+      "source_filename": "Space_Feet_Socks_PL-lno7ucan.pdf",
+      "manual_override": false,
+      "review_reasons": [
+        "material_not_found"
+      ],
+      "review_notes": []
+    },
+    {
+      "source_filename": "Spooky_sock_set_final.pdf",
+      "manual_override": false,
+      "review_reasons": [
+        "multiple_meter_ratios"
+      ],
+      "review_notes": []
+    },
+    {
+      "source_filename": "Starry_Night_Hat_PL-ljvt8ze9.pdf",
+      "manual_override": false,
+      "review_reasons": [
+        "material_not_found"
+      ],
+      "review_notes": []
+    },
+    {
+      "source_filename": "Starry_Night_Mittens_PL-lo9p3u7q.pdf",
+      "manual_override": false,
+      "review_reasons": [],
+      "review_notes": []
+    },
+    {
+      "source_filename": "Starry_Night_Socks_PL-ljvt91ie.pdf",
+      "manual_override": false,
+      "review_reasons": [
+        "material_not_found",
+        "multiple_meter_ratios"
+      ],
+      "review_notes": []
+    },
+    {
+      "source_filename": "Summer by Rowan spódnica.pdf",
+      "manual_override": true,
+      "review_reasons": [
+        "requires_ocr",
+        "material_not_found",
+        "meters_per_100g_not_found",
+        "language_unknown"
+      ],
+      "review_notes": [
+        "Dokument podaje motki 50 g, ale nie podaje składu ani długości włóczki."
+      ]
+    },
+    {
+      "source_filename": "SWAN TOP.pdf",
+      "manual_override": false,
+      "review_reasons": [
+        "meters_per_100g_not_found"
+      ],
+      "review_notes": []
+    },
+    {
+      "source_filename": "SWEATERNO9.LIGHT.ENG (2).pdf",
+      "manual_override": false,
+      "review_reasons": [
+        "material_not_found"
+      ],
+      "review_notes": []
+    },
+    {
+      "source_filename": "SweetTreatsSocks_NBielińska.pdf",
+      "manual_override": false,
+      "review_reasons": [],
+      "review_notes": []
+    },
+    {
+      "source_filename": "Sweter_Kikimora_Moracraft(1).pdf",
+      "manual_override": false,
+      "review_reasons": [],
+      "review_notes": []
+    },
+    {
+      "source_filename": "Sweter_Kikimora_Moracraft.pdf",
+      "manual_override": false,
+      "review_reasons": [],
+      "review_notes": []
+    },
+    {
+      "source_filename": "sweterek z golfem Bobbie.pdf",
+      "manual_override": false,
+      "review_reasons": [
+        "multiple_meter_ratios"
+      ],
+      "review_notes": []
+    },
+    {
+      "source_filename": "Szal_Queen_of_Spades_Kokonki_Pure.pdf",
+      "manual_override": false,
+      "review_reasons": [],
+      "review_notes": []
+    },
+    {
+      "source_filename": "Teddy Bear Socks - wzór PL (ang skróty).pdf.pdf",
+      "manual_override": false,
+      "review_reasons": [],
+      "review_notes": []
+    },
+    {
+      "source_filename": "TEXTURE_VEST_hi_UK-rm07er.pdf",
+      "manual_override": false,
+      "review_reasons": [
+        "meters_per_100g_not_found"
+      ],
+      "review_notes": []
+    },
+    {
+      "source_filename": "The_truth_is_out_there_Final_edit.pdf",
+      "manual_override": false,
+      "review_reasons": [
+        "multiple_meter_ratios"
+      ],
+      "review_notes": []
+    },
+    {
+      "source_filename": "Tromsø Hoodie NORSK.pdf",
+      "manual_override": false,
+      "review_reasons": [
+        "material_not_found",
+        "multiple_meter_ratios",
+        "language_unknown"
+      ],
+      "review_notes": []
+    },
+    {
+      "source_filename": "Tropfen sweater.pdf",
+      "manual_override": true,
+      "review_reasons": [
+        "requires_ocr",
+        "material_not_found",
+        "meters_per_100g_not_found",
+        "language_unknown"
+      ],
+      "review_notes": []
+    },
+    {
+      "source_filename": "UNDER_THE_SEA_SOCKS_PL-ljvt9559.pdf",
+      "manual_override": false,
+      "review_reasons": [
+        "material_not_found",
+        "multiple_meter_ratios"
+      ],
+      "review_notes": []
+    },
+    {
+      "source_filename": "Urth Yarns skarpetki.pdf",
+      "manual_override": false,
+      "review_reasons": [
+        "material_not_found",
+        "meters_per_100g_not_found"
+      ],
+      "review_notes": []
+    },
+    {
+      "source_filename": "Warm-Knit-Klara-wzor-dziewiarski-zulknh.pdf",
+      "manual_override": false,
+      "review_reasons": [
+        "meters_per_100g_not_found"
+      ],
+      "review_notes": []
+    },
+    {
+      "source_filename": "You Make Me (W)hole Cardigan - opis.pdf",
+      "manual_override": false,
+      "review_reasons": [],
+      "review_notes": []
+    },
+    {
+      "source_filename": "You Make Me (W)hole Cardigan - Schematy.pdf",
+      "manual_override": false,
+      "review_reasons": [
+        "material_not_found",
+        "meters_per_100g_not_found"
+      ],
+      "review_notes": []
+    },
+    {
+      "source_filename": "YouthVibeJumper_nana.makes.it.all.pdf",
+      "manual_override": false,
+      "review_reasons": [
+        "meters_per_100g_not_found"
+      ],
+      "review_notes": []
+    }
+  ]
+}
