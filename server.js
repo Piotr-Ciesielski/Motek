@@ -3,6 +3,7 @@ const path = require("path");
 const fs = require("fs");
 const fsPromises = require("fs/promises");
 const initSqlJs = require("sql.js");
+const { createSupabaseConnection } = require("./supabase");
 
 const rootDir = __dirname;
 const configuredDbFile = process.env.DATABASE_FILE?.trim();
@@ -14,6 +15,7 @@ const dbDir = path.dirname(dbFile);
 let SQL;
 let db;
 let server;
+let supabaseConnection;
 let shuttingDown = false;
 
 const MAX_JSON_BODY_BYTES = 16 * 1024;
@@ -418,6 +420,14 @@ function getRuntimeConfig() {
 }
 
 async function main() {
+  supabaseConnection = createSupabaseConnection();
+  if (supabaseConnection) {
+    await supabaseConnection.verify();
+    console.log("Połączenie Motka z Supabase działa.");
+  } else {
+    console.log("Supabase nie jest jeszcze skonfigurowany. Motek używa lokalnej bazy SQLite.");
+  }
+
   SQL = await initSqlJs({
     locateFile: (file) => path.join(rootDir, "node_modules", "sql.js", "dist", file),
   });
@@ -495,6 +505,7 @@ async function shutdown(signal = "shutdown") {
     });
   }
   server = null;
+  supabaseConnection = null;
 
   if (db) {
     persist();
