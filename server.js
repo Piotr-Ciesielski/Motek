@@ -3,6 +3,7 @@ const path = require("path");
 const fs = require("fs");
 const fsPromises = require("fs/promises");
 const initSqlJs = require("sql.js");
+const { createSupabaseConnection } = require("./supabase");
 
 const rootDir = __dirname;
 const configuredDbFile = process.env.DATABASE_FILE?.trim();
@@ -14,6 +15,7 @@ const dbDir = path.dirname(dbFile);
 let SQL;
 let db;
 let server;
+let supabaseConnection;
 let shuttingDown = false;
 
 const MAX_JSON_BODY_BYTES = 16 * 1024;
@@ -262,7 +264,7 @@ function getYarns() {
   return rows;
 }
 
-function getPatterns() {
+function getLocalPatterns() {
   const stmt = db.prepare("SELECT * FROM patterns ORDER BY id ASC");
   const rows = [];
   while (stmt.step()) {
@@ -275,6 +277,54 @@ function getPatterns() {
   }
   stmt.free();
   return rows;
+}
+
+function normalizeCatalogPattern(pattern) {
+  const ratio =
+    pattern.meters_per_100g === null || pattern.meters_per_100g === undefined
+      ? null
+      : Number(pattern.meters_per_100g);
+
+  return {
+    id: Number(pattern.id),
+    name: pattern.name,
+    description: pattern.description,
+    materials: Array.isArray(pattern.materials) ? pattern.materials : [],
+    metersPer100g: Number.isFinite(ratio) ? ratio : null,
+    yarnRequirements: Array.isArray(pattern.yarn_requirements)
+      ? pattern.yarn_requirements
+      : [],
+    sourceLanguage: pattern.source_language || "unknown",
+    needsReview: Boolean(pattern.needs_review),
+  };
+}
+
+async function getCatalogPatterns() {
+  if (!supabaseConnection) {
+    return getLocalPatterns().map((pattern) => ({
+      id: pattern.id,
+      name: pattern.name,
+      description: pattern.description,
+      materials: pattern.materials,
+      metersPer100g: null,
+      yarnRequirements: [],
+      sourceLanguage: "pl",
+      needsReview: true,
+    }));
+  }
+
+  const { data, error } = await supabaseConnection.client
+    .from("patterns")
+    .select(
+      "id,name,description,materials,meters_per_100g,yarn_requirements,source_language,needs_review"
+    )
+    .order("name", { ascending: true });
+
+  if (error) {
+    throw new Error(`Nie udało się pobrać wzorów z Supabase: ${error.message}`);
+  }
+
+  return data.map(normalizeCatalogPattern);
 }
 
 function normalizeText(value, field, fallback) {
@@ -369,12 +419,12 @@ async function handleApi(req, res, url) {
   }
 
   if (req.method === "GET" && url.pathname === "/api/patterns") {
-    return sendJson(res, 200, getPatterns());
+    return sendJson(res, 200, await getCatalogPatterns());
   }
 
   if (req.method === "GET" && url.pathname === "/api/matches") {
     const yarns = getYarns();
-    const scored = getPatterns()
+    const scored = getLocalPatterns()
       .map((pattern) => ({ pattern, ...scorePattern(pattern, yarns) }))
       .filter((item) => item.doable)
       .sort((a, b) => b.total - a.total);
@@ -417,7 +467,20 @@ function getRuntimeConfig() {
   return { host, port };
 }
 
-async function main() {
+async function main(options = {}) {
+  supabaseConnection = Object.prototype.hasOwnProperty.call(
+    options,
+    "supabaseConnection"
+  )
+    ? options.supabaseConnection
+    : createSupabaseConnection();
+  if (supabaseConnection) {
+    await supabaseConnection.verify();
+    console.log("Połączenie Motka z Supabase działa.");
+  } else {
+    console.log("Supabase nie jest jeszcze skonfigurowany. Motek używa lokalnej bazy SQLite.");
+  }
+
   SQL = await initSqlJs({
     locateFile: (file) => path.join(rootDir, "node_modules", "sql.js", "dist", file),
   });
@@ -495,6 +558,7 @@ async function shutdown(signal = "shutdown") {
     });
   }
   server = null;
+  supabaseConnection = null;
 
   if (db) {
     persist();
@@ -527,4 +591,4 @@ if (require.main === module) {
   });
 }
 
-module.exports = { main, shutdown };
+module.exports = { main, normalizeCatalogPattern, shutdown };

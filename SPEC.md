@@ -157,3 +157,44 @@ Wersję 1.0.0 uznaje się za zgodną, jeśli:
 - działa zapis i odczyt włóczek z SQLite
 - działa pobranie wzorów i wyników dopasowania
 - dane przetrwają ponowne uruchomienie serwera
+
+---
+
+# Plan rozwoju Motek v2.0.0
+
+## 13. Cel wersji 2.0.0
+Wersja 2.0.0 przenosi trwałe dane Motka z lokalnego pliku SQLite do
+zewnętrznej bazy Supabase. Dzięki temu dane nie będą zależne od jednego
+komputera i aplikacja będzie przygotowana do dalszego rozwoju w chmurze.
+
+## 14. Etapy migracji
+
+### 14.1 Etap pierwszy — tabela wzorów
+- backend łączy się z Supabase przez bezpieczną konfigurację środowiskową
+- tabela `patterns` w Supabase staje się docelowym źródłem danych o wzorach
+- rekordy wzorów powstają na podstawie plików roboczych z lokalnego folderu `Wzory`
+- pliki źródłowe PDF nie trafiają do Git ani do publicznej części aplikacji
+- magazyn włóczek pozostaje tymczasowo w SQLite
+
+### 14.2 Etap drugi — tabela włóczek
+- tabela `yarns` zostaje przeniesiona do Supabase
+- po sprawdzeniu kompletności danych SQLite przestaje być magazynem aplikacji
+- mechanizm dopasowania korzysta z obu tabel w Supabase
+
+## 15. Bezpieczeństwo integracji
+- połączenie z Supabase obsługuje wyłącznie backend
+- adres projektu jest przechowywany w `SUPABASE_URL`
+- klucz typu `secret` jest przechowywany w `SUPABASE_SECRET_KEY`
+- klucz `secret` nie może znaleźć się w kodzie frontendu, repozytorium Git ani logach
+- aplikacja weryfikuje konfigurację i połączenie podczas uruchamiania
+
+## 16. Stan przejściowy
+Tabela `patterns` jest podłączona do backendu i służy jako źródło katalogu
+wzorów widocznego na froncie. Katalog pozwala wyszukiwać rekordy i filtrować je
+według statusu weryfikacji.
+
+Magazyn włóczek oraz dotychczasowy mechanizm dopasowania pozostają tymczasowo
+w SQLite. Nowe rekordy wzorów nie zawierają jeszcze całkowitego zużycia włóczki
+dla konkretnego rozmiaru, dlatego nie są jeszcze używane przez ranking
+dopasowania. Pozwala to niezależnie przetestować katalog przed drugim etapem
+migracji.

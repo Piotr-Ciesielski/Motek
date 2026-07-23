@@ -5,6 +5,11 @@ const results = document.getElementById("results");
 const summary = document.getElementById("summary");
 const addYarnBtn = document.getElementById("addYarnBtn");
 const findBtn = document.getElementById("findBtn");
+const patternTemplate = document.getElementById("patternTemplate");
+const patternSearch = document.getElementById("patternSearch");
+const patternReviewFilter = document.getElementById("patternReviewFilter");
+const patternCatalogSummary = document.getElementById("patternCatalogSummary");
+const patternCatalog = document.getElementById("patternCatalog");
 
 const LOCAL_STORAGE_KEY = "motek.yarns.v1";
 const DEFAULT_LOCAL_YARNS = [
@@ -51,6 +56,7 @@ let autosaveTimer = null;
 let autosaveInFlight = null;
 let autosavePending = false;
 let memoryLocalYarns = null;
+let catalogPatterns = [];
 
 function normalizeYarns(yarns) {
   let nextId = 1;
@@ -304,6 +310,131 @@ async function loadMatches() {
     .sort((a, b) => b.total - a.total);
 }
 
+function normalizeLocalCatalogPattern(pattern, index) {
+  return {
+    id: index + 1,
+    name: pattern.name,
+    description: pattern.description,
+    materials: pattern.materials,
+    metersPer100g: null,
+    yarnRequirements: [],
+    sourceLanguage: "pl",
+    needsReview: true,
+  };
+}
+
+async function loadPatternCatalog() {
+  if (runtimeMode === "remote") {
+    return api("/api/patterns");
+  }
+
+  return DEFAULT_PATTERNS.map(normalizeLocalCatalogPattern);
+}
+
+function formatRatio(value) {
+  const ratio = Number(value);
+  return Number.isFinite(ratio) && ratio > 0
+    ? `${ratio.toLocaleString("pl-PL")} m/100 g`
+    : "brak danych";
+}
+
+function formatRequirement(requirement, index) {
+  const name = requirement.yarn_name || `Włóczka ${index + 1}`;
+  const role = requirement.option
+    ? `${requirement.role || "główna"}, ${requirement.option}`
+    : requirement.role || "główna";
+  const materials = Array.isArray(requirement.materials)
+    ? requirement.materials.join(", ")
+    : "";
+  const details = [materials, formatRatio(requirement.meters_per_100g)]
+    .filter(Boolean)
+    .join(" · ");
+
+  return `${name} (${role}) — ${details}`;
+}
+
+function createMaterialTag(material) {
+  const tag = document.createElement("span");
+  tag.className = "material-tag";
+  tag.textContent = material;
+  return tag;
+}
+
+function renderPatternCatalog() {
+  const phrase = patternSearch.value.trim().toLocaleLowerCase("pl");
+  const reviewFilter = patternReviewFilter.value;
+  const visiblePatterns = catalogPatterns.filter((pattern) => {
+    const searchable = [
+      pattern.name,
+      pattern.description,
+      ...(Array.isArray(pattern.materials) ? pattern.materials : []),
+    ]
+      .join(" ")
+      .toLocaleLowerCase("pl");
+    const matchesPhrase = !phrase || searchable.includes(phrase);
+    const matchesStatus =
+      reviewFilter === "all" ||
+      (reviewFilter === "review" && pattern.needsReview) ||
+      (reviewFilter === "verified" && !pattern.needsReview);
+    return matchesPhrase && matchesStatus;
+  });
+
+  patternCatalogSummary.textContent =
+    `Widoczne wzory: ${visiblePatterns.length} z ${catalogPatterns.length}`;
+  patternCatalog.replaceChildren();
+
+  if (!visiblePatterns.length) {
+    showMessage(patternCatalog, "Nie znaleziono wzorów spełniających te kryteria.");
+    return;
+  }
+
+  visiblePatterns.forEach((pattern) => {
+    const card = patternTemplate.content.firstElementChild.cloneNode(true);
+    const requirements = Array.isArray(pattern.yarnRequirements)
+      ? pattern.yarnRequirements
+      : [];
+    const materials = Array.isArray(pattern.materials) ? pattern.materials : [];
+
+    card.querySelector("h3").textContent = pattern.name;
+    card.querySelector(".pattern-card__kicker").textContent =
+      pattern.sourceLanguage === "pl" ? "Wzór po polsku" : "Wzór obcojęzyczny";
+    card.querySelector(".pattern-card__description").textContent =
+      pattern.description;
+    card.querySelector(".pattern-card__facts").textContent =
+      `Główna włóczka: ${formatRatio(pattern.metersPer100g)}`;
+
+    const status = card.querySelector(".status-pill");
+    status.textContent = pattern.needsReview ? "Do sprawdzenia" : "Zweryfikowany";
+    status.classList.toggle("status-pill--review", pattern.needsReview);
+
+    const tags = card.querySelector(".material-tags");
+    if (materials.length) {
+      tags.replaceChildren(...materials.map(createMaterialTag));
+    } else {
+      tags.replaceChildren(createMaterialTag("materiał nieustalony"));
+    }
+
+    const yarnList = card.querySelector(".pattern-card__yarns");
+    if (requirements.length > 1) {
+      yarnList.replaceChildren(
+        ...requirements.map((requirement, index) =>
+          createRequirement(formatRequirement(requirement, index))
+        )
+      );
+    } else {
+      yarnList.remove();
+    }
+
+    patternCatalog.appendChild(card);
+  });
+}
+
+async function refreshPatternCatalog() {
+  showMessage(patternCatalog, "Pobieram wzory z bazy...");
+  catalogPatterns = await loadPatternCatalog();
+  renderPatternCatalog();
+}
+
 async function renderResults() {
   const matches = await loadMatches();
   results.replaceChildren();
@@ -391,9 +522,18 @@ findBtn.addEventListener("click", async () => {
   }
 });
 
+patternSearch.addEventListener("input", renderPatternCatalog);
+patternReviewFilter.addEventListener("change", renderPatternCatalog);
+
 detectRuntimeMode()
   .then(async () => {
-    await refresh();
+    await Promise.all([
+      refresh(),
+      refreshPatternCatalog().catch((error) => {
+        patternCatalogSummary.textContent = "";
+        showMessage(patternCatalog, error.message);
+      }),
+    ]);
   })
   .catch((error) => {
     showMessage(results, error.message);

@@ -62,6 +62,41 @@
           <div id="results" class="results"></div>
         </article>
       </section>
+
+      <section class="panel catalog-panel">
+        <div class="catalog-header">
+          <div>
+            <p class="eyebrow">Supabase</p>
+            <h2>Baza wzorów</h2>
+            <p>
+              Przeglądaj wzory zaimportowane z dokumentów PDF. Informacja
+              „do sprawdzenia” oznacza, że część parametrów nie występowała
+              jednoznacznie w pliku źródłowym.
+            </p>
+          </div>
+          <div class="catalog-controls">
+            <label>
+              Szukaj
+              <input
+                id="patternSearch"
+                type="search"
+                placeholder="Nazwa, opis lub materiał"
+                autocomplete="off"
+              />
+            </label>
+            <label>
+              Status danych
+              <select id="patternReviewFilter">
+                <option value="all">Wszystkie</option>
+                <option value="verified">Zweryfikowane</option>
+                <option value="review">Do sprawdzenia</option>
+              </select>
+            </label>
+          </div>
+        </div>
+        <div id="patternCatalogSummary" class="catalog-summary" aria-live="polite"></div>
+        <div id="patternCatalog" class="pattern-catalog"></div>
+      </section>
     </main>
 
     <template id="yarnTemplate">
@@ -126,6 +161,22 @@
         </div>
         <p class="result-card__desc"></p>
         <ul class="requirements"></ul>
+      </article>
+    </template>
+
+    <template id="patternTemplate">
+      <article class="pattern-card">
+        <div class="pattern-card__top">
+          <div>
+            <p class="pattern-card__kicker"></p>
+            <h3></h3>
+          </div>
+          <span class="status-pill"></span>
+        </div>
+        <p class="pattern-card__description"></p>
+        <div class="pattern-card__facts"></div>
+        <div class="material-tags" aria-label="Materiały"></div>
+        <ul class="pattern-card__yarns"></ul>
       </article>
     </template>
 

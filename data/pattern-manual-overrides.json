@@ -1,0 +1,431 @@
+{
+  "48121b_76193f9fc7a34173bf81ea1ae1c28b28.pdf": {
+    "name": "Jak prosto zrobić dekolt V na drutach",
+    "description": "Instrukcja formowania dekoltu V w swetrze lub kardiganie wykonywanym od góry, wraz z obliczeniami i kształtowaniem raglanów.",
+    "materials": [],
+    "meters_per_100g": null,
+    "yarn_requirements": [],
+    "source_language": "pl",
+    "needs_review": true,
+    "review_notes": [
+      "Dokument opisuje technikę dziewiarską i nie wskazuje jednej wymaganej włóczki ani parametru m/100 g."
+    ]
+  },
+  "Bone vest by Rowan.pdf": {
+    "name": "Bone",
+    "description": "Ażurowa kamizelka bez rękawów dostępna w wersji krótkiej lub dłuższej.",
+    "materials": [],
+    "meters_per_100g": null,
+    "yarn_requirements": [
+      {
+        "role": "główna",
+        "yarn_name": "Summerlite DK",
+        "materials": [],
+        "meters_per_100g": null
+      }
+    ],
+    "source_language": "en",
+    "needs_review": true,
+    "review_notes": [
+      "Dokument podaje motki 50 g, ale nie podaje składu ani długości włóczki."
+    ]
+  },
+  "Bubble by Rowan.pdf": {
+    "name": "Bubble",
+    "description": "Kardigan o wyrazistej fakturze tworzonej przez dekoracyjne bąbelki.",
+    "materials": [],
+    "meters_per_100g": null,
+    "yarn_requirements": [
+      {
+        "role": "główna",
+        "yarn_name": "Kid Silk Haze",
+        "strand_count": 3,
+        "materials": [],
+        "meters_per_100g": null
+      }
+    ],
+    "source_language": "en",
+    "needs_review": true,
+    "review_notes": [
+      "Włóczka jest przerabiana trzema nitkami jednocześnie.",
+      "Dokument podaje motki 25 g, ale nie podaje składu ani długości włóczki."
+    ]
+  },
+  "Cirro sweater.pdf": {
+    "name": "Cirro",
+    "description": "Sweter wykonywany od góry, z ażurowym karczkiem i modelowaniem krótkimi rzędami.",
+    "materials": [
+      "wełna",
+      "moher",
+      "jedwab"
+    ],
+    "meters_per_100g": 496,
+    "yarn_requirements": [
+      {
+        "role": "główna",
+        "yarn_name": "Biches & Buches Le Petit Lambswool",
+        "materials": [
+          "wełna"
+        ],
+        "meters_per_100g": 496
+      },
+      {
+        "role": "dodatkowa",
+        "yarn_name": "Biches & Buches Le Petit Silk & Mohair",
+        "materials": [
+          "moher",
+          "jedwab"
+        ],
+        "meters_per_100g": 840
+      }
+    ],
+    "source_language": "en",
+    "needs_review": false,
+    "review_notes": []
+  },
+  "Cotton t-shirt by Rowan.pdf": {
+    "name": "Cotton",
+    "description": "Koszulka z krótkim rękawem i dekoltem w serek.",
+    "materials": [],
+    "meters_per_100g": null,
+    "yarn_requirements": [
+      {
+        "role": "główna",
+        "yarn_name": "Summerlite DK",
+        "materials": [],
+        "meters_per_100g": null
+      }
+    ],
+    "source_language": "en",
+    "needs_review": true,
+    "review_notes": [
+      "Nazwa wzoru nie jest dowodem składu włóczki.",
+      "Dokument podaje motki 50 g, ale nie podaje składu ani długości włóczki."
+    ]
+  },
+  "Grassland tee.pdf": {
+    "name": "Grassland Tee",
+    "description": "Bezszwowa koszulka wykonywana od góry, z krótkimi rękawami i ażurowym panelem z przodu.",
+    "materials": [
+      "wełna",
+      "jedwab",
+      "moher"
+    ],
+    "meters_per_100g": 480,
+    "yarn_requirements": [
+      {
+        "role": "główna",
+        "yarn_name": "Gepard Wild & Soft",
+        "materials": [
+          "wełna",
+          "jedwab"
+        ],
+        "meters_per_100g": 480
+      },
+      {
+        "role": "dodatkowa",
+        "yarn_name": "Gepard Kid Seta",
+        "materials": [
+          "moher",
+          "jedwab"
+        ],
+        "meters_per_100g": 840
+      }
+    ],
+    "source_language": "en",
+    "needs_review": false,
+    "review_notes": [
+      "Obie włóczki są przerabiane razem."
+    ]
+  },
+  "Greenbay top by Rowan.pdf": {
+    "name": "Greenbay",
+    "description": "Teksturowany top bez rękawów, z rozcięciami po bokach.",
+    "materials": [],
+    "meters_per_100g": null,
+    "yarn_requirements": [
+      {
+        "role": "główna",
+        "yarn_name": "Summerlite 4ply",
+        "materials": [],
+        "meters_per_100g": null
+      }
+    ],
+    "source_language": "en",
+    "needs_review": true,
+    "review_notes": [
+      "Dokument podaje motki 50 g, ale nie podaje składu ani długości włóczki."
+    ]
+  },
+  "Happy_Haunts_Socks.pdf": {
+    "name": "Happy Haunts Socks",
+    "description": "Skarpetki wykonywane od palców, ozdobione wielokolorowym motywem duchów.",
+    "materials": [],
+    "meters_per_100g": null,
+    "yarn_requirements": [
+      {
+        "role": "główna",
+        "yarn_weight": "fingering",
+        "materials": [],
+        "meters_per_100g": null
+      },
+      {
+        "role": "kontrastowa",
+        "yarn_weight": "fingering",
+        "materials": [],
+        "meters_per_100g": null
+      }
+    ],
+    "source_language": "en",
+    "needs_review": true,
+    "review_notes": [
+      "Dokument nie podaje składu ani przelicznika długości na masę."
+    ]
+  },
+  "Lento.pdf": {
+    "name": "Lento",
+    "description": "Prosty sweter raglanowy wykonywany od góry, z dwiema włóczkami przerabianymi razem.",
+    "materials": [
+      "wełna",
+      "alpaka",
+      "jedwab"
+    ],
+    "meters_per_100g": 366,
+    "yarn_requirements": [
+      {
+        "role": "główna",
+        "yarn_name": "La Bien Aimée Merino Singles",
+        "materials": [
+          "wełna"
+        ],
+        "meters_per_100g": 366
+      },
+      {
+        "role": "dodatkowa",
+        "yarn_name": "La Bien Aimée Kumo",
+        "materials": [
+          "alpaka",
+          "jedwab"
+        ],
+        "meters_per_100g": 600
+      }
+    ],
+    "source_language": "en",
+    "needs_review": false,
+    "review_notes": [
+      "Obie włóczki są przerabiane razem."
+    ]
+  },
+  "MADE_ME_PUFF_TOP_mademeknit.pdf": {
+    "name": "Made Me Puff Top",
+    "description": "Dopasowany top z odkrytymi ramionami i bardzo bufiastymi, moherowymi rękawami.",
+    "materials": [
+      "moher"
+    ],
+    "meters_per_100g": 200,
+    "yarn_requirements": [
+      {
+        "role": "główna",
+        "yarn_name": "Drops Muskat lub włóczka o podobnych parametrach",
+        "materials": [],
+        "meters_per_100g": 200
+      },
+      {
+        "role": "rękawy",
+        "yarn_name": "dowolna włóczka moherowa",
+        "materials": [
+          "moher"
+        ],
+        "meters_per_100g": 840
+      }
+    ],
+    "source_language": "pl",
+    "needs_review": true,
+    "review_notes": [
+      "Dokument określa główną włóczkę jako merceryzowaną, ale nie podaje wprost rodzaju włókna."
+    ]
+  },
+  "Mineral by Rowan.pdf": {
+    "name": "Mineral",
+    "description": "Top z krótkim rękawem, teksturowanym wzorem i zaokrąglonym dołem.",
+    "materials": [],
+    "meters_per_100g": null,
+    "yarn_requirements": [
+      {
+        "role": "główna",
+        "yarn_name": "Cotton Glace",
+        "materials": [],
+        "meters_per_100g": null
+      }
+    ],
+    "source_language": "en",
+    "needs_review": true,
+    "review_notes": [
+      "Dokument podaje motki 50 g, ale nie podaje wprost składu ani długości włóczki."
+    ]
+  },
+  "Nova Skirt Sandnes Garn 2311vol2.pdf": {
+    "name": "Nova Skirt",
+    "description": "Prążkowana spódnica dostępna w wersji krótkiej lub długiej.",
+    "materials": [
+      "wełna"
+    ],
+    "meters_per_100g": 410,
+    "yarn_requirements": [
+      {
+        "role": "główna",
+        "yarn_name": "Tynn Peer Gynt",
+        "materials": [
+          "wełna"
+        ],
+        "meters_per_100g": 410
+      }
+    ],
+    "source_language": "en",
+    "needs_review": false,
+    "review_notes": []
+  },
+  "Pearl top by Rowan.pdf": {
+    "name": "Pearl",
+    "description": "Top bez rękawów z dekoltem w serek.",
+    "materials": [],
+    "meters_per_100g": null,
+    "yarn_requirements": [
+      {
+        "role": "główna",
+        "yarn_name": "Summerlite DK",
+        "materials": [],
+        "meters_per_100g": null
+      }
+    ],
+    "source_language": "en",
+    "needs_review": true,
+    "review_notes": [
+      "Dokument podaje motki 50 g, ale nie podaje składu ani długości włóczki."
+    ]
+  },
+  "Silk dress by Rowan.pdf": {
+    "name": "Silk",
+    "description": "Prążkowana sukienka bez rękawów dostępna w wersji krótkiej lub długiej.",
+    "materials": [],
+    "meters_per_100g": null,
+    "yarn_requirements": [
+      {
+        "role": "główna",
+        "yarn_name": "Cotton Glace",
+        "materials": [],
+        "meters_per_100g": null
+      }
+    ],
+    "source_language": "en",
+    "needs_review": true,
+    "review_notes": [
+      "Nazwa wzoru nie jest dowodem składu włóczki.",
+      "Dokument podaje motki 50 g, ale nie podaje wprost składu ani długości włóczki."
+    ]
+  },
+  "Skyward sweater.pdf": {
+    "name": "Skyward",
+    "description": "Sweter wykonywany od góry, z warkoczowym karczkiem i korpusem przerabianym ściegiem lewym.",
+    "materials": [
+      "wełna"
+    ],
+    "meters_per_100g": null,
+    "yarn_requirements": [
+      {
+        "role": "główna",
+        "option": "wariant 1",
+        "yarn_name": "De Rerum Natura Gilliatt",
+        "materials": [
+          "wełna"
+        ],
+        "meters_per_100g": 250
+      },
+      {
+        "role": "główna",
+        "option": "wariant 2",
+        "yarn_name": "Urth Yarns Harvest Worsted",
+        "materials": [
+          "wełna"
+        ],
+        "meters_per_100g": 206
+      }
+    ],
+    "source_language": "en",
+    "needs_review": false,
+    "review_notes": [
+      "Dokument podaje dwie alternatywne włóczki; nie należy używać ich jednocześnie."
+    ]
+  },
+  "SOS_Basic_Sock.pdf": {
+    "name": "The I’m So Basic Sock",
+    "description": "Podstawowy wzór skarpet wykonywanych metodą magic loop, przeznaczony również dla osób uczących się tej konstrukcji.",
+    "materials": [
+      "wełna",
+      "poliamid"
+    ],
+    "meters_per_100g": null,
+    "yarn_requirements": [
+      {
+        "role": "główna",
+        "yarn_weight": "sock/fingering",
+        "materials": [
+          "wełna",
+          "poliamid"
+        ],
+        "meters_per_100g": null
+      },
+      {
+        "role": "kontrastowa",
+        "materials": [],
+        "meters_per_100g": null
+      }
+    ],
+    "source_language": "en",
+    "needs_review": true,
+    "review_notes": [
+      "Dokument zaleca typową włóczkę skarpetkową, ale nie wskazuje jednej obowiązkowej mieszanki.",
+      "Podano długość w jardach bez masy motka, więc nie można rzetelnie obliczyć metrów na 100 g."
+    ]
+  },
+  "Summer by Rowan spódnica.pdf": {
+    "name": "Summer",
+    "description": "Prążkowana spódnica wykonywana od góry.",
+    "materials": [],
+    "meters_per_100g": null,
+    "yarn_requirements": [
+      {
+        "role": "główna",
+        "yarn_name": "Summerlite 4ply",
+        "materials": [],
+        "meters_per_100g": null
+      }
+    ],
+    "source_language": "en",
+    "needs_review": true,
+    "review_notes": [
+      "Dokument podaje motki 50 g, ale nie podaje składu ani długości włóczki."
+    ]
+  },
+  "Tropfen sweater.pdf": {
+    "name": "Tropfen",
+    "description": "Sweter z okrągłym karczkiem i wielokolorowym wzorem, o swobodnym fasonie.",
+    "materials": [
+      "wełna"
+    ],
+    "meters_per_100g": 400,
+    "yarn_requirements": [
+      {
+        "role": "główna",
+        "yarn_name": "Annabel Williams Bluff Cove 4ply",
+        "materials": [
+          "wełna"
+        ],
+        "meters_per_100g": 400
+      }
+    ],
+    "source_language": "en",
+    "needs_review": false,
+    "review_notes": []
+  }
+}

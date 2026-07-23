@@ -7,9 +7,12 @@
   "scripts": {
     "start": "node --env-file-if-exists=.env server.js",
     "test": "node --test",
-    "check": "node --check server.js && node --check app.js && node --test"
+    "check": "node --check server.js && node --check app.js && node --test",
+    "patterns:check": "node --env-file-if-exists=.env scripts/import-patterns.js",
+    "patterns:import": "node --env-file-if-exists=.env scripts/import-patterns.js --execute"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.110.8",
     "sql.js": "^1.13.0"
   }
 }

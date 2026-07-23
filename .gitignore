@@ -22,3 +22,7 @@ Thumbs.db
 dist/
 build/
 coverage/
+.venv/
+tmp/
+
+Wzory/
