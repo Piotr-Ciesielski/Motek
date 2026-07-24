@@ -356,7 +356,7 @@ async function getAuthenticatedSession(req, res) {
   const profileResult = await authenticatedClient
     .from("profiles")
     .select("id,login,email,full_name,avatar_url,status,role,created_at,updated_at,last_login_at")
-    .eq("id", data.user.id)
+    .eq("id", userResult.data.user.id)
     .maybeSingle();
 
   return {
