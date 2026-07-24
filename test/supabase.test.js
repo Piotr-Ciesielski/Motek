@@ -2,10 +2,35 @@ const { test } = require("node:test");
 const assert = require("node:assert/strict");
 
 const {
+  createSupabaseAuthClient,
   createSupabaseConnection,
+  readSupabaseAuthConfig,
   readSupabaseConfig,
   verifySupabaseDataApi,
 } = require("../supabase");
+
+test("konfiguracja Supabase Auth używa wyłącznie klucza publishable", () => {
+  const config = readSupabaseAuthConfig({
+    SUPABASE_URL: "https://projekt.supabase.co",
+    SUPABASE_PUBLISHABLE_KEY: "sb_publishable_test",
+  });
+
+  assert.equal(config.url, "https://projekt.supabase.co");
+  assert.equal(config.publishableKey, "sb_publishable_test");
+  assert.throws(
+    () => readSupabaseAuthConfig({ SUPABASE_URL: "https://projekt.supabase.co" }),
+    /niepełna/
+  );
+  assert.throws(
+    () =>
+      readSupabaseAuthConfig({
+        SUPABASE_URL: "https://projekt.supabase.co",
+        SUPABASE_PUBLISHABLE_KEY: "sb_secret_test",
+      }),
+    /publicznym/
+  );
+  assert.ok(createSupabaseAuthClient(config));
+});
 
 test("konfiguracja Supabase jest opcjonalna w okresie przejściowym", () => {
   assert.equal(readSupabaseConfig({}), null);

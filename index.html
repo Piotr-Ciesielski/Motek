@@ -34,6 +34,59 @@
         </div>
       </section>
 
+      <section class="panel auth-panel" aria-labelledby="authTitle">
+        <div class="panel__header">
+          <div>
+            <p class="eyebrow">Konto</p>
+            <h2 id="authTitle">Zaloguj się do Motka</h2>
+            <p id="authLead">Załóż konto, aby przygotować aplikację do prywatnego magazynu włóczek.</p>
+          </div>
+          <div id="authUser" class="auth-user" hidden></div>
+        </div>
+
+        <div id="authForms" class="auth-forms">
+          <form id="loginForm" class="auth-form">
+            <h3>Logowanie</h3>
+            <label>
+              E-mail
+              <input name="email" type="email" maxlength="254" autocomplete="email" required />
+            </label>
+            <label>
+              Hasło
+              <input name="password" type="password" minlength="8" maxlength="256" autocomplete="current-password" required />
+            </label>
+            <button class="button" type="submit">Zaloguj się</button>
+          </form>
+
+          <form id="registerForm" class="auth-form">
+            <h3>Nowe konto</h3>
+            <label>
+              Login
+              <input name="login" type="text" minlength="3" maxlength="30" pattern="[A-Za-z0-9_]{3,30}" autocomplete="username" required />
+            </label>
+            <label>
+              E-mail
+              <input name="email" type="email" maxlength="254" autocomplete="email" required />
+            </label>
+            <label>
+              Imię i nazwisko
+              <input name="full_name" type="text" maxlength="200" autocomplete="name" />
+            </label>
+            <label>
+              Hasło
+              <input name="password" type="password" minlength="8" maxlength="256" autocomplete="new-password" required />
+            </label>
+            <button class="button button--secondary" type="submit">Załóż konto</button>
+          </form>
+        </div>
+
+        <div id="authLoggedIn" class="auth-logged-in" hidden>
+          <p id="authProfileSummary"></p>
+          <button id="logoutBtn" class="button button--ghost" type="button">Wyloguj się</button>
+        </div>
+        <p id="authMessage" class="auth-message" role="status" aria-live="polite"></p>
+      </section>
+
       <section class="grid">
         <article class="panel">
           <div class="panel__header">

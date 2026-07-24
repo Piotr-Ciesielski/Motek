@@ -10,6 +10,15 @@ const patternSearch = document.getElementById("patternSearch");
 const patternReviewFilter = document.getElementById("patternReviewFilter");
 const patternCatalogSummary = document.getElementById("patternCatalogSummary");
 const patternCatalog = document.getElementById("patternCatalog");
+const loginForm = document.getElementById("loginForm");
+const registerForm = document.getElementById("registerForm");
+const authForms = document.getElementById("authForms");
+const authLoggedIn = document.getElementById("authLoggedIn");
+const authUser = document.getElementById("authUser");
+const authProfileSummary = document.getElementById("authProfileSummary");
+const authMessage = document.getElementById("authMessage");
+const authLead = document.getElementById("authLead");
+const logoutBtn = document.getElementById("logoutBtn");
 
 const LOCAL_STORAGE_KEY = "motek.yarns.v1";
 const DEFAULT_LOCAL_YARNS = [
@@ -140,6 +149,7 @@ async function api(path, options = {}) {
   }
 
   const response = await fetch(`${baseUrl}${path}`, {
+    credentials: "same-origin",
     headers: { "Content-Type": "application/json" },
     ...options,
   });
@@ -491,6 +501,109 @@ async function renderSummary() {
   );
 }
 
+function setAuthMessage(message, kind = "") {
+  authMessage.textContent = message;
+  authMessage.dataset.kind = kind;
+}
+
+function setAuthBusy(form, busy) {
+  form.querySelector('button[type="submit"]').disabled = busy;
+}
+
+function renderAuthState(payload) {
+  const authenticated = Boolean(payload?.authenticated && payload.user);
+  authForms.hidden = authenticated;
+  authLoggedIn.hidden = !authenticated;
+  authUser.hidden = !authenticated;
+
+  if (!authenticated) {
+    authUser.textContent = "";
+    authProfileSummary.textContent = "";
+    authLead.textContent = "Załóż konto, aby przygotować aplikację do prywatnego magazynu włóczek.";
+    return;
+  }
+
+  const profile = payload.profile || {};
+  const login = profile.login || payload.user.metadata?.login || payload.user.email;
+  authUser.textContent = `Zalogowano jako ${login}`;
+  authProfileSummary.textContent = profile.full_name
+    ? `${profile.full_name} (${profile.email || payload.user.email})`
+    : profile.email || payload.user.email || "Zalogowany użytkownik";
+  authLead.textContent = "Sesja jest aktywna. Dane włóczek pozostają jeszcze w trybie przejściowym.";
+}
+
+async function refreshAuthSession() {
+  if (runtimeMode !== "remote") {
+    renderAuthState({ authenticated: false });
+    setAuthMessage("Logowanie jest dostępne po uruchomieniu backendu Motka.");
+    return;
+  }
+
+  try {
+    const payload = await api("/api/auth/session");
+    renderAuthState(payload);
+    if (!payload.authenticated) {
+      setAuthMessage("Możesz założyć konto lub zalogować się.");
+    }
+  } catch (error) {
+    renderAuthState({ authenticated: false });
+    setAuthMessage(error.message, "error");
+  }
+}
+
+async function submitAuthForm(form, endpoint, successMessage) {
+  setAuthBusy(form, true);
+  setAuthMessage("Przetwarzam...");
+  try {
+    const formData = new FormData(form);
+    const body = Object.fromEntries(formData.entries());
+    const payload = await api(endpoint, {
+      method: "POST",
+      body: JSON.stringify(body),
+    });
+    renderAuthState({
+      authenticated: Boolean(payload.user && !payload.requiresEmailConfirmation),
+      user: payload.user,
+      profile: null,
+    });
+    if (payload.requiresEmailConfirmation) {
+      setAuthMessage("Konto utworzone. Potwierdź adres e-mail, aby się zalogować.");
+    } else {
+      setAuthMessage(successMessage, "success");
+      await refreshAuthSession();
+    }
+    form.reset();
+  } catch (error) {
+    setAuthMessage(error.message, "error");
+  } finally {
+    setAuthBusy(form, false);
+  }
+}
+
+loginForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  await submitAuthForm(loginForm, "/api/auth/login", "Zalogowano.");
+});
+
+registerForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  await submitAuthForm(registerForm, "/api/auth/register", "Konto utworzone.");
+});
+
+logoutBtn.addEventListener("click", async () => {
+  logoutBtn.disabled = true;
+  setAuthMessage("Wylogowuję...");
+  try {
+    await api("/api/auth/logout", { method: "POST", body: "{}" });
+    renderAuthState({ authenticated: false });
+    setAuthMessage("Wylogowano.", "success");
+  } catch (error) {
+    setAuthMessage(error.message, "error");
+  } finally {
+    logoutBtn.disabled = false;
+  }
+});
+
 async function refresh() {
   const yarns = await loadYarns();
   yarnList.replaceChildren();
@@ -528,6 +641,7 @@ patternReviewFilter.addEventListener("change", renderPatternCatalog);
 detectRuntimeMode()
   .then(async () => {
     await Promise.all([
+      refreshAuthSession(),
       refresh(),
       refreshPatternCatalog().catch((error) => {
         patternCatalogSummary.textContent = "";
