@@ -3,8 +3,8 @@
 ## Status wersji
 
 - bieżąca wydana wersja aplikacji: `1.0.2`
-- rozwijana wersja: `2.0.0-alpha.2`
-- zrealizowany zakres: katalog wzorów, tabela profili Auth oraz podstawowa obsługa sesji
+- rozwijana wersja: `2.0.0-alpha.3`
+- zrealizowany zakres: katalog wzorów oraz kompletny podstawowy przepływ Supabase Auth
 - następny zakres: syntetyczne dane testowe i przeniesienie magazynu włóczek do Supabase
 
 ## 1. Cel produktu
@@ -294,7 +294,8 @@ wyników dopasowania do magazynu użytkownika.
 | magazyn włóczek | lokalna baza SQLite | aktywny przejściowo |
 | ranking dopasowania | przykładowe wzory i włóczki w SQLite | aktywny przejściowo |
 | dokumenty PDF | lokalny ignorowany folder `Wzory` | tylko źródło importu |
-| dane logowania | jeszcze niewdrożone | planowany kolejny etap |
+| konta użytkowników | Supabase Auth i `profiles` | aktywny |
+| sesje użytkowników | Supabase Auth i ciasteczka HttpOnly | aktywny |
 
 Backend weryfikuje połączenie z Supabase przy starcie. Gdy konfiguracja
 Supabase nie jest dostępna, aplikacja może nadal uruchomić się w ograniczonym
@@ -305,9 +306,11 @@ trybie lokalnym.
 - sekret Supabase jest przechowywany wyłącznie w lokalnym pliku `.env`
 - `.env` i folder `Wzory` są ignorowane przez Git
 - frontend komunikuje się wyłącznie z backendem Motka
+- klucz publishable służy wyłącznie do operacji Auth wykonywanych przez backend
 - backend wybiera jawnie pola zwracane przez API
 - błędy połączenia nie ujawniają wartości sekretnego klucza
-- klient serwerowy nie zapisuje sesji logowania
+- tokeny sesji nie są dostępne dla JavaScriptu i pozostają w ciasteczkach HttpOnly
+- ciasteczka sesji używają `SameSite=Lax`, a w środowisku produkcyjnym także `Secure`
 - tabela ma włączone RLS, a operacje importu używają roli serwerowej
 - przed importem można sprawdzić liczbę nowych i aktualizowanych rekordów
 
@@ -325,7 +328,55 @@ Etap pierwszy uznaje się za ukończony, jeżeli:
 - testy backendu, API i zabezpieczeń przechodzą poprawnie
 - dotychczasowa obsługa włóczek w SQLite nadal działa
 
-## 22. Następny etap — tabela włóczek
+## 22. Zrealizowany etap — konta użytkowników i sesje
+
+### 22.1 Przepływ użytkownika
+
+Frontend udostępnia formularze rejestracji, logowania i wylogowania. Backend
+korzysta z Supabase Auth i nie zapisuje haseł w bazie Motka ani w logach.
+
+Po rejestracji:
+
+1. Supabase Auth tworzy użytkownika w `auth.users`,
+2. trigger tworzy powiązany rekord w `public.profiles`,
+3. po udanym uwierzytelnieniu backend zapisuje tokeny w ciasteczkach HttpOnly,
+4. endpoint `GET /api/auth/session` zwraca bezpieczne dane użytkownika i jego profil.
+
+### 22.2 Konfiguracja e-mail
+
+Provider e-mail musi być włączony w ustawieniach Supabase Auth. W środowisku
+testowym można wyłączyć obowiązek potwierdzania adresu, aby użytkownik otrzymał
+sesję bezpośrednio po rejestracji. W środowisku produkcyjnym rekomendowane jest
+ponowne włączenie potwierdzania adresu oraz skonfigurowanie własnego SMTP.
+
+Wyłączenie całego providera e-mail blokuje zarówno rejestrację, jak i logowanie.
+Wbudowana usługa wysyłki Supabase ma limity, dlatego testy wymagające wielu
+wiadomości powinny korzystać z własnego SMTP albo trybu bez potwierdzania.
+
+### 22.3 Bezpieczna diagnostyka
+
+Stan sesji można sprawdzić przez:
+
+- komunikat zalogowanego użytkownika na froncie,
+- odpowiedź `GET /api/auth/session` z `authenticated=true`,
+- pole ostatniego logowania i logi Auth w panelu Supabase.
+
+Do zgłoszeń błędów nie należy dołączać pełnego pliku HAR, nagłówka `Cookie`,
+tokenów dostępu ani tokenów odświeżających. Ujawnioną sesję należy unieważnić,
+a następnie zalogować się ponownie.
+
+### 22.4 Kryteria odbioru
+
+Etap Supabase Auth jest ukończony, ponieważ:
+
+- rejestracja tworzy użytkownika oraz odpowiadający profil,
+- logowanie tworzy aktywną sesję,
+- odczyt sesji zwraca własny profil zgodnie z RLS,
+- wylogowanie usuwa lokalne ciasteczka sesji,
+- interfejs pokazuje stan zalogowania bez błędów w konsoli,
+- testy automatyczne przechodzą poprawnie.
+
+## 23. Następny etap — tabela włóczek
 
 Kolejny etap wersji 2.0.0 obejmie:
 
