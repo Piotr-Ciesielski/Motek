@@ -3,7 +3,11 @@ const path = require("path");
 const fs = require("fs");
 const fsPromises = require("fs/promises");
 const initSqlJs = require("sql.js");
-const { createSupabaseConnection } = require("./supabase");
+const {
+  createSupabaseAuthClient,
+  createSupabaseConnection,
+  readSupabaseAuthConfig,
+} = require("./supabase");
 
 const rootDir = __dirname;
 const configuredDbFile = process.env.DATABASE_FILE?.trim();
@@ -16,9 +20,14 @@ let SQL;
 let db;
 let server;
 let supabaseConnection;
+let supabaseAuthConfig;
 let shuttingDown = false;
 
 const MAX_JSON_BODY_BYTES = 16 * 1024;
+const AUTH_ACCESS_COOKIE = "motek_access_token";
+const AUTH_REFRESH_COOKIE = "motek_refresh_token";
+const AUTH_ACCESS_MAX_AGE = 60 * 60;
+const AUTH_REFRESH_MAX_AGE = 60 * 60 * 24 * 30;
 const MAX_TEXT_LENGTH = {
   name: 100,
   color: 50,
@@ -176,6 +185,184 @@ function sendText(res, status, text, contentType = "text/plain; charset=utf-8") 
     "Cache-Control": "no-store",
   });
   res.end(text);
+}
+
+function parseCookies(header) {
+  return String(header || "")
+    .split(";")
+    .map((part) => part.trim())
+    .filter(Boolean)
+    .reduce((cookies, part) => {
+      const separator = part.indexOf("=");
+      if (separator < 1) return cookies;
+      const name = part.slice(0, separator).trim();
+      const value = part.slice(separator + 1).trim();
+      try {
+        cookies[name] = decodeURIComponent(value);
+      } catch {
+        cookies[name] = value;
+      }
+      return cookies;
+    }, {});
+}
+
+function appendSetCookie(res, value) {
+  const current = res.getHeader("Set-Cookie");
+  const cookies = Array.isArray(current) ? current : current ? [current] : [];
+  res.setHeader("Set-Cookie", [...cookies, value]);
+}
+
+function buildAuthCookie(name, value, maxAge) {
+  const secure = process.env.NODE_ENV === "production" ? "; Secure" : "";
+  return `${name}=${encodeURIComponent(value)}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${maxAge}${secure}`;
+}
+
+function setAuthCookies(res, session) {
+  if (!session?.access_token || !session?.refresh_token) return;
+  appendSetCookie(
+    res,
+    buildAuthCookie(AUTH_ACCESS_COOKIE, session.access_token, AUTH_ACCESS_MAX_AGE)
+  );
+  appendSetCookie(
+    res,
+    buildAuthCookie(AUTH_REFRESH_COOKIE, session.refresh_token, AUTH_REFRESH_MAX_AGE)
+  );
+}
+
+function clearAuthCookies(res) {
+  appendSetCookie(res, buildAuthCookie(AUTH_ACCESS_COOKIE, "", 0));
+  appendSetCookie(res, buildAuthCookie(AUTH_REFRESH_COOKIE, "", 0));
+}
+
+function normalizeAuthEmail(value) {
+  if (typeof value !== "string") {
+    throw new ApiError(400, "Podaj prawidłowy adres e-mail.");
+  }
+
+  const email = value.trim().toLowerCase();
+  if (
+    !email ||
+    email.length > 254 ||
+    !/^[^\s@]+@[^\s@]+\.[^\s@]+$/u.test(email)
+  ) {
+    throw new ApiError(400, "Podaj prawidłowy adres e-mail.");
+  }
+  return email;
+}
+
+function normalizeAuthLogin(value) {
+  if (typeof value !== "string") {
+    throw new ApiError(400, "Login musi mieć 3-30 znaków: litery, cyfry lub podkreślenie.");
+  }
+
+  const login = value.trim().toLowerCase();
+  if (!/^[a-z0-9_]{3,30}$/u.test(login)) {
+    throw new ApiError(400, "Login musi mieć 3-30 znaków: litery, cyfry lub podkreślenie.");
+  }
+  return login;
+}
+
+function validateAuthPassword(value) {
+  if (typeof value !== "string" || value.length < 8 || value.length > 256) {
+    throw new ApiError(400, "Hasło musi mieć od 8 do 256 znaków.");
+  }
+  if (/^\s+$/u.test(value)) {
+    throw new ApiError(400, "Hasło nie może składać się wyłącznie ze spacji.");
+  }
+  if (!/[a-z]/u.test(value) || !/[A-Z]/u.test(value) || !/\d/u.test(value) || !/[^\p{L}\p{N}\s]/u.test(value)) {
+    throw new ApiError(400, "Hasło musi zawierać małą i wielką literę, cyfrę oraz znak specjalny.");
+  }
+  return value;
+}
+
+function normalizeFullName(value) {
+  if (value === undefined || value === null || value === "") return null;
+  if (typeof value !== "string" || value.trim().length > 200) {
+    throw new ApiError(400, "Imię i nazwisko może mieć maksymalnie 200 znaków.");
+  }
+  return value.trim() || null;
+}
+
+function authClient() {
+  if (!supabaseAuthConfig) {
+    throw new ApiError(503, "Logowanie nie jest jeszcze skonfigurowane.");
+  }
+  return createSupabaseAuthClient(supabaseAuthConfig);
+}
+
+function sanitizeAuthUser(user) {
+  if (!user) return null;
+  return {
+    id: user.id,
+    email: user.email || null,
+    emailConfirmed: Boolean(user.email_confirmed_at),
+    metadata: {
+      login: user.user_metadata?.login || null,
+      fullName: user.user_metadata?.full_name || null,
+    },
+  };
+}
+
+function genericAuthError(operation) {
+  if (operation === "login") {
+    return new ApiError(401, "Nieprawidłowy e-mail lub hasło.");
+  }
+  return new ApiError(400, "Nie udało się utworzyć konta. Sprawdź dane i spróbuj ponownie.");
+}
+
+async function updateLastLogin(userId) {
+  if (!supabaseConnection?.client || !userId) return;
+  const { error } = await supabaseConnection.client
+    .from("profiles")
+    .update({ last_login_at: new Date().toISOString() })
+    .eq("id", userId);
+  if (error) {
+    console.warn("Nie udało się zaktualizować daty ostatniego logowania.");
+  }
+}
+
+async function getAuthenticatedSession(req, res) {
+  if (!supabaseAuthConfig) return null;
+
+  const cookies = parseCookies(req.headers.cookie);
+  const accessToken = cookies[AUTH_ACCESS_COOKIE];
+  const refreshToken = cookies[AUTH_REFRESH_COOKIE];
+  if (!accessToken && !refreshToken) return null;
+
+  const client = createSupabaseAuthClient(supabaseAuthConfig);
+  let activeAccessToken = accessToken;
+  let userResult = accessToken
+    ? await client.auth.getUser(accessToken)
+    : { data: null, error: new Error("Brak tokenu dostępu") };
+
+  if (userResult.error && refreshToken) {
+    const refreshed = await client.auth.refreshSession({ refresh_token: refreshToken });
+    if (refreshed.data?.session) {
+      setAuthCookies(res, refreshed.data.session);
+      activeAccessToken = refreshed.data.session.access_token;
+      userResult = await client.auth.getUser(activeAccessToken);
+    }
+  }
+
+  if (userResult.error || !userResult.data?.user) {
+    clearAuthCookies(res);
+    return null;
+  }
+
+  const authenticatedClient = createSupabaseAuthClient(
+    supabaseAuthConfig,
+    activeAccessToken || undefined
+  );
+  const profileResult = await authenticatedClient
+    .from("profiles")
+    .select("id,login,email,full_name,avatar_url,status,role,created_at,updated_at,last_login_at")
+    .eq("id", data.user.id)
+    .maybeSingle();
+
+  return {
+    user: userResult.data.user,
+    profile: profileResult.error ? null : profileResult.data,
+  };
 }
 
 function scorePattern(pattern, yarns) {
@@ -391,7 +578,85 @@ function insertYarn(yarn) {
   persist();
 }
 
+async function handleAuthApi(req, res, url) {
+  if (req.method === "POST" && url.pathname === "/api/auth/register") {
+    const body = await readBody(req);
+    const email = normalizeAuthEmail(body.email);
+    const password = validateAuthPassword(body.password);
+    const login = normalizeAuthLogin(body.login);
+    const fullName = normalizeFullName(body.full_name);
+
+    const { data, error } = await authClient().auth.signUp({
+      email,
+      password,
+      options: {
+        data: {
+          login,
+          full_name: fullName,
+        },
+      },
+    });
+
+    if (error || !data?.user) {
+      throw genericAuthError("register");
+    }
+
+    if (data.session) {
+      setAuthCookies(res, data.session);
+      await updateLastLogin(data.user.id);
+    }
+
+    return sendJson(res, 201, {
+      user: sanitizeAuthUser(data.user),
+      requiresEmailConfirmation: !data.session,
+    });
+  }
+
+  if (req.method === "POST" && url.pathname === "/api/auth/login") {
+    const body = await readBody(req);
+    const email = normalizeAuthEmail(body.email);
+    const password = validateAuthPassword(body.password);
+    const { data, error } = await authClient().auth.signInWithPassword({ email, password });
+
+    if (error || !data?.user || !data.session) {
+      throw genericAuthError("login");
+    }
+
+    setAuthCookies(res, data.session);
+    await updateLastLogin(data.user.id);
+    return sendJson(res, 200, { user: sanitizeAuthUser(data.user) });
+  }
+
+  if (req.method === "POST" && url.pathname === "/api/auth/logout") {
+    const cookies = parseCookies(req.headers.cookie);
+    if (supabaseAuthConfig && cookies[AUTH_ACCESS_COOKIE]) {
+      const client = createSupabaseAuthClient(
+        supabaseAuthConfig,
+        cookies[AUTH_ACCESS_COOKIE]
+      );
+      await client.auth.signOut({ scope: "local" });
+    }
+    clearAuthCookies(res);
+    return sendJson(res, 200, { authenticated: false });
+  }
+
+  if (req.method === "GET" && url.pathname === "/api/auth/session") {
+    const session = await getAuthenticatedSession(req, res);
+    return sendJson(res, 200, {
+      authenticated: Boolean(session),
+      user: session ? sanitizeAuthUser(session.user) : null,
+      profile: session?.profile || null,
+    });
+  }
+
+  return false;
+}
+
 async function handleApi(req, res, url) {
+  if (url.pathname.startsWith("/api/auth/")) {
+    return handleAuthApi(req, res, url);
+  }
+
   if (req.method === "GET" && url.pathname === "/api/yarns") {
     return sendJson(res, 200, getYarns());
   }
@@ -474,6 +739,7 @@ async function main(options = {}) {
   )
     ? options.supabaseConnection
     : createSupabaseConnection();
+  supabaseAuthConfig = readSupabaseAuthConfig();
   if (supabaseConnection) {
     await supabaseConnection.verify();
     console.log("Połączenie Motka z Supabase działa.");
@@ -559,6 +825,7 @@ async function shutdown(signal = "shutdown") {
   }
   server = null;
   supabaseConnection = null;
+  supabaseAuthConfig = null;
 
   if (db) {
     persist();
@@ -591,4 +858,11 @@ if (require.main === module) {
   });
 }
 
-module.exports = { main, normalizeCatalogPattern, shutdown };
+module.exports = {
+  main,
+  normalizeAuthEmail,
+  normalizeAuthLogin,
+  normalizeCatalogPattern,
+  shutdown,
+  validateAuthPassword,
+};

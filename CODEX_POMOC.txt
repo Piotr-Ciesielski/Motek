@@ -18,3 +18,14 @@ Najwazniejsze zasady pracy:
 - Do recznych zmian plikow uzywaj zawsze `apply_patch`.
 - Przy zmianach frontendowych sprawdzaj efekt w plikach i skladnie JS.
 - Gdy zadanie jest wieksze, rozbij je na kroki i weryfikuj po drodze.
+
+Workflow pushu do GitHub:
+- Przed publikacja sprawdz branch, status i testy.
+- Skrypt `tmp/push-with-ssh-agent.sh` jest ignorowany przez Git i sluzy do
+  bezpiecznego pushu z osobnego okna Git Bash.
+- Skrypt uruchamia tymczasowy `ssh-agent`, dodaje lokalny klucz
+  `~/.ssh/id_ed25519` i wykonuje `git push -u origin <biezacy-branch>`.
+- Haslo do klucza wpisuje sie tylko w otwartym oknie terminala; hasla ani
+  klucza prywatnego nie zapisujemy w projekcie, logach ani repozytorium.
+- Po pushu tworzymy Pull Request do `main`, a merge wykonujemy dopiero po
+  przejsciu CI i recznej weryfikacji.

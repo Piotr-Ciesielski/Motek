@@ -106,6 +106,76 @@ h1 {
   padding: 22px;
 }
 
+.auth-panel {
+  margin-bottom: 22px;
+}
+
+.auth-forms {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.auth-form {
+  display: grid;
+  gap: 12px;
+  padding: 18px;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.45);
+}
+
+.auth-form h3 {
+  font-size: 1.35rem;
+}
+
+.auth-form label {
+  display: grid;
+  gap: 5px;
+  font-size: 0.86rem;
+  font-weight: 600;
+}
+
+.auth-form input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.82);
+  color: var(--text);
+  font: inherit;
+}
+
+.auth-logged-in {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.auth-user {
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: rgba(31, 154, 114, 0.12);
+  color: var(--good);
+  font-size: 0.86rem;
+  font-weight: 700;
+}
+
+.auth-message {
+  min-height: 1.5em;
+  margin: 14px 0 0;
+  font-size: 0.9rem;
+}
+
+.auth-message[data-kind="success"] {
+  color: var(--good);
+}
+
+.auth-message[data-kind="error"] {
+  color: var(--accent);
+}
+
 .panel--sticky {
   position: sticky;
   top: 18px;
@@ -377,6 +447,10 @@ body::before {
 
 @media (max-width: 960px) {
   .hero, .grid, .catalog-header {
+    grid-template-columns: 1fr;
+  }
+
+  .auth-forms {
     grid-template-columns: 1fr;
   }
 

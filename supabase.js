@@ -41,6 +41,71 @@ function readSupabaseConfig(env = process.env) {
   };
 }
 
+function validateSupabaseUrl(value) {
+  let parsedUrl;
+  try {
+    parsedUrl = new URL(value);
+  } catch {
+    throw new Error("SUPABASE_URL nie jest prawidłowym adresem URL.");
+  }
+
+  if (parsedUrl.protocol !== "https:") {
+    throw new Error("SUPABASE_URL musi używać bezpiecznego połączenia HTTPS.");
+  }
+
+  if (parsedUrl.username || parsedUrl.password) {
+    throw new Error("SUPABASE_URL nie może zawierać danych logowania.");
+  }
+
+  return parsedUrl.toString().replace(/\/$/, "");
+}
+
+function readSupabaseAuthConfig(env = process.env) {
+  const url = env.SUPABASE_URL?.trim();
+  const publishableKey = env.SUPABASE_PUBLISHABLE_KEY?.trim();
+
+  if (!url && !publishableKey) {
+    return null;
+  }
+
+  if (!url || !publishableKey) {
+    throw new Error(
+      "Konfiguracja Supabase Auth jest niepełna. Ustaw SUPABASE_URL i SUPABASE_PUBLISHABLE_KEY."
+    );
+  }
+
+  if (!publishableKey.startsWith("sb_publishable_")) {
+    throw new Error(
+      "SUPABASE_PUBLISHABLE_KEY musi być kluczem publicznym typu sb_publishable_."
+    );
+  }
+
+  return {
+    url: validateSupabaseUrl(url),
+    publishableKey,
+  };
+}
+
+function createSupabaseAuthClient(config, accessToken) {
+  const options = {
+    auth: {
+      persistSession: false,
+      autoRefreshToken: false,
+      detectSessionInUrl: false,
+    },
+  };
+
+  if (accessToken) {
+    options.global = {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    };
+  }
+
+  return createClient(config.url, config.publishableKey, options);
+}
+
 async function verifySupabaseDataApi(config, fetchImpl = globalThis.fetch) {
   if (typeof fetchImpl !== "function") {
     throw new Error("Ta wersja Node.js nie udostępnia funkcji fetch wymaganej przez Supabase.");
@@ -92,6 +157,8 @@ function createSupabaseConnection(options = {}) {
 
 module.exports = {
   createSupabaseConnection,
+  createSupabaseAuthClient,
   readSupabaseConfig,
+  readSupabaseAuthConfig,
   verifySupabaseDataApi,
 };
