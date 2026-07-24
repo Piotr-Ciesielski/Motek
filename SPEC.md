@@ -3,9 +3,9 @@
 ## Status wersji
 
 - bieżąca wydana wersja aplikacji: `1.0.2`
-- rozwijana wersja: `2.0.0`
-- zrealizowany zakres wersji 2.0.0: etap pierwszy — tabela i katalog wzorów
-- następny zakres: etap drugi — przeniesienie magazynu włóczek do Supabase
+- rozwijana wersja: `2.0.0-alpha.1`
+- zrealizowany zakres: katalog wzorów w Supabase oraz fundament tabeli profili Auth
+- następny zakres: integracja rejestracji/logowania i przeniesienie magazynu włóczek do Supabase
 
 ## 1. Cel produktu
 Motek to prosta aplikacja webowa dla dziewiarzy i dziewiarek, która pomaga dopasować dostępny zapas włóczek do wzorów udziergów.

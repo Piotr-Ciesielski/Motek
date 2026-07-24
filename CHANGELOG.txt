@@ -1,5 +1,12 @@
 Motek - log zmian
 
+Wersja 2.0.0-alpha.1 (w przygotowaniu) - fundament Supabase Auth
+- Dodano tabelę `profiles` powiązaną 1:1 z `auth.users`.
+- Dodano automatyczne tworzenie profilu po rejestracji oraz synchronizację adresu e-mail.
+- Włączono RLS ograniczający odczyt i edycję profilu do właściciela.
+- Zabezpieczono funkcje triggerów przed bezpośrednim wywołaniem przez API.
+- Interfejs rejestracji i logowania oraz migracja tabeli `yarns` pozostają kolejnymi etapami.
+
 Wersja 2.0.0 (w przygotowaniu) - etap 1: katalog wzorów w Supabase
 - Dodano bezpieczne połączenie backendu z Supabase przez zmienne środowiskowe.
 - Klucz typu secret pozostaje wyłącznie po stronie backendu i nie jest udostępniany frontendowi.
