@@ -1,6 +1,14 @@
 Motek - log zmian
 
-Wersja 2.0.0-alpha.2 (w przygotowaniu) - rejestracja i logowanie
+Wersja 2.0.0-alpha.3 (w przygotowaniu) - stabilizacja logowania i sesji
+- Sprawdzono pełny przepływ rejestracji użytkownika przez Supabase Auth.
+- Potwierdzono automatyczne tworzenie powiązanego rekordu w tabeli `profiles`.
+- Naprawiono odczyt profilu podczas sprawdzania aktywnej sesji.
+- Potwierdzono logowanie, wylogowanie i przechowywanie sesji w ciasteczkach HttpOnly.
+- Udokumentowano konfigurację providera e-mail oraz tryb testowy bez potwierdzania adresu.
+- Dodano zasady bezpiecznej diagnostyki bez udostępniania tokenów, ciasteczek i plików HAR.
+
+Wersja 2.0.0-alpha.2 - rejestracja i logowanie
 - Dodano endpointy rejestracji, logowania, wylogowania i odczytu sesji.
 - Sesja użytkownika jest przechowywana w bezpiecznych ciasteczkach HttpOnly.
 - Dodano formularze konta w interfejsie Motka.
