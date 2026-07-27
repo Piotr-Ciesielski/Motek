@@ -4,7 +4,7 @@
 
 - bieżąca wydana wersja aplikacji: `1.0.2`
 - rozwijana wersja: `2.0.0-alpha.8`
-- zrealizowany zakres: katalog wzorów, Supabase Auth, prywatny magazyn włóczek oraz bezpieczna ścieżka rankingu
+- zrealizowany zakres: katalog wzorów, Supabase Auth, prywatny magazyn włóczek, zapis i usuwanie w `yarns` oraz bezpieczna ścieżka rankingu
 - następny zakres: uzupełnienie kompletnych wymagań dopasowania dla wzorów
 
 ## 1. Cel produktu
@@ -326,7 +326,7 @@ Etap pierwszy uznaje się za ukończony, jeżeli:
 - rekordy niepełne są widocznie oznaczone
 - klucz secret nie znajduje się w kodzie, odpowiedzi API ani repozytorium
 - testy backendu, API i zabezpieczeń przechodzą poprawnie
-- dotychczasowa obsługa włóczek w SQLite nadal działa
+- endpointy magazynu włóczek działają przez Supabase
 
 ## 22. Zrealizowany etap — konta użytkowników i sesje
 
@@ -402,8 +402,9 @@ usuwania. Każda polityka ogranicza dostęp do rekordów, dla których `user_id`
 jest równe `auth.uid()`. Dostęp anonimowy jest wyłączony, a dostęp
 administracyjny pozostaje po stronie `service_role`.
 
-Tabela jest obecnie pusta produkcyjnie. Syntetyczne dane są używane wyłącznie
-w testach, a endpointy magazynu działają już przez Supabase.
+Tabela może zawierać dane użytkowników. Syntetyczne dane są używane wyłącznie
+w testach, a ręczna próba zapisu i usunięcia włóczki z aplikacji została
+potwierdzona w tabeli `public.yarns` po restarcie backendu.
 
 ### 23.2 Zrealizowany podetap — endpointy magazynu w Supabase
 
@@ -415,6 +416,12 @@ zweryfikowanego użytkownika, nigdy na podstawie danych z formularza.
 Brak konfiguracji Supabase zatrzymuje backend czytelnym błędem. Testy
 syntetyczne sprawdzają, że niezalogowany użytkownik otrzymuje odmowę, a dwaj
 użytkownicy nie widzą i nie usuwają wzajemnie swoich włóczek.
+
+27 lipca 2026 potwierdzono również ręcznie pełny przepływ z aplikacji:
+formularz wysłał `POST /api/yarns`, rekord pojawił się w `public.yarns`, a
+usunięcie z interfejsu usunęło ten sam rekord z Supabase. Po operacji ponownie
+uruchomiono backend, aby wykluczyć działanie starego procesu z lokalnym
+fallbackiem.
 
 ### 23.3 Zrealizowany podetap — bezpieczna ścieżka rankingu w Supabase
 
