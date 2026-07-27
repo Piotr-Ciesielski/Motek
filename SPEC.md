@@ -3,9 +3,9 @@
 ## Status wersji
 
 - bieżąca wydana wersja aplikacji: `1.0.2`
-- rozwijana wersja: `2.0.0-alpha.3`
-- zrealizowany zakres: katalog wzorów oraz kompletny podstawowy przepływ Supabase Auth
-- następny zakres: syntetyczne dane testowe i przeniesienie magazynu włóczek do Supabase
+- rozwijana wersja: `2.0.0-alpha.5`
+- zrealizowany zakres: katalog wzorów, Supabase Auth oraz prywatny magazyn włóczek
+- następny zakres: przeniesienie rankingu dopasowania na dane z Supabase
 
 ## 1. Cel produktu
 Motek to prosta aplikacja webowa dla dziewiarzy i dziewiarek, która pomaga dopasować dostępny zapas włóczek do wzorów udziergów.
@@ -200,8 +200,8 @@ Tabela `patterns` jest podłączona do backendu i służy jako źródło katalog
 wzorów widocznego na froncie. Katalog pozwala wyszukiwać rekordy i filtrować je
 według statusu weryfikacji.
 
-Magazyn włóczek oraz dotychczasowy mechanizm dopasowania pozostają tymczasowo
-w SQLite. Nowe rekordy wzorów nie zawierają jeszcze całkowitego zużycia włóczki
+Dotychczasowy mechanizm dopasowania pozostaje tymczasowo w SQLite. Nowe rekordy
+wzorów nie zawierają jeszcze całkowitego zużycia włóczki
 dla konkretnego rozmiaru, dlatego nie są jeszcze używane przez ranking
 dopasowania. Pozwala to niezależnie przetestować katalog przed drugim etapem
 migracji.
@@ -291,7 +291,7 @@ wyników dopasowania do magazynu użytkownika.
 | Obszar | Źródło danych | Stan |
 | --- | --- | --- |
 | katalog wzorów na froncie | Supabase `patterns` | aktywny |
-| magazyn włóczek | lokalna baza SQLite | aktywny przejściowo |
+| magazyn włóczek | Supabase `yarns` z RLS per użytkownik | aktywny |
 | ranking dopasowania | przykładowe wzory i włóczki w SQLite | aktywny przejściowo |
 | dokumenty PDF | lokalny ignorowany folder `Wzory` | tylko źródło importu |
 | konta użytkowników | Supabase Auth i `profiles` | aktywny |
@@ -402,5 +402,16 @@ usuwania. Każda polityka ogranicza dostęp do rekordów, dla których `user_id`
 jest równe `auth.uid()`. Dostęp anonimowy jest wyłączony, a dostęp
 administracyjny pozostaje po stronie `service_role`.
 
-Tabela jest obecnie pusta. Kolejny podetap to przygotowanie syntetycznych
-danych testowych i przełączenie endpointów magazynu na Supabase.
+Tabela jest obecnie pusta produkcyjnie. Syntetyczne dane są używane wyłącznie
+w testach, a endpointy magazynu działają już przez Supabase.
+
+### 23.2 Zrealizowany podetap — endpointy magazynu w Supabase
+
+Endpointy `GET /api/yarns`, `POST /api/yarns` i `DELETE /api/yarns/:id` używają
+Supabase, gdy aplikacja działa z konfiguracją chmurową. Backend przekazuje
+token sesji przez klienta Auth, a `user_id` nowego rekordu wyznacza na podstawie
+zweryfikowanego użytkownika, nigdy na podstawie danych z formularza.
+
+W trybie bez konfiguracji Supabase pozostaje lokalny fallback SQLite. Testy
+syntetyczne sprawdzają, że niezalogowany użytkownik otrzymuje odmowę, a dwaj
+użytkownicy nie widzą i nie usuwają wzajemnie swoich włóczek.

@@ -21,6 +21,7 @@ let db;
 let server;
 let supabaseConnection;
 let supabaseAuthConfig;
+let supabaseAuthClientFactory = createSupabaseAuthClient;
 let shuttingDown = false;
 
 const MAX_JSON_BODY_BYTES = 16 * 1024;
@@ -329,7 +330,7 @@ async function getAuthenticatedSession(req, res) {
   const refreshToken = cookies[AUTH_REFRESH_COOKIE];
   if (!accessToken && !refreshToken) return null;
 
-  const client = createSupabaseAuthClient(supabaseAuthConfig);
+  const client = supabaseAuthClientFactory(supabaseAuthConfig);
   let activeAccessToken = accessToken;
   let userResult = accessToken
     ? await client.auth.getUser(accessToken)
@@ -349,7 +350,7 @@ async function getAuthenticatedSession(req, res) {
     return null;
   }
 
-  const authenticatedClient = createSupabaseAuthClient(
+  const authenticatedClient = supabaseAuthClientFactory(
     supabaseAuthConfig,
     activeAccessToken || undefined
   );
@@ -362,7 +363,94 @@ async function getAuthenticatedSession(req, res) {
   return {
     user: userResult.data.user,
     profile: profileResult.error ? null : profileResult.data,
+    accessToken: activeAccessToken,
   };
+}
+
+async function requireAuthenticatedSession(req, res) {
+  const session = await getAuthenticatedSession(req, res);
+  if (!session) {
+    throw new ApiError(401, "Zaloguj się, aby zarządzać swoim magazynem włóczek.");
+  }
+  return session;
+}
+
+function normalizeSupabaseYarn(yarn) {
+  return {
+    id: Number(yarn.id),
+    name: yarn.name,
+    color: yarn.color,
+    material: yarn.material,
+    weightClass: yarn.weight_class,
+    length: Number(yarn.length_meters),
+    weight: Number(yarn.weight_grams),
+  };
+}
+
+function toSupabaseYarn(yarn, userId) {
+  return {
+    user_id: userId,
+    name: yarn.name,
+    color: yarn.color,
+    material: yarn.material,
+    weight_class: yarn.weightClass,
+    length_meters: yarn.length,
+    weight_grams: yarn.weight,
+  };
+}
+
+async function getSupabaseYarns(session) {
+  const { data, error } = await supabaseAuthClientFactory(
+    supabaseAuthConfig,
+    session.accessToken
+  )
+    .from("yarns")
+    .select("id,name,color,material,weight_class,length_meters,weight_grams")
+    .eq("user_id", session.user.id)
+    .order("id", { ascending: true });
+
+  if (error) {
+    throw new Error(`Nie udało się pobrać włóczek z Supabase: ${error.message}`);
+  }
+
+  return data.map(normalizeSupabaseYarn);
+}
+
+async function insertSupabaseYarn(session, yarn) {
+  const { data, error } = await supabaseAuthClientFactory(
+    supabaseAuthConfig,
+    session.accessToken
+  )
+    .from("yarns")
+    .insert(toSupabaseYarn(yarn, session.user.id))
+    .select("id,name,color,material,weight_class,length_meters,weight_grams")
+    .single();
+
+  if (error) {
+    throw new Error(`Nie udało się zapisać włóczki w Supabase: ${error.message}`);
+  }
+
+  return normalizeSupabaseYarn(data);
+}
+
+async function deleteSupabaseYarn(session, id) {
+  const { data, error } = await supabaseAuthClientFactory(
+    supabaseAuthConfig,
+    session.accessToken
+  )
+    .from("yarns")
+    .delete()
+    .eq("id", id)
+    .eq("user_id", session.user.id)
+    .select("id");
+
+  if (error) {
+    throw new Error(`Nie udało się usunąć włóczki z Supabase: ${error.message}`);
+  }
+
+  if (!data.length) {
+    throw new ApiError(404, "Nie znaleziono włóczki o podanym identyfikatorze.");
+  }
 }
 
 function scorePattern(pattern, yarns) {
@@ -630,7 +718,7 @@ async function handleAuthApi(req, res, url) {
   if (req.method === "POST" && url.pathname === "/api/auth/logout") {
     const cookies = parseCookies(req.headers.cookie);
     if (supabaseAuthConfig && cookies[AUTH_ACCESS_COOKIE]) {
-      const client = createSupabaseAuthClient(
+      const client = supabaseAuthClientFactory(
         supabaseAuthConfig,
         cookies[AUTH_ACCESS_COOKIE]
       );
@@ -658,12 +746,23 @@ async function handleApi(req, res, url) {
   }
 
   if (req.method === "GET" && url.pathname === "/api/yarns") {
-    return sendJson(res, 200, getYarns());
+    if (!supabaseConnection) {
+      return sendJson(res, 200, getYarns());
+    }
+
+    const session = await requireAuthenticatedSession(req, res);
+    return sendJson(res, 200, await getSupabaseYarns(session));
   }
 
   if (req.method === "POST" && url.pathname === "/api/yarns") {
     const body = await readBody(req);
-    insertYarn(validateYarn(body));
+    const yarn = validateYarn(body);
+    if (supabaseConnection) {
+      const session = await requireAuthenticatedSession(req, res);
+      return sendJson(res, 201, await insertSupabaseYarn(session, yarn));
+    }
+
+    insertYarn(yarn);
     const inserted = getYarns().at(-1);
     return sendJson(res, 201, inserted);
   }
@@ -673,6 +772,12 @@ async function handleApi(req, res, url) {
     if (!Number.isInteger(id) || id < 1) {
       throw new ApiError(400, "Identyfikator włóczki musi być dodatnią liczbą całkowitą.");
     }
+    if (supabaseConnection) {
+      const session = await requireAuthenticatedSession(req, res);
+      await deleteSupabaseYarn(session, id);
+      return sendJson(res, 204, {});
+    }
+
     const stmt = db.prepare("DELETE FROM yarns WHERE id = ?");
     stmt.run([id]);
     stmt.free();
@@ -739,7 +844,10 @@ async function main(options = {}) {
   )
     ? options.supabaseConnection
     : createSupabaseConnection();
-  supabaseAuthConfig = readSupabaseAuthConfig();
+  supabaseAuthConfig = Object.prototype.hasOwnProperty.call(options, "supabaseAuthConfig")
+    ? options.supabaseAuthConfig
+    : readSupabaseAuthConfig();
+  supabaseAuthClientFactory = options.supabaseAuthClientFactory || createSupabaseAuthClient;
   if (supabaseConnection) {
     await supabaseConnection.verify();
     console.log("Połączenie Motka z Supabase działa.");
@@ -826,6 +934,7 @@ async function shutdown(signal = "shutdown") {
   server = null;
   supabaseConnection = null;
   supabaseAuthConfig = null;
+  supabaseAuthClientFactory = createSupabaseAuthClient;
 
   if (db) {
     persist();
@@ -863,6 +972,8 @@ module.exports = {
   normalizeAuthEmail,
   normalizeAuthLogin,
   normalizeCatalogPattern,
+  normalizeSupabaseYarn,
+  toSupabaseYarn,
   shutdown,
   validateAuthPassword,
 };

@@ -61,6 +61,7 @@ const DEFAULT_PATTERNS = [
 
 let runtimeMode = "local";
 let baseUrl = "";
+let isAuthenticated = false;
 let autosaveTimer = null;
 let autosaveInFlight = null;
 let autosavePending = false;
@@ -244,6 +245,7 @@ function collectYarnsFromDom() {
 
 async function loadYarns() {
   if (runtimeMode === "remote") {
+    if (!isAuthenticated) return [];
     return api("/api/yarns");
   }
 
@@ -254,6 +256,10 @@ async function saveYarns() {
   const local = collectYarnsFromDom();
 
   if (runtimeMode === "remote") {
+    if (!isAuthenticated) {
+      throw new Error("Zaloguj się, aby zapisywać włóczki w swoim magazynie.");
+    }
+
     const existing = await api("/api/yarns");
     for (const yarn of existing) {
       await api(`/api/yarns/${yarn.id}`, { method: "DELETE" });
@@ -276,6 +282,9 @@ async function saveYarns() {
 
 async function deleteYarn(id) {
   if (runtimeMode === "remote") {
+    if (!isAuthenticated) {
+      throw new Error("Zaloguj się, aby zmieniać swój magazyn włóczek.");
+    }
     await api(`/api/yarns/${id}`, { method: "DELETE" });
     return;
   }
@@ -512,6 +521,7 @@ function setAuthBusy(form, busy) {
 
 function renderAuthState(payload) {
   const authenticated = Boolean(payload?.authenticated && payload.user);
+  isAuthenticated = authenticated;
   authForms.hidden = authenticated;
   authLoggedIn.hidden = !authenticated;
   authUser.hidden = !authenticated;
@@ -529,7 +539,7 @@ function renderAuthState(payload) {
   authProfileSummary.textContent = profile.full_name
     ? `${profile.full_name} (${profile.email || payload.user.email})`
     : profile.email || payload.user.email || "Zalogowany użytkownik";
-  authLead.textContent = "Sesja jest aktywna. Dane włóczek pozostają jeszcze w trybie przejściowym.";
+  authLead.textContent = "Sesja jest aktywna. Twój magazyn włóczek jest przechowywany prywatnie w Supabase.";
 }
 
 async function refreshAuthSession() {
@@ -544,6 +554,8 @@ async function refreshAuthSession() {
     renderAuthState(payload);
     if (!payload.authenticated) {
       setAuthMessage("Możesz założyć konto lub zalogować się.");
+    } else {
+      await refresh();
     }
   } catch (error) {
     renderAuthState({ authenticated: false });
@@ -596,6 +608,7 @@ logoutBtn.addEventListener("click", async () => {
   try {
     await api("/api/auth/logout", { method: "POST", body: "{}" });
     renderAuthState({ authenticated: false });
+    await refresh();
     setAuthMessage("Wylogowano.", "success");
   } catch (error) {
     setAuthMessage(error.message, "error");

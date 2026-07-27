@@ -31,6 +31,76 @@ test("serwer Motek działa bezpiecznie", async (t) => {
       needs_review: false,
     },
   ];
+  const syntheticUsers = {
+    "token-user-a": { id: "11111111-1111-4111-8111-111111111111", email: "a@example.com" },
+    "token-user-b": { id: "22222222-2222-4222-8222-222222222222", email: "b@example.com" },
+  };
+  const syntheticProfiles = Object.fromEntries(
+    Object.values(syntheticUsers).map((user) => [user.id, { id: user.id, login: user.id === syntheticUsers["token-user-a"].id ? "uzytkownik_a" : "uzytkownik_b", email: user.email }])
+  );
+  const syntheticYarns = [];
+  let nextSyntheticYarnId = 1;
+
+  function createSyntheticQuery(table, token) {
+    const filters = [];
+    let operation = "select";
+    let insertedRow = null;
+    const query = {
+      select() {
+        if (operation === "delete") {
+          const matches = syntheticYarns.filter((row) => filters.every(([field, value]) => row[field] === value));
+          matches.forEach((row) => syntheticYarns.splice(syntheticYarns.indexOf(row), 1));
+          return Promise.resolve({ data: matches.map((row) => ({ id: row.id })), error: null });
+        }
+        return query;
+      },
+      eq(field, value) {
+        filters.push([field, value]);
+        return query;
+      },
+      order() {
+        const rows = table === "yarns"
+          ? syntheticYarns.filter((row) => filters.every(([field, value]) => row[field] === value))
+          : [];
+        return Promise.resolve({ data: rows, error: null });
+      },
+      maybeSingle() {
+        const rows = table === "profiles"
+          ? Object.values(syntheticProfiles).filter((row) => filters.every(([field, value]) => row[field] === value))
+          : [];
+        return Promise.resolve({ data: rows[0] || null, error: null });
+      },
+      insert(row) {
+        operation = "insert";
+        insertedRow = { ...row, id: nextSyntheticYarnId++ };
+        syntheticYarns.push(insertedRow);
+        return query;
+      },
+      single() {
+        return Promise.resolve({ data: insertedRow, error: null });
+      },
+      delete() {
+        operation = "delete";
+        return query;
+      },
+    };
+    return query;
+  }
+
+  function fakeSupabaseAuthClientFactory(config, token) {
+    return {
+      auth: {
+        async getUser(accessToken) {
+          const user = syntheticUsers[accessToken];
+          return user ? { data: { user }, error: null } : { data: null, error: new Error("invalid token") };
+        },
+        async signOut() {},
+      },
+      from(table) {
+        return createSyntheticQuery(table, token);
+      },
+    };
+  }
   const fakeSupabaseConnection = {
     verify: async () => {},
     client: {
@@ -51,7 +121,11 @@ test("serwer Motek działa bezpiecznie", async (t) => {
       },
     },
   };
-  const runtime = await main({ supabaseConnection: fakeSupabaseConnection });
+  const runtime = await main({
+    supabaseConnection: fakeSupabaseConnection,
+    supabaseAuthConfig: { url: "https://projekt.supabase.co", publishableKey: "sb_publishable_test" },
+    supabaseAuthClientFactory: fakeSupabaseAuthClientFactory,
+  });
   const baseUrl = `http://${runtime.host}:${runtime.port}`;
 
   try {
@@ -71,10 +145,17 @@ test("serwer Motek działa bezpiecznie", async (t) => {
       assert.equal(response.headers.get("access-control-allow-origin"), null);
     });
 
-    await t.test("zapisuje i usuwa poprawną włóczkę w osobnej bazie", async () => {
+    await t.test("wymaga zalogowania do zdalnego magazynu", async () => {
+      const response = await fetch(`${baseUrl}/api/yarns`);
+      assert.equal(response.status, 401);
+    });
+
+    await t.test("izoluje syntetyczne dane włóczek między użytkownikami", async () => {
+      const userACookies = "motek_access_token=token-user-a";
+      const userBCookies = "motek_access_token=token-user-b";
       const createResponse = await fetch(`${baseUrl}/api/yarns`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", Cookie: userACookies },
         body: JSON.stringify({
           name: "Test automatyczny",
           color: "zielony",
@@ -88,7 +169,22 @@ test("serwer Motek działa bezpiecznie", async (t) => {
       const created = await createResponse.json();
       assert.equal(created.name, "Test automatyczny");
 
-      const deleteResponse = await fetch(`${baseUrl}/api/yarns/${created.id}`, { method: "DELETE" });
+      const userAList = await fetch(`${baseUrl}/api/yarns`, { headers: { Cookie: userACookies } });
+      assert.deepEqual((await userAList.json()).map((yarn) => yarn.name), ["Test automatyczny"]);
+
+      const userBList = await fetch(`${baseUrl}/api/yarns`, { headers: { Cookie: userBCookies } });
+      assert.deepEqual(await userBList.json(), []);
+
+      const forbiddenDelete = await fetch(`${baseUrl}/api/yarns/${created.id}`, {
+        method: "DELETE",
+        headers: { Cookie: userBCookies },
+      });
+      assert.equal(forbiddenDelete.status, 404);
+
+      const deleteResponse = await fetch(`${baseUrl}/api/yarns/${created.id}`, {
+        method: "DELETE",
+        headers: { Cookie: userACookies },
+      });
       assert.equal(deleteResponse.status, 204);
     });
 

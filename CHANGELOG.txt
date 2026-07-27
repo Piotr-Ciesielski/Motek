@@ -1,5 +1,12 @@
 Motek - log zmian
 
+Wersja 2.0.0-alpha.5 (w przygotowaniu) - magazyn włóczek per użytkownik
+- Przełączono zdalne endpointy odczytu, dodawania i usuwania włóczek na Supabase.
+- Powiązano zapisy z użytkownikiem wynikającym z aktywnej sesji Auth.
+- Dodano obsługę odmowy dla niezalogowanych użytkowników.
+- Dodano syntetyczny test izolacji magazynów dwóch użytkowników.
+- Frontend odświeża magazyn po zalogowaniu i czyści go po wylogowaniu.
+
 Wersja 2.0.0-alpha.4 (w przygotowaniu) - schemat magazynu włóczek w Supabase
 - Utworzono tabelę `yarns` z właścicielem powiązanym z Supabase Auth.
 - Dodano ograniczenia poprawności pól, indeks po właścicielu oraz automatyczne `updated_at`.
