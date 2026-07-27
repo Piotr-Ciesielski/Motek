@@ -84,12 +84,11 @@ czytać i zmieniać wyłącznie rekordy należące do niego. Backend przekazuje 
 sesji do klienta Supabase, a właściciel rekordu jest ustalany na podstawie
 uwierzytelnionej sesji, nie danych z formularza.
 
-### SQLite jako tryb przejściowy
+### Supabase jako jedyne źródło danych
 
-SQLite i `sql.js` pozostają lokalnym fallbackiem, gdy Supabase nie jest
-skonfigurowany. Ułatwia to uruchamianie projektu i zachowuje działanie starszej
-wersji aplikacji podczas migracji. Docelowo SQLite oraz zależność `sql.js`
-zostaną usunięte po zakończeniu migracji danych i rankingu.
+Supabase jest wymagane do uruchomienia aplikacji. Backend sprawdza konfigurację
+`SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY` i `SUPABASE_SECRET_KEY` przy starcie.
+Lokalny fallback SQLite oraz zależność `sql.js` zostały usunięte.
 
 ## API
 
@@ -155,10 +154,10 @@ jednym kroku:
 - potem przeniesiono magazyn włóczek do Supabase z izolacją użytkowników,
 - na końcu przygotowano bezpieczną ścieżkę rankingu.
 
-Takie podejście pozwala testować każdą granicę osobno: katalog, autoryzację,
-własność danych i dopasowanie. SQLite pozostaje awaryjną ścieżką lokalną, więc
-rozwój chmurowy nie odbiera możliwości uruchomienia aplikacji na jednym
-komputerze.
+Takie podejście pozwoliło testować każdą granicę osobno: katalog, autoryzację,
+własność danych i dopasowanie. Obecnie wszystkie dane aplikacji przechodzą przez
+Supabase, a lokalnie pozostają wyłącznie narzędzia importu i testowe dane
+syntetyczne.
 
 Najważniejsza zasada projektowa brzmi: **brak danych nie może udawać dokładnego
 wyniku**. Dlatego rekord wymagający weryfikacji jest widoczny w katalogu, ale
@@ -224,7 +223,7 @@ npm run patterns:import
 
 ## Stan projektu i wersjonowanie
 
-Aktualna wersja rozwojowa: **2.0.0-alpha.7**.
+Aktualna wersja rozwojowa: **2.0.0-alpha.8**.
 
 Najważniejsze etapy zapisane w `CHANGELOG.txt`:
 
@@ -233,14 +232,15 @@ Najważniejsze etapy zapisane w `CHANGELOG.txt`:
 - `2.0.0-alpha.1–alpha.3` — profile, rejestracja, logowanie i sesje,
 - `2.0.0-alpha.4–alpha.5` — tabela `yarns` i magazyn per użytkownik,
 - `2.0.0-alpha.6` — ranking z prywatnego magazynu Supabase,
-- `2.0.0-alpha.7` — osobne role włóczek i walidowany lokalny format wymagań.
+- `2.0.0-alpha.7` — osobne role włóczek i walidowany lokalny format wymagań,
+- `2.0.0-alpha.8` — Supabase jako jedyne źródło danych i usunięcie SQLite.
 
 ## Najbliższy etap rozwoju
 
 Następnym krokiem jest ręczne uzupełnienie kompletnych, potwierdzonych danych
-zużycia dla rozmiarów i wariantów wybranych wzorów. Dopiero po tej weryfikacji
-warto aktualizować rekordy w Supabase. Kolejne etapy to pełna migracja rankingu
-oraz usunięcie SQLite z produkcyjnej ścieżki aplikacji.
+zużycia dla rozmiarów i wariantów wybranych wzorów oraz ich selektywny import do
+Supabase. Ranking automatycznie pomija rekordy bez pełnych, zweryfikowanych
+wymagań.
 
 ## Struktura projektu
 
@@ -259,4 +259,3 @@ Motek/
 ├── CHANGELOG.txt                 # historia wersji
 └── VERSION                       # bieżąca wersja projektu
 ```
-

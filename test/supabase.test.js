@@ -32,7 +32,7 @@ test("konfiguracja Supabase Auth używa wyłącznie klucza publishable", () => {
   assert.ok(createSupabaseAuthClient(config));
 });
 
-test("konfiguracja Supabase jest opcjonalna w okresie przejściowym", () => {
+test("parser konfiguracji rozpoznaje brak ustawień przed startem aplikacji", () => {
   assert.equal(readSupabaseConfig({}), null);
 });
 

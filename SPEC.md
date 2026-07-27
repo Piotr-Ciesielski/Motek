@@ -3,7 +3,7 @@
 ## Status wersji
 
 - bieżąca wydana wersja aplikacji: `1.0.2`
-- rozwijana wersja: `2.0.0-alpha.6`
+- rozwijana wersja: `2.0.0-alpha.8`
 - zrealizowany zakres: katalog wzorów, Supabase Auth, prywatny magazyn włóczek oraz bezpieczna ścieżka rankingu
 - następny zakres: uzupełnienie kompletnych wymagań dopasowania dla wzorów
 
@@ -298,9 +298,8 @@ wyników dopasowania do magazynu użytkownika.
 | konta użytkowników | Supabase Auth i `profiles` | aktywny |
 | sesje użytkowników | Supabase Auth i ciasteczka HttpOnly | aktywny |
 
-Backend weryfikuje połączenie z Supabase przy starcie. Gdy konfiguracja
-Supabase nie jest dostępna, aplikacja może nadal uruchomić się w ograniczonym
-trybie lokalnym.
+Backend weryfikuje połączenie z Supabase przy starcie. Kompletna konfiguracja
+Supabase jest wymagana — aplikacja nie uruchamia już lokalnego trybu SQLite.
 
 ## 20. Bezpieczeństwo wdrożonego etapu
 
@@ -377,9 +376,9 @@ Etap Supabase Auth jest ukończony, ponieważ:
 - interfejs pokazuje stan zalogowania bez błędów w konsoli,
 - testy automatyczne przechodzą poprawnie.
 
-## 23. Następny etap — tabela włóczek
+## 23. Zakończenie migracji — tabela włóczek i ranking
 
-Kolejny etap wersji 2.0.0 obejmie:
+Etap migracji wersji 2.0.0 obejmował:
 
 1. zaprojektowanie tabeli `yarns` w Supabase,
 2. migrację endpointów dodawania, odczytu i usuwania włóczek,
@@ -409,11 +408,11 @@ w testach, a endpointy magazynu działają już przez Supabase.
 ### 23.2 Zrealizowany podetap — endpointy magazynu w Supabase
 
 Endpointy `GET /api/yarns`, `POST /api/yarns` i `DELETE /api/yarns/:id` używają
-Supabase, gdy aplikacja działa z konfiguracją chmurową. Backend przekazuje
+Supabase. Backend przekazuje
 token sesji przez klienta Auth, a `user_id` nowego rekordu wyznacza na podstawie
 zweryfikowanego użytkownika, nigdy na podstawie danych z formularza.
 
-W trybie bez konfiguracji Supabase pozostaje lokalny fallback SQLite. Testy
+Brak konfiguracji Supabase zatrzymuje backend czytelnym błędem. Testy
 syntetyczne sprawdzają, że niezalogowany użytkownik otrzymuje odmowę, a dwaj
 użytkownicy nie widzą i nie usuwają wzajemnie swoich włóczek.
 

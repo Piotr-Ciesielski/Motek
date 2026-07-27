@@ -1,5 +1,12 @@
 Motek - log zmian
 
+Wersja 2.0.0-alpha.8 (w przygotowaniu) - Supabase jako jedyne źródło danych
+- Usunięto lokalny fallback SQLite z backendu i frontendu.
+- Usunięto zależność `sql.js` oraz konfigurację `DATABASE_FILE` z testów.
+- Backend wymaga kompletnej konfiguracji Supabase przy uruchomieniu.
+- Magazyn włóczek, katalog wzorów i ranking korzystają wyłącznie z Supabase.
+- Zaktualizowano dokumentację migracji i kryteria dalszego rozwoju.
+
 Wersja 2.0.0-alpha.7 (w przygotowaniu) - role włóczek w rankingu
 - Rozszerzono lokalny format importu o kompletne wymagania wariantów.
 - Dodano obsługę osobnych ról włóczek w wariancie wzoru.

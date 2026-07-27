@@ -2,7 +2,6 @@ const http = require("http");
 const path = require("path");
 const fs = require("fs");
 const fsPromises = require("fs/promises");
-const initSqlJs = require("sql.js");
 const {
   createSupabaseAuthClient,
   createSupabaseConnection,
@@ -10,14 +9,6 @@ const {
 } = require("./supabase");
 
 const rootDir = __dirname;
-const configuredDbFile = process.env.DATABASE_FILE?.trim();
-const dbFile = configuredDbFile
-  ? path.resolve(rootDir, configuredDbFile)
-  : path.join(rootDir, "data", "motek.sqlite");
-const dbDir = path.dirname(dbFile);
-
-let SQL;
-let db;
 let server;
 let supabaseConnection;
 let supabaseAuthConfig;
@@ -63,111 +54,6 @@ class ApiError extends Error {
     super(message);
     this.status = status;
   }
-}
-
-function toJson(value) {
-  return JSON.stringify(value);
-}
-
-function fromJson(value) {
-  if (Array.isArray(value)) return value;
-  return value ? JSON.parse(value) : [];
-}
-
-function initSchema() {
-  db.run(`
-    CREATE TABLE IF NOT EXISTS yarns (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      name TEXT NOT NULL,
-      color TEXT NOT NULL,
-      material TEXT NOT NULL,
-      weightClass TEXT NOT NULL,
-      length INTEGER NOT NULL,
-      weight INTEGER NOT NULL
-    );
-
-    CREATE TABLE IF NOT EXISTS patterns (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      name TEXT NOT NULL,
-      description TEXT NOT NULL,
-      yarnsNeeded INTEGER NOT NULL,
-      metersNeeded INTEGER NOT NULL,
-      gramsNeeded INTEGER NOT NULL,
-      materials TEXT NOT NULL,
-      weightClasses TEXT NOT NULL,
-      colors TEXT NOT NULL
-    );
-  `);
-}
-
-function seedData() {
-  const yarnCount = db.exec("SELECT COUNT(*) AS count FROM yarns");
-  const patternCount = db.exec("SELECT COUNT(*) AS count FROM patterns");
-  const yarnTotal = yarnCount.length ? yarnCount[0].values[0][0] : 0;
-  const patternTotal = patternCount.length ? patternCount[0].values[0][0] : 0;
-
-  if (yarnTotal === 0) {
-    const stmt = db.prepare(
-      "INSERT INTO yarns (name, color, material, weightClass, length, weight) VALUES (?, ?, ?, ?, ?, ?)"
-    );
-    const seedYarns = [
-      ["Merino Soft", "beż", "wełna", "dk", 220, 80],
-      ["Cotton Air", "krem", "bawełna", "sport", 180, 60],
-      ["Acrylic Mix", "szary", "mieszanka", "dk", 240, 100],
-    ];
-    db.run("BEGIN TRANSACTION");
-    seedYarns.forEach((row) => stmt.run(row));
-    db.run("COMMIT");
-    stmt.free();
-  }
-
-  if (patternTotal === 0) {
-    const stmt = db.prepare(
-      "INSERT INTO patterns (name, description, yarnsNeeded, metersNeeded, gramsNeeded, materials, weightClasses, colors) VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
-    );
-    const seedPatterns = [
-      [
-        "Prosty szal",
-        "Lekki projekt dla mieszanych zapasów. Wystarczy jedna dobra włóczka lub kilka podobnych motków.",
-        1,
-        300,
-        100,
-        toJson(["wełna", "alpaka", "akryl", "mieszanka"]),
-        toJson(["lace", "fingering", "sport", "dk"]),
-        "dowolny",
-      ],
-      [
-        "Ciepła czapka",
-        "Dobry wybór na pojedyncze motki średniej grubości.",
-        1,
-        180,
-        60,
-        toJson(["wełna", "alpaka", "akryl", "mieszanka"]),
-        toJson(["sport", "dk", "worsted"]),
-        "dowolny",
-      ],
-      [
-        "Sweter dziecięcy",
-        "Projekt wymaga kilku motków, ale nadal jest realny dla większości domowych zapasów.",
-        3,
-        750,
-        250,
-        toJson(["wełna", "alpaka", "bawełna", "mieszanka"]),
-        toJson(["sport", "dk", "worsted"]),
-        "spójne",
-      ],
-    ];
-    db.run("BEGIN TRANSACTION");
-    seedPatterns.forEach((row) => stmt.run(row));
-    db.run("COMMIT");
-    stmt.free();
-  }
-}
-
-function persist() {
-  const data = db.export();
-  fs.mkdirSync(dbDir, { recursive: true });
-  fs.writeFileSync(dbFile, Buffer.from(data));
 }
 
 function sendJson(res, status, payload) {
@@ -489,8 +375,8 @@ function scorePattern(pattern, yarns) {
     };
   }
 
-  const materials = fromJson(pattern.materials);
-  const weightClasses = fromJson(pattern.weightClasses);
+  const materials = Array.isArray(pattern.materials) ? pattern.materials : [];
+  const weightClasses = Array.isArray(pattern.weightClasses) ? pattern.weightClasses : [];
   const totalLength = yarns.reduce((sum, yarn) => sum + yarn.length, 0);
   const totalWeight = yarns.reduce((sum, yarn) => sum + yarn.weight, 0);
   const matchedYarns = yarns.filter((yarn) => materials.includes(yarn.material) && weightClasses.includes(yarn.weightClass)).length;
@@ -632,29 +518,6 @@ function sendFile(res, filePath) {
   });
 }
 
-function getYarns() {
-  const stmt = db.prepare("SELECT * FROM yarns ORDER BY id ASC");
-  const rows = [];
-  while (stmt.step()) rows.push(stmt.getAsObject());
-  stmt.free();
-  return rows;
-}
-
-function getLocalPatterns() {
-  const stmt = db.prepare("SELECT * FROM patterns ORDER BY id ASC");
-  const rows = [];
-  while (stmt.step()) {
-    const pattern = stmt.getAsObject();
-    rows.push({
-      ...pattern,
-      materials: fromJson(pattern.materials),
-      weightClasses: fromJson(pattern.weightClasses),
-    });
-  }
-  stmt.free();
-  return rows;
-}
-
 function normalizeCatalogPattern(pattern) {
   const ratio =
     pattern.meters_per_100g === null || pattern.meters_per_100g === undefined
@@ -752,20 +615,6 @@ function normalizeMatchingRequirement(value) {
 }
 
 async function getCatalogPatterns() {
-  if (!supabaseConnection) {
-    return getLocalPatterns().map((pattern) => ({
-      id: pattern.id,
-      name: pattern.name,
-      description: pattern.description,
-      materials: pattern.materials,
-      metersPer100g: null,
-      yarnRequirements: [],
-      matchingRequirements: [],
-      sourceLanguage: "pl",
-      needsReview: true,
-    }));
-  }
-
   const { data, error } = await supabaseConnection.client
     .from("patterns")
     .select(
@@ -826,22 +675,6 @@ function validateYarn(body) {
     length: normalizeMeasurement(body.length, "length"),
     weight: normalizeMeasurement(body.weight, "weight"),
   };
-}
-
-function insertYarn(yarn) {
-  const stmt = db.prepare(
-    "INSERT INTO yarns (name, color, material, weightClass, length, weight) VALUES (?, ?, ?, ?, ?, ?)"
-  );
-  stmt.run([
-    yarn.name,
-    yarn.color,
-    yarn.material,
-    yarn.weightClass,
-    yarn.length,
-    yarn.weight,
-  ]);
-  stmt.free();
-  persist();
 }
 
 async function handleAuthApi(req, res, url) {
@@ -924,10 +757,6 @@ async function handleApi(req, res, url) {
   }
 
   if (req.method === "GET" && url.pathname === "/api/yarns") {
-    if (!supabaseConnection) {
-      return sendJson(res, 200, getYarns());
-    }
-
     const session = await requireAuthenticatedSession(req, res);
     return sendJson(res, 200, await getSupabaseYarns(session));
   }
@@ -935,14 +764,8 @@ async function handleApi(req, res, url) {
   if (req.method === "POST" && url.pathname === "/api/yarns") {
     const body = await readBody(req);
     const yarn = validateYarn(body);
-    if (supabaseConnection) {
-      const session = await requireAuthenticatedSession(req, res);
-      return sendJson(res, 201, await insertSupabaseYarn(session, yarn));
-    }
-
-    insertYarn(yarn);
-    const inserted = getYarns().at(-1);
-    return sendJson(res, 201, inserted);
+    const session = await requireAuthenticatedSession(req, res);
+    return sendJson(res, 201, await insertSupabaseYarn(session, yarn));
   }
 
   if (req.method === "DELETE" && url.pathname.startsWith("/api/yarns/")) {
@@ -950,19 +773,8 @@ async function handleApi(req, res, url) {
     if (!Number.isInteger(id) || id < 1) {
       throw new ApiError(400, "Identyfikator włóczki musi być dodatnią liczbą całkowitą.");
     }
-    if (supabaseConnection) {
-      const session = await requireAuthenticatedSession(req, res);
-      await deleteSupabaseYarn(session, id);
-      return sendJson(res, 204, {});
-    }
-
-    const stmt = db.prepare("DELETE FROM yarns WHERE id = ?");
-    stmt.run([id]);
-    stmt.free();
-    if (db.getRowsModified() === 0) {
-      throw new ApiError(404, "Nie znaleziono włóczki o podanym identyfikatorze.");
-    }
-    persist();
+    const session = await requireAuthenticatedSession(req, res);
+    await deleteSupabaseYarn(session, id);
     return sendJson(res, 204, {});
   }
 
@@ -971,17 +783,8 @@ async function handleApi(req, res, url) {
   }
 
   if (req.method === "GET" && url.pathname === "/api/matches") {
-    if (supabaseConnection) {
-      const session = await requireAuthenticatedSession(req, res);
-      return sendJson(res, 200, await getSupabaseMatches(session));
-    }
-
-    const yarns = getYarns();
-    const scored = getLocalPatterns()
-      .map((pattern) => ({ pattern, ...scorePattern(pattern, yarns) }))
-      .filter((item) => item.doable)
-      .sort((a, b) => b.total - a.total);
-    return sendJson(res, 200, scored);
+    const session = await requireAuthenticatedSession(req, res);
+    return sendJson(res, 200, await getSupabaseMatches(session));
   }
 
   sendJson(res, 404, { error: "Nieznany endpoint" });
@@ -1031,26 +834,13 @@ async function main(options = {}) {
     ? options.supabaseAuthConfig
     : readSupabaseAuthConfig();
   supabaseAuthClientFactory = options.supabaseAuthClientFactory || createSupabaseAuthClient;
-  if (supabaseConnection) {
-    await supabaseConnection.verify();
-    console.log("Połączenie Motka z Supabase działa.");
-  } else {
-    console.log("Supabase nie jest jeszcze skonfigurowany. Motek używa lokalnej bazy SQLite.");
+  if (!supabaseConnection || !supabaseAuthConfig) {
+    throw new Error(
+      "Motek wymaga konfiguracji Supabase. Ustaw SUPABASE_URL, SUPABASE_SECRET_KEY i SUPABASE_PUBLISHABLE_KEY."
+    );
   }
-
-  SQL = await initSqlJs({
-    locateFile: (file) => path.join(rootDir, "node_modules", "sql.js", "dist", file),
-  });
-
-  if (fs.existsSync(dbFile)) {
-    db = new SQL.Database(fs.readFileSync(dbFile));
-  } else {
-    db = new SQL.Database();
-  }
-
-  initSchema();
-  seedData();
-  persist();
+  await supabaseConnection.verify();
+  console.log("Połączenie Motka z Supabase działa.");
 
   server = http.createServer(async (req, res) => {
     let url;
@@ -1118,12 +908,6 @@ async function shutdown(signal = "shutdown") {
   supabaseConnection = null;
   supabaseAuthConfig = null;
   supabaseAuthClientFactory = createSupabaseAuthClient;
-
-  if (db) {
-    persist();
-    db.close();
-    db = null;
-  }
 
   console.log("Motek został bezpiecznie zatrzymany.");
 }

@@ -1,18 +1,11 @@
 const { test } = require("node:test");
 const assert = require("node:assert/strict");
-const fs = require("node:fs/promises");
-const os = require("node:os");
-const path = require("node:path");
-
-const tempDir = path.join(os.tmpdir(), `motek-test-${process.pid}-${Date.now()}`);
 process.env.HOST = "127.0.0.1";
 process.env.PORT = "0";
-process.env.DATABASE_FILE = path.join(tempDir, "motek-test.sqlite");
 
 const { main, shutdown } = require("../server");
 
 test("serwer Motek działa bezpiecznie", async (t) => {
-  await fs.mkdir(tempDir, { recursive: true });
   const supabasePatterns = [
     {
       id: 21,
@@ -272,7 +265,6 @@ test("serwer Motek działa bezpiecznie", async (t) => {
     });
   } finally {
     await shutdown("test");
-    await fs.rm(tempDir, { recursive: true, force: true });
   }
 
   await assert.rejects(fetch(`${baseUrl}/`, { signal: AbortSignal.timeout(1_000) }));

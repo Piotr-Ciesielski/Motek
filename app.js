@@ -20,133 +20,24 @@ const authMessage = document.getElementById("authMessage");
 const authLead = document.getElementById("authLead");
 const logoutBtn = document.getElementById("logoutBtn");
 
-const LOCAL_STORAGE_KEY = "motek.yarns.v1";
-const DEFAULT_LOCAL_YARNS = [
-  { name: "Merino Soft", color: "beż", material: "wełna", weightClass: "dk", length: 220, weight: 80 },
-  { name: "Cotton Air", color: "krem", material: "bawełna", weightClass: "sport", length: 180, weight: 60 },
-  { name: "Acrylic Mix", color: "szary", material: "mieszanka", weightClass: "dk", length: 240, weight: 100 },
-];
-const DEFAULT_PATTERNS = [
-  {
-    name: "Prosty szal",
-    description: "Lekki projekt dla mieszanych zapasów. Wystarczy jedna dobra włóczka lub kilka podobnych motków.",
-    yarnsNeeded: 1,
-    metersNeeded: 300,
-    gramsNeeded: 100,
-    materials: ["wełna", "alpaka", "akryl", "mieszanka"],
-    weightClasses: ["lace", "fingering", "sport", "dk"],
-    colors: "dowolny",
-  },
-  {
-    name: "Ciepła czapka",
-    description: "Dobry wybór na pojedyncze motki średniej grubości.",
-    yarnsNeeded: 1,
-    metersNeeded: 180,
-    gramsNeeded: 60,
-    materials: ["wełna", "alpaka", "akryl", "mieszanka"],
-    weightClasses: ["sport", "dk", "worsted"],
-    colors: "dowolny",
-  },
-  {
-    name: "Sweter dziecięcy",
-    description: "Projekt wymaga kilku motków, ale nadal jest realny dla większości domowych zapasów.",
-    yarnsNeeded: 3,
-    metersNeeded: 750,
-    gramsNeeded: 250,
-    materials: ["wełna", "alpaka", "bawełna", "mieszanka"],
-    weightClasses: ["sport", "dk", "worsted"],
-    colors: "spójne",
-  },
-];
-
-let runtimeMode = "local";
-let baseUrl = "";
+let baseUrl = window.location.origin;
 let isAuthenticated = false;
 let autosaveTimer = null;
 let autosaveInFlight = null;
 let autosavePending = false;
-let memoryLocalYarns = null;
 let catalogPatterns = [];
-
-function normalizeYarns(yarns) {
-  let nextId = 1;
-
-  return yarns.map((yarn) => {
-    const parsedId = Number(yarn.id);
-    const id = Number.isFinite(parsedId) && parsedId > 0 ? parsedId : nextId;
-    nextId = Math.max(nextId, id + 1);
-
-    return {
-      id,
-      name: yarn.name || "Bez nazwy",
-      color: yarn.color || "nieokreślony",
-      material: yarn.material || "mieszanka",
-      weightClass: yarn.weightClass || "dk",
-      length: Number(yarn.length) || 0,
-      weight: Number(yarn.weight) || 0,
-    };
-  });
-}
-
-function cloneDefaultYarns() {
-  return normalizeYarns(DEFAULT_LOCAL_YARNS);
-}
-
-function persistLocalYarns(yarns) {
-  const normalized = normalizeYarns(yarns);
-  memoryLocalYarns = normalized;
-
-  try {
-    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(normalized));
-  } catch {
-    // Some browsers restrict storage for file:// pages.
-  }
-
-  return normalized;
-}
-
-function readLocalYarns() {
-  if (memoryLocalYarns) {
-    return memoryLocalYarns;
-  }
-
-  try {
-    const raw = localStorage.getItem(LOCAL_STORAGE_KEY);
-    if (!raw) {
-      return persistLocalYarns(cloneDefaultYarns());
-    }
-
-    const parsed = JSON.parse(raw);
-    if (!Array.isArray(parsed)) {
-      return persistLocalYarns(cloneDefaultYarns());
-    }
-
-    return persistLocalYarns(parsed);
-  } catch {
-    memoryLocalYarns = memoryLocalYarns || cloneDefaultYarns();
-    return memoryLocalYarns;
-  }
-}
-
-function removeLocalYarn(id) {
-  const remaining = readLocalYarns().filter((yarn) => String(yarn.id) !== String(id));
-  persistLocalYarns(remaining);
-}
 
 async function detectRuntimeMode() {
   if (window.location.protocol === "file:") {
-    runtimeMode = "local";
-    baseUrl = "";
-    return;
+    throw new Error("Otwórz Motka przez serwer Node.js z konfiguracją Supabase.");
   }
 
-  runtimeMode = "remote";
   baseUrl = window.location.origin;
 }
 
 async function api(path, options = {}) {
   if (!baseUrl) {
-    throw new Error("Tryb lokalny nie używa backendu.");
+    throw new Error("Brak adresu backendu Motka.");
   }
 
   const response = await fetch(`${baseUrl}${path}`, {
@@ -244,52 +135,39 @@ function collectYarnsFromDom() {
 }
 
 async function loadYarns() {
-  if (runtimeMode === "remote") {
-    if (!isAuthenticated) return [];
-    return api("/api/yarns");
-  }
-
-  return readLocalYarns();
+  if (!isAuthenticated) return [];
+  return api("/api/yarns");
 }
 
 async function saveYarns() {
   const local = collectYarnsFromDom();
 
-  if (runtimeMode === "remote") {
-    if (!isAuthenticated) {
-      throw new Error("Zaloguj się, aby zapisywać włóczki w swoim magazynie.");
-    }
-
-    const existing = await api("/api/yarns");
-    for (const yarn of existing) {
-      await api(`/api/yarns/${yarn.id}`, { method: "DELETE" });
-    }
-
-    const savedYarns = [];
-    for (const yarn of local) {
-      savedYarns.push(
-        await api("/api/yarns", {
-          method: "POST",
-          body: JSON.stringify(yarn),
-        })
-      );
-    }
-    return savedYarns;
+  if (!isAuthenticated) {
+    throw new Error("Zaloguj się, aby zapisywać włóczki w swoim magazynie.");
   }
 
-  return persistLocalYarns(local);
+  const existing = await api("/api/yarns");
+  for (const yarn of existing) {
+    await api(`/api/yarns/${yarn.id}`, { method: "DELETE" });
+  }
+
+  const savedYarns = [];
+  for (const yarn of local) {
+    savedYarns.push(
+      await api("/api/yarns", {
+        method: "POST",
+        body: JSON.stringify(yarn),
+      })
+    );
+  }
+  return savedYarns;
 }
 
 async function deleteYarn(id) {
-  if (runtimeMode === "remote") {
-    if (!isAuthenticated) {
-      throw new Error("Zaloguj się, aby zmieniać swój magazyn włóczek.");
-    }
-    await api(`/api/yarns/${id}`, { method: "DELETE" });
-    return;
+  if (!isAuthenticated) {
+    throw new Error("Zaloguj się, aby zmieniać swój magazyn włóczek.");
   }
-
-  removeLocalYarn(id);
+  await api(`/api/yarns/${id}`, { method: "DELETE" });
 }
 
 function syncDomIds(savedYarns) {
@@ -299,56 +177,13 @@ function syncDomIds(savedYarns) {
   });
 }
 
-function scorePattern(pattern, yarns) {
-  const totalLength = yarns.reduce((sum, yarn) => sum + yarn.length, 0);
-  const totalWeight = yarns.reduce((sum, yarn) => sum + yarn.weight, 0);
-  const matchedYarns = yarns.filter(
-    (yarn) => pattern.materials.includes(yarn.material) && pattern.weightClasses.includes(yarn.weightClass)
-  ).length;
-  const lengthScore = Math.min(totalLength / pattern.metersNeeded, 1);
-  const weightScore = Math.min(totalWeight / pattern.gramsNeeded, 1);
-  const materialScore = Math.min(matchedYarns / pattern.yarnsNeeded, 1);
-  const colorScore = pattern.colors === "dowolny" ? 1 : 0.8;
-  const total = Math.round(lengthScore * 40 + weightScore * 25 + materialScore * 25 + colorScore * 10);
-  const doable =
-    totalLength >= pattern.metersNeeded &&
-    totalWeight >= pattern.gramsNeeded &&
-    matchedYarns >= pattern.yarnsNeeded;
-
-  return { total, doable, totalLength, totalWeight, matchedYarns };
-}
-
 async function loadMatches() {
-  if (runtimeMode === "remote") {
-    if (!isAuthenticated) return [];
-    return api("/api/matches");
-  }
-
-  const yarns = readLocalYarns();
-  return DEFAULT_PATTERNS.map((pattern) => ({ pattern, ...scorePattern(pattern, yarns) }))
-    .filter((item) => item.doable)
-    .sort((a, b) => b.total - a.total);
-}
-
-function normalizeLocalCatalogPattern(pattern, index) {
-  return {
-    id: index + 1,
-    name: pattern.name,
-    description: pattern.description,
-    materials: pattern.materials,
-    metersPer100g: null,
-    yarnRequirements: [],
-    sourceLanguage: "pl",
-    needsReview: true,
-  };
+  if (!isAuthenticated) return [];
+  return api("/api/matches");
 }
 
 async function loadPatternCatalog() {
-  if (runtimeMode === "remote") {
-    return api("/api/patterns");
-  }
-
-  return DEFAULT_PATTERNS.map(normalizeLocalCatalogPattern);
+  return api("/api/patterns");
 }
 
 function formatRatio(value) {
@@ -489,10 +324,7 @@ async function renderSummary() {
   const yarns = await loadYarns();
   const totalLength = yarns.reduce((sum, yarn) => sum + yarn.length, 0);
   const totalWeight = yarns.reduce((sum, yarn) => sum + yarn.weight, 0);
-  const storageText =
-    runtimeMode === "remote"
-      ? "Zestaw jest przechowywany w backendzie."
-      : "Zestaw jest przechowywany lokalnie w przeglądarce.";
+  const storageText = "Zestaw jest przechowywany prywatnie w Supabase.";
 
   const yarnCount = document.createElement("strong");
   yarnCount.textContent = String(yarns.length);
@@ -544,12 +376,6 @@ function renderAuthState(payload) {
 }
 
 async function refreshAuthSession() {
-  if (runtimeMode !== "remote") {
-    renderAuthState({ authenticated: false });
-    setAuthMessage("Logowanie jest dostępne po uruchomieniu backendu Motka.");
-    return;
-  }
-
   try {
     const payload = await api("/api/auth/session");
     renderAuthState(payload);
