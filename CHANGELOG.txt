@@ -1,5 +1,11 @@
 Motek - log zmian
 
+Wersja 2.0.0-alpha.6 (w przygotowaniu) - bezpieczny ranking z Supabase
+- Dodano pole `matching_requirements` dla kompletnych wymagań wariantów wzorów.
+- Przełączono zdalny endpoint `GET /api/matches` na prywatne włóczki użytkownika i katalog Supabase.
+- Ranking pomija rekordy niezweryfikowane lub pozbawione pełnych danych zamiast zgadywać zużycie.
+- Dodano syntetyczny test dopasowania i izolacji wyników między użytkownikami.
+
 Wersja 2.0.0-alpha.5 (w przygotowaniu) - magazyn włóczek per użytkownik
 - Przełączono zdalne endpointy odczytu, dodawania i usuwania włóczek na Supabase.
 - Powiązano zapisy z użytkownikiem wynikającym z aktywnej sesji Auth.

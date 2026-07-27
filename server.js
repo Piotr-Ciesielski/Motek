@@ -468,6 +468,29 @@ function scorePattern(pattern, yarns) {
   return { total, doable, totalLength, totalWeight, matchedYarns };
 }
 
+async function getSupabaseMatches(session) {
+  const [yarns, patterns] = await Promise.all([
+    getSupabaseYarns(session),
+    getCatalogPatterns(),
+  ]);
+
+  return patterns
+    .filter((pattern) => !pattern.needsReview)
+    .flatMap((pattern) =>
+      pattern.matchingRequirements.map((variant) => ({
+        pattern: {
+          ...pattern,
+          ...variant,
+          id: `${pattern.id}:${variant.id}`,
+          name: `${pattern.name} — ${variant.label}`,
+        },
+        ...scorePattern({ ...pattern, ...variant }, yarns),
+      }))
+    )
+    .filter((item) => item.doable)
+    .sort((a, b) => b.total - a.total);
+}
+
 async function readBody(req) {
   const contentType = String(req.headers["content-type"] || "")
     .split(";", 1)[0]
@@ -569,9 +592,48 @@ function normalizeCatalogPattern(pattern) {
     yarnRequirements: Array.isArray(pattern.yarn_requirements)
       ? pattern.yarn_requirements
       : [],
+    matchingRequirements: normalizeMatchingRequirements(pattern.matching_requirements),
     sourceLanguage: pattern.source_language || "unknown",
     needsReview: Boolean(pattern.needs_review),
   };
+}
+
+function normalizeMatchingRequirements(value) {
+  if (!value || typeof value !== "object" || !Array.isArray(value.variants)) {
+    return [];
+  }
+
+  return value.variants.flatMap((variant, index) => {
+    if (!variant || typeof variant !== "object") return [];
+
+    const yarnsNeeded = Number(variant.yarns_needed);
+    const metersNeeded = Number(variant.meters_needed);
+    const gramsNeeded = Number(variant.grams_needed);
+    const materials = Array.isArray(variant.materials) ? variant.materials.filter(Boolean) : [];
+    const weightClasses = Array.isArray(variant.weight_classes)
+      ? variant.weight_classes.filter(Boolean)
+      : [];
+
+    if (
+      !Number.isInteger(yarnsNeeded) || yarnsNeeded < 1 ||
+      !Number.isInteger(metersNeeded) || metersNeeded < 1 ||
+      !Number.isInteger(gramsNeeded) || gramsNeeded < 1 ||
+      materials.length === 0 || weightClasses.length === 0
+    ) {
+      return [];
+    }
+
+    return [{
+      id: String(variant.id || `wariant-${index + 1}`),
+      label: String(variant.label || variant.size || `Wariant ${index + 1}`),
+      yarnsNeeded,
+      metersNeeded,
+      gramsNeeded,
+      materials,
+      weightClasses,
+      colors: typeof variant.colors === "string" ? variant.colors : "dowolny",
+    }];
+  });
 }
 
 async function getCatalogPatterns() {
@@ -583,6 +645,7 @@ async function getCatalogPatterns() {
       materials: pattern.materials,
       metersPer100g: null,
       yarnRequirements: [],
+      matchingRequirements: [],
       sourceLanguage: "pl",
       needsReview: true,
     }));
@@ -591,7 +654,7 @@ async function getCatalogPatterns() {
   const { data, error } = await supabaseConnection.client
     .from("patterns")
     .select(
-      "id,name,description,materials,meters_per_100g,yarn_requirements,source_language,needs_review"
+      "id,name,description,materials,meters_per_100g,yarn_requirements,matching_requirements,source_language,needs_review"
     )
     .order("name", { ascending: true });
 
@@ -793,6 +856,11 @@ async function handleApi(req, res, url) {
   }
 
   if (req.method === "GET" && url.pathname === "/api/matches") {
+    if (supabaseConnection) {
+      const session = await requireAuthenticatedSession(req, res);
+      return sendJson(res, 200, await getSupabaseMatches(session));
+    }
+
     const yarns = getYarns();
     const scored = getLocalPatterns()
       .map((pattern) => ({ pattern, ...scorePattern(pattern, yarns) }))

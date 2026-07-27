@@ -27,6 +27,20 @@ test("serwer Motek działa bezpiecznie", async (t) => {
           meters_per_100g: 400,
         },
       ],
+      matching_requirements: {
+        variants: [
+          {
+            id: "m",
+            label: "M",
+            yarns_needed: 1,
+            meters_needed: 200,
+            grams_needed: 80,
+            materials: ["wełna"],
+            weight_classes: ["dk"],
+            colors: "dowolny",
+          },
+        ],
+      },
       source_language: "pl",
       needs_review: false,
     },
@@ -172,8 +186,18 @@ test("serwer Motek działa bezpiecznie", async (t) => {
       const userAList = await fetch(`${baseUrl}/api/yarns`, { headers: { Cookie: userACookies } });
       assert.deepEqual((await userAList.json()).map((yarn) => yarn.name), ["Test automatyczny"]);
 
+      const userAMatches = await fetch(`${baseUrl}/api/matches`, { headers: { Cookie: userACookies } });
+      const matches = await userAMatches.json();
+      assert.equal(userAMatches.status, 200);
+      assert.equal(matches.length, 1);
+      assert.equal(matches[0].pattern.name, "Testowy wzór Supabase — M");
+      assert.equal(matches[0].total, 100);
+
       const userBList = await fetch(`${baseUrl}/api/yarns`, { headers: { Cookie: userBCookies } });
       assert.deepEqual(await userBList.json(), []);
+
+      const userBMatches = await fetch(`${baseUrl}/api/matches`, { headers: { Cookie: userBCookies } });
+      assert.deepEqual(await userBMatches.json(), []);
 
       const forbiddenDelete = await fetch(`${baseUrl}/api/yarns/${created.id}`, {
         method: "DELETE",
@@ -204,6 +228,18 @@ test("serwer Motek działa bezpiecznie", async (t) => {
             role: "główna",
             materials: ["wełna"],
             meters_per_100g: 400,
+          },
+        ],
+        matchingRequirements: [
+          {
+            id: "m",
+            label: "M",
+            yarnsNeeded: 1,
+            metersNeeded: 200,
+            gramsNeeded: 80,
+            materials: ["wełna"],
+            weightClasses: ["dk"],
+            colors: "dowolny",
           },
         ],
         sourceLanguage: "pl",

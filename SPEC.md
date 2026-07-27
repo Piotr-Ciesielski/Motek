@@ -3,9 +3,9 @@
 ## Status wersji
 
 - bieżąca wydana wersja aplikacji: `1.0.2`
-- rozwijana wersja: `2.0.0-alpha.5`
-- zrealizowany zakres: katalog wzorów, Supabase Auth oraz prywatny magazyn włóczek
-- następny zakres: przeniesienie rankingu dopasowania na dane z Supabase
+- rozwijana wersja: `2.0.0-alpha.6`
+- zrealizowany zakres: katalog wzorów, Supabase Auth, prywatny magazyn włóczek oraz bezpieczna ścieżka rankingu
+- następny zakres: uzupełnienie kompletnych wymagań dopasowania dla wzorów
 
 ## 1. Cel produktu
 Motek to prosta aplikacja webowa dla dziewiarzy i dziewiarek, która pomaga dopasować dostępny zapas włóczek do wzorów udziergów.
@@ -228,6 +228,7 @@ Rekord katalogu zawiera:
 - `materials` — lista rozpoznanych materiałów
 - `meters_per_100g` — parametr głównej włóczki, jeśli można go jednoznacznie ustalić
 - `yarn_requirements` — lista wszystkich wymaganych lub alternatywnych włóczek
+- `matching_requirements` — kompletne wymagania wariantów lub rozmiarów używane przez ranking
 - `source_filename` — unikalna nazwa źródłowego pliku PDF
 - `source_language` — język dokumentu źródłowego
 - `needs_review` — informacja, czy dane wymagają dodatkowej weryfikacji
@@ -292,7 +293,7 @@ wyników dopasowania do magazynu użytkownika.
 | --- | --- | --- |
 | katalog wzorów na froncie | Supabase `patterns` | aktywny |
 | magazyn włóczek | Supabase `yarns` z RLS per użytkownik | aktywny |
-| ranking dopasowania | przykładowe wzory i włóczki w SQLite | aktywny przejściowo |
+| ranking dopasowania | Supabase `patterns` + prywatne `yarns`, tylko dla kompletnych wymagań | aktywny przejściowo |
 | dokumenty PDF | lokalny ignorowany folder `Wzory` | tylko źródło importu |
 | konta użytkowników | Supabase Auth i `profiles` | aktywny |
 | sesje użytkowników | Supabase Auth i ciasteczka HttpOnly | aktywny |
@@ -415,3 +416,30 @@ zweryfikowanego użytkownika, nigdy na podstawie danych z formularza.
 W trybie bez konfiguracji Supabase pozostaje lokalny fallback SQLite. Testy
 syntetyczne sprawdzają, że niezalogowany użytkownik otrzymuje odmowę, a dwaj
 użytkownicy nie widzą i nie usuwają wzajemnie swoich włóczek.
+
+### 23.3 Zrealizowany podetap — bezpieczna ścieżka rankingu w Supabase
+
+Tabela `patterns` zawiera teraz pole `matching_requirements` w formacie:
+
+```json
+{
+  "variants": [
+    {
+      "id": "m",
+      "label": "M",
+      "yarns_needed": 1,
+      "meters_needed": 1200,
+      "grams_needed": 300,
+      "materials": ["wełna"],
+      "weight_classes": ["dk"],
+      "colors": "dowolny"
+    }
+  ]
+}
+```
+
+`GET /api/matches` wymaga zalogowania, pobiera prywatny magazyn użytkownika
+oraz wzory z Supabase i ocenia wyłącznie zweryfikowane warianty z kompletnymi
+danymi. Obecne 116 rekordów ma pustą listę wariantów, dlatego nie są jeszcze
+prezentowane jako potwierdzone dopasowania. System nie wylicza brakujących
+metrów ani gramów na podstawie przypuszczeń.

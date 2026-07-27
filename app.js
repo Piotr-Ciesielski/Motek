@@ -320,6 +320,7 @@ function scorePattern(pattern, yarns) {
 
 async function loadMatches() {
   if (runtimeMode === "remote") {
+    if (!isAuthenticated) return [];
     return api("/api/matches");
   }
 
