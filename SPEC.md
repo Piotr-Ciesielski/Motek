@@ -386,3 +386,21 @@ Kolejny etap wersji 2.0.0 obejmie:
 4. rozszerzenie modelu wzorów o całkowite zużycie włóczki dla rozmiarów,
 5. dostosowanie algorytmu dopasowania do danych Supabase,
 6. usunięcie SQLite i zależności `sql.js` po zakończeniu migracji.
+
+### 23.1 Zrealizowany podetap — schemat tabeli włóczek
+
+Utworzono tabelę `public.yarns` w Supabase. Rekord zawiera:
+
+- `id` — identyfikator generowany przez bazę,
+- `user_id` — właściciela powiązanego z `auth.users`,
+- `name`, `color`, `material`, `weight_class`,
+- `length_meters` i `weight_grams`,
+- `created_at` i `updated_at`.
+
+Tabela ma włączone RLS oraz osobne polityki odczytu, dodawania, edycji i
+usuwania. Każda polityka ogranicza dostęp do rekordów, dla których `user_id`
+jest równe `auth.uid()`. Dostęp anonimowy jest wyłączony, a dostęp
+administracyjny pozostaje po stronie `service_role`.
+
+Tabela jest obecnie pusta. Kolejny podetap to przygotowanie syntetycznych
+danych testowych i przełączenie endpointów magazynu na Supabase.

@@ -1,5 +1,11 @@
 Motek - log zmian
 
+Wersja 2.0.0-alpha.4 (w przygotowaniu) - schemat magazynu włóczek w Supabase
+- Utworzono tabelę `yarns` z właścicielem powiązanym z Supabase Auth.
+- Dodano ograniczenia poprawności pól, indeks po właścicielu oraz automatyczne `updated_at`.
+- Włączono RLS z osobnymi politykami odczytu, dodawania, edycji i usuwania własnych włóczek.
+- Wyłączono dostęp anonimowy; tabela pozostaje pusta do czasu migracji endpointów.
+
 Wersja 2.0.0-alpha.3 (w przygotowaniu) - stabilizacja logowania i sesji
 - Sprawdzono pełny przepływ rejestracji użytkownika przez Supabase Auth.
 - Potwierdzono automatyczne tworzenie powiązanego rekordu w tabeli `profiles`.
