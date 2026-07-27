@@ -23,6 +23,17 @@ function readImportData() {
     throw new Error("Plik importu zawiera powtórzone nazwy plików źródłowych.");
   }
 
+  for (const record of document.records) {
+    if (
+      !record.matching_requirements ||
+      !Array.isArray(record.matching_requirements.variants)
+    ) {
+      throw new Error(
+        `Rekord ${record.source_filename} nie zawiera poprawnego matching_requirements.`
+      );
+    }
+  }
+
   if (!SOURCE_FILTER) {
     return document.records;
   }

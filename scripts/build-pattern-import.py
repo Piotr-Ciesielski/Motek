@@ -13,6 +13,7 @@ DATABASE_FIELDS = (
     "materials",
     "meters_per_100g",
     "yarn_requirements",
+    "matching_requirements",
     "source_filename",
     "source_language",
     "needs_review",
@@ -52,6 +53,33 @@ def validate_record(record: dict) -> list[str]:
     requirements = record.get("yarn_requirements")
     if not isinstance(requirements, list):
         errors.append(f"{source}: yarn_requirements musi być listą")
+
+    matching_requirements = record.get("matching_requirements")
+    if not isinstance(matching_requirements, dict) or not isinstance(
+        matching_requirements.get("variants"), list
+    ):
+        errors.append(
+            f"{source}: matching_requirements musi zawierać listę variants"
+        )
+    else:
+        for index, variant in enumerate(matching_requirements["variants"], start=1):
+            if not isinstance(variant, dict):
+                errors.append(f"{source}: wariant {index} nie jest obiektem")
+                continue
+            for field in ("yarns_needed", "meters_needed", "grams_needed"):
+                value = variant.get(field)
+                if not isinstance(value, int) or isinstance(value, bool) or value < 1:
+                    errors.append(
+                        f"{source}: wariant {index} ma nieprawidłowe pole {field}"
+                    )
+            for field in ("materials", "weight_classes"):
+                value = variant.get(field)
+                if not isinstance(value, list) or not all(
+                    isinstance(item, str) and item.strip() for item in value
+                ):
+                    errors.append(
+                        f"{source}: wariant {index} ma nieprawidłowe pole {field}"
+                    )
 
     if record.get("source_language") not in ALLOWED_LANGUAGES:
         errors.append(f"{source}: nieobsługiwany język źródła")
@@ -99,7 +127,13 @@ def main() -> None:
         merged = {**candidate, **overrides.get(source_filename, {})}
         merged["source_filename"] = source_filename
 
-        record = {field: merged[field] for field in DATABASE_FIELDS}
+        record = {
+            field: merged.get(
+                field,
+                {"variants": []} if field == "matching_requirements" else None,
+            )
+            for field in DATABASE_FIELDS
+        }
         validation_errors.extend(validate_record(record))
         records.append(record)
 

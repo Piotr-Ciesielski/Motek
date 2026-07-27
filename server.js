@@ -454,6 +454,41 @@ async function deleteSupabaseYarn(session, id) {
 }
 
 function scorePattern(pattern, yarns) {
+  if (Array.isArray(pattern.requirements) && pattern.requirements.length > 0) {
+    const allocation = allocateRequirementYarns(pattern.requirements, yarns);
+    if (!allocation) {
+      return {
+        total: 0,
+        doable: false,
+        totalLength: 0,
+        totalWeight: 0,
+        matchedYarns: 0,
+      };
+    }
+
+    const requiredLength = pattern.requirements.reduce(
+      (sum, requirement) => sum + requirement.metersNeeded,
+      0
+    );
+    const requiredWeight = pattern.requirements.reduce(
+      (sum, requirement) => sum + requirement.gramsNeeded,
+      0
+    );
+    const totalLength = allocation.flat().reduce((sum, yarn) => sum + yarn.length, 0);
+    const totalWeight = allocation.flat().reduce((sum, yarn) => sum + yarn.weight, 0);
+    const lengthScore = Math.min(totalLength / requiredLength, 1);
+    const weightScore = Math.min(totalWeight / requiredWeight, 1);
+    const total = Math.round(lengthScore * 40 + weightScore * 25 + 25 + 10);
+
+    return {
+      total,
+      doable: true,
+      totalLength,
+      totalWeight,
+      matchedYarns: allocation.flat().length,
+    };
+  }
+
   const materials = fromJson(pattern.materials);
   const weightClasses = fromJson(pattern.weightClasses);
   const totalLength = yarns.reduce((sum, yarn) => sum + yarn.length, 0);
@@ -466,6 +501,49 @@ function scorePattern(pattern, yarns) {
   const total = Math.round(lengthScore * 40 + weightScore * 25 + materialScore * 25 + colorScore * 10);
   const doable = totalLength >= pattern.metersNeeded && totalWeight >= pattern.gramsNeeded && matchedYarns >= pattern.yarnsNeeded;
   return { total, doable, totalLength, totalWeight, matchedYarns };
+}
+
+function allocateRequirementYarns(requirements, yarns) {
+  function choose(index, used, allocation) {
+    if (index === requirements.length) return allocation;
+
+    const requirement = requirements[index];
+    const eligible = yarns.filter(
+      (yarn, yarnIndex) =>
+        !used.has(yarnIndex) &&
+        requirement.materials.includes(yarn.material) &&
+        requirement.weightClasses.includes(yarn.weightClass)
+    );
+
+    function chooseGroup(start, group, length, weight) {
+      if (
+        group.length >= requirement.yarnsNeeded &&
+        length >= requirement.metersNeeded &&
+        weight >= requirement.gramsNeeded
+      ) {
+        const nextUsed = new Set(used);
+        group.forEach((yarn) => nextUsed.add(yarns.indexOf(yarn)));
+        const result = choose(index + 1, nextUsed, [...allocation, group]);
+        if (result) return result;
+      }
+
+      if (group.length >= requirement.yarnsNeeded) return null;
+      for (let candidate = start; candidate < eligible.length; candidate += 1) {
+        const result = chooseGroup(
+          candidate + 1,
+          [...group, eligible[candidate]],
+          length + eligible[candidate].length,
+          weight + eligible[candidate].weight
+        );
+        if (result) return result;
+      }
+      return null;
+    }
+
+    return chooseGroup(0, [], 0, 0);
+  }
+
+  return choose(0, new Set(), []);
 }
 
 async function getSupabaseMatches(session) {
@@ -623,6 +701,13 @@ function normalizeMatchingRequirements(value) {
       return [];
     }
 
+    const yarnRequirements = Array.isArray(variant.yarn_requirements)
+      ? variant.yarn_requirements.flatMap((requirement) => {
+          const normalized = normalizeMatchingRequirement(requirement);
+          return normalized ? [normalized] : [];
+        })
+      : [];
+
     return [{
       id: String(variant.id || `wariant-${index + 1}`),
       label: String(variant.label || variant.size || `Wariant ${index + 1}`),
@@ -632,8 +717,38 @@ function normalizeMatchingRequirements(value) {
       materials,
       weightClasses,
       colors: typeof variant.colors === "string" ? variant.colors : "dowolny",
+      ...(yarnRequirements.length > 0 ? { requirements: yarnRequirements } : {}),
     }];
   });
+}
+
+function normalizeMatchingRequirement(value) {
+  if (!value || typeof value !== "object") return null;
+  const yarnsNeeded = Number(value.yarns_needed);
+  const metersNeeded = Number(value.meters_needed);
+  const gramsNeeded = Number(value.grams_needed);
+  const materials = Array.isArray(value.materials) ? value.materials.filter(Boolean) : [];
+  const weightClasses = Array.isArray(value.weight_classes)
+    ? value.weight_classes.filter(Boolean)
+    : [];
+
+  if (
+    !Number.isInteger(yarnsNeeded) || yarnsNeeded < 1 ||
+    !Number.isInteger(metersNeeded) || metersNeeded < 1 ||
+    !Number.isInteger(gramsNeeded) || gramsNeeded < 1 ||
+    materials.length === 0 || weightClasses.length === 0
+  ) {
+    return null;
+  }
+
+  return {
+    role: String(value.role || "wymagana włóczka"),
+    yarnsNeeded,
+    metersNeeded,
+    gramsNeeded,
+    materials,
+    weightClasses,
+  };
 }
 
 async function getCatalogPatterns() {

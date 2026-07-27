@@ -432,7 +432,17 @@ Tabela `patterns` zawiera teraz pole `matching_requirements` w formacie:
       "grams_needed": 300,
       "materials": ["wełna"],
       "weight_classes": ["dk"],
-      "colors": "dowolny"
+      "colors": "dowolny",
+      "yarn_requirements": [
+        {
+          "role": "główna",
+          "yarns_needed": 1,
+          "meters_needed": 1200,
+          "grams_needed": 300,
+          "materials": ["wełna"],
+          "weight_classes": ["dk"]
+        }
+      ]
     }
   ]
 }
@@ -440,6 +450,8 @@ Tabela `patterns` zawiera teraz pole `matching_requirements` w formacie:
 
 `GET /api/matches` wymaga zalogowania, pobiera prywatny magazyn użytkownika
 oraz wzory z Supabase i ocenia wyłącznie zweryfikowane warianty z kompletnymi
-danymi. Obecne 116 rekordów ma pustą listę wariantów, dlatego nie są jeszcze
-prezentowane jako potwierdzone dopasowania. System nie wylicza brakujących
-metrów ani gramów na podstawie przypuszczeń.
+danymi. Wariant może dodatkowo przechowywać osobne wymagania dla włóczki
+głównej, dodatkowej lub kontrastowej. Ranking przydziela motki do tych ról
+bez ponownego użycia tego samego motka. Obecne 116 rekordów ma pustą listę
+wariantów, dlatego nie są jeszcze prezentowane jako potwierdzone dopasowania.
+System nie wylicza brakujących metrów ani gramów na podstawie przypuszczeń.
