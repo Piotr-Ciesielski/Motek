@@ -618,6 +618,13 @@ pełny zestaw kandydatów i dokładność w ramach limitu węzłów, ale dodano 
 przycinanie gałęzi bez wystarczającej liczby włóczek, metrów lub gramów. Pozostaje
 benchmark maksimum i decyzja o dalszej optymalizacji lub workerze.
 
+**Wynik benchmarku 2026-07-28:** syntetyczny magazyn 500 włóczek i katalog 300
+typowych wzorów został przeliczony w 83,48 ms; wszystkie 300 przypadków zakończyło
+się poprawnym dopasowaniem. Celowo trudny przypadek dwóch ról po 251 włóczek
+zakończył się po 1,38 s kontrolowanym błędem limitu 25 000 węzłów. Przy obecnych
+limitach worker nie jest potrzebny dla typowych danych. Pozostaje opcjonalny dla
+wyjątkowo złożonych wzorów lub zwiększenia limitów produktu.
+
 ### AUD-29 — Walidacja JSONB w bazie jest słabsza niż walidacja importera
 
 1. Lokalizacja: migracja 20260728000002_validate_pattern_matching_requirements.sql,
