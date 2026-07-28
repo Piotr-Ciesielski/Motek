@@ -231,7 +231,7 @@ npm run patterns:import
 
 ## Stan projektu i wersjonowanie
 
-Aktualna wersja rozwojowa: **2.0.0-alpha.8**.
+Aktualna wersja rozwojowa: **2.0.0-alpha.9**.
 
 Najważniejsze etapy zapisane w `CHANGELOG.txt`:
 
@@ -242,6 +242,7 @@ Najważniejsze etapy zapisane w `CHANGELOG.txt`:
 - `2.0.0-alpha.6` — ranking z prywatnego magazynu Supabase,
 - `2.0.0-alpha.7` — osobne role włóczek i walidowany lokalny format wymagań,
 - `2.0.0-alpha.8` — Supabase jako jedyne źródło danych i usunięcie SQLite.
+- `2.0.0-alpha.9` — bezpieczny autosave, zabezpieczenia Auth, limity produktu i ograniczenie kosztu rankingu.
 
 ## Najbliższy etap rozwoju
 

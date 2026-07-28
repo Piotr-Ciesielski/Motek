@@ -1,5 +1,12 @@
 Motek - log zmian
 
+Wersja 2.0.0-alpha.9 (w przygotowaniu) - stabilizacja bezpieczeństwa i limitów produktu
+- Zabezpieczono autosave przed kasowaniem całego magazynu podczas zapisu.
+- Dodano `COOKIE_SECURE`, rate limiting Auth oraz limity kosztu rankingu.
+- Ustalono limit 500 włóczek na użytkownika i 300 wzorów w katalogu.
+- Rozdzielono limit magazynu od limitu pojedynczego obliczenia rankingu.
+- Skalowanie ponad obecne limity pozostaje opcjonalne i zależne od benchmarku.
+
 Wersja 2.0.0-alpha.8 (w przygotowaniu) - Supabase jako jedyne źródło danych
 - Usunięto lokalny fallback SQLite z backendu i frontendu.
 - Usunięto zależność `sql.js` oraz konfigurację `DATABASE_FILE` z testów.
