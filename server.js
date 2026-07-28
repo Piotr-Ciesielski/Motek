@@ -38,6 +38,7 @@ const YARN_WRITE_BLOCK_MS = 60 * 1000;
 const HTTP_REQUEST_TIMEOUT_MS = 30 * 1000;
 const HTTP_HEADERS_TIMEOUT_MS = 10 * 1000;
 const HTTP_KEEP_ALIVE_TIMEOUT_MS = 5 * 1000;
+const HTTP_BODY_TIMEOUT_MS = 10 * 1000;
 const MAX_MATCH_VARIANTS = 250;
 const MAX_MATCH_ROLE_REQUIREMENTS = 8;
 const MAX_MATCH_SEARCH_NODES = 25_000;
@@ -803,21 +804,7 @@ function selectMatchingYarns(pattern, yarns) {
   return { yarns: eligible, limited: false };
 }
 
-async function readBody(req) {
-  const contentType = String(req.headers["content-type"] || "")
-    .split(";", 1)[0]
-    .trim()
-    .toLowerCase();
-
-  if (contentType !== "application/json") {
-    throw new ApiError(415, "Oczekiwano danych w formacie application/json.");
-  }
-
-  const declaredLength = Number(req.headers["content-length"]);
-  if (Number.isFinite(declaredLength) && declaredLength > MAX_JSON_BODY_BYTES) {
-    throw new ApiError(413, "Przesłane dane są zbyt duże.");
-  }
-
+async function readBodyContent(req) {
   const chunks = [];
   let receivedBytes = 0;
 
@@ -846,6 +833,36 @@ async function readBody(req) {
   }
 
   return body;
+}
+
+async function readBody(req) {
+  const contentType = String(req.headers["content-type"] || "")
+    .split(";", 1)[0]
+    .trim()
+    .toLowerCase();
+
+  if (contentType !== "application/json") {
+    throw new ApiError(415, "Oczekiwano danych w formacie application/json.");
+  }
+
+  const declaredLength = Number(req.headers["content-length"]);
+  if (Number.isFinite(declaredLength) && declaredLength > MAX_JSON_BODY_BYTES) {
+    throw new ApiError(413, "Przesłane dane są zbyt duże.");
+  }
+
+  let timeout;
+  const timeoutPromise = new Promise((resolve, reject) => {
+    timeout = setTimeout(() => {
+      req.destroy();
+      reject(new ApiError(408, "Przekroczono czas przesyłania danych."));
+    }, HTTP_BODY_TIMEOUT_MS);
+  });
+
+  try {
+    return await Promise.race([readBodyContent(req), timeoutPromise]);
+  } finally {
+    clearTimeout(timeout);
+  }
 }
 
 function sendFile(res, filePath) {

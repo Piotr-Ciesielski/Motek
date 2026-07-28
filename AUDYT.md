@@ -576,6 +576,10 @@ hasła względem baz wycieków.
    req.destroy() po jego przekroczeniu i ustawić limity połączeń na proxy.
    Dodać test klienta wysyłającego body fragmentami.
 
+**Status po poprawce 2026-07-28:** częściowo zamknięte. Dodano pełny deadline
+10 sekund dla odbioru body i przerwanie połączenia po jego przekroczeniu.
+Pozostają limity połączeń i test slowloris na reverse proxy.
+
 ### AUD-27 — Autosave nie pokazuje błędu i może pozostawić UI w stanie lokalnym
 
 1. Lokalizacja: app.js:88-108, scheduleAutosave; app.js:155-190,
@@ -664,7 +668,7 @@ ponieważ nie jest obecnie częścią repozytorium.
    protection i wykonać test rejestracji — AUD-24.
 2. Dodać ochronę na reverse proxy/WAF i limiter współdzielony między instancjami
    — AUD-25 oraz plan ochrony DDoS.
-3. Dodać deadline dla powolnego body i test slowloris — AUD-26.
+3. Ustawić limity połączeń na reverse proxy i wykonać test slowloris — AUD-26.
 4. Zdefiniować dokładność i koszt rankingu oraz wykonać benchmark maksimum 500
    włóczek / 300 wzorów — AUD-28.
 5. Ujednolicić walidację JSONB i zaplanować atomowy import katalogu — AUD-29,
