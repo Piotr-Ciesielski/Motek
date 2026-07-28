@@ -95,7 +95,14 @@
  2. **Kategoria:** Jakość / Logika biznesowa / integralność danych.
  3. **Poziom krytyczności:** **Średni**.
  4. **Opis problemu:** Migracja wymaga tylko, aby JSONB był obiektem; nie wymusza obecności `variants` ani poprawności pól, zakresów, materiałów i klas. `normalizeMatchingRequirements` cicho odrzuca niepoprawne warianty, przez co rekord może wyglądać poprawnie w katalogu, ale zniknąć z dopasowania bez alarmu. Walidator importu nie chroni przed ręczną zmianą danych z użyciem roli serwerowej.
- 5. **Rekomendacja:** Wprowadzić wersjonowany schemat JSON i walidację przed zapisem/importem, raportować odrzucone warianty, odrzucać rekordy z niepoprawnymi wymaganiami zamiast je cicho pomijać oraz dodać testy negatywne dla JSONB.
+5. **Rekomendacja:** Wprowadzić wersjonowany schemat JSON i walidację przed zapisem/importem, raportować odrzucone warianty, odrzucać rekordy z niepoprawnymi wymaganiami zamiast je cicho pomijać oraz dodać testy negatywne dla JSONB.
+
+**Status po poprawce 2026-07-28:** częściowo zamknięte. Importer waliduje
+strukturę wariantów, dodatnie liczby całkowite, niepuste materiały/grubości i
+role, a błędny rekord zatrzymuje import. Dodano migrację z triggerem Supabase,
+który powtarza podstawową walidację przy bezpośrednich zapisach `service_role`.
+Migracja nie została jeszcze zastosowana na zdalnej bazie; po jej wdrożeniu
+trzeba wykonać kontrolę istniejących rekordów i test migracji na stagingu.
 
  ### AUD-10 — Zapis lokalnej bazy nie jest atomowy
 

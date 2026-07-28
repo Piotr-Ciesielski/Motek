@@ -21,6 +21,43 @@ function validateImportCapacity(target) {
   }
 }
 
+function validateRequirement(requirement, context) {
+  if (!requirement || typeof requirement !== "object" || Array.isArray(requirement)) {
+    throw new Error(`${context} musi być obiektem.`);
+  }
+
+  for (const field of ["yarns_needed", "meters_needed", "grams_needed"]) {
+    if (!Number.isInteger(requirement[field]) || requirement[field] < 1) {
+      throw new Error(`${context}.${field} musi być dodatnią liczbą całkowitą.`);
+    }
+  }
+
+  for (const field of ["materials", "weight_classes"]) {
+    if (!Array.isArray(requirement[field]) || requirement[field].length === 0 || requirement[field].some((value) => typeof value !== "string" || !value.trim())) {
+      throw new Error(`${context}.${field} musi być niepustą tablicą tekstów.`);
+    }
+  }
+}
+
+function validateMatchingRequirements(value, sourceFilename) {
+  if (!value || typeof value !== "object" || Array.isArray(value) || !Array.isArray(value.variants)) {
+    throw new Error(`Rekord ${sourceFilename} nie zawiera poprawnego matching_requirements.`);
+  }
+
+  value.variants.forEach((variant, index) => {
+    const context = `Rekord ${sourceFilename}, wariant ${index + 1}`;
+    validateRequirement(variant, context);
+    if (variant.yarn_requirements !== undefined) {
+      if (!Array.isArray(variant.yarn_requirements) || variant.yarn_requirements.length > 8) {
+        throw new Error(`${context}.yarn_requirements musi zawierać od 0 do 8 elementów.`);
+      }
+      variant.yarn_requirements.forEach((requirement, requirementIndex) =>
+        validateRequirement(requirement, `${context}.yarn_requirements[${requirementIndex}]`)
+      );
+    }
+  });
+}
+
 function readImportData() {
   const document = JSON.parse(fs.readFileSync(IMPORT_PATH, "utf8"));
 
@@ -34,14 +71,7 @@ function readImportData() {
   }
 
   for (const record of document.records) {
-    if (
-      !record.matching_requirements ||
-      !Array.isArray(record.matching_requirements.variants)
-    ) {
-      throw new Error(
-        `Rekord ${record.source_filename} nie zawiera poprawnego matching_requirements.`
-      );
-    }
+    validateMatchingRequirements(record.matching_requirements, record.source_filename);
   }
 
   if (!SOURCE_FILTER) {
@@ -175,4 +205,5 @@ if (require.main === module) {
 
 module.exports = {
   validateImportCapacity,
+  validateMatchingRequirements,
 };
