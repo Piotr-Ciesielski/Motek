@@ -644,6 +644,9 @@ odrzuca te same klasy niepoprawnych danych także przy zapisie przez
 `service_role`. Pozostaje rozważenie pełnego współdzielenia kodu normalizera z
 walidacją importera.
 
+Backend również korzysta teraz z tych samych limitów i odrzuca warianty z
+niepoprawnymi tablicami tekstów zamiast filtrować ich elementy po cichu.
+
 ### AUD-30 — Brakująca migracja daje nieinformatywny błąd 500
 
 1. Lokalizacja: server.js:544-570, insertSupabaseYarn.

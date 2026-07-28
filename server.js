@@ -11,6 +11,9 @@ const {
 const {
   maxYarnsPerUser: MAX_YARNS_PER_USER,
   maxPatternCatalogRecords: MAX_PATTERN_CATALOG_RECORDS,
+  maxMatchingVariantsPerPattern: MAX_MATCH_VARIANTS,
+  maxMatchingRoleRequirements: MAX_MATCH_ROLE_REQUIREMENTS,
+  maxMatchingTextLength: MAX_MATCHING_TEXT_LENGTH,
 } = require("./limits");
 
 const rootDir = __dirname;
@@ -39,8 +42,6 @@ const HTTP_REQUEST_TIMEOUT_MS = 30 * 1000;
 const HTTP_HEADERS_TIMEOUT_MS = 10 * 1000;
 const HTTP_KEEP_ALIVE_TIMEOUT_MS = 5 * 1000;
 const HTTP_BODY_TIMEOUT_MS = 10 * 1000;
-const MAX_MATCH_VARIANTS = 250;
-const MAX_MATCH_ROLE_REQUIREMENTS = 8;
 const MAX_MATCH_SEARCH_NODES = 25_000;
 const MAX_PATTERN_PAGE_SIZE = 50;
 const authRateLimiter = createAuthRateLimiter();
@@ -935,10 +936,8 @@ function normalizeMatchingRequirements(value) {
     const yarnsNeeded = Number(variant.yarns_needed);
     const metersNeeded = Number(variant.meters_needed);
     const gramsNeeded = Number(variant.grams_needed);
-    const materials = Array.isArray(variant.materials) ? variant.materials.filter(Boolean) : [];
-    const weightClasses = Array.isArray(variant.weight_classes)
-      ? variant.weight_classes.filter(Boolean)
-      : [];
+    const materials = normalizeMatchingTextArray(variant.materials);
+    const weightClasses = normalizeMatchingTextArray(variant.weight_classes);
 
     if (
       !Number.isInteger(yarnsNeeded) || yarnsNeeded < 1 ||
@@ -961,8 +960,8 @@ function normalizeMatchingRequirements(value) {
     }
 
     return [{
-      id: String(variant.id || `wariant-${index + 1}`),
-      label: String(variant.label || variant.size || `Wariant ${index + 1}`),
+       id: normalizeMatchingLabel(variant.id, `wariant-${index + 1}`),
+       label: normalizeMatchingLabel(variant.label || variant.size, `Wariant ${index + 1}`),
       yarnsNeeded,
       metersNeeded,
       gramsNeeded,
@@ -979,10 +978,8 @@ function normalizeMatchingRequirement(value) {
   const yarnsNeeded = Number(value.yarns_needed);
   const metersNeeded = Number(value.meters_needed);
   const gramsNeeded = Number(value.grams_needed);
-  const materials = Array.isArray(value.materials) ? value.materials.filter(Boolean) : [];
-  const weightClasses = Array.isArray(value.weight_classes)
-    ? value.weight_classes.filter(Boolean)
-    : [];
+  const materials = normalizeMatchingTextArray(value.materials);
+  const weightClasses = normalizeMatchingTextArray(value.weight_classes);
 
   if (
     !Number.isInteger(yarnsNeeded) || yarnsNeeded < 1 ||
@@ -994,13 +991,36 @@ function normalizeMatchingRequirement(value) {
   }
 
   return {
-    role: String(value.role || "wymagana włóczka"),
+    role: normalizeMatchingLabel(value.role, "wymagana włóczka"),
     yarnsNeeded,
     metersNeeded,
     gramsNeeded,
     materials,
     weightClasses,
   };
+}
+
+function normalizeMatchingTextArray(value) {
+  if (!Array.isArray(value) || value.length === 0) return [];
+  if (
+    value.some(
+      (item) =>
+        typeof item !== "string" ||
+        !item.trim() ||
+        item.trim().length > MAX_MATCHING_TEXT_LENGTH
+    )
+  ) {
+    return [];
+  }
+  return value.map((item) => item.trim());
+}
+
+function normalizeMatchingLabel(value, fallback) {
+  if (value === undefined || value === null || value === "") return fallback;
+  if (typeof value !== "string" || value.trim().length > MAX_MATCHING_TEXT_LENGTH) {
+    return fallback;
+  }
+  return value.trim() || fallback;
 }
 
 async function getCatalogPatterns({ limit = null, offset = 0 } = {}) {
