@@ -497,3 +497,170 @@ Zadanie odłożone do etapu konfiguracji produkcyjnej:
 
 Limity i timeouty w aplikacji Motek pozostają warstwą dodatkową i nie zastępują
 ochrony infrastrukturalnej przed atakiem rozproszonym.
+
+## Audyt iteracja 3 — wykonany na podstawie PROMPTS.md
+
+Data audytu: 2026-07-28. Zakres obejmował server.js, app.js, supabase.js,
+limits.js, skrypt importu, migracje Supabase, testy, konfigurację npm oraz
+zdalny projekt Supabase. Nie odczytywano pliku .env ani innych sekretów.
+
+### Wyniki weryfikacji
+
+- npm run check: 26/26 testów zaliczonych.
+- npm audit --omit=dev: 0 wykrytych podatności.
+- Zdalny projekt Supabase ma status ACTIVE_HEALTHY.
+- Zdalna historia migracji zawiera wszystkie migracje zapisane w repozytorium,
+  w tym limity 500/300 i walidację wymagań dopasowania.
+- RLS jest włączone dla public.patterns, public.profiles i public.yarns.
+  profiles ma 2 polityki, yarns 4 polityki, a patterns 0 polityk.
+
+### AUD-23 — Publicznie wykonywalna funkcja SECURITY DEFINER w Supabase
+
+1. Lokalizacja: zdalny Supabase, public.rls_auto_enable(); funkcja nie występuje
+   w lokalnych migracjach projektu.
+2. Kategoria: Bezpieczeństwo / kontrola dostępu.
+3. Poziom krytyczności: Wysoki do czasu potwierdzenia przeznaczenia.
+4. Opis problemu: Supabase Security Advisor wykrywa, że role anon i
+   authenticated mogą wykonywać funkcję SECURITY DEFINER przez RPC. Taka
+   funkcja działa z uprawnieniami właściciela, więc publiczna możliwość jej
+   wywołania może prowadzić do obejścia RLS lub modyfikacji schematu — zależnie
+   od jej ciała. Nie ma jej w kontrolowanym repozytorium.
+5. Rekomendacja: Odczytać i ocenić ciało funkcji. Jeśli nie jest wymagana,
+   przenieść ją poza public albo odebrać EXECUTE rolom public, anon i
+   authenticated. Dodać bezpieczną zmianę jako migrację i ponownie uruchomić
+   Security Advisor.
+
+**Status po poprawce 2026-07-28:** zamknięte. Odebrano EXECUTE rolom `public`,
+`anon` i `authenticated`; weryfikacja potwierdziła ACL ograniczone do właściciela
+`postgres`, a Security Advisor przestał zgłaszać tę funkcję.
+
+### AUD-24 — Ochrona przed wyciekłymi hasłami jest wyłączona
+
+1. Lokalizacja: zdalny Supabase Auth, ustawienie leaked password protection.
+2. Kategoria: Bezpieczeństwo / uwierzytelnianie.
+3. Poziom krytyczności: Średni.
+4. Opis problemu: Supabase Security Advisor zgłasza wyłączoną kontrolę haseł
+   znajdujących się w bazach wycieków. Lokalna polityka złożoności hasła nie
+   wykrywa haseł znanych z wcześniejszych incydentów.
+5. Rekomendacja: Włączyć leaked password protection w konfiguracji Auth i
+   wykonać test rejestracji z hasłem odrzuconym przez tę ochronę.
+
+### AUD-25 — Rate limiting nie skaluje się między procesami
+
+1. Lokalizacja: server.js:142-212, authRateLimiter,
+   authRequestRateLimiter i yarnWriteRateLimiter.
+2. Kategoria: Bezpieczeństwo / dostępność / architektura.
+3. Poziom krytyczności: Średni.
+4. Opis problemu: Limity są przechowywane w pamięci pojedynczego procesu
+   Node.js. Przy kilku instancjach atakujący może rozłożyć żądania między
+   procesy, a restart usuwa stan ochrony.
+5. Rekomendacja: Ustawić limit połączeń i rate limiting na reverse proxy/WAF,
+   a dla wielu instancji przenieść stan limitera do współdzielonego magazynu,
+   np. Redis. Limiter aplikacyjny zachować jako warstwę dodatkową.
+
+### AUD-26 — Brak osobnego deadline'u dla powolnego body żądania
+
+1. Lokalizacja: server.js:806-849, readBody; timeouty server.js:1348-1350.
+2. Kategoria: Bezpieczeństwo / dostępność / edge case.
+3. Poziom krytyczności: Średni.
+4. Opis problemu: Serwer ogranicza rozmiar JSON i ustawia timeouty HTTP, ale nie
+   przerywa jednoznacznie powolnego przesyłania body po krótkim deadline'ie.
+   Klient może utrzymywać połączenie, wysyłając małe fragmenty.
+5. Rekomendacja: Dodać deadline obejmujący całe odebranie body, obsłużyć
+   req.destroy() po jego przekroczeniu i ustawić limity połączeń na proxy.
+   Dodać test klienta wysyłającego body fragmentami.
+
+### AUD-27 — Autosave nie pokazuje błędu i może pozostawić UI w stanie lokalnym
+
+1. Lokalizacja: app.js:88-108, scheduleAutosave; app.js:155-190,
+   saveYarns.
+2. Kategoria: Jakość / logika biznesowa / UX.
+3. Poziom krytyczności: Średni.
+4. Opis problemu: Asynchroniczna funkcja uruchomiona przez setTimeout nie ma
+   końcowej obsługi odrzuconej obietnicy. Błąd limitu, konfliktu wersji, sieci
+   lub Supabase może skończyć się bez komunikatu w interfejsie. Użytkownik widzi
+   zmienione pola, choć zapis mógł się nie udać.
+5. Rekomendacja: Dodać try/catch wokół pętli autosave, komunikat o błędzie i stan
+   zapisano / zapisywanie / konflikt / błąd. Przy konflikcie odświeżać magazyn
+   dopiero po decyzji użytkownika.
+
+### AUD-28 — Ranking nadal wykonuje pełny odczyt i wyszukiwanie magazynu
+
+1. Lokalizacja: server.js:741-769, getSupabaseMatches; server.js:785-804,
+   selectMatchingYarns; server.js:671-738, allocateRequirementYarns.
+2. Kategoria: Architektura / wydajność / logika biznesowa.
+3. Poziom krytyczności: Średni przy obecnych limitach, Wysoki po ich zwiększeniu.
+4. Opis problemu: selectMatchingYarns wybiera wszystkie kwalifikujące się
+   włóczki i zawsze zwraca limited: false. Komunikat frontendowy o podzbiorze
+   jest więc nieaktywny, a trudne wymagania mogą zakończyć się 503 po przekroczeniu
+   limitu 25 000 węzłów.
+5. Rekomendacja: Ustalić i udokumentować, czy wynik ma być dokładny. Zastosować
+   bounded search/DP, selekcję kandydatów z jawnym oznaczeniem podzbioru albo
+   workera z limitem czasu i anulowaniem. Dodać benchmark dla 500 włóczek.
+
+### AUD-29 — Walidacja JSONB w bazie jest słabsza niż walidacja importera
+
+1. Lokalizacja: migracja 20260728000002_validate_pattern_matching_requirements.sql,
+   scripts/import-patterns.js:19-54.
+2. Kategoria: Integralność danych / bezpieczeństwo / utrzymywalność.
+3. Poziom krytyczności: Średni.
+4. Opis problemu: Trigger bazy sprawdza typy i dodatnie liczby, ale nie ogranicza
+   liczby wariantów, długości tablic, liczby elementów tekstowych ani etykiet.
+   Bezpośredni zapis przez service_role może zaakceptować JSON, który backend
+   później częściowo pominie albo który zwiększy koszt rankingu.
+5. Rekomendacja: Zdefiniować jeden kontrakt JSONB z limitami strukturalnymi i
+   używać go w importerze, triggerze oraz normalizerze. Dodać testy negatywne.
+
+### AUD-30 — Brakująca migracja daje nieinformatywny błąd 500
+
+1. Lokalizacja: server.js:544-570, insertSupabaseYarn.
+2. Kategoria: Operacje / diagnostyka / jakość API.
+3. Poziom krytyczności: Niski po zastosowaniu migracji, Średni przy rozjechanym
+   schemacie.
+4. Opis problemu: Gdy RPC insert_yarn_with_limit nie istnieje, każdy błąd poza
+   P0001 jest zamieniany na ogólny 500. W praktyce ukryło to brak migracji i
+   utrudniło diagnozę zapisu włóczki.
+5. Rekomendacja: Rozpoznać kody PGRST202 lub brak funkcji i zwracać 503 z
+   komunikatem operacyjnym bez szczegółów bazy. W CI/CD sprawdzać zgodność
+   migracji przed startem backendu.
+
+### AUD-31 — Import katalogu nie jest atomowy
+
+1. Lokalizacja: scripts/import-patterns.js:138-157, importRecords.
+2. Kategoria: Logika / integralność danych / operacje.
+3. Poziom krytyczności: Średni.
+4. Opis problemu: Import wykonuje wiele osobnych upsertów po 50 rekordów. Awaria
+   po kilku batchach zostawia częściowo zaktualizowany katalog. Limit 300 chroni
+   pojemność, ale nie zapewnia rollbacku ani wersjonowania zestawu.
+5. Rekomendacja: Importować przez staging table i transakcję po stronie bazy albo
+   wersjonowany batch z możliwością wycofania. Zapisywać manifest importu.
+
+## Podsumowanie ogólnego stanu — iteracja 3
+
+Kod ma dobre podstawy: sekrety są rozdzielone od frontendu, dane włóczek mają
+RLS i własność użytkownika, aplikacja sprawdza pochodzenie żądań, waliduje JSON,
+ma limity wejścia, timeouty HTTP i przypiętą zależność Supabase. Testy lokalne są
+zielone, a npm audit nie wykrywa podatności. Nie rekomenduję jednak wdrożenia
+produkcyjnego przed zamknięciem publicznej funkcji SECURITY DEFINER w zdalnym
+Supabase, włączeniem ochrony wyciekłych haseł, przygotowaniem rate limitingu na
+brzegu oraz poprawą obsługi błędów autosave i kosztu rankingu. Ocenę zdalnej
+funkcji rls_auto_enable trzeba traktować jako pilną hipotezę do weryfikacji,
+ponieważ nie jest obecnie częścią repozytorium.
+
+## TOP 5 najpilniejszych spraw przed produkcją — iteracja 3
+
+1. Zabezpieczyć lub usunąć public.rls_auto_enable() i ponownie uruchomić
+   Security Advisor — AUD-23.
+2. Włączyć leaked password protection w Supabase Auth — AUD-24.
+3. Dodać ochronę na reverse proxy/WAF i limiter współdzielony między instancjami
+   — AUD-25 oraz plan ochrony DDoS.
+4. Naprawić autosave i dodać testy awarii, konfliktu i retry — AUD-27.
+5. Zdefiniować dokładność i koszt rankingu oraz wykonać benchmark maksimum 500
+   włóczek / 300 wzorów — AUD-28; równolegle ujednolicić walidację JSONB — AUD-29.
+
+## Ograniczenia audytu — iteracja 3
+
+Nie wykonano testu penetracyjnego, testu z wieloma procesami Node.js, testu
+slowloris, testu rzeczywistej współbieżności na produkcyjnym Supabase ani testu
+pełnego importu z rollbackiem. Nie odczytano ciała zdalnej funkcji
+rls_auto_enable, dlatego jej rzeczywisty wpływ pozostaje do potwierdzenia.
