@@ -41,10 +41,14 @@ async function api(path, options = {}) {
     throw new Error("Brak adresu backendu Motka.");
   }
 
+  const { headers: optionHeaders = {}, ...requestOptions } = options;
   const response = await fetch(`${baseUrl}${path}`, {
     credentials: "same-origin",
-    headers: { "Content-Type": "application/json" },
-    ...options,
+    ...requestOptions,
+    headers: {
+      "Content-Type": "application/json",
+      ...optionHeaders,
+    },
   });
 
   if (!response.ok && response.status !== 204) {
