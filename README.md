@@ -46,7 +46,7 @@ zużycia na podstawie samej nazwy wzoru, materiału ani przybliżenia.
 ### Frontend
 
 Statyczny interfejs HTML, CSS i JavaScript znajduje się w `index.html`,
-`style.css` i `app.js`. Odpowiada za:
+`styles.css` i `app.js`. Odpowiada za:
 
 - konto użytkownika i sesję,
 - formularz magazynu włóczek,
@@ -72,7 +72,7 @@ za:
 
 ### Supabase
 
-Supabase jest docelowym źródłem danych dla trybu chmurowego:
+Supabase jest obecnie jedynym źródłem danych aplikacji:
 
 - `auth.users` przechowuje konta,
 - `profiles` przechowuje profil użytkownika,
@@ -248,7 +248,7 @@ wymagań.
 Motek/
 ├── app.js                         # logika interfejsu
 ├── index.html                     # widok aplikacji
-├── style.css                      # style
+├── styles.css                     # style
 ├── server.js                      # backend HTTP i API
 ├── supabase.js                    # konfiguracja połączenia Supabase
 ├── supabase/migrations/           # migracje schematu bazy

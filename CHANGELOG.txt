@@ -8,6 +8,7 @@ Wersja 2.0.0-alpha.8 (w przygotowaniu) - Supabase jako jedyne źródło danych
 - Potwierdzono ręcznie zapis i usuwanie włóczek z interfejsu aż do tabeli `yarns`.
 - Potwierdzono poprawność po restarcie backendu i brak błędów w konsoli przeglądarki.
 - Zaktualizowano dokumentację migracji i kryteria dalszego rozwoju.
+- Uporządkowano `SPEC.md` i `README.md`, aby opisywały aktualny stan Supabase bez nieaktualnego SQLite.
 
 Wersja 2.0.0-alpha.7 (w przygotowaniu) - role włóczek w rankingu
 - Rozszerzono lokalny format importu o kompletne wymagania wariantów.

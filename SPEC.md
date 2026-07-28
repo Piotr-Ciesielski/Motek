@@ -1,463 +1,232 @@
-# Motek — specyfikacja produktu
+# Motek — aktualna specyfikacja produktu
 
-## Status wersji
+## 1. Status projektu
 
-- bieżąca wydana wersja aplikacji: `1.0.2`
-- rozwijana wersja: `2.0.0-alpha.8`
-- zrealizowany zakres: katalog wzorów, Supabase Auth, prywatny magazyn włóczek, zapis i usuwanie w `yarns` oraz bezpieczna ścieżka rankingu
-- następny zakres: uzupełnienie kompletnych wymagań dopasowania dla wzorów
+- bieżąca wersja rozwojowa: `2.0.0-alpha.8`
+- ostatnia wersja wydana: `1.0.2`
+- aktualne źródło danych: Supabase
+- lokalny SQLite: usunięty z aplikacji
+- następny zakres: uzupełnienie i selektywny import kompletnych wymagań dopasowania dla wzorów
 
-## 1. Cel produktu
-Motek to prosta aplikacja webowa dla dziewiarzy i dziewiarek, która pomaga dopasować dostępny zapas włóczek do wzorów udziergów.
+Motek jest aplikacją webową dla osób robiących na drutach i szydełku. Pomaga
+odpowiedzieć na pytanie: który wzór można wykonać z włóczek znajdujących się w
+prywatnym magazynie użytkownika.
 
-System przyjmuje dane o włóczkach, przechowuje je lokalnie w bazie SQLite i porównuje z bazą wzorów. Na tej podstawie zwraca wzory, które można wykonać z posiadanego materiału.
+## 2. Aktualny cel produktu
 
-## 2. Zakres wersji 1.0.0
-Wersja 1.0.0 obejmuje:
-- interfejs webowy do przeglądania i wprowadzania włóczek
-- lokalny backend HTTP w Node.js
-- trwały magazyn danych w pliku SQLite
-- bazę wzorów przechowywaną w SQLite
-- mechanizm dopasowania wzorów do włóczek
+Użytkownik może:
 
-Poza zakresem tej wersji:
-- logowanie użytkowników
-- synchronizacja z chmurą
-- wielu użytkowników jednocześnie
-- edycja wzorów przez panel administracyjny
-- import zewnętrznych katalogów włóczek lub gotowych baz wzorów
+- założyć konto i zalogować się,
+- prowadzić prywatny magazyn motków,
+- przeglądać katalog wzorów,
+- wyszukiwać wzory i filtrować je według statusu weryfikacji,
+- sprawdzać dopasowania wyłącznie dla wzorów z kompletnymi wymaganiami.
 
-## 3. Użytkownik docelowy
-Użytkownikiem jest osoba zajmująca się robótkami ręcznymi, która:
-- ma zapas różnych motków
-- zna podstawowe parametry włóczki
-- chce szybko sprawdzić, jaki wzór jest wykonalny
+Motek nie jest sklepem ani pełnym programem do projektowania dzianin. Jego
+główną funkcją jest świadome wykorzystanie posiadanego zapasu włóczek.
 
-## 4. Główne przypadki użycia
-### 4.1 Przeglądanie magazynu włóczek
-Użytkownik otwiera aplikację i widzi aktualną listę włóczek zapisanych w bazie.
+## 3. Aktualny przepływ użytkownika
 
-### 4.2 Dodanie włóczki
-Użytkownik może dopisać nowy motek przez formularz z polami:
-- nazwa
-- kolor
-- materiał
-- klasa grubości
-- długość w metrach
-- waga w gramach
+1. Użytkownik zakłada konto albo się loguje.
+2. Dodaje motki, podając nazwę, kolor, materiał, klasę grubości, długość i wagę.
+3. Aplikacja zapisuje magazyn prywatnie w Supabase.
+4. Użytkownik przegląda katalog wzorów.
+5. Uruchamia dopasowanie.
+6. Backend zwraca tylko potwierdzone warianty, które spełniają wymagania.
 
-### 4.3 Usunięcie włóczki
-Użytkownik może usunąć wybrany motek z magazynu.
+Niepełne dane wzoru są widoczne w katalogu, ale nie są używane jako
+potwierdzone rekomendacje. System nie zgaduje brakujących metrów ani gramów.
 
-### 4.4 Wyszukanie pasujących wzorów
-Użytkownik uruchamia dopasowanie, a system zwraca tylko te wzory, które spełniają minimalne wymagania.
+## 4. Architektura
 
-## 5. Model danych
-### 5.1 Włóczka
-Reprezentuje pojedynczy motek lub pozycję magazynową.
+### Frontend
 
-Pola:
-- `id`
-- `name`
-- `color`
-- `material`
-- `weightClass`
-- `length`
-- `weight`
+Frontend jest statyczną aplikacją HTML/CSS/JavaScript:
 
-### 5.2 Wzór
-Reprezentuje jeden udzierg możliwy do wykonania z odpowiednich włóczek.
+- `index.html` — widok aplikacji,
+- `styles.css` — style,
+- `app.js` — logika interfejsu.
 
-Pola:
-- `id`
-- `name`
-- `description`
-- `yarnsNeeded`
-- `metersNeeded`
-- `gramsNeeded`
-- `materials`
-- `weightClasses`
-- `colors`
+Frontend obsługuje formularze Auth, magazyn włóczek, katalog, wyszukiwanie,
+filtrowanie i prezentację wyników. Nie otrzymuje sekretnego klucza Supabase.
 
-## 6. Zasada dopasowania
-Wzór jest uznany za wykonalny, jeśli:
-- suma długości wszystkich włóczek jest co najmniej równa wymaganej długości
-- suma wag wszystkich włóczek jest co najmniej równa wymaganej wadze
-- liczba włóczek zgodnych materiałowo i wagowo jest co najmniej równa liczbie wymaganych motków
+### Backend
 
-System nadaje także prosty wynik procentowy dopasowania, który porządkuje listę wyników.
-
-### 6.1 Cechy oceniane
-Do oceny używane są:
-- długość całkowita
-- waga całkowita
-- zgodność materiału
-- zgodność klasy grubości
-- uproszczona zgodność kolorystyczna
-
-## 7. API
-### 7.1 `GET /api/yarns`
-Zwraca listę zapisanych włóczek.
-
-### 7.2 `POST /api/yarns`
-Dodaje nową włóczkę do bazy.
-
-### 7.3 `DELETE /api/yarns/:id`
-Usuwa wskazaną włóczkę.
-
-### 7.4 `GET /api/patterns`
-Zwraca listę wzorów.
-
-### 7.5 `GET /api/matches`
-Zwraca uporządkowaną listę wzorów możliwych do wykonania z aktualnego stanu magazynu.
-
-## 8. Architektura
-### 8.1 Frontend
-Frontend to statyczna aplikacja HTML/CSS/JavaScript.
-
+`server.js` jest lekkim serwerem HTTP Node.js bez dodatkowego frameworka.
 Odpowiada za:
-- prezentację danych
-- formularz włóczek
-- wywołania API
-- renderowanie wyników dopasowania
 
-### 8.2 Backend
-Backend to prosty serwer HTTP w Node.js.
+- serwowanie plików aplikacji,
+- walidację danych wejściowych,
+- rejestrację, logowanie, sesję i wylogowanie,
+- operacje na magazynie włóczek,
+- pobieranie katalogu wzorów,
+- ranking dopasowania,
+- nagłówki bezpieczeństwa i obsługę błędów.
 
-Odpowiada za:
-- serwowanie plików statycznych
-- obsługę REST API
-- odczyt i zapis bazy SQLite
-- seedowanie danych startowych
+### Supabase
 
-### 8.3 Baza danych
-Wersja 1.0.0 używa SQLite utrzymywanego w pliku `data/motek.sqlite`.
+Supabase jest jedynym źródłem danych aplikacji:
 
-## 9. Dane startowe
-Po pierwszym uruchomieniu system tworzy bazę i wypełnia ją przykładowymi danymi:
-- kilka włóczek
-- kilka podstawowych wzorów
+- `auth.users` — konta użytkowników,
+- `profiles` — dane aplikacyjne profilu,
+- `yarns` — prywatny magazyn włóczek,
+- `patterns` — wspólny katalog wzorów.
 
-## 10. Uruchomienie
-Projekt uruchamia się poleceniem:
+Backend wymaga przy uruchomieniu kompletnej konfiguracji Supabase. Aplikacja
+nie ma lokalnego trybu SQLite ani fallbacku do pliku lokalnego.
+
+## 5. Bezpieczeństwo i własność danych
+
+- sekret Supabase pozostaje wyłącznie po stronie backendu,
+- klucz publishable jest używany tylko przez backendowy klient Auth,
+- tokeny sesji są przechowywane w ciasteczkach HttpOnly,
+- magazyn włóczek jest izolowany przez `user_id` i RLS,
+- właściciel nowej włóczki wynika z uwierzytelnionej sesji, nie z formularza,
+- dane wejściowe mają limity długości i wartości,
+- odpowiedzi API nie zawierają sekretów ani tokenów,
+- `.env` i lokalny folder `Wzory` nie trafiają do Git.
+
+Szczegółowe ryzyka przed wdrożeniem produkcyjnym opisuje `AUDYT.md`.
+
+## 6. Model danych
+
+### 6.1 Włóczka — `public.yarns`
+
+Pola aplikacyjne:
+
+- `id`, `user_id`,
+- `name`, `color`, `material`, `weight_class`,
+- `length_meters`, `weight_grams`,
+- `created_at`, `updated_at`.
+
+Dozwolone materiały to między innymi wełna, bawełna, akryl, alpaka i
+mieszanka. Klasa grubości korzysta z wartości `lace`, `fingering`, `sport`,
+`dk`, `worsted` i `bulky`.
+
+### 6.2 Wzór — `public.patterns`
+
+Rekord zawiera między innymi:
+
+- `name`, `description`, `materials`,
+- `meters_per_100g`,
+- `yarn_requirements`,
+- `matching_requirements`,
+- `source_filename`, `source_language`, `needs_review`.
+
+`yarn_requirements` opisuje włóczki występujące we wzorze, w tym role główne,
+dodatkowe, kontrastowe lub alternatywne. `matching_requirements` zawiera
+potwierdzone zużycie dla wariantów lub rozmiarów używane przez ranking.
+
+## 7. Zasada dopasowania
+
+Wzór może pojawić się w wynikach tylko wtedy, gdy:
+
+- rekord nie wymaga dodatkowej weryfikacji,
+- wariant ma kompletne wymagania,
+- liczba i parametry dostępnych włóczek spełniają wymagania wariantu,
+- jeden motek nie jest używany jednocześnie do dwóch różnych ról.
+
+Ranking uwzględnia wymagane metry, gramy, materiały i klasy grubości. Wyniki
+są sortowane według wyniku procentowego. Brak danych oznacza brak możliwości
+potwierdzenia wykonalności, a nie zgodę na użycie przybliżenia.
+
+Obecne rekordy katalogu mają jeszcze pustą listę wariantów dopasowania, więc
+nie są prezentowane jako potwierdzone wyniki, dopóki wymagania nie zostaną
+uzupełnione i zweryfikowane.
+
+## 8. API
+
+| Endpoint | Znaczenie |
+| --- | --- |
+| `GET /health` | Kontrola stanu serwera |
+| `GET /api/auth/session` | Sprawdzenie aktywnej sesji |
+| `POST /api/auth/register` | Rejestracja użytkownika |
+| `POST /api/auth/login` | Logowanie |
+| `POST /api/auth/logout` | Wylogowanie |
+| `GET /api/yarns` | Pobranie własnego magazynu |
+| `POST /api/yarns` | Dodanie włóczki |
+| `DELETE /api/yarns/:id` | Usunięcie własnej włóczki |
+| `GET /api/patterns` | Pobranie katalogu wzorów |
+| `GET /api/matches` | Pobranie wykonalnych dopasowań |
+
+Endpointy magazynu i rankingu wymagają zalogowanej sesji. `GET /api/patterns`
+jest publicznym odczytem katalogu, ale sekret Supabase nigdy nie trafia do
+frontendu.
+
+## 9. Katalog wzorów i import
+
+Katalog powstał na podstawie 116 lokalnych dokumentów PDF w folderze `Wzory`.
+Folder jest roboczy, ignorowany przez Git i nie jest serwowany przez aplikację.
+
+Proces przygotowania danych obejmuje:
+
+1. audyt dokumentów,
+2. przygotowanie kandydatów,
+3. ręczne poprawki przypadków niejednoznacznych,
+4. walidację danych,
+5. kontrolę podsumowania importu,
+6. selektywny import do Supabase.
+
+Narzędzia importowe znajdują się w `scripts/`. Import powinien być wykonywany
+dopiero po sprawdzeniu podsumowania zmian.
+
+## 10. Uruchomienie i sprawdzanie
+
+Wymagane są Node.js z obsługą `--env-file-if-exists` oraz npm.
 
 ```bash
+npm install
 npm start
 ```
 
-Domyślny adres:
+Domyślny adres to `http://localhost:3000`.
+
+Konfiguracja Supabase jest przekazywana przez lokalny `.env`:
 
 ```text
-http://localhost:3000
+SUPABASE_URL=...
+SUPABASE_PUBLISHABLE_KEY=...
+SUPABASE_SECRET_KEY=...
 ```
 
-## 11. Ograniczenia znane w wersji 1.0.0
-- baza wzorów jest niewielka i przykładowa
-- logika dopasowania jest heurystyczna, nie dekonstrukcyjna
-- kolor jest oceniany uproszczone
-- brak panelu administracyjnego
-- brak walidacji biznesowej dla bardziej złożonych przypadków dziewiarskich
+Podstawowe sprawdzenie projektu:
 
-## 12. Kryterium zgodności wersji
-Wersję 1.0.0 uznaje się za zgodną, jeśli:
-- aplikacja startuje lokalnie
-- działa zapis i odczyt włóczek z SQLite
-- działa pobranie wzorów i wyników dopasowania
-- dane przetrwają ponowne uruchomienie serwera
-
----
-
-# Plan rozwoju Motek v2.0.0
-
-## 13. Cel wersji 2.0.0
-Wersja 2.0.0 przenosi trwałe dane Motka z lokalnego pliku SQLite do
-zewnętrznej bazy Supabase. Dzięki temu dane nie będą zależne od jednego
-komputera i aplikacja będzie przygotowana do dalszego rozwoju w chmurze.
-
-## 14. Etapy migracji
-
-### 14.1 Etap pierwszy — tabela wzorów
-- backend łączy się z Supabase przez bezpieczną konfigurację środowiskową
-- tabela `patterns` w Supabase staje się docelowym źródłem danych o wzorach
-- rekordy wzorów powstają na podstawie plików roboczych z lokalnego folderu `Wzory`
-- pliki źródłowe PDF nie trafiają do Git ani do publicznej części aplikacji
-- magazyn włóczek pozostaje tymczasowo w SQLite
-
-### 14.2 Etap drugi — tabela włóczek
-- tabela `yarns` zostaje przeniesiona do Supabase
-- po sprawdzeniu kompletności danych SQLite przestaje być magazynem aplikacji
-- mechanizm dopasowania korzysta z obu tabel w Supabase
-
-## 15. Bezpieczeństwo integracji
-- połączenie z Supabase obsługuje wyłącznie backend
-- adres projektu jest przechowywany w `SUPABASE_URL`
-- klucz typu `secret` jest przechowywany w `SUPABASE_SECRET_KEY`
-- klucz `secret` nie może znaleźć się w kodzie frontendu, repozytorium Git ani logach
-- aplikacja weryfikuje konfigurację i połączenie podczas uruchamiania
-
-## 16. Stan przejściowy
-Tabela `patterns` jest podłączona do backendu i służy jako źródło katalogu
-wzorów widocznego na froncie. Katalog pozwala wyszukiwać rekordy i filtrować je
-według statusu weryfikacji.
-
-Dotychczasowy mechanizm dopasowania pozostaje tymczasowo w SQLite. Nowe rekordy
-wzorów nie zawierają jeszcze całkowitego zużycia włóczki
-dla konkretnego rozmiaru, dlatego nie są jeszcze używane przez ranking
-dopasowania. Pozwala to niezależnie przetestować katalog przed drugim etapem
-migracji.
-
-## 17. Zrealizowany etap pierwszy — katalog wzorów w Supabase
-
-### 17.1 Źródło danych
-
-Katalog został przygotowany na podstawie 116 lokalnych dokumentów PDF z folderu
-`Wzory`. Folder jest roboczy, nie trafia do Git i nie jest udostępniany przez
-aplikację.
-
-Każdy plik PDF odpowiada jednemu rekordowi w tabeli `patterns`. Zasada ta
-obowiązuje również dla identycznych kopii plików, ponieważ każdy dokument jest
-traktowany jako osobna pozycja źródłowa.
-
-### 17.2 Model rekordu `patterns`
-
-Rekord katalogu zawiera:
-
-- `id` — identyfikator nadawany przez bazę
-- `name` — nazwa wzoru lub instrukcji
-- `description` — krótki opis w języku polskim
-- `materials` — lista rozpoznanych materiałów
-- `meters_per_100g` — parametr głównej włóczki, jeśli można go jednoznacznie ustalić
-- `yarn_requirements` — lista wszystkich wymaganych lub alternatywnych włóczek
-- `matching_requirements` — kompletne wymagania wariantów lub rozmiarów używane przez ranking
-- `source_filename` — unikalna nazwa źródłowego pliku PDF
-- `source_language` — język dokumentu źródłowego
-- `needs_review` — informacja, czy dane wymagają dodatkowej weryfikacji
-- `created_at` — data utworzenia rekordu
-
-Pole `yarn_requirements` może przechowywać oddzielne parametry włóczki głównej,
-dodatkowej, kontrastowej albo alternatywnych wariantów. Dzięki temu wzory
-wykorzystujące kilka nitek nie są upraszczane do jednego parametru.
-
-### 17.3 Zasada jakości danych
-
-System nie uzupełnia brakujących informacji na podstawie przypuszczeń. Jeżeli
-dokument nie podaje składu lub nie pozwala obliczyć metrów na 100 gramów,
-wartość pozostaje pusta, a rekord otrzymuje `needs_review=true`.
-
-Aktualny zestaw zawiera:
-
-- 116 rekordów
-- 77 rekordów z rozpoznanym materiałem
-- 46 rekordów z pojedynczym parametrem głównej włóczki
-- 110 rekordów oznaczonych do przeglądu
-- 18 rekordów z ręcznie sprawdzonymi poprawkami po analizie wizualnej
-
-Flaga `needs_review` nie oznacza, że cały rekord jest błędny. Informuje, że co
-najmniej jeden element powinien zostać potwierdzony przed wykorzystaniem go w
-automatycznym dopasowaniu.
-
-### 17.4 Proces przygotowania i importu
-
-Proces jest powtarzalny i składa się z:
-
-1. audytu dokumentów PDF,
-2. automatycznego odczytu kandydatów,
-3. ręcznych poprawek dla skanów i przypadków niejednoznacznych,
-4. walidacji kompletnego zestawu,
-5. kontrolnego podglądu zmian w Supabase,
-6. importu lub selektywnej aktualizacji rekordów.
-
-Importer wykorzystuje `source_filename` jako stabilny klucz konfliktu. Ponowne
-uruchomienie aktualizuje istniejący rekord zamiast tworzyć duplikat tej samej
-pozycji źródłowej.
-
-## 18. Katalog wzorów na froncie
-
-Frontend zawiera sekcję „Baza wzorów”, która:
-
-- pobiera dane przez backendowy endpoint `GET /api/patterns`
-- nie otrzymuje sekretnego klucza Supabase
-- prezentuje nazwę i opis wzoru
-- pokazuje materiały i parametr m/100 g
-- pokazuje wiele wymaganych włóczek, jeśli występują
-- odróżnia rekordy zweryfikowane od wymagających sprawdzenia
-- umożliwia wyszukiwanie po nazwie, opisie i materiale
-- umożliwia filtrowanie według statusu weryfikacji
-
-Katalog jest funkcją informacyjną. Na obecnym etapie nie zastępuje jeszcze
-wyników dopasowania do magazynu użytkownika.
-
-## 19. Aktualna architektura przejściowa
-
-| Obszar | Źródło danych | Stan |
-| --- | --- | --- |
-| katalog wzorów na froncie | Supabase `patterns` | aktywny |
-| magazyn włóczek | Supabase `yarns` z RLS per użytkownik | aktywny |
-| ranking dopasowania | Supabase `patterns` + prywatne `yarns`, tylko dla kompletnych wymagań | aktywny przejściowo |
-| dokumenty PDF | lokalny ignorowany folder `Wzory` | tylko źródło importu |
-| konta użytkowników | Supabase Auth i `profiles` | aktywny |
-| sesje użytkowników | Supabase Auth i ciasteczka HttpOnly | aktywny |
-
-Backend weryfikuje połączenie z Supabase przy starcie. Kompletna konfiguracja
-Supabase jest wymagana — aplikacja nie uruchamia już lokalnego trybu SQLite.
-
-## 20. Bezpieczeństwo wdrożonego etapu
-
-- sekret Supabase jest przechowywany wyłącznie w lokalnym pliku `.env`
-- `.env` i folder `Wzory` są ignorowane przez Git
-- frontend komunikuje się wyłącznie z backendem Motka
-- klucz publishable służy wyłącznie do operacji Auth wykonywanych przez backend
-- backend wybiera jawnie pola zwracane przez API
-- błędy połączenia nie ujawniają wartości sekretnego klucza
-- tokeny sesji nie są dostępne dla JavaScriptu i pozostają w ciasteczkach HttpOnly
-- ciasteczka sesji używają `SameSite=Lax`, a w środowisku produkcyjnym także `Secure`
-- tabela ma włączone RLS, a operacje importu używają roli serwerowej
-- przed importem można sprawdzić liczbę nowych i aktualizowanych rekordów
-
-## 21. Kryteria odbioru etapu pierwszego
-
-Etap pierwszy uznaje się za ukończony, jeżeli:
-
-- aplikacja uruchamia się z prawidłową konfiguracją Supabase
-- tabela `patterns` zawiera 116 rekordów
-- `GET /api/patterns` pobiera katalog z Supabase
-- frontend pokazuje 116 wzorów
-- wyszukiwanie i filtrowanie działają bez przeładowania strony
-- rekordy niepełne są widocznie oznaczone
-- klucz secret nie znajduje się w kodzie, odpowiedzi API ani repozytorium
-- testy backendu, API i zabezpieczeń przechodzą poprawnie
-- endpointy magazynu włóczek działają przez Supabase
-
-## 22. Zrealizowany etap — konta użytkowników i sesje
-
-### 22.1 Przepływ użytkownika
-
-Frontend udostępnia formularze rejestracji, logowania i wylogowania. Backend
-korzysta z Supabase Auth i nie zapisuje haseł w bazie Motka ani w logach.
-
-Po rejestracji:
-
-1. Supabase Auth tworzy użytkownika w `auth.users`,
-2. trigger tworzy powiązany rekord w `public.profiles`,
-3. po udanym uwierzytelnieniu backend zapisuje tokeny w ciasteczkach HttpOnly,
-4. endpoint `GET /api/auth/session` zwraca bezpieczne dane użytkownika i jego profil.
-
-### 22.2 Konfiguracja e-mail
-
-Provider e-mail musi być włączony w ustawieniach Supabase Auth. W środowisku
-testowym można wyłączyć obowiązek potwierdzania adresu, aby użytkownik otrzymał
-sesję bezpośrednio po rejestracji. W środowisku produkcyjnym rekomendowane jest
-ponowne włączenie potwierdzania adresu oraz skonfigurowanie własnego SMTP.
-
-Wyłączenie całego providera e-mail blokuje zarówno rejestrację, jak i logowanie.
-Wbudowana usługa wysyłki Supabase ma limity, dlatego testy wymagające wielu
-wiadomości powinny korzystać z własnego SMTP albo trybu bez potwierdzania.
-
-### 22.3 Bezpieczna diagnostyka
-
-Stan sesji można sprawdzić przez:
-
-- komunikat zalogowanego użytkownika na froncie,
-- odpowiedź `GET /api/auth/session` z `authenticated=true`,
-- pole ostatniego logowania i logi Auth w panelu Supabase.
-
-Do zgłoszeń błędów nie należy dołączać pełnego pliku HAR, nagłówka `Cookie`,
-tokenów dostępu ani tokenów odświeżających. Ujawnioną sesję należy unieważnić,
-a następnie zalogować się ponownie.
-
-### 22.4 Kryteria odbioru
-
-Etap Supabase Auth jest ukończony, ponieważ:
-
-- rejestracja tworzy użytkownika oraz odpowiadający profil,
-- logowanie tworzy aktywną sesję,
-- odczyt sesji zwraca własny profil zgodnie z RLS,
-- wylogowanie usuwa lokalne ciasteczka sesji,
-- interfejs pokazuje stan zalogowania bez błędów w konsoli,
-- testy automatyczne przechodzą poprawnie.
-
-## 23. Zakończenie migracji — tabela włóczek i ranking
-
-Etap migracji wersji 2.0.0 obejmował:
-
-1. zaprojektowanie tabeli `yarns` w Supabase,
-2. migrację endpointów dodawania, odczytu i usuwania włóczek,
-3. przygotowanie danych do rozróżniania użytkowników po wdrożeniu logowania,
-4. rozszerzenie modelu wzorów o całkowite zużycie włóczki dla rozmiarów,
-5. dostosowanie algorytmu dopasowania do danych Supabase,
-6. usunięcie SQLite i zależności `sql.js` po zakończeniu migracji.
-
-### 23.1 Zrealizowany podetap — schemat tabeli włóczek
-
-Utworzono tabelę `public.yarns` w Supabase. Rekord zawiera:
-
-- `id` — identyfikator generowany przez bazę,
-- `user_id` — właściciela powiązanego z `auth.users`,
-- `name`, `color`, `material`, `weight_class`,
-- `length_meters` i `weight_grams`,
-- `created_at` i `updated_at`.
-
-Tabela ma włączone RLS oraz osobne polityki odczytu, dodawania, edycji i
-usuwania. Każda polityka ogranicza dostęp do rekordów, dla których `user_id`
-jest równe `auth.uid()`. Dostęp anonimowy jest wyłączony, a dostęp
-administracyjny pozostaje po stronie `service_role`.
-
-Tabela może zawierać dane użytkowników. Syntetyczne dane są używane wyłącznie
-w testach, a ręczna próba zapisu i usunięcia włóczki z aplikacji została
-potwierdzona w tabeli `public.yarns` po restarcie backendu.
-
-### 23.2 Zrealizowany podetap — endpointy magazynu w Supabase
-
-Endpointy `GET /api/yarns`, `POST /api/yarns` i `DELETE /api/yarns/:id` używają
-Supabase. Backend przekazuje
-token sesji przez klienta Auth, a `user_id` nowego rekordu wyznacza na podstawie
-zweryfikowanego użytkownika, nigdy na podstawie danych z formularza.
-
-Brak konfiguracji Supabase zatrzymuje backend czytelnym błędem. Testy
-syntetyczne sprawdzają, że niezalogowany użytkownik otrzymuje odmowę, a dwaj
-użytkownicy nie widzą i nie usuwają wzajemnie swoich włóczek.
-
-27 lipca 2026 potwierdzono również ręcznie pełny przepływ z aplikacji:
-formularz wysłał `POST /api/yarns`, rekord pojawił się w `public.yarns`, a
-usunięcie z interfejsu usunęło ten sam rekord z Supabase. Po operacji ponownie
-uruchomiono backend, aby wykluczyć działanie starego procesu z lokalnym
-fallbackiem.
-
-### 23.3 Zrealizowany podetap — bezpieczna ścieżka rankingu w Supabase
-
-Tabela `patterns` zawiera teraz pole `matching_requirements` w formacie:
-
-```json
-{
-  "variants": [
-    {
-      "id": "m",
-      "label": "M",
-      "yarns_needed": 1,
-      "meters_needed": 1200,
-      "grams_needed": 300,
-      "materials": ["wełna"],
-      "weight_classes": ["dk"],
-      "colors": "dowolny",
-      "yarn_requirements": [
-        {
-          "role": "główna",
-          "yarns_needed": 1,
-          "meters_needed": 1200,
-          "grams_needed": 300,
-          "materials": ["wełna"],
-          "weight_classes": ["dk"]
-        }
-      ]
-    }
-  ]
-}
+```bash
+npm run check
 ```
 
-`GET /api/matches` wymaga zalogowania, pobiera prywatny magazyn użytkownika
-oraz wzory z Supabase i ocenia wyłącznie zweryfikowane warianty z kompletnymi
-danymi. Wariant może dodatkowo przechowywać osobne wymagania dla włóczki
-głównej, dodatkowej lub kontrastowej. Ranking przydziela motki do tych ról
-bez ponownego użycia tego samego motka. Obecne 116 rekordów ma pustą listę
-wariantów, dlatego nie są jeszcze prezentowane jako potwierdzone dopasowania.
-System nie wylicza brakujących metrów ani gramów na podstawie przypuszczeń.
+Kontrola danych wzorów bez wykonywania importu:
+
+```bash
+npm run patterns:check
+```
+
+## 11. Aktualny zakres i następne kroki
+
+Zrealizowano:
+
+- katalog wzorów w Supabase,
+- Supabase Auth i profile użytkowników,
+- prywatny magazyn włóczek z RLS,
+- zapis i usuwanie włóczek przez aplikację,
+- bezpieczną ścieżkę rankingu z wymaganiami wariantów,
+- usunięcie SQLite z aplikacji.
+
+Do wykonania pozostają przede wszystkim:
+
+- uzupełnienie kompletnych wymagań dopasowania dla wybranych wzorów,
+- przebudowa autosave tak, aby nie usuwał danych przed potwierdzeniem zapisu,
+- zabezpieczenie logowania przed brute force i rate limitingiem,
+- wymuszenie bezpiecznych ciasteczek i HTTPS w produkcji,
+- ograniczenie kosztu rankingu oraz rozszerzenie testów awarii i obciążenia,
+- uporządkowanie konfiguracji wdrożenia produkcyjnego.
+
+## 12. Historia migracji
+
+Wersja `1.0.x` była lokalną aplikacją z SQLite. W wersji `2.0.0` rozpoczęto
+migrację katalogu wzorów do Supabase. Kolejne wersje alpha dodały Auth,
+profile, prywatny magazyn włóczek, role włóczek w rankingu i ostatecznie
+usunęły SQLite z aplikacji.
+
+Szczegółową historię zmian zawiera `CHANGELOG.txt`, a uzasadnienie ryzyk
+bezpieczeństwa i jakości — `AUDYT.md`.
