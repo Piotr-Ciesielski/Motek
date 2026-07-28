@@ -211,6 +211,29 @@ test("serwer Motek działa bezpiecznie", async (t) => {
       from(table) {
         return createSyntheticQuery(table, token);
       },
+      rpc(name, args) {
+        assert.equal(name, "insert_yarn_with_limit");
+        const userId = syntheticUsers[token]?.id;
+        const userYarns = syntheticYarns.filter((row) => row.user_id === userId);
+        if (userYarns.length >= 500) {
+          return Promise.resolve({
+            data: null,
+            error: { code: "P0001", message: "Magazyn osiągnął limit 500 włóczek na użytkownika." },
+          });
+        }
+        const inserted = {
+          id: nextSyntheticYarnId++,
+          user_id: userId,
+          name: args.p_name,
+          color: args.p_color,
+          material: args.p_material,
+          weight_class: args.p_weight_class,
+          length_meters: args.p_length_meters,
+          weight_grams: args.p_weight_grams,
+        };
+        syntheticYarns.push(inserted);
+        return Promise.resolve({ data: [inserted], error: null });
+      },
     };
   }
   const fakeSupabaseConnection = {
@@ -337,6 +360,27 @@ test("serwer Motek działa bezpiecznie", async (t) => {
         headers: { Cookie: userACookies },
       });
       assert.equal(deleteResponse.status, 204);
+
+      for (let id = 0; id < 500; id += 1) {
+        syntheticYarns.push({
+          id: nextSyntheticYarnId++,
+          user_id: syntheticUsers["token-user-a"].id,
+          name: `Limit ${id}`,
+          color: "zielony",
+          material: "wełna",
+          weight_class: "dk",
+          length_meters: 100,
+          weight_grams: 20,
+        });
+      }
+      const limitResponse = await fetch(`${baseUrl}/api/yarns`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Cookie: userACookies },
+        body: JSON.stringify({ name: "Po limicie" }),
+      });
+      assert.equal(limitResponse.status, 409);
+      assert.match((await limitResponse.json()).error, /500 włóczek/);
+      syntheticYarns.length = 0;
 
       syntheticProfiles[syntheticUsers["token-user-a"].id].status = "suspended";
       const suspendedResponse = await fetch(`${baseUrl}/api/yarns`, {

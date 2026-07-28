@@ -258,6 +258,13 @@ pozostają zadaniem infrastruktury przed wdrożeniem wieloinstancyjnym.
    POST-ów i test po przekroczeniu limitu. Utrzymywać limit także w procesie
    importu/administracji, nie tylko w HTTP API.
 
+**Status po poprawce 2026-07-28:** naprawione dla ścieżki HTTP użytkownika.
+Insert korzysta z funkcji Supabase `insert_yarn_with_limit`, która blokuje
+operacje dla użytkownika w transakcji, sprawdza limit i dopiero wtedy zapisuje
+rekord. Kontrola aplikacyjna nie wykonuje już podatnego na wyścig odczytu count
+przed insertem. Dodano test odpowiedzi po osiągnięciu limitu; migrację trzeba
+zastosować przed wdrożeniem nowej wersji backendu.
+
 ### AUD-17 — Limit katalogu 300 jest tylko kontrolą odczytu, nie regułą danych
 
 1. **Lokalizacja:** `server.js:829-864` (`getCatalogPatterns`,

@@ -424,23 +424,32 @@ async function getSupabaseYarns(session) {
 }
 
 async function insertSupabaseYarn(session, yarn) {
-  const existingYarns = await getSupabaseYarns(session);
-  validateYarnStorageCapacity(existingYarns.length);
-
   const { data, error } = await supabaseAuthClientFactory(
     supabaseAuthConfig,
     session.accessToken
   )
-    .from("yarns")
-    .insert(toSupabaseYarn(yarn, session.user.id))
-    .select("id,name,color,material,weight_class,length_meters,weight_grams")
-    .single();
+    .rpc("insert_yarn_with_limit", {
+      p_name: yarn.name,
+      p_color: yarn.color,
+      p_material: yarn.material,
+      p_weight_class: yarn.weightClass,
+      p_length_meters: yarn.length,
+      p_weight_grams: yarn.weight,
+    });
 
   if (error) {
+    if (error.code === "P0001") {
+      throw new ApiError(409, "Magazyn osiągnął limit 500 włóczek na użytkownika.");
+    }
     throw new Error(`Nie udało się zapisać włóczki w Supabase: ${error.message}`);
   }
 
-  return normalizeSupabaseYarn(data);
+  const insertedYarn = Array.isArray(data) ? data[0] : data;
+  if (!insertedYarn) {
+    throw new Error("Supabase nie zwróciło zapisanej włóczki.");
+  }
+
+  return normalizeSupabaseYarn(insertedYarn);
 }
 
 async function updateSupabaseYarn(session, id, yarn) {
