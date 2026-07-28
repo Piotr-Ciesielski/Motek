@@ -164,21 +164,16 @@ async function inspectTarget(client, records) {
 }
 
 async function importRecords(client, records) {
-  let savedCount = 0;
+  const { data, error } = await client
+    .from("patterns")
+    .upsert(records, { onConflict: "source_filename" })
+    .select("id");
 
-  for (const batch of splitIntoBatches(records, BATCH_SIZE)) {
-    const { data, error } = await client
-      .from("patterns")
-      .upsert(batch, { onConflict: "source_filename" })
-      .select("id");
-
-    if (error) {
-      throw new Error(`Import został zatrzymany: ${error.message}`);
-    }
-    savedCount += data.length;
+  if (error) {
+    throw new Error(`Import został zatrzymany: ${error.message}`);
   }
 
-  return savedCount;
+  return data.length;
 }
 
 async function main() {
@@ -239,4 +234,5 @@ if (require.main === module) {
 module.exports = {
   validateImportCapacity,
   validateMatchingRequirements,
+  importRecords,
 };

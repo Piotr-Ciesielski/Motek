@@ -673,6 +673,11 @@ migracji w procesie wdrożenia.
 5. Rekomendacja: Importować przez staging table i transakcję po stronie bazy albo
    wersjonowany batch z możliwością wycofania. Zapisywać manifest importu.
 
+**Status po poprawce 2026-07-28:** częściowo zamknięte. Zatwierdzony import
+wykonuje jeden zbiorczy `upsert`, a test potwierdza, że nie dzieli zapisu na
+częściowe batche. Baza traktuje pojedyncze żądanie jako jedną operację; pozostaje
+staging table i manifest importu dla pełnego procesu operacyjnego.
+
 ## Podsumowanie ogólnego stanu — iteracja 3
 
 Kod ma dobre podstawy: sekrety są rozdzielone od frontendu, dane włóczek mają
