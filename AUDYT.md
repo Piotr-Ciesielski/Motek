@@ -281,8 +281,8 @@ pozostają zadaniem infrastruktury przed wdrożeniem wieloinstancyjnym.
 Insert korzysta z funkcji Supabase `insert_yarn_with_limit`, która blokuje
 operacje dla użytkownika w transakcji, sprawdza limit i dopiero wtedy zapisuje
 rekord. Kontrola aplikacyjna nie wykonuje już podatnego na wyścig odczytu count
-przed insertem. Dodano test odpowiedzi po osiągnięciu limitu; migrację trzeba
-zastosować przed wdrożeniem nowej wersji backendu.
+przed insertem. Dodano test odpowiedzi po osiągnięciu limitu. Migracja została
+zastosowana na zdalnym Supabase i zweryfikowana po problemie z odpowiedzią 500.
 
 ### AUD-17 — Limit katalogu 300 jest tylko kontrolą odczytu, nie regułą danych
 
@@ -440,9 +440,8 @@ tokenów, wielu procesów, reverse proxy, awarii sieci i obciążenia produkcyjn
 korzystają ze wspólnego modułu `limits.js`. Dodano migrację z triggerem
 Supabase, który blokuje 301. nowy wzór także przy zapisie przez `service_role`,
 z zachowaniem możliwości aktualizacji istniejących wzorów przy count=300.
-Migracja nie została zastosowana na zdalnej bazie; przed wdrożeniem trzeba ją
-uruchomić i sprawdzić w stagingu, a następnie zweryfikować uprawnienia i logi
-importera.
+Migracja została zastosowana na zdalnej bazie i zweryfikowana. Pozostaje
+sprawdzenie uprawnień i logów importera w stagingu przed wdrożeniem produkcyjnym.
 
 ## Pozytywne elementy potwierdzone w iteracji
 

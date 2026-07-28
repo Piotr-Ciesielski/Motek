@@ -1,5 +1,10 @@
 Motek - log zmian
 
+Wersja 2.0.0-alpha.10 (w przygotowaniu) - stabilizacja zapisu magazynu
+- Naprawiono zachowanie nagłówka `Content-Type: application/json` przy żądaniach z nagłówkiem wersji magazynu.
+- Zastosowano na zdalnym Supabase migracje atomowego limitu 500 włóczek, limitu 300 wzorów oraz walidacji wymagań dopasowania.
+- Potwierdzono zapis włóczki z frontendu do tabeli `yarns` po synchronizacji migracji.
+
 Wersja 2.0.0-alpha.9 (w przygotowaniu) - stabilizacja bezpieczeństwa i limitów produktu
 - Zabezpieczono autosave przed kasowaniem całego magazynu podczas zapisu.
 - Dodano `COOKIE_SECURE`, rate limiting Auth oraz limity kosztu rankingu.
