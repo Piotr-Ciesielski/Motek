@@ -41,6 +41,7 @@ const HTTP_KEEP_ALIVE_TIMEOUT_MS = 5 * 1000;
 const MAX_MATCH_VARIANTS = 250;
 const MAX_MATCH_ROLE_REQUIREMENTS = 8;
 const MAX_MATCH_SEARCH_NODES = 25_000;
+const MAX_PATTERN_PAGE_SIZE = 50;
 const authRateLimiter = createAuthRateLimiter();
 const authRequestRateLimiter = createRequestRateLimiter({
   windowMs: AUTH_REQUEST_WINDOW_MS,
@@ -965,7 +966,7 @@ function normalizeMatchingRequirement(value) {
   };
 }
 
-async function getCatalogPatterns() {
+async function getCatalogPatterns({ limit = null, offset = 0 } = {}) {
   const patternClient = supabaseConnection.client.from("patterns");
   const { count, error: countError } = await patternClient
     .select("id", { count: "exact", head: true });
@@ -976,18 +977,45 @@ async function getCatalogPatterns() {
 
   validatePatternCatalogSize(count ?? 0);
 
+  const effectiveLimit = limit ?? count ?? 0;
   const { data, error } = await supabaseConnection.client
     .from("patterns")
     .select(
       "id,name,description,materials,meters_per_100g,yarn_requirements,matching_requirements,source_language,needs_review"
     )
+    .range(offset, Math.max(offset, offset + effectiveLimit - 1))
     .order("name", { ascending: true });
 
   if (error) {
     throw new Error(`Nie udało się pobrać wzorów z Supabase: ${error.message}`);
   }
 
-  return data.map(normalizeCatalogPattern);
+  const patterns = data.map(normalizeCatalogPattern);
+  if (limit === null) return patterns;
+
+  return {
+    items: patterns,
+    total: count ?? 0,
+    limit: effectiveLimit,
+    offset,
+    hasMore: offset + patterns.length < (count ?? 0),
+  };
+}
+
+function parsePatternPage(url) {
+  const rawLimit = url.searchParams.get("limit");
+  const rawOffset = url.searchParams.get("offset");
+  const limit = rawLimit === null ? MAX_PATTERN_PAGE_SIZE : Number(rawLimit);
+  const offset = rawOffset === null ? 0 : Number(rawOffset);
+
+  if (!Number.isInteger(limit) || limit < 1 || limit > MAX_PATTERN_PAGE_SIZE) {
+    throw new ApiError(400, `Parametr limit musi być liczbą całkowitą od 1 do ${MAX_PATTERN_PAGE_SIZE}.`);
+  }
+  if (!Number.isInteger(offset) || offset < 0) {
+    throw new ApiError(400, "Parametr offset musi być nieujemną liczbą całkowitą.");
+  }
+
+  return { limit, offset };
 }
 
 function validateYarnStorageCapacity(count) {
@@ -1204,7 +1232,7 @@ async function handleApi(req, res, url) {
   }
 
   if (req.method === "GET" && url.pathname === "/api/patterns") {
-    return sendJson(res, 200, await getCatalogPatterns());
+    return sendJson(res, 200, await getCatalogPatterns(parsePatternPage(url)));
   }
 
   if (req.method === "GET" && url.pathname === "/api/matches") {

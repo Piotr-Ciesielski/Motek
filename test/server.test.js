@@ -268,6 +268,15 @@ test("serwer Motek działa bezpiecznie", async (t) => {
             }
             assert.match(columns, /meters_per_100g/);
             return {
+              range(from, to) {
+                return {
+                  async order(field, options) {
+                    assert.equal(field, "name");
+                    assert.deepEqual(options, { ascending: true });
+                    return { data: supabasePatterns.slice(from, to + 1), error: null };
+                  },
+                };
+              },
               async order(field, options) {
                 assert.equal(field, "name");
                 assert.deepEqual(options, { ascending: true });
@@ -480,11 +489,20 @@ test("serwer Motek działa bezpiecznie", async (t) => {
     });
 
     await t.test("pobiera katalog wzorów z Supabase bez ujawniania sekretów", async () => {
+      const oversizedPageResponse = await fetch(`${baseUrl}/api/patterns?limit=51`);
+      assert.equal(oversizedPageResponse.status, 400);
+      const negativeOffsetResponse = await fetch(`${baseUrl}/api/patterns?offset=-1`);
+      assert.equal(negativeOffsetResponse.status, 400);
+
       const response = await fetch(`${baseUrl}/api/patterns`);
       assert.equal(response.status, 200);
-      const patterns = await response.json();
-      assert.equal(patterns.length, 1);
-      assert.deepEqual(patterns[0], {
+      const page = await response.json();
+      assert.deepEqual(page, {
+        total: 1,
+        limit: 50,
+        offset: 0,
+        hasMore: false,
+        items: [{
         id: 21,
         name: "Testowy wzór Supabase",
         description: "Opis wzoru pobranego ze zdalnej bazy.",
@@ -511,8 +529,9 @@ test("serwer Motek działa bezpiecznie", async (t) => {
         ],
         sourceLanguage: "pl",
         needsReview: false,
+        }],
       });
-      assert.equal(JSON.stringify(patterns).includes("sb_secret_"), false);
+      assert.equal(JSON.stringify(page).includes("sb_secret_"), false);
     });
 
     await t.test("odrzuca nieprawidłowe i zbyt duże dane", async () => {

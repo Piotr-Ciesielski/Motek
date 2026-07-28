@@ -209,7 +209,19 @@ async function loadMatches() {
 }
 
 async function loadPatternCatalog() {
-  return api("/api/patterns");
+  const patterns = [];
+  let offset = 0;
+  let hasMore = true;
+
+  while (hasMore) {
+    const page = await api(`/api/patterns?limit=50&offset=${offset}`);
+    patterns.push(...page.items);
+    hasMore = page.hasMore;
+    offset += page.items.length;
+    if (!page.items.length) break;
+  }
+
+  return patterns;
 }
 
 function formatRatio(value) {
