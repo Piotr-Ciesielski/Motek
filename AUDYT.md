@@ -61,7 +61,7 @@
  3. **Poziom krytyczności:** **Wysoki**.
  4. **Opis problemu:** Przy każdym wymaganiu algorytm przegląda kombinacje włóczek rekurencyjnie. Liczba kombinacji rośnie wykładniczo, a aplikacja nie ogranicza liczby rekordów magazynu na użytkownika, liczby wariantów ani czasu wykonania. Uwierzytelniony użytkownik może dodać wiele rekordów i wywołać `/api/matches`, blokując pojedynczy proces Node.js. Dodatkowo endpoint pobiera cały katalog i cały magazyn bez paginacji.
  5. **Rekomendacja:** Ustalić limit liczby włóczek, wariantów i wymagań; odrzucać lub kolejkować zbyt duże obliczenia; dodać deadline/cancellation. Zastąpić brute force algorytmem sortowania/greedy, DP z limitem stanu albo obliczeniami w bazie/workerze. Dodać test obciążeniowy z realistycznym maksimum.
- 6. **Stan po zmianie 2026-07-28:** Dodano limity 50 włóczek, 250 wariantów i 25 000 kroków wyszukiwania oraz szybkie odrzucenie oczywiście niewykonalnych wymagań. Przekroczenie limitu zwraca błąd zamiast bez końca obciążać proces. Benchmark potwierdził szybkie odrzucanie niemożliwych przypadków; pozostaje decyzja, czy przenieść obliczenia do workera.
+ 6. **Stan po zmianie 2026-07-28:** Dodano limit 250 wariantów i 25 000 kroków wyszukiwania oraz szybkie odrzucenie oczywiście niewykonalnych wymagań. Przy większym magazynie ranking wybiera do 50 najlepiej pasujących kandydatów dla wariantu i oznacza wynik jako podzbiór; zapis magazynu nie jest ograniczony. Benchmark potwierdził szybkie odrzucanie niemożliwych przypadków. Pozostaje decyzja, czy przenieść obliczenia do workera.
 
  ### AUD-06 — Dopasowanie ról może odrzucać poprawny zestaw
 

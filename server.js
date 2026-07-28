@@ -23,7 +23,7 @@ const AUTH_REFRESH_MAX_AGE = 60 * 60 * 24 * 30;
 const AUTH_RATE_LIMIT_WINDOW_MS = 15 * 60 * 1000;
 const AUTH_RATE_LIMIT_MAX_FAILURES = 5;
 const AUTH_RATE_LIMIT_BLOCK_MS = 15 * 60 * 1000;
-const MAX_MATCH_YARNS = 50;
+const MAX_MATCH_CANDIDATE_YARNS = 50;
 const MAX_MATCH_VARIANTS = 250;
 const MAX_MATCH_ROLE_REQUIREMENTS = 8;
 const MAX_MATCH_SEARCH_NODES = 25_000;
@@ -573,33 +573,32 @@ async function getSupabaseMatches(session) {
     getCatalogPatterns(),
   ]);
 
-  validateMatchLimits(yarns, patterns);
-
-  return patterns
+  validateMatchLimits(patterns);
+  let limited = false;
+  const matches = patterns
     .filter((pattern) => !pattern.needsReview)
     .flatMap((pattern) =>
-      pattern.matchingRequirements.map((variant) => ({
-        pattern: {
-          ...pattern,
-          ...variant,
-          id: `${pattern.id}:${variant.id}`,
-          name: `${pattern.name} — ${variant.label}`,
-        },
-        ...scorePattern({ ...pattern, ...variant }, yarns),
-      }))
+      pattern.matchingRequirements.flatMap((variant) => {
+        const candidateSet = selectMatchingYarns({ ...pattern, ...variant }, yarns);
+        limited ||= candidateSet.limited;
+        return [{
+          pattern: {
+            ...pattern,
+            ...variant,
+            id: `${pattern.id}:${variant.id}`,
+            name: `${pattern.name} — ${variant.label}`,
+          },
+          ...scorePattern({ ...pattern, ...variant }, candidateSet.yarns),
+        }];
+      })
     )
     .filter((item) => item.doable)
     .sort((a, b) => b.total - a.total);
+
+  return { matches, limited };
 }
 
-function validateMatchLimits(yarns, patterns) {
-  if (yarns.length > MAX_MATCH_YARNS) {
-    throw new ApiError(
-      413,
-      `To obliczenie rankingu obsługuje maksymalnie ${MAX_MATCH_YARNS} włóczek. Magazyn nadal może zawierać więcej motków.`
-    );
-  }
-
+function validateMatchLimits(patterns) {
   const variantCount = patterns.reduce(
     (total, pattern) => total + pattern.matchingRequirements.length,
     0
@@ -610,6 +609,53 @@ function validateMatchLimits(yarns, patterns) {
       "Katalog zawiera zbyt wiele wariantów do jednego dopasowania. Spróbuj później lub zawęź katalog."
     );
   }
+}
+
+function selectMatchingYarns(pattern, yarns) {
+  const requirements = Array.isArray(pattern.requirements) && pattern.requirements.length > 0
+    ? pattern.requirements
+    : [{
+        yarnsNeeded: pattern.yarnsNeeded,
+        metersNeeded: pattern.metersNeeded,
+        gramsNeeded: pattern.gramsNeeded,
+        materials: pattern.materials,
+        weightClasses: pattern.weightClasses,
+      }];
+  const eligible = yarns.filter((yarn) =>
+    requirements.some(
+      (requirement) =>
+        requirement.materials.includes(yarn.material) &&
+        requirement.weightClasses.includes(yarn.weightClass)
+    )
+  );
+
+  if (eligible.length <= MAX_MATCH_CANDIDATE_YARNS) {
+    return { yarns: eligible, limited: false };
+  }
+
+  const ranked = eligible
+    .map((yarn) => {
+      const relevance = Math.max(
+        ...requirements.map((requirement) => {
+          if (
+            !requirement.materials.includes(yarn.material) ||
+            !requirement.weightClasses.includes(yarn.weightClass)
+          ) {
+            return 0;
+          }
+          return (
+            yarn.length / Math.max(requirement.metersNeeded, 1) +
+            yarn.weight / Math.max(requirement.gramsNeeded, 1)
+          );
+        })
+      );
+      return { yarn, relevance };
+    })
+    .sort((a, b) => b.relevance - a.relevance || b.yarn.length - a.yarn.length || b.yarn.weight - a.yarn.weight)
+    .slice(0, MAX_MATCH_CANDIDATE_YARNS)
+    .map(({ yarn }) => yarn);
+
+  return { yarns: ranked, limited: true };
 }
 
 async function readBody(req) {
@@ -966,7 +1012,9 @@ async function handleApi(req, res, url) {
 
   if (req.method === "GET" && url.pathname === "/api/matches") {
     const session = await requireAuthenticatedSession(req, res);
-    return sendJson(res, 200, await getSupabaseMatches(session));
+    const result = await getSupabaseMatches(session);
+    res.setHeader("X-Motek-Match-Scope", result.limited ? "subset" : "full");
+    return sendJson(res, 200, result.matches);
   }
 
   sendJson(res, 404, { error: "Nieznany endpoint" });
@@ -1124,6 +1172,7 @@ module.exports = {
   normalizeCatalogPattern,
   normalizeSupabaseYarn,
   scorePattern,
+  selectMatchingYarns,
   toSupabaseYarn,
   buildAuthCookie,
   createAuthRateLimiter,

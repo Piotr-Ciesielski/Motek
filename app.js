@@ -57,6 +57,9 @@ async function api(path, options = {}) {
     throw new Error(`Błąd komunikacji z backendem (${response.status})${details}`);
   }
 
+  api.lastMatchScope = path === "/api/matches"
+    ? response.headers.get("X-Motek-Match-Scope") || "full"
+    : null;
   return response.status === 204 ? null : response.json();
 }
 
@@ -302,14 +305,24 @@ async function refreshPatternCatalog() {
 
 async function renderResults() {
   const matches = await loadMatches();
+  const matchScopeLimited = api.lastMatchScope === "subset";
   results.replaceChildren();
 
   if (!matches.length) {
     showMessage(
       results,
-      "Brak pełnego dopasowania. Spróbuj dodać więcej metrów, większą wagę lub inny materiał."
+      matchScopeLimited
+        ? "Nie znaleziono dopasowania w analizowanym podzbiorze magazynu. Dodaj mniej motków do bieżącego zestawu albo spróbuj ponownie po dalszej optymalizacji rankingu."
+        : "Brak pełnego dopasowania. Spróbuj dodać więcej metrów, większą wagę lub inny materiał."
     );
     return;
+  }
+
+  if (matchScopeLimited) {
+    const notice = document.createElement("div");
+    notice.className = "empty-state";
+    notice.textContent = "Ranking użył najlepiej pasującego podzbioru motków. Pozostałe włóczki nadal są zapisane w Twoim magazynie.";
+    results.appendChild(notice);
   }
 
   matches.forEach((item) => {

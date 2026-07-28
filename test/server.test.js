@@ -3,13 +3,40 @@ const assert = require("node:assert/strict");
 process.env.HOST = "127.0.0.1";
 process.env.PORT = "0";
 
-const { main, scorePattern, shutdown, validateMatchLimits } = require("../server");
+const {
+  main,
+  scorePattern,
+  selectMatchingYarns,
+  shutdown,
+  validateMatchLimits,
+} = require("../server");
 
 test("ranking respektuje limity rozmiaru i może użyć kilku motków dla jednej roli", () => {
   assert.throws(
-    () => validateMatchLimits(Array.from({ length: 51 }, () => ({})), []),
-    /maksymalnie 50/
+    () => validateMatchLimits(
+      Array.from({ length: 251 }, () => ({ matchingRequirements: [{}] }))
+    ),
+    /zbyt wiele wariantów/
   );
+
+  const selected = selectMatchingYarns(
+    {
+      yarnsNeeded: 1,
+      metersNeeded: 500,
+      gramsNeeded: 100,
+      materials: ["wełna"],
+      weightClasses: ["dk"],
+    },
+    Array.from({ length: 75 }, (_, id) => ({
+      id,
+      material: "wełna",
+      weightClass: "dk",
+      length: 100,
+      weight: 20,
+    }))
+  );
+  assert.equal(selected.yarns.length, 50);
+  assert.equal(selected.limited, true);
 
   const result = scorePattern(
     {

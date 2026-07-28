@@ -138,6 +138,10 @@ Obecne rekordy katalogu mają jeszcze pustą listę wariantów dopasowania, wię
 nie są prezentowane jako potwierdzone wyniki, dopóki wymagania nie zostaną
 uzupełnione i zweryfikowane.
 
+Jeśli magazyn użytkownika jest większy niż bieżący limit obliczeń, ranking
+wybiera najlepiej pasujący podzbiór dla konkretnego wariantu. Limit dotyczy
+obliczenia, a nie liczby motków, które użytkownik może zapisać.
+
 ## 8. API
 
 | Endpoint | Znaczenie |

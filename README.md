@@ -108,7 +108,9 @@ Najważniejsze endpointy backendu:
 | `GET /health` | Kontrola stanu serwera |
 
 `GET /api/matches` wymaga zalogowania w trybie Supabase. Nie zwraca wyników na
-podstawie magazynu innego użytkownika.
+podstawie magazynu innego użytkownika. Przy większym magazynie bieżąca wersja
+analizuje ograniczony, najlepiej pasujący podzbiór motków; nie ogranicza to
+zapisu danych.
 
 ## Model danych dopasowania
 
