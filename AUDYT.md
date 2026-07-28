@@ -396,6 +396,12 @@ wzmocnieniem, jeśli aplikacja będzie obsługiwać złożone scenariusze subdom
    testy statusów profilu, konkurencyjnych POST/PATCH/DELETE, 429 i `Retry-After`,
    limitu katalogu/importu, timeoutów, Origin oraz property-based testy alokacji.
 
+**Status po poprawce 2026-07-28:** częściowo zamknięte. Dodano syntetyczny
+test rejestracji i logowania, testy statusu profilu, konfliktu wersji magazynu,
+limitów, limiterów, Origin/CSRF i importera; pakiet obejmuje teraz 24 testy.
+Pozostają testy wymagające stagingowego Supabase, rzeczywistego odświeżania
+tokenów, wielu procesów, reverse proxy, awarii sieci i obciążenia produkcyjnego.
+
 ### AUD-23 — Limity produktu są niespójne z bezpośrednimi ścieżkami administracyjnymi
 
 1. **Lokalizacja:** `scripts/import-patterns.js:93-145`, migracje `patterns` i

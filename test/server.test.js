@@ -207,6 +207,25 @@ test("serwer Motek działa bezpiecznie", async (t) => {
           return user ? { data: { user }, error: null } : { data: null, error: new Error("invalid token") };
         },
         async signOut() {},
+        async signUp({ email, options }) {
+          return {
+            data: {
+              user: {
+                id: "33333333-3333-4333-8333-333333333333",
+                email,
+                user_metadata: {
+                  login: options.data.login,
+                  full_name: options.data.full_name,
+                },
+              },
+              session: null,
+            },
+            error: null,
+          };
+        },
+        async signInWithPassword() {
+          return { data: null, error: new Error("invalid credentials") };
+        },
       },
       from(table) {
         return createSyntheticQuery(table, token);
@@ -287,6 +306,39 @@ test("serwer Motek działa bezpiecznie", async (t) => {
     await t.test("wymaga zalogowania do zdalnego magazynu", async () => {
       const response = await fetch(`${baseUrl}/api/yarns`);
       assert.equal(response.status, 401);
+    });
+
+    await t.test("obsługuje rejestrację i nie ujawnia szczegółów błędu logowania", async () => {
+      const registerResponse = await fetch(`${baseUrl}/api/auth/register`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Origin: baseUrl },
+        body: JSON.stringify({
+          email: "nowy@example.com",
+          password: "Haslo123!",
+          login: "nowy_user",
+          full_name: "Nowy Użytkownik",
+        }),
+      });
+      assert.equal(registerResponse.status, 201);
+      assert.deepEqual(await registerResponse.json(), {
+        user: {
+          id: "33333333-3333-4333-8333-333333333333",
+          email: "nowy@example.com",
+          emailConfirmed: false,
+          metadata: { login: "nowy_user", fullName: "Nowy Użytkownik" },
+        },
+        requiresEmailConfirmation: true,
+      });
+
+      const loginResponse = await fetch(`${baseUrl}/api/auth/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Origin: baseUrl },
+        body: JSON.stringify({ email: "nowy@example.com", password: "Haslo123!" }),
+      });
+      assert.equal(loginResponse.status, 401);
+      assert.deepEqual(await loginResponse.json(), {
+        error: "Nieprawidłowy e-mail lub hasło.",
+      });
     });
 
     await t.test("izoluje syntetyczne dane włóczek między użytkownikami", async () => {

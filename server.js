@@ -364,7 +364,7 @@ function authClient() {
   if (!supabaseAuthConfig) {
     throw new ApiError(503, "Logowanie nie jest jeszcze skonfigurowane.");
   }
-  return createSupabaseAuthClient(supabaseAuthConfig);
+  return supabaseAuthClientFactory(supabaseAuthConfig);
 }
 
 function sanitizeAuthUser(user) {
