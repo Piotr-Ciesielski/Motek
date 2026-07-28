@@ -80,6 +80,7 @@ nie ma lokalnego trybu SQLite ani fallbacku do pliku lokalnego.
 - sekret Supabase pozostaje wyłącznie po stronie backendu,
 - klucz publishable jest używany tylko przez backendowy klient Auth,
 - tokeny sesji są przechowywane w ciasteczkach HttpOnly,
+- produkcja wymaga jawnego `COOKIE_SECURE=true` dla atrybutu `Secure`,
 - magazyn włóczek jest izolowany przez `user_id` i RLS,
 - właściciel nowej włóczki wynika z uwierzytelnionej sesji, nie z formularza,
 - dane wejściowe mają limity długości i wartości,

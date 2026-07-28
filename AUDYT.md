@@ -34,6 +34,7 @@
  3. **Poziom krytyczności:** **Wysoki**.
  4. **Opis problemu:** Atrybut `Secure` jest dodawany wyłącznie, gdy `process.env.NODE_ENV === "production"`. Typowe wdrożenie może mieć HTTPS na reverse proxy, ale nie mieć dokładnie takiej zmiennej. Wtedy access i refresh token mogą być wysłane po HTTP, jeśli aplikacja jest osiągalna przez niezabezpieczony adres. Kradzież refresh tokena daje długotrwały dostęp do konta.
  5. **Rekomendacja:** Wprowadzić jawny tryb transportu, np. `COOKIE_SECURE=true` wymagany poza lokalnym developmentem, oraz wymusić HTTPS na proxy. Dodać HSTS po potwierdzeniu, że cała domena działa wyłącznie po HTTPS. Test wdrożeniowy powinien sprawdzać `Secure; HttpOnly; SameSite=Lax` na obu ciasteczkach.
+ 6. **Stan po zmianie 2026-07-28:** Backend wymaga `COOKIE_SECURE=true` przy `NODE_ENV=production`, a testy sprawdzają konfigurację i atrybut `Secure`. Wymuszenie HTTPS i HSTS pozostaje zadaniem dla reverse proxy i hostingu.
 
  ### AUD-03 — Brak rate limiting i ochrony przed brute force
 

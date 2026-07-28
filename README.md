@@ -194,9 +194,11 @@ Tryb Supabase wymaga lokalnego pliku `.env` z wartościami:
 SUPABASE_URL=...
 SUPABASE_PUBLISHABLE_KEY=...
 SUPABASE_SECRET_KEY=...
+COOKIE_SECURE=false
 ```
 
 Sekretnego klucza nie należy umieszczać w frontendzie, commitach ani logach.
+W produkcji ustaw `COOKIE_SECURE=true` i używaj wyłącznie HTTPS.
 
 ## Sprawdzanie projektu
 

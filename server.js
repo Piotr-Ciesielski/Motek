@@ -99,8 +99,21 @@ function appendSetCookie(res, value) {
   res.setHeader("Set-Cookie", [...cookies, value]);
 }
 
-function buildAuthCookie(name, value, maxAge) {
-  const secure = process.env.NODE_ENV === "production" ? "; Secure" : "";
+function shouldUseSecureCookies(env = process.env) {
+  const configured = String(env.COOKIE_SECURE || "").trim().toLowerCase();
+  if (configured === "true") return true;
+  if (configured === "false") return false;
+  return env.NODE_ENV === "production";
+}
+
+function validateCookieSecurityConfig(env = process.env) {
+  if (env.NODE_ENV === "production" && String(env.COOKIE_SECURE).toLowerCase() !== "true") {
+    throw new Error("W środowisku produkcyjnym COOKIE_SECURE=true jest wymagane dla ciasteczek sesji.");
+  }
+}
+
+function buildAuthCookie(name, value, maxAge, env = process.env) {
+  const secure = shouldUseSecureCookies(env) ? "; Secure" : "";
   return `${name}=${encodeURIComponent(value)}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${maxAge}${secure}`;
 }
 
@@ -863,6 +876,7 @@ function getRuntimeConfig() {
 }
 
 async function main(options = {}) {
+  validateCookieSecurityConfig();
   supabaseConnection = Object.prototype.hasOwnProperty.call(
     options,
     "supabaseConnection"
@@ -980,6 +994,9 @@ module.exports = {
   normalizeCatalogPattern,
   normalizeSupabaseYarn,
   toSupabaseYarn,
+  buildAuthCookie,
+  shouldUseSecureCookies,
   shutdown,
+  validateCookieSecurityConfig,
   validateAuthPassword,
 };
