@@ -417,6 +417,14 @@ tokenów, wielu procesów, reverse proxy, awarii sieci i obciążenia produkcyjn
    backend i importer, dodać kontrolę przed zapisem oraz procedurę operatora,
    która blokuje przekroczenie limitu i raportuje różnicę.
 
+**Status po poprawce 2026-07-28:** częściowo zamknięte. Backend i importer
+korzystają ze wspólnego modułu `limits.js`. Dodano migrację z triggerem
+Supabase, który blokuje 301. nowy wzór także przy zapisie przez `service_role`,
+z zachowaniem możliwości aktualizacji istniejących wzorów przy count=300.
+Migracja nie została zastosowana na zdalnej bazie; przed wdrożeniem trzeba ją
+uruchomić i sprawdzić w stagingu, a następnie zweryfikować uprawnienia i logi
+importera.
+
 ## Pozytywne elementy potwierdzone w iteracji
 
 - brak sekretów w kodzie i brak odczytu `.env` przez audyt;

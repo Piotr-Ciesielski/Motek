@@ -2,6 +2,7 @@ const fs = require("node:fs");
 const path = require("node:path");
 
 const { createSupabaseConnection } = require("../supabase");
+const { maxPatternCatalogRecords: MAX_PATTERN_CATALOG_RECORDS } = require("../limits");
 
 const PROJECT_DIR = path.resolve(__dirname, "..");
 const IMPORT_PATH = path.join(PROJECT_DIR, "data", "patterns-import.json");
@@ -10,7 +11,6 @@ const SOURCE_FILTER = process.argv
   .find((argument) => argument.startsWith("--source="))
   ?.slice("--source=".length);
 const BATCH_SIZE = 50;
-const MAX_PATTERN_CATALOG_RECORDS = 300;
 
 function validateImportCapacity(target) {
   const finalCount = target.tableRecordCount + target.newRecordCount;

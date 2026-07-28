@@ -8,6 +8,10 @@ const {
   createSupabaseConnection,
   readSupabaseAuthConfig,
 } = require("./supabase");
+const {
+  maxYarnsPerUser: MAX_YARNS_PER_USER,
+  maxPatternCatalogRecords: MAX_PATTERN_CATALOG_RECORDS,
+} = require("./limits");
 
 const rootDir = __dirname;
 let server;
@@ -37,8 +41,6 @@ const HTTP_KEEP_ALIVE_TIMEOUT_MS = 5 * 1000;
 const MAX_MATCH_VARIANTS = 250;
 const MAX_MATCH_ROLE_REQUIREMENTS = 8;
 const MAX_MATCH_SEARCH_NODES = 25_000;
-const MAX_YARNS_PER_USER = 500;
-const MAX_PATTERN_CATALOG_RECORDS = 300;
 const authRateLimiter = createAuthRateLimiter();
 const authRequestRateLimiter = createRequestRateLimiter({
   windowMs: AUTH_REQUEST_WINDOW_MS,
