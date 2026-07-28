@@ -125,6 +125,7 @@ function addYarnCard(yarn = {}) {
 
 function collectYarnsFromDom() {
   return [...yarnList.querySelectorAll(".yarn-card")].map((card) => ({
+    id: card.dataset.id ? Number(card.dataset.id) : null,
     name: card.querySelector('[data-field="name"]').value.trim(),
     color: card.querySelector('[data-field="color"]').value.trim(),
     material: card.querySelector('[data-field="material"]').value,
@@ -147,18 +148,27 @@ async function saveYarns() {
   }
 
   const existing = await api("/api/yarns");
+  const localIds = new Set(local.filter((yarn) => yarn.id).map((yarn) => yarn.id));
+
   for (const yarn of existing) {
-    await api(`/api/yarns/${yarn.id}`, { method: "DELETE" });
+    if (!localIds.has(yarn.id)) {
+      await api(`/api/yarns/${yarn.id}`, { method: "DELETE" });
+    }
   }
 
   const savedYarns = [];
   for (const yarn of local) {
-    savedYarns.push(
-      await api("/api/yarns", {
-        method: "POST",
-        body: JSON.stringify(yarn),
-      })
-    );
+    const body = { ...yarn };
+    delete body.id;
+    savedYarns.push(yarn.id
+      ? await api(`/api/yarns/${yarn.id}`, {
+          method: "PATCH",
+          body: JSON.stringify(body),
+        })
+      : await api("/api/yarns", {
+          method: "POST",
+          body: JSON.stringify(body),
+        }));
   }
   return savedYarns;
 }

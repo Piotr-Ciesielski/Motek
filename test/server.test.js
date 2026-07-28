@@ -48,19 +48,26 @@ test("serwer Motek działa bezpiecznie", async (t) => {
   const syntheticYarns = [];
   let nextSyntheticYarnId = 1;
 
-  function createSyntheticQuery(table, token) {
-    const filters = [];
-    let operation = "select";
-    let insertedRow = null;
-    const query = {
-      select() {
-        if (operation === "delete") {
-          const matches = syntheticYarns.filter((row) => filters.every(([field, value]) => row[field] === value));
-          matches.forEach((row) => syntheticYarns.splice(syntheticYarns.indexOf(row), 1));
-          return Promise.resolve({ data: matches.map((row) => ({ id: row.id })), error: null });
-        }
-        return query;
-      },
+    function createSyntheticQuery(table, token) {
+      const filters = [];
+      let operation = "select";
+      let insertedRow = null;
+      let updateValues = null;
+      const query = {
+        select() {
+          if (operation === "delete") {
+            const matches = syntheticYarns.filter((row) => filters.every(([field, value]) => row[field] === value));
+            matches.forEach((row) => syntheticYarns.splice(syntheticYarns.indexOf(row), 1));
+            return Promise.resolve({ data: matches.map((row) => ({ id: row.id })), error: null });
+          }
+          if (operation === "update") {
+            const matches = syntheticYarns.filter((row) => filters.every(([field, value]) => row[field] === value));
+            matches.forEach((row) => Object.assign(row, updateValues));
+            insertedRow = matches[0] || null;
+            return query;
+          }
+          return query;
+        },
       eq(field, value) {
         filters.push([field, value]);
         return query;
@@ -77,15 +84,24 @@ test("serwer Motek działa bezpiecznie", async (t) => {
           : [];
         return Promise.resolve({ data: rows[0] || null, error: null });
       },
-      insert(row) {
-        operation = "insert";
-        insertedRow = { ...row, id: nextSyntheticYarnId++ };
-        syntheticYarns.push(insertedRow);
-        return query;
-      },
-      single() {
-        return Promise.resolve({ data: insertedRow, error: null });
-      },
+        insert(row) {
+          operation = "insert";
+          insertedRow = { ...row, id: nextSyntheticYarnId++ };
+          syntheticYarns.push(insertedRow);
+          return query;
+        },
+        update(values) {
+          operation = "update";
+          updateValues = values;
+          return query;
+        },
+        single() {
+          return Promise.resolve(
+            insertedRow
+              ? { data: insertedRow, error: null }
+              : { data: null, error: { code: "PGRST116", message: "No rows found" } }
+          );
+        },
       delete() {
         operation = "delete";
         return query;
@@ -176,8 +192,23 @@ test("serwer Motek działa bezpiecznie", async (t) => {
       const created = await createResponse.json();
       assert.equal(created.name, "Test automatyczny");
 
+      const updateResponse = await fetch(`${baseUrl}/api/yarns/${created.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json", Cookie: userACookies },
+        body: JSON.stringify({
+          name: "Test automatyczny — zmieniony",
+          color: "niebieski",
+          material: "wełna",
+          weightClass: "dk",
+          length: 300,
+          weight: 120,
+        }),
+      });
+      assert.equal(updateResponse.status, 200);
+      assert.equal((await updateResponse.json()).name, "Test automatyczny — zmieniony");
+
       const userAList = await fetch(`${baseUrl}/api/yarns`, { headers: { Cookie: userACookies } });
-      assert.deepEqual((await userAList.json()).map((yarn) => yarn.name), ["Test automatyczny"]);
+      assert.deepEqual((await userAList.json()).map((yarn) => yarn.name), ["Test automatyczny — zmieniony"]);
 
       const userAMatches = await fetch(`${baseUrl}/api/matches`, { headers: { Cookie: userACookies } });
       const matches = await userAMatches.json();
@@ -197,6 +228,20 @@ test("serwer Motek działa bezpiecznie", async (t) => {
         headers: { Cookie: userBCookies },
       });
       assert.equal(forbiddenDelete.status, 404);
+
+      const forbiddenUpdate = await fetch(`${baseUrl}/api/yarns/${created.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json", Cookie: userBCookies },
+        body: JSON.stringify({
+          name: "Nieautoryzowana zmiana",
+          color: "czerwony",
+          material: "wełna",
+          weightClass: "dk",
+          length: 300,
+          weight: 120,
+        }),
+      });
+      assert.equal(forbiddenUpdate.status, 404);
 
       const deleteResponse = await fetch(`${baseUrl}/api/yarns/${created.id}`, {
         method: "DELETE",

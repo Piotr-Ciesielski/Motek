@@ -276,6 +276,12 @@ function normalizeSupabaseYarn(yarn) {
 function toSupabaseYarn(yarn, userId) {
   return {
     user_id: userId,
+    ...toSupabaseYarnFields(yarn),
+  };
+}
+
+function toSupabaseYarnFields(yarn) {
+  return {
     name: yarn.name,
     color: yarn.color,
     material: yarn.material,
@@ -314,6 +320,28 @@ async function insertSupabaseYarn(session, yarn) {
 
   if (error) {
     throw new Error(`Nie udało się zapisać włóczki w Supabase: ${error.message}`);
+  }
+
+  return normalizeSupabaseYarn(data);
+}
+
+async function updateSupabaseYarn(session, id, yarn) {
+  const { data, error } = await supabaseAuthClientFactory(
+    supabaseAuthConfig,
+    session.accessToken
+  )
+    .from("yarns")
+    .update(toSupabaseYarnFields(yarn))
+    .eq("id", id)
+    .eq("user_id", session.user.id)
+    .select("id,name,color,material,weight_class,length_meters,weight_grams")
+    .single();
+
+  if (error) {
+    if (error.code === "PGRST116") {
+      throw new ApiError(404, "Nie znaleziono włóczki o podanym identyfikatorze.");
+    }
+    throw new Error(`Nie udało się zaktualizować włóczki w Supabase: ${error.message}`);
   }
 
   return normalizeSupabaseYarn(data);
@@ -766,6 +794,17 @@ async function handleApi(req, res, url) {
     const yarn = validateYarn(body);
     const session = await requireAuthenticatedSession(req, res);
     return sendJson(res, 201, await insertSupabaseYarn(session, yarn));
+  }
+
+  if (req.method === "PATCH" && url.pathname.startsWith("/api/yarns/")) {
+    const id = Number(url.pathname.split("/").pop());
+    if (!Number.isInteger(id) || id < 1) {
+      throw new ApiError(400, "Identyfikator włóczki musi być dodatnią liczbą całkowitą.");
+    }
+    const body = await readBody(req);
+    const yarn = validateYarn(body);
+    const session = await requireAuthenticatedSession(req, res);
+    return sendJson(res, 200, await updateSupabaseYarn(session, id, yarn));
   }
 
   if (req.method === "DELETE" && url.pathname.startsWith("/api/yarns/")) {

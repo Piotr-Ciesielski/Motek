@@ -43,13 +43,14 @@
  4. **Opis problemu:** Endpoint logowania wykonuje próbę Supabase dla każdego żądania, bez limitu per IP, per konto, backoffu, blokady czasowej ani limitu rejestracji. Atakujący może prowadzić password spraying, enumerować dostępność usługi lub generować koszt i obciążenie Supabase. Sama walidacja złożoności hasła nie ogranicza liczby prób.
  5. **Rekomendacja:** Dodać rate limiting na reverse proxy i aplikacji (osobno login, register i reset hasła), narastające opóźnienie po błędach, monitoring oraz alerty. Limit powinien działać za poprawnie skonfigurowanym proxy i uwzględniać prawdziwy adres klienta bez zaufania do dowolnego nagłówka `X-Forwarded-For`.
 
- ### AUD-04 — Autosave kasuje cały magazyn i odtwarza go sekwencyjnie
+ ### AUD-04 — Autosave wymaga dalszego wzmocnienia atomowości
 
- 1. **Lokalizacja:** `app.js:255-277` (`saveYarns`).
+ 1. **Lokalizacja:** `app.js:142-175` (`saveYarns`), `server.js:305-362, 799-811`.
  2. **Kategoria:** Logika / Edge case / niezawodność danych.
  3. **Poziom krytyczności:** **Wysoki**.
- 4. **Opis problemu:** Zapis pobiera istniejące rekordy, usuwa je wszystkie, a następnie wykonuje osobne POST-y. Błąd sieci, wygaśnięcie sesji, zamknięcie karty lub drugi zapis w innej karcie może zostawić magazyn pusty albo częściowy. Operacja nie jest atomowa i nie ma wersjonowania/optimistic locking. Użytkownik może bezpowrotnie stracić dane, mimo że interfejs pokazuje zwykły autosave.
+ 4. **Opis problemu:** Przed zmianą zapis pobierał istniejące rekordy, usuwał je wszystkie, a następnie wykonywał osobne POST-y. Obecnie autosave zapisuje różnice per rekord, więc błąd nie kasuje całego magazynu. Nadal nie ma atomowości całej serii zmian ani wersjonowania/optimistic locking, dlatego równoległe edycje mogą nadpisać część zmian.
  5. **Rekomendacja:** Zastąpić to endpointem atomowym, np. `PUT /api/yarns` przyjmującym cały stan i wykonywanym w transakcji albo operacjami `PATCH/POST/DELETE` na pojedynczych rekordach. Dodać `updated_at`/wersję klienta, idempotency key, obsługę retry oraz test awarii między usunięciem a insertem. Nie kasować danych przed potwierdzeniem poprawnego zapisu nowej wersji.
+ 6. **Stan po zmianie 2026-07-28:** Autosave korzysta z operacji per rekord (`POST`, `PATCH`, `DELETE`) i nie usuwa już całego magazynu przed zapisem. Pozostają do rozważenia atomowość większych serii zmian, wersjonowanie klienta i retry.
 
  ### AUD-05 — Algorytm dopasowania ma potencjalnie wykładniczy koszt
 
@@ -136,9 +137,9 @@
  1. **Zablokować automatyczny fallback do SQLite w produkcji** i wymusić fail-closed przy braku Supabase (AUD-01).
  2. **Zabezpieczyć ciasteczka i wymusić HTTPS** niezależnie od przypadkowego ustawienia `NODE_ENV` (AUD-02).
  3. **Dodać rate limiting/brute-force protection** dla logowania i rejestracji (AUD-03).
- 4. **Przebudować autosave na operację atomową** bez kasowania całego magazynu przed potwierdzeniem zapisu (AUD-04).
+ 4. **Dodać wersjonowanie i retry dla autosave** oraz rozważyć atomowość całej serii zmian (AUD-04).
  5. **Ograniczyć koszt `/api/matches` i poprawić alokację włóczek** — limity, timeout/worker oraz testy poprawności dla wielu motków w jednej roli (AUD-05, AUD-06).
 
  ## Podsumowanie końcowe
 
- Projekt jest na dobrym etapie prototypu/wersji alpha i ma kilka świadomie wdrożonych zabezpieczeń, ale obecny zestaw testów i tryb przejściowej architektury nie daje wystarczającej gwarancji bezpiecznego wdrożenia wieloużytkownikowego. Najpoważniejszy problem to możliwość uruchomienia produkcji bez Supabase jako publicznego, wspólnego SQLite, a następnie ryzyko utraty danych przez destrukcyjny autosave. Po zamknięciu tych kwestii, zabezpieczeniu sesji, dodaniu limitów i testów awarii/obciążenia można przejść do testu stagingowego z prawdziwym Supabase i przeglądu konfiguracji hostingu.
+ Projekt jest na dobrym etapie prototypu/wersji alpha i ma kilka świadomie wdrożonych zabezpieczeń, ale obecny zestaw testów nie daje jeszcze wystarczającej gwarancji bezpiecznego wdrożenia wieloużytkownikowego. Najważniejsze pozostałe kwestie to ochrona logowania, bezpieczna konfiguracja ciasteczek, limity kosztownych operacji, wersjonowanie autosave oraz testy awarii i obciążenia. Po ich zamknięciu można przejść do testu stagingowego z prawdziwym Supabase i przeglądu konfiguracji hostingu.

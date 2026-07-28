@@ -210,12 +210,12 @@ Zrealizowano:
 - prywatny magazyn włóczek z RLS,
 - zapis i usuwanie włóczek przez aplikację,
 - bezpieczną ścieżkę rankingu z wymaganiami wariantów,
+- autosave zapisujący różnice per motek przez `POST`, `PATCH` i `DELETE`,
 - usunięcie SQLite z aplikacji.
 
 Do wykonania pozostają przede wszystkim:
 
 - uzupełnienie kompletnych wymagań dopasowania dla wybranych wzorów,
-- przebudowa autosave tak, aby nie usuwał danych przed potwierdzeniem zapisu,
 - zabezpieczenie logowania przed brute force i rate limitingiem,
 - wymuszenie bezpiecznych ciasteczek i HTTPS w produkcji,
 - ograniczenie kosztu rankingu oraz rozszerzenie testów awarii i obciążenia,
