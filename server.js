@@ -23,6 +23,7 @@ const AUTH_REFRESH_MAX_AGE = 60 * 60 * 24 * 30;
 const AUTH_RATE_LIMIT_WINDOW_MS = 15 * 60 * 1000;
 const AUTH_RATE_LIMIT_MAX_FAILURES = 5;
 const AUTH_RATE_LIMIT_BLOCK_MS = 15 * 60 * 1000;
+const AUTH_RATE_LIMIT_MAX_ENTRIES = 10_000;
 const MAX_MATCH_CANDIDATE_YARNS = 50;
 const MAX_MATCH_VARIANTS = 250;
 const MAX_MATCH_ROLE_REQUIREMENTS = 8;
@@ -120,13 +121,27 @@ function createAuthRateLimiter(options = {}) {
   const windowMs = options.windowMs || AUTH_RATE_LIMIT_WINDOW_MS;
   const maxFailures = options.maxFailures || AUTH_RATE_LIMIT_MAX_FAILURES;
   const blockMs = options.blockMs || AUTH_RATE_LIMIT_BLOCK_MS;
+  const maxEntries = Math.max(1, options.maxEntries || AUTH_RATE_LIMIT_MAX_ENTRIES);
   const now = options.now || (() => Date.now());
   const entries = new Map();
 
+  function pruneExpired(currentTime) {
+    for (const [key, entry] of entries) {
+      if (entry.blockedUntil <= currentTime && currentTime - entry.windowStartedAt >= windowMs) {
+        entries.delete(key);
+      }
+    }
+  }
+
   function getEntry(key) {
+    const currentTime = now();
+    pruneExpired(currentTime);
     const current = entries.get(key);
-    if (!current || now() - current.windowStartedAt >= windowMs) {
-      const fresh = { failures: 0, windowStartedAt: now(), blockedUntil: 0 };
+    if (!current || currentTime - current.windowStartedAt >= windowMs) {
+      if (!current && entries.size >= maxEntries) {
+        entries.delete(entries.keys().next().value);
+      }
+      const fresh = { failures: 0, windowStartedAt: currentTime, blockedUntil: 0 };
       entries.set(key, fresh);
       return fresh;
     }
@@ -135,9 +150,11 @@ function createAuthRateLimiter(options = {}) {
 
   return {
     getRetryAfterMs(key) {
+      const currentTime = now();
+      pruneExpired(currentTime);
       const entry = entries.get(key);
-      if (!entry || entry.blockedUntil <= now()) return 0;
-      return entry.blockedUntil - now();
+      if (!entry || entry.blockedUntil <= currentTime) return 0;
+      return entry.blockedUntil - currentTime;
     },
     recordFailure(key) {
       const entry = getEntry(key);
@@ -148,6 +165,10 @@ function createAuthRateLimiter(options = {}) {
     },
     clear(key) {
       entries.delete(key);
+    },
+    size() {
+      pruneExpired(now());
+      return entries.size;
     },
   };
 }
@@ -161,8 +182,10 @@ function getAuthRateLimitKeys(req, email) {
   return [`ip:${getClientAddress(req)}`, `email:${email}`];
 }
 
-function enforceAuthRateLimit(keys) {
-  if (keys.some((key) => authRateLimiter.getRetryAfterMs(key) > 0)) {
+function enforceAuthRateLimit(keys, res) {
+  const retryAfterMs = Math.max(...keys.map((key) => authRateLimiter.getRetryAfterMs(key)));
+  if (retryAfterMs > 0) {
+    res?.setHeader("Retry-After", String(Math.ceil(retryAfterMs / 1000)));
     throw new ApiError(429, "Zbyt wiele nieudanych prób. Spróbuj ponownie później.");
   }
 }
@@ -927,7 +950,7 @@ async function handleAuthApi(req, res, url) {
     const login = normalizeAuthLogin(body.login);
     const fullName = normalizeFullName(body.full_name);
     const rateLimitKeys = getAuthRateLimitKeys(req, email);
-    enforceAuthRateLimit(rateLimitKeys);
+    enforceAuthRateLimit(rateLimitKeys, res);
 
     const { data, error } = await authClient().auth.signUp({
       email,
@@ -963,7 +986,7 @@ async function handleAuthApi(req, res, url) {
     const email = normalizeAuthEmail(body.email);
     const password = validateAuthPassword(body.password);
     const rateLimitKeys = getAuthRateLimitKeys(req, email);
-    enforceAuthRateLimit(rateLimitKeys);
+    enforceAuthRateLimit(rateLimitKeys, res);
     const { data, error } = await authClient().auth.signInWithPassword({ email, password });
 
     if (error || !data?.user || !data.session) {

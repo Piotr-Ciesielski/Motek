@@ -236,6 +236,12 @@ Dodano testy dla profilu zawieszonego i brakującego. Weryfikacja: `npm run chec
    liczby prób po stronie infrastruktury. Wprowadzić jawne `TRUSTED_PROXY` oraz
    bezpieczne ustalanie prawdziwego adresu klienta. Zwracać `Retry-After` dla 429.
 
+**Status po poprawce 2026-07-28:** częściowo zamknięte w procesie aplikacji.
+Limiter usuwa wygasłe wpisy, ma limit 10 000 wpisów i zwraca `Retry-After` dla
+odpowiedzi 429. Ochrona nadal nie jest współdzielona między instancjami i nie
+rozwiązuje identyfikacji klienta za niezaufanym reverse proxy; te elementy
+pozostają zadaniem infrastruktury przed wdrożeniem wieloinstancyjnym.
+
 ### AUD-16 — Limit 500 włóczek nie jest atomowy i nie jest egzekwowany w bazie
 
 1. **Lokalizacja:** `server.js:393-411` (`insertSupabaseYarn`),

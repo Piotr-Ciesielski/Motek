@@ -72,3 +72,25 @@ test("rate limiter blokuje serię nieudanych prób i wygasa po czasie", () => {
   limiter.recordFailure("ip:127.0.0.1");
   assert.equal(limiter.getRetryAfterMs("ip:127.0.0.1"), 0);
 });
+
+test("rate limiter usuwa wygasłe wpisy i nie przekracza limitu pamięci", () => {
+  let now = 0;
+  const limiter = createAuthRateLimiter({
+    windowMs: 100,
+    maxFailures: 2,
+    blockMs: 50,
+    maxEntries: 2,
+    now: () => now,
+  });
+
+  limiter.recordFailure("email:a@example.com");
+  limiter.recordFailure("email:b@example.com");
+  assert.equal(limiter.size(), 2);
+
+  limiter.recordFailure("email:c@example.com");
+  assert.equal(limiter.size(), 2);
+  assert.equal(limiter.getRetryAfterMs("email:a@example.com"), 0);
+
+  now = 100;
+  assert.equal(limiter.size(), 0);
+});
