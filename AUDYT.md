@@ -545,6 +545,12 @@ zdalny projekt Supabase. Nie odczytywano pliku .env ani innych sekretów.
 5. Rekomendacja: Włączyć leaked password protection w konfiguracji Auth i
    wykonać test rejestracji z hasłem odrzuconym przez tę ochronę.
 
+**Status po weryfikacji 2026-07-28:** odłożone z przyczyn planu Supabase.
+Aktualny plan projektu nie pozwala włączyć tej funkcji bez zakupu płatnego
+planu. Wymaganie pozostaje zapisane jako przyszłe usprawnienie bezpieczeństwa;
+lokalna walidacja złożoności haseł nadal działa, ale nie zastępuje sprawdzania
+hasła względem baz wycieków.
+
 ### AUD-25 — Rate limiting nie skaluje się między procesami
 
 1. Lokalizacja: server.js:142-212, authRateLimiter,
@@ -651,7 +657,8 @@ ponieważ nie jest obecnie częścią repozytorium.
 
 1. Zabezpieczyć lub usunąć public.rls_auto_enable() i ponownie uruchomić
    Security Advisor — AUD-23.
-2. Włączyć leaked password protection w Supabase Auth — AUD-24.
+2. Po przejściu na plan Supabase obsługujący tę funkcję włączyć leaked password
+   protection i wykonać test rejestracji — AUD-24.
 3. Dodać ochronę na reverse proxy/WAF i limiter współdzielony między instancjami
    — AUD-25 oraz plan ochrony DDoS.
 4. Naprawić autosave i dodać testy awarii, konfliktu i retry — AUD-27.
@@ -664,3 +671,8 @@ Nie wykonano testu penetracyjnego, testu z wieloma procesami Node.js, testu
 slowloris, testu rzeczywistej współbieżności na produkcyjnym Supabase ani testu
 pełnego importu z rollbackiem. Nie odczytano ciała zdalnej funkcji
 rls_auto_enable, dlatego jej rzeczywisty wpływ pozostaje do potwierdzenia.
+
+## Przyszłe usprawnienia zależne od planu Supabase
+
+- Po przejściu na płatny plan włączyć leaked password protection w Supabase
+  Auth i potwierdzić jej działanie testem rejestracji.
