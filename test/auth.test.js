@@ -6,6 +6,7 @@ const {
   normalizeAuthLogin,
   validateAuthPassword,
   buildAuthCookie,
+  createAuthRateLimiter,
   shouldUseSecureCookies,
   validateCookieSecurityConfig,
 } = require("../server");
@@ -48,4 +49,26 @@ test("Secure jest sterowane konfiguracją transportu", () => {
     buildAuthCookie("motek_access_token", "token", 60, { NODE_ENV: "production", COOKIE_SECURE: "true" }),
     /; HttpOnly; SameSite=Lax; Max-Age=60; Secure$/
   );
+});
+
+test("rate limiter blokuje serię nieudanych prób i wygasa po czasie", () => {
+  let now = 0;
+  const limiter = createAuthRateLimiter({
+    windowMs: 100,
+    maxFailures: 3,
+    blockMs: 50,
+    now: () => now,
+  });
+
+  limiter.recordFailure("ip:127.0.0.1");
+  limiter.recordFailure("ip:127.0.0.1");
+  assert.equal(limiter.getRetryAfterMs("ip:127.0.0.1"), 0);
+  limiter.recordFailure("ip:127.0.0.1");
+  assert.equal(limiter.getRetryAfterMs("ip:127.0.0.1"), 50);
+
+  now = 50;
+  assert.equal(limiter.getRetryAfterMs("ip:127.0.0.1"), 0);
+  now = 100;
+  limiter.recordFailure("ip:127.0.0.1");
+  assert.equal(limiter.getRetryAfterMs("ip:127.0.0.1"), 0);
 });

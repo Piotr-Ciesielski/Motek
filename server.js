@@ -20,6 +20,10 @@ const AUTH_ACCESS_COOKIE = "motek_access_token";
 const AUTH_REFRESH_COOKIE = "motek_refresh_token";
 const AUTH_ACCESS_MAX_AGE = 60 * 60;
 const AUTH_REFRESH_MAX_AGE = 60 * 60 * 24 * 30;
+const AUTH_RATE_LIMIT_WINDOW_MS = 15 * 60 * 1000;
+const AUTH_RATE_LIMIT_MAX_FAILURES = 5;
+const AUTH_RATE_LIMIT_BLOCK_MS = 15 * 60 * 1000;
+const authRateLimiter = createAuthRateLimiter();
 const MAX_TEXT_LENGTH = {
   name: 100,
   color: 50,
@@ -104,6 +108,65 @@ function shouldUseSecureCookies(env = process.env) {
   if (configured === "true") return true;
   if (configured === "false") return false;
   return env.NODE_ENV === "production";
+}
+
+function createAuthRateLimiter(options = {}) {
+  const windowMs = options.windowMs || AUTH_RATE_LIMIT_WINDOW_MS;
+  const maxFailures = options.maxFailures || AUTH_RATE_LIMIT_MAX_FAILURES;
+  const blockMs = options.blockMs || AUTH_RATE_LIMIT_BLOCK_MS;
+  const now = options.now || (() => Date.now());
+  const entries = new Map();
+
+  function getEntry(key) {
+    const current = entries.get(key);
+    if (!current || now() - current.windowStartedAt >= windowMs) {
+      const fresh = { failures: 0, windowStartedAt: now(), blockedUntil: 0 };
+      entries.set(key, fresh);
+      return fresh;
+    }
+    return current;
+  }
+
+  return {
+    getRetryAfterMs(key) {
+      const entry = entries.get(key);
+      if (!entry || entry.blockedUntil <= now()) return 0;
+      return entry.blockedUntil - now();
+    },
+    recordFailure(key) {
+      const entry = getEntry(key);
+      entry.failures += 1;
+      if (entry.failures >= maxFailures) {
+        entry.blockedUntil = now() + blockMs;
+      }
+    },
+    clear(key) {
+      entries.delete(key);
+    },
+  };
+}
+
+function getClientAddress(req) {
+  const address = req.socket?.remoteAddress || "unknown";
+  return address.startsWith("::ffff:") ? address.slice(7) : address;
+}
+
+function getAuthRateLimitKeys(req, email) {
+  return [`ip:${getClientAddress(req)}`, `email:${email}`];
+}
+
+function enforceAuthRateLimit(keys) {
+  if (keys.some((key) => authRateLimiter.getRetryAfterMs(key) > 0)) {
+    throw new ApiError(429, "Zbyt wiele nieudanych prób. Spróbuj ponownie później.");
+  }
+}
+
+function recordAuthFailure(keys) {
+  keys.forEach((key) => authRateLimiter.recordFailure(key));
+}
+
+function clearAuthFailures(keys) {
+  keys.forEach((key) => authRateLimiter.clear(key));
 }
 
 function validateCookieSecurityConfig(env = process.env) {
@@ -725,6 +788,8 @@ async function handleAuthApi(req, res, url) {
     const password = validateAuthPassword(body.password);
     const login = normalizeAuthLogin(body.login);
     const fullName = normalizeFullName(body.full_name);
+    const rateLimitKeys = getAuthRateLimitKeys(req, email);
+    enforceAuthRateLimit(rateLimitKeys);
 
     const { data, error } = await authClient().auth.signUp({
       email,
@@ -738,8 +803,11 @@ async function handleAuthApi(req, res, url) {
     });
 
     if (error || !data?.user) {
+      recordAuthFailure(rateLimitKeys);
       throw genericAuthError("register");
     }
+
+    clearAuthFailures(rateLimitKeys);
 
     if (data.session) {
       setAuthCookies(res, data.session);
@@ -756,11 +824,16 @@ async function handleAuthApi(req, res, url) {
     const body = await readBody(req);
     const email = normalizeAuthEmail(body.email);
     const password = validateAuthPassword(body.password);
+    const rateLimitKeys = getAuthRateLimitKeys(req, email);
+    enforceAuthRateLimit(rateLimitKeys);
     const { data, error } = await authClient().auth.signInWithPassword({ email, password });
 
     if (error || !data?.user || !data.session) {
+      recordAuthFailure(rateLimitKeys);
       throw genericAuthError("login");
     }
+
+    clearAuthFailures(rateLimitKeys);
 
     setAuthCookies(res, data.session);
     await updateLastLogin(data.user.id);
@@ -995,6 +1068,7 @@ module.exports = {
   normalizeSupabaseYarn,
   toSupabaseYarn,
   buildAuthCookie,
+  createAuthRateLimiter,
   shouldUseSecureCookies,
   shutdown,
   validateCookieSecurityConfig,

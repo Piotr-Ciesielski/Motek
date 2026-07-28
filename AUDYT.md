@@ -43,6 +43,7 @@
  3. **Poziom krytyczności:** **Wysoki**.
  4. **Opis problemu:** Endpoint logowania wykonuje próbę Supabase dla każdego żądania, bez limitu per IP, per konto, backoffu, blokady czasowej ani limitu rejestracji. Atakujący może prowadzić password spraying, enumerować dostępność usługi lub generować koszt i obciążenie Supabase. Sama walidacja złożoności hasła nie ogranicza liczby prób.
  5. **Rekomendacja:** Dodać rate limiting na reverse proxy i aplikacji (osobno login, register i reset hasła), narastające opóźnienie po błędach, monitoring oraz alerty. Limit powinien działać za poprawnie skonfigurowanym proxy i uwzględniać prawdziwy adres klienta bez zaufania do dowolnego nagłówka `X-Forwarded-For`.
+ 6. **Stan po zmianie 2026-07-28:** Backend ogranicza nieudane próby logowania i rejestracji osobno per adres klienta i e-mail, bez zaufania do `X-Forwarded-For`. Pozostają limity i monitoring na reverse proxy oraz ochrona rozproszona dla wielu procesów.
 
  ### AUD-04 — Autosave wymaga dalszego wzmocnienia atomowości
 
@@ -136,8 +137,8 @@
  ## TOP 5 przed produkcją
 
  1. **Zablokować automatyczny fallback do SQLite w produkcji** i wymusić fail-closed przy braku Supabase (AUD-01).
- 2. **Zabezpieczyć ciasteczka i wymusić HTTPS** niezależnie od przypadkowego ustawienia `NODE_ENV` (AUD-02).
- 3. **Dodać rate limiting/brute-force protection** dla logowania i rejestracji (AUD-03).
+ 2. **Wymusić HTTPS i HSTS na reverse proxy** po potwierdzeniu konfiguracji domeny (AUD-02).
+ 3. **Dodać rate limiting na reverse proxy, monitoring i ochronę rozproszoną** dla logowania i rejestracji (AUD-03).
  4. **Dodać wersjonowanie i retry dla autosave** oraz rozważyć atomowość całej serii zmian (AUD-04).
  5. **Ograniczyć koszt `/api/matches` i poprawić alokację włóczek** — limity, timeout/worker oraz testy poprawności dla wielu motków w jednej roli (AUD-05, AUD-06).
 

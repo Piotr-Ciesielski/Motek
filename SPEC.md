@@ -84,6 +84,7 @@ nie ma lokalnego trybu SQLite ani fallbacku do pliku lokalnego.
 - magazyn włóczek jest izolowany przez `user_id` i RLS,
 - właściciel nowej włóczki wynika z uwierzytelnionej sesji, nie z formularza,
 - dane wejściowe mają limity długości i wartości,
+- logowanie i rejestracja ograniczają serię nieudanych prób per adres klienta i e-mail,
 - odpowiedzi API nie zawierają sekretów ani tokenów,
 - `.env` i lokalny folder `Wzory` nie trafiają do Git.
 
@@ -217,8 +218,8 @@ Zrealizowano:
 Do wykonania pozostają przede wszystkim:
 
 - uzupełnienie kompletnych wymagań dopasowania dla wybranych wzorów,
-- zabezpieczenie logowania przed brute force i rate limitingiem,
-- wymuszenie bezpiecznych ciasteczek i HTTPS w produkcji,
+- uzupełnienie rate limitingu na reverse proxy oraz monitoring prób Auth,
+- wymuszenie HTTPS i HSTS na reverse proxy w produkcji,
 - ograniczenie kosztu rankingu oraz rozszerzenie testów awarii i obciążenia,
 - uporządkowanie konfiguracji wdrożenia produkcyjnego.
 

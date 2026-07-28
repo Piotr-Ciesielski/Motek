@@ -170,6 +170,7 @@ nie trafia do automatycznego dopasowania jako potwierdzona rekomendacja.
 - magazyn włóczek jest izolowany przez `user_id` i RLS,
 - backend jawnie wybiera dane zwracane przez API,
 - dane wejściowe są walidowane i ograniczane rozmiarem,
+- logowanie i rejestracja mają limit nieudanych prób per adres klienta i e-mail,
 - błędy nie ujawniają sekretów ani tokenów,
 - folder `Wzory` i plik `.env` nie trafiają do repozytorium.
 

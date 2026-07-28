@@ -11,6 +11,7 @@ Wersja 2.0.0-alpha.8 (w przygotowaniu) - Supabase jako jedyne źródło danych
 - Uporządkowano `SPEC.md` i `README.md`, aby opisywały aktualny stan Supabase bez nieaktualnego SQLite.
 - Zastąpiono destrukcyjny autosave zapisem różnic per motek przez `POST`, `PATCH` i `DELETE`.
 - Dodano jawną konfigurację `COOKIE_SECURE` i blokadę startu produkcji bez `Secure` dla ciasteczek sesji.
+- Dodano aplikacyjny rate limiting nieudanych prób logowania i rejestracji per adres klienta i e-mail.
 
 Wersja 2.0.0-alpha.7 (w przygotowaniu) - role włóczek w rankingu
 - Rozszerzono lokalny format importu o kompletne wymagania wariantów.
