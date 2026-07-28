@@ -129,8 +129,10 @@ Wzór może pojawić się w wynikach tylko wtedy, gdy:
 - jeden motek nie jest używany jednocześnie do dwóch różnych ról.
 
 Ranking uwzględnia wymagane metry, gramy, materiały i klasy grubości. Wyniki
-są sortowane według wyniku procentowego. Brak danych oznacza brak możliwości
-potwierdzenia wykonalności, a nie zgodę na użycie przybliżenia.
+są sortowane według wyniku procentowego. Jedno wymaganie może użyć kilku
+kompatybilnych motków, jeśli `yarns_needed` oznacza minimalną liczbę motków.
+Brak danych oznacza brak możliwości potwierdzenia wykonalności, a nie zgodę
+na użycie przybliżenia.
 
 Obecne rekordy katalogu mają jeszcze pustą listę wariantów dopasowania, więc
 nie są prezentowane jako potwierdzone wyniki, dopóki wymagania nie zostaną
@@ -220,7 +222,7 @@ Do wykonania pozostają przede wszystkim:
 - uzupełnienie kompletnych wymagań dopasowania dla wybranych wzorów,
 - uzupełnienie rate limitingu na reverse proxy oraz monitoring prób Auth,
 - wymuszenie HTTPS i HSTS na reverse proxy w produkcji,
-- ograniczenie kosztu rankingu oraz rozszerzenie testów awarii i obciążenia,
+- dalsze ograniczenie kosztu rankingu, testy obciążenia i ewentualny worker,
 - uporządkowanie konfiguracji wdrożenia produkcyjnego.
 
 ## 12. Historia migracji

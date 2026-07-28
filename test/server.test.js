@@ -3,7 +3,35 @@ const assert = require("node:assert/strict");
 process.env.HOST = "127.0.0.1";
 process.env.PORT = "0";
 
-const { main, shutdown } = require("../server");
+const { main, scorePattern, shutdown, validateMatchLimits } = require("../server");
+
+test("ranking respektuje limity rozmiaru i może użyć kilku motków dla jednej roli", () => {
+  assert.throws(
+    () => validateMatchLimits(Array.from({ length: 51 }, () => ({})), []),
+    /maksymalnie 50/
+  );
+
+  const result = scorePattern(
+    {
+      requirements: [
+        {
+          yarnsNeeded: 1,
+          metersNeeded: 500,
+          gramsNeeded: 100,
+          materials: ["wełna"],
+          weightClasses: ["dk"],
+        },
+      ],
+    },
+    [
+      { id: 1, material: "wełna", weightClass: "dk", length: 300, weight: 60 },
+      { id: 2, material: "wełna", weightClass: "dk", length: 250, weight: 50 },
+    ]
+  );
+
+  assert.equal(result.doable, true);
+  assert.equal(result.matchedYarns, 2);
+});
 
 test("serwer Motek działa bezpiecznie", async (t) => {
   const supabasePatterns = [

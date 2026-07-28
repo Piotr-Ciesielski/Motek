@@ -23,6 +23,10 @@ const AUTH_REFRESH_MAX_AGE = 60 * 60 * 24 * 30;
 const AUTH_RATE_LIMIT_WINDOW_MS = 15 * 60 * 1000;
 const AUTH_RATE_LIMIT_MAX_FAILURES = 5;
 const AUTH_RATE_LIMIT_BLOCK_MS = 15 * 60 * 1000;
+const MAX_MATCH_YARNS = 50;
+const MAX_MATCH_VARIANTS = 250;
+const MAX_MATCH_ROLE_REQUIREMENTS = 8;
+const MAX_MATCH_SEARCH_NODES = 25_000;
 const authRateLimiter = createAuthRateLimiter();
 const MAX_TEXT_LENGTH = {
   name: 100,
@@ -494,7 +498,13 @@ function scorePattern(pattern, yarns) {
 }
 
 function allocateRequirementYarns(requirements, yarns) {
+  let searchNodes = 0;
+
   function choose(index, used, allocation) {
+    searchNodes += 1;
+    if (searchNodes > MAX_MATCH_SEARCH_NODES) {
+      throw new ApiError(503, "Dopasowanie jest zbyt złożone. Zmniejsz magazyn lub wybierz prostszy wzór.");
+    }
     if (index === requirements.length) return allocation;
 
     const requirement = requirements[index];
@@ -506,6 +516,10 @@ function allocateRequirementYarns(requirements, yarns) {
     );
 
     function chooseGroup(start, group, length, weight) {
+      searchNodes += 1;
+      if (searchNodes > MAX_MATCH_SEARCH_NODES) {
+        throw new ApiError(503, "Dopasowanie jest zbyt złożone. Zmniejsz magazyn lub wybierz prostszy wzór.");
+      }
       if (
         group.length >= requirement.yarnsNeeded &&
         length >= requirement.metersNeeded &&
@@ -517,7 +531,6 @@ function allocateRequirementYarns(requirements, yarns) {
         if (result) return result;
       }
 
-      if (group.length >= requirement.yarnsNeeded) return null;
       for (let candidate = start; candidate < eligible.length; candidate += 1) {
         const result = chooseGroup(
           candidate + 1,
@@ -542,6 +555,8 @@ async function getSupabaseMatches(session) {
     getCatalogPatterns(),
   ]);
 
+  validateMatchLimits(yarns, patterns);
+
   return patterns
     .filter((pattern) => !pattern.needsReview)
     .flatMap((pattern) =>
@@ -557,6 +572,26 @@ async function getSupabaseMatches(session) {
     )
     .filter((item) => item.doable)
     .sort((a, b) => b.total - a.total);
+}
+
+function validateMatchLimits(yarns, patterns) {
+  if (yarns.length > MAX_MATCH_YARNS) {
+    throw new ApiError(
+      413,
+      `Magazyn zawiera zbyt wiele włóczek do jednego dopasowania (maksymalnie ${MAX_MATCH_YARNS}).`
+    );
+  }
+
+  const variantCount = patterns.reduce(
+    (total, pattern) => total + pattern.matchingRequirements.length,
+    0
+  );
+  if (variantCount > MAX_MATCH_VARIANTS) {
+    throw new ApiError(
+      503,
+      "Katalog zawiera zbyt wiele wariantów do jednego dopasowania. Spróbuj później lub zawęź katalog."
+    );
+  }
 }
 
 async function readBody(req) {
@@ -674,6 +709,10 @@ function normalizeMatchingRequirements(value) {
           return normalized ? [normalized] : [];
         })
       : [];
+
+    if (yarnRequirements.length > MAX_MATCH_ROLE_REQUIREMENTS) {
+      return [];
+    }
 
     return [{
       id: String(variant.id || `wariant-${index + 1}`),
@@ -1066,9 +1105,11 @@ module.exports = {
   normalizeAuthLogin,
   normalizeCatalogPattern,
   normalizeSupabaseYarn,
+  scorePattern,
   toSupabaseYarn,
   buildAuthCookie,
   createAuthRateLimiter,
+  validateMatchLimits,
   shouldUseSecureCookies,
   shutdown,
   validateCookieSecurityConfig,

@@ -56,11 +56,12 @@
 
  ### AUD-05 — Algorytm dopasowania ma potencjalnie wykładniczy koszt
 
- 1. **Lokalizacja:** `server.js:506-547` (`allocateRequirementYarns`) oraz `server.js:549-569` (`getSupabaseMatches`).
+ 1. **Lokalizacja:** `server.js:470-535` (`allocateRequirementYarns`) oraz `server.js:575-610` (`getSupabaseMatches`).
  2. **Kategoria:** Bezpieczeństwo — denial of service / wydajność.
  3. **Poziom krytyczności:** **Wysoki**.
  4. **Opis problemu:** Przy każdym wymaganiu algorytm przegląda kombinacje włóczek rekurencyjnie. Liczba kombinacji rośnie wykładniczo, a aplikacja nie ogranicza liczby rekordów magazynu na użytkownika, liczby wariantów ani czasu wykonania. Uwierzytelniony użytkownik może dodać wiele rekordów i wywołać `/api/matches`, blokując pojedynczy proces Node.js. Dodatkowo endpoint pobiera cały katalog i cały magazyn bez paginacji.
  5. **Rekomendacja:** Ustalić limit liczby włóczek, wariantów i wymagań; odrzucać lub kolejkować zbyt duże obliczenia; dodać deadline/cancellation. Zastąpić brute force algorytmem sortowania/greedy, DP z limitem stanu albo obliczeniami w bazie/workerze. Dodać test obciążeniowy z realistycznym maksimum.
+ 6. **Stan po zmianie 2026-07-28:** Dodano limity 50 włóczek, 250 wariantów i 25 000 kroków wyszukiwania. Przekroczenie limitu zwraca błąd zamiast bez końca obciążać proces. Pozostaje benchmark oraz decyzja, czy przenieść obliczenia do workera.
 
  ### AUD-06 — Dopasowanie ról może odrzucać poprawny zestaw
 
@@ -69,6 +70,7 @@
  3. **Poziom krytyczności:** **Średni**.
  4. **Opis problemu:** Rekurencja kończy wybieranie grupy natychmiast po osiągnięciu `group.length >= requirement.yarnsNeeded` (`server.js:530`). Oznacza to, że gdy wymaganie mówi „1 motek”, ale pojedynczy motek nie ma wystarczającej liczby metrów/gramów, drugi kompatybilny motek nie może zostać dołączony. Wynik może być pusty mimo spełnienia sumy materiału przez kilka motków. To wymaga potwierdzenia semantyki `yarns_needed`; jeśli oznacza minimum, jest to błąd.
  5. **Rekomendacja:** Ustalić w modelu, czy `yarns_needed` oznacza dokładnie czy co najmniej. Dla wartości minimalnej kontynuować wybór po osiągnięciu liczby minimalnej aż do spełnienia metrów/gramów; dla wartości dokładnej dodać walidację danych i test jawnie potwierdzający tę regułę.
+ 6. **Stan po zmianie 2026-07-28:** Przyjęto interpretację „co najmniej” i dodano test potwierdzający użycie kilku kompatybilnych motków dla jednej roli.
 
  ### AUD-07 — Brak limitu czasu odczytu żądania (slowloris)
 
@@ -140,7 +142,7 @@
  2. **Wymusić HTTPS i HSTS na reverse proxy** po potwierdzeniu konfiguracji domeny (AUD-02).
  3. **Dodać rate limiting na reverse proxy, monitoring i ochronę rozproszoną** dla logowania i rejestracji (AUD-03).
  4. **Dodać wersjonowanie i retry dla autosave** oraz rozważyć atomowość całej serii zmian (AUD-04).
- 5. **Ograniczyć koszt `/api/matches` i poprawić alokację włóczek** — limity, timeout/worker oraz testy poprawności dla wielu motków w jednej roli (AUD-05, AUD-06).
+ 5. **Dodać benchmark i ewentualnego workera dla `/api/matches`** po wprowadzonych limitach i poprawie alokacji (AUD-05, AUD-06).
 
  ## Podsumowanie końcowe
 
