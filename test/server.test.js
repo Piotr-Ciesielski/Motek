@@ -127,7 +127,12 @@ test("serwer Motek działa bezpiecznie", async (t) => {
     "token-user-b": { id: "22222222-2222-4222-8222-222222222222", email: "b@example.com" },
   };
   const syntheticProfiles = Object.fromEntries(
-    Object.values(syntheticUsers).map((user) => [user.id, { id: user.id, login: user.id === syntheticUsers["token-user-a"].id ? "uzytkownik_a" : "uzytkownik_b", email: user.email }])
+    Object.values(syntheticUsers).map((user) => [user.id, {
+      id: user.id,
+      login: user.id === syntheticUsers["token-user-a"].id ? "uzytkownik_a" : "uzytkownik_b",
+      email: user.email,
+      status: "active",
+    }])
   );
   const syntheticYarns = [];
   let nextSyntheticYarnId = 1;
@@ -332,6 +337,21 @@ test("serwer Motek działa bezpiecznie", async (t) => {
         headers: { Cookie: userACookies },
       });
       assert.equal(deleteResponse.status, 204);
+
+      syntheticProfiles[syntheticUsers["token-user-a"].id].status = "suspended";
+      const suspendedResponse = await fetch(`${baseUrl}/api/yarns`, {
+        headers: { Cookie: userACookies },
+      });
+      assert.equal(suspendedResponse.status, 403);
+      assert.deepEqual(await suspendedResponse.json(), {
+        error: "Konto jest zawieszone lub zablokowane.",
+      });
+
+      delete syntheticProfiles[syntheticUsers["token-user-a"].id];
+      const missingProfileResponse = await fetch(`${baseUrl}/api/yarns`, {
+        headers: { Cookie: userACookies },
+      });
+      assert.equal(missingProfileResponse.status, 401);
     });
 
     await t.test("pobiera katalog wzorów z Supabase bez ujawniania sekretów", async () => {

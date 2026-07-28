@@ -328,9 +328,19 @@ async function getAuthenticatedSession(req, res) {
     .eq("id", userResult.data.user.id)
     .maybeSingle();
 
+  if (profileResult.error || !profileResult.data) {
+    clearAuthCookies(res);
+    return null;
+  }
+
+  if (profileResult.data.status !== "active") {
+    clearAuthCookies(res);
+    throw new ApiError(403, "Konto jest zawieszone lub zablokowane.");
+  }
+
   return {
     user: userResult.data.user,
-    profile: profileResult.error ? null : profileResult.data,
+    profile: profileResult.data,
     accessToken: activeAccessToken,
   };
 }

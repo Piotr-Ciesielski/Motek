@@ -148,3 +148,259 @@
  ## Podsumowanie końcowe
 
  Projekt jest na dobrym etapie prototypu/wersji alpha i ma kilka świadomie wdrożonych zabezpieczeń, ale obecny zestaw testów nie daje jeszcze wystarczającej gwarancji bezpiecznego wdrożenia wieloużytkownikowego. Najważniejsze pozostałe kwestie to ochrona logowania, bezpieczna konfiguracja ciasteczek, limity kosztownych operacji, wersjonowanie autosave oraz testy awarii i obciążenia. Po ich zamknięciu można przejść do testu stagingowego z prawdziwym Supabase i przeglądu konfiguracji hostingu.
+
+---
+
+# Audyt iteracja 2 — wersja 2.0.0-alpha.9
+
+Data audytu: 2026-07-28
+Zakres: aktualny `server.js`, `app.js`, `supabase.js`, `README.md`, `SPEC.md`,
+migracje Supabase, skrypty importu, testy i konfiguracja npm.
+
+## Prompt audytu zastosowany w tej iteracji
+
+Audyt został wykonany z perspektywy Senior QA Engineer / Security Reviewer.
+Sprawdzono: OWASP Top 10 i AppSec, sekrety i dane wrażliwe, walidację wejścia,
+autoryzację endpointów, zależności i CVE, obsługę błędów, architekturę,
+logikę biznesową, współbieżność, transakcje, wartości graniczne, duże wolumeny,
+błędy usług zewnętrznych, jakość kodu, utrzymywalność i pokrycie testami.
+Każde ustalenie zawiera lokalizację, kategorię, krytyczność, opis i rekomendację.
+Nie zakładano, że brak testu oznacza poprawność. Nie odczytywano plików sekretów.
+
+## Metoda i wynik kontroli
+
+- `npm run check` — **20 testów przechodzi**;
+- `node --check server.js` i `node --check app.js` — bez błędów;
+- `npm audit --omit=dev --audit-level=moderate` — **0 znanych podatności**
+  w aktualnym lockfile;
+- przegląd statyczny kodu, migracji, skryptów importu i poprzednich ustaleń;
+- nie wykonano testów na prawdziwym projekcie Supabase, testów penetracyjnych,
+  testów wieloprocesowych ani testów reverse proxy/hostingu.
+
+## Status poprzednich ustaleń
+
+- **AUD-01 SQLite fallback** — nieaktualne jako problem bieżącego kodu; SQLite
+  został usunięty, a start wymaga Supabase. Historyczny opis pozostaje dla śladu
+  migracji.
+- **AUD-02 Secure cookies** — częściowo zamknięte przez `COOKIE_SECURE=true`
+  wymagane w produkcji; HTTPS i HSTS nadal należą do reverse proxy/hostingu.
+- **AUD-03 rate limiting** — częściowo zamknięte w pojedynczym procesie;
+  pozostają problemy pamięci, wielu instancji i reverse proxy opisane niżej.
+- **AUD-04 autosave** — częściowo zamknięte przez zapis per rekord; nadal nie
+  ma atomowości całej serii, wersjonowania ani ochrony przed dwiema kartami.
+- **AUD-05/AUD-06 ranking** — dodano limity, szybkie odrzucanie i obsługę wielu
+  motków; wybór najlepszego podzbioru jest nadal heurystyczny.
+- **AUD-07/AUD-08/AUD-09/AUD-11/AUD-12/AUD-13** — pozostają otwarte albo
+  częściowo otwarte zgodnie z ustaleniami poniżej.
+
+## Nowe i ponownie potwierdzone problemy
+
+### AUD-14 — Status zawieszonego użytkownika nie jest egzekwowany
+
+1. **Lokalizacja:** `server.js:293-338` (`getAuthenticatedSession`),
+   `server.js:996-1045` (`handleApi`); `supabase/migrations/20260724000000_create_profiles_auth.sql`.
+2. **Kategoria:** Bezpieczeństwo — kontrola dostępu / broken authorization.
+3. **Poziom krytyczności:** **Wysoki**.
+4. **Opis problemu:** Tabela `profiles` ma pola `status` z wartościami
+   `active`, `suspended` i `banned`, ale `getAuthenticatedSession` zwraca
+   sesję jako poprawną niezależnie od statusu profilu. W efekcie użytkownik
+   oznaczony jako zawieszony lub zablokowany może nadal korzystać z magazynu,
+   rankingu i innych endpointów wymagających sesji. Brak profilu także nie
+   powoduje fail-closed — profil jest wtedy tylko ustawiany na `null`.
+5. **Rekomendacja:** Po odczycie profilu odrzucać status `suspended` i `banned`
+   kodem 403, a brak profilu traktować jako błąd konfiguracji lub niepełną
+   sesję. Dodać testy dla wszystkich statusów oraz test bez profilu.
+
+**Status po poprawce 2026-07-28:** naprawione w `server.js`. Tylko profil ze
+statusem `active` jest uznawany za aktywną sesję; statusy `suspended`, `banned`
+i inne nieaktywne kończą się kodem 403, a brak profilu lub błąd jego odczytu
+kończy się unieważnieniem ciasteczek i odpowiedzią 401 na chronionych endpointach.
+Dodano testy dla profilu zawieszonego i brakującego. Weryfikacja: `npm run check`
+— 20/20 testów zakończonych powodzeniem.
+
+### AUD-15 — Rate limiter jest lokalny, podatny na wzrost pamięci i błędny za proxy
+
+1. **Lokalizacja:** `server.js:119-175` (`createAuthRateLimiter`),
+   `server.js:155-160` (`getClientAddress`).
+2. **Kategoria:** Bezpieczeństwo — availability / brute force / skalowanie.
+3. **Poziom krytyczności:** **Wysoki**.
+4. **Opis problemu:** Limiter przechowuje klucze w bezterminowej mapie procesu.
+   Atakujący może generować nieudane próby z wieloma adresami e-mail, tworząc
+   stale nowe wpisy i zwiększając zużycie pamięci. Przy wielu instancjach Node.js
+   każda instancja ma własny limit, więc ochrona może być obchodzona. Za reverse
+   proxy wszystkie żądania mogą mieć jeden adres socketu proxy, co z kolei może
+   zablokować legalnych użytkowników. Kod słusznie nie ufa dowolnemu
+   `X-Forwarded-For`, ale nie ma konfigurowanej listy zaufanych proxy.
+5. **Rekomendacja:** Przenieść główny limiter do reverse proxy lub współdzielonego
+   magazynu (np. Redis), ograniczyć liczbę wpisów przez TTL/LRU i dodać limit
+   liczby prób po stronie infrastruktury. Wprowadzić jawne `TRUSTED_PROXY` oraz
+   bezpieczne ustalanie prawdziwego adresu klienta. Zwracać `Retry-After` dla 429.
+
+### AUD-16 — Limit 500 włóczek nie jest atomowy i nie jest egzekwowany w bazie
+
+1. **Lokalizacja:** `server.js:393-411` (`insertSupabaseYarn`),
+   `server.js:846-853` (`validateYarnStorageCapacity`), migracja `yarns`.
+2. **Kategoria:** Logika / integralność danych / współbieżność.
+3. **Poziom krytyczności:** **Średni**.
+4. **Opis problemu:** Backend najpierw pobiera aktualną liczbę włóczek, a potem
+   wykonuje osobny insert. Dwa równoczesne żądania przy stanie 499 mogą oba
+   zobaczyć 499 i oba zapisać rekord, przekraczając limit 500. Limit nie jest też
+   zapisany w polityce, triggerze ani funkcji bazodanowej. Bezpośredni dostęp
+   przez inne zaufane ścieżki lub import może ominąć limit aplikacji.
+5. **Rekomendacja:** Egzekwować limit w kontrolowanej funkcji bazodanowej z
+   blokadą/advisory lock albo innym atomowym mechanizmem. Dodać test równoległych
+   POST-ów i test po przekroczeniu limitu. Utrzymywać limit także w procesie
+   importu/administracji, nie tylko w HTTP API.
+
+### AUD-17 — Limit katalogu 300 jest tylko kontrolą odczytu, nie regułą danych
+
+1. **Lokalizacja:** `server.js:829-864` (`getCatalogPatterns`,
+   `validatePatternCatalogSize`), `scripts/import-patterns.js:14-145`.
+2. **Kategoria:** Architektura / integralność danych / operacje.
+3. **Poziom krytyczności:** **Średni**.
+4. **Opis problemu:** Aplikacja pobiera cały katalog, a dopiero potem zwraca
+   błąd, jeśli jest więcej niż 300 rekordów. Importer nie sprawdza limitu przed
+   `upsert`, więc może zapisać większy katalog i dopiero później zepsuć endpointy
+   katalogu oraz rankingu. To powoduje awarię funkcji zamiast kontrolowanego
+   odrzucenia importu.
+5. **Rekomendacja:** Walidować limit w trybie check przed wykonaniem importu,
+   sprawdzać finalny count przed zapisem i odrzucać batch, który przekroczy 300.
+   Docelowo dodać administracyjną funkcję importu z kontrolą transakcyjną lub
+   wersjonowaniem zestawu danych.
+
+### AUD-18 — Ranking na podzbiorze może zwrócić fałszywy brak dopasowania
+
+1. **Lokalizacja:** `server.js:619-664` (`selectMatchingYarns`),
+   `server.js:575-604` (`getSupabaseMatches`), `app.js:306-345`.
+2. **Kategoria:** Logika biznesowa / jakość wyniku / edge case.
+3. **Poziom krytyczności:** **Wysoki**.
+4. **Opis problemu:** Gdy użytkownik ma więcej niż 50 kompatybilnych motków,
+   ranking wybiera 50 rekordów na podstawie indywidualnego iloczynu metrów i
+   gramów. Taka heurystyka może pominąć wiele mniejszych motków, które dopiero
+   razem spełniają wymaganie, albo pominąć kombinację pokrywającą różne role.
+   API zwraca wtedy brak wyniku, mimo że pełny magazyn mógłby spełniać wzór.
+   Komunikat w UI informuje o podzbiorze, ale nie oznacza wyniku jako
+   przybliżonego ani nie gwarantuje kompletności.
+5. **Rekomendacja:** Rozróżnić wynik dokładny od przybliżonego w kontrakcie API.
+   Dla limitu 500 użyć deterministycznego bounded knapsack/DP lub algorytmu z
+   dowodem pokrycia, a przy nierozstrzygniętym wyniku pokazać „nie sprawdzono
+   całego magazynu”. Dodać testy fałszywego braku dopasowania dla wielu małych
+   motków i wielu ról.
+
+### AUD-19 — Autosave nadal może usuwać zmiany z innej karty
+
+1. **Lokalizacja:** `app.js:146-177` (`saveYarns`), endpointy `PATCH/DELETE`
+   w `server.js:1013-1032`.
+2. **Kategoria:** Logika / integralność danych / współbieżność.
+3. **Poziom krytyczności:** **Średni**.
+4. **Opis problemu:** Zapis per rekord usunął najgroźniejszy scenariusz
+   „skasuj wszystko i odtwórz”, ale nie ma `updated_at`/wersji klienta ani
+   optimistic locking. Dwie karty mogą pobrać różne stany; późniejszy autosave
+   może usunąć włóczkę dodaną w drugiej karcie, bo nie ma jej w swoim DOM.
+   Seria operacji nadal nie jest atomowa i może zakończyć się częściowym stanem.
+5. **Rekomendacja:** Dodać wersję magazynu lub `updated_at` do operacji zapisu,
+   odrzucać konflikt kodem 409 i odświeżać stan użytkownika. Rozważyć endpoint
+   synchronizacji różnic z idempotency key zamiast pełnego porównania DOM.
+
+### AUD-20 — Brak timeoutów żądań i ochrony przed slowloris
+
+1. **Lokalizacja:** `server.js:666-709` (`readBody`) oraz `server.js:1099-1148`
+   (serwer HTTP).
+2. **Kategoria:** Bezpieczeństwo — availability / DoS.
+3. **Poziom krytyczności:** **Średni**.
+4. **Opis problemu:** `readBody` ogranicza rozmiar JSON, ale czeka na kolejne
+   fragmenty strumienia bez własnego deadline. Serwer nie ustawia jawnie
+   `requestTimeout`, `headersTimeout` ani `keepAliveTimeout`. Powolny klient
+   może długo zajmować połączenie, a pojedynczy proces Node.js jest punktem
+   koncentracji obsługi.
+5. **Rekomendacja:** Ustawić timeouty serwera i deadline odczytu body, przerwać
+   żądanie po przekroczeniu czasu, ustawić limity połączeń na proxy i dodać test
+   powolnego klienta. Timeouty zewnętrznych wywołań Supabase również powinny być
+   jawnie kontrolowane.
+
+### AUD-21 — Brak osobnej ochrony CSRF i kontroli Origin
+
+1. **Lokalizacja:** `server.js:184-203` (ciasteczka), `server.js:912-990`
+   (Auth), `server.js:996-1045` (operacje zmieniające stan).
+2. **Kategoria:** Bezpieczeństwo — CSRF.
+3. **Poziom krytyczności:** **Średni**.
+4. **Opis problemu:** Operacje POST/PATCH/DELETE uwierzytelniają użytkownika
+   ciasteczkiem, ale nie sprawdzają `Origin`/`Referer` i nie używają tokena CSRF.
+   `SameSite=Lax` i wymóg `application/json` ograniczają typowe ataki, lecz nie
+   są pełną kontrolą, szczególnie w środowisku z zaufanymi subdomenami lub
+   nietypowym reverse proxy.
+5. **Rekomendacja:** Wprowadzić allowlistę `Origin` dla żądań zmieniających
+   stan oraz synchronizer token albo signed double-submit cookie. Dodać testy
+   żądań z obcym i brakującym Origin.
+
+### AUD-22 — Brak egzekwowania profilu i statusu w testach integracyjnych
+
+1. **Lokalizacja:** `test/server.test.js`, `test/auth.test.js`,
+   `server.js:293-338`.
+2. **Kategoria:** Jakość / Bezpieczeństwo.
+3. **Poziom krytyczności:** **Średni**.
+4. **Opis problemu:** 20 testów obejmuje syntetyczny magazyn i funkcje
+   konfiguracyjne, ale nie wykonuje rzeczywistych kontraktów `signUp`, `signIn`,
+   refresh, logout, blokady statusu profilu, CSRF, timeoutów, równoległych
+   zapisów ani testu podzbioru rankingu, który prowadzi do fałszywego braku.
+   Zielone testy nie są więc dowodem gotowości produkcyjnej.
+5. **Rekomendacja:** Dodać testy kontraktowe Auth z mockiem odświeżania,
+   testy statusów profilu, konkurencyjnych POST/PATCH/DELETE, 429 i `Retry-After`,
+   limitu katalogu/importu, timeoutów, Origin oraz property-based testy alokacji.
+
+### AUD-23 — Limity produktu są niespójne z bezpośrednimi ścieżkami administracyjnymi
+
+1. **Lokalizacja:** `scripts/import-patterns.js:93-145`, migracje `patterns` i
+   `yarns`, kontrola limitów w `server.js:846-864`.
+2. **Kategoria:** Architektura / operacje / integralność danych.
+3. **Poziom krytyczności:** **Niski** (podwyższony do **Średniego** przy
+   udostępnieniu importu osobom innym niż zaufany operator).
+4. **Opis problemu:** Limity 500/300 są regułami backendu HTTP, a nie wspólnym
+   kontraktem danych. Import patterns używa `service_role` i nie ma kontroli
+   limitu przed `upsert`. Zmiana danych przez panel Supabase lub skrypt może
+   stworzyć stan, którego aplikacja nie potrafi obsłużyć.
+5. **Rekomendacja:** Umieścić limity w jednym module/konfiguracji używanej przez
+   backend i importer, dodać kontrolę przed zapisem oraz procedurę operatora,
+   która blokuje przekroczenie limitu i raportuje różnicę.
+
+## Pozytywne elementy potwierdzone w iteracji
+
+- brak sekretów w kodzie i brak odczytu `.env` przez audyt;
+- `SUPABASE_URL` wymaga HTTPS i nie może zawierać danych logowania;
+- klucz `sb_secret_` pozostaje po stronie backendu, a Auth używa klucza
+  publishable;
+- RLS `profiles` i `yarns` ogranicza rekordy do właściciela;
+- frontend renderuje dane użytkownika przez `textContent`, a CSP blokuje inline
+  skrypty;
+- wejście JSON ma limit rozmiaru, a pola włóczki mają walidację typów, zakresów
+  i dozwolonych wartości;
+- bieżący lockfile nie ma podatności wykrytych przez `npm audit`;
+- błędy API nie zwracają stack trace klientowi.
+
+## Werdykt iteracji 2
+
+**Nie rekomenduję wdrożenia produkcyjnego bez zamknięcia AUD-14, AUD-15,
+AUD-18, AUD-20 i AUD-21.** Kod ma dobre podstawy: Supabase jest wymagany,
+RLS chroni własność włóczek, sekrety nie trafiają do frontendu, a limity i
+rate limiting ograniczają część ryzyk. Nadal jednak są istotne luki w egzekwowaniu
+statusu użytkownika, ochronie rozproszonej, współbieżności, kompletności
+rankingu i odporności serwera na powolne/masowe żądania. Brak podatności z
+`npm audit` nie zastępuje testu konfiguracji Supabase, reverse proxy i hostingu.
+
+## TOP 5 przed produkcją — iteracja 2
+
+1. **Egzekwować `profiles.status` i brak profilu jako fail-closed** — AUD-14.
+2. **Przenieść rate limiting poza pojedynczy proces i ograniczyć pamięć mapy** — AUD-15.
+3. **Rozstrzygnąć, kiedy ranking jest dokładny, oraz naprawić fałszywe braki
+   wyników przy podzbiorze 50 motków** — AUD-18.
+4. **Dodać timeouty HTTP/body i ochronę reverse proxy przed slowloris** — AUD-20.
+5. **Dodać Origin/CSRF oraz testy współbieżności i limitów** — AUD-21, AUD-16,
+   AUD-22.
+
+## Ograniczenia audytu
+
+Nie wykonano testów na produkcyjnym Supabase, testów penetracyjnych, testów
+z wielu procesów Node.js, testów z rzeczywistym reverse proxy, testów awarii
+sieci podczas autosave ani testów obciążeniowych z 500 włóczkami i 300 wzorami.
+Wnioski dotyczące RLS, providerów Auth, HTTPS, HSTS i limitów infrastruktury
+wymagają potwierdzenia w docelowym środowisku wdrożeniowym.
