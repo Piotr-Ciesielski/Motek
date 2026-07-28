@@ -638,6 +638,12 @@ wyjątkowo złożonych wzorów lub zwiększenia limitów produktu.
 5. Rekomendacja: Zdefiniować jeden kontrakt JSONB z limitami strukturalnymi i
    używać go w importerze, triggerze oraz normalizerze. Dodać testy negatywne.
 
+**Status po poprawce 2026-07-28:** częściowo zamknięte. Importer korzysta ze
+wspólnych limitów wariantów, ról i długości tekstów, a zdalny trigger Supabase
+odrzuca te same klasy niepoprawnych danych także przy zapisie przez
+`service_role`. Pozostaje rozważenie pełnego współdzielenia kodu normalizera z
+walidacją importera.
+
 ### AUD-30 — Brakująca migracja daje nieinformatywny błąd 500
 
 1. Lokalizacja: server.js:544-570, insertSupabaseYarn.
