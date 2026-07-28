@@ -1,4 +1,5 @@
 const http = require("http");
+const crypto = require("crypto");
 const path = require("path");
 const fs = require("fs");
 const fsPromises = require("fs/promises");
@@ -384,7 +385,37 @@ function normalizeSupabaseYarn(yarn) {
     weightClass: yarn.weight_class,
     length: Number(yarn.length_meters),
     weight: Number(yarn.weight_grams),
+    updatedAt: yarn.updated_at || null,
   };
+}
+
+function getYarnCollectionVersion(yarns) {
+  return `"${crypto
+    .createHash("sha256")
+    .update(JSON.stringify(yarns.map((yarn) => [
+      yarn.id,
+      yarn.updatedAt,
+      yarn.name,
+      yarn.color,
+      yarn.material,
+      yarn.weightClass,
+      yarn.length,
+      yarn.weight,
+    ])))
+    .digest("hex")}"`;
+}
+
+async function requireCurrentYarnVersion(req, session) {
+  const expectedVersion = req.headers["if-match"];
+  if (typeof expectedVersion !== "string" || !expectedVersion) {
+    throw new ApiError(428, "Odśwież magazyn przed zapisaniem zmian.");
+  }
+
+  const currentYarns = await getSupabaseYarns(session);
+  const currentVersion = getYarnCollectionVersion(currentYarns);
+  if (expectedVersion !== currentVersion) {
+    throw new ApiError(409, "Magazyn został zmieniony w innej karcie. Odśwież dane i spróbuj ponownie.");
+  }
 }
 
 function toSupabaseYarn(yarn, userId) {
@@ -411,7 +442,7 @@ async function getSupabaseYarns(session) {
     session.accessToken
   )
     .from("yarns")
-    .select("id,name,color,material,weight_class,length_meters,weight_grams")
+    .select("id,name,color,material,weight_class,length_meters,weight_grams,updated_at")
     .eq("user_id", session.user.id)
     .order("id", { ascending: true });
 
@@ -491,6 +522,12 @@ async function deleteSupabaseYarn(session, id) {
   if (!data.length) {
     throw new ApiError(404, "Nie znaleziono włóczki o podanym identyfikatorze.");
   }
+}
+
+async function sendYarnMutationResponse(res, status, payload, session) {
+  const currentYarns = await getSupabaseYarns(session);
+  res.setHeader("ETag", getYarnCollectionVersion(currentYarns));
+  return sendJson(res, status, payload);
 }
 
 function scorePattern(pattern, yarns) {
@@ -1023,14 +1060,17 @@ async function handleApi(req, res, url) {
 
   if (req.method === "GET" && url.pathname === "/api/yarns") {
     const session = await requireAuthenticatedSession(req, res);
-    return sendJson(res, 200, await getSupabaseYarns(session));
+    const yarns = await getSupabaseYarns(session);
+    res.setHeader("ETag", getYarnCollectionVersion(yarns));
+    return sendJson(res, 200, yarns);
   }
 
   if (req.method === "POST" && url.pathname === "/api/yarns") {
     const body = await readBody(req);
     const yarn = validateYarn(body);
     const session = await requireAuthenticatedSession(req, res);
-    return sendJson(res, 201, await insertSupabaseYarn(session, yarn));
+    await requireCurrentYarnVersion(req, session);
+    return sendYarnMutationResponse(res, 201, await insertSupabaseYarn(session, yarn), session);
   }
 
   if (req.method === "PATCH" && url.pathname.startsWith("/api/yarns/")) {
@@ -1041,7 +1081,8 @@ async function handleApi(req, res, url) {
     const body = await readBody(req);
     const yarn = validateYarn(body);
     const session = await requireAuthenticatedSession(req, res);
-    return sendJson(res, 200, await updateSupabaseYarn(session, id, yarn));
+    await requireCurrentYarnVersion(req, session);
+    return sendYarnMutationResponse(res, 200, await updateSupabaseYarn(session, id, yarn), session);
   }
 
   if (req.method === "DELETE" && url.pathname.startsWith("/api/yarns/")) {
@@ -1050,8 +1091,9 @@ async function handleApi(req, res, url) {
       throw new ApiError(400, "Identyfikator włóczki musi być dodatnią liczbą całkowitą.");
     }
     const session = await requireAuthenticatedSession(req, res);
+    await requireCurrentYarnVersion(req, session);
     await deleteSupabaseYarn(session, id);
-    return sendJson(res, 204, {});
+    return sendYarnMutationResponse(res, 204, null, session);
   }
 
   if (req.method === "GET" && url.pathname === "/api/patterns") {

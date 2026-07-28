@@ -26,6 +26,7 @@ let autosaveTimer = null;
 let autosaveInFlight = null;
 let autosavePending = false;
 let catalogPatterns = [];
+let yarnVersion = null;
 
 async function detectRuntimeMode() {
   if (window.location.protocol === "file:") {
@@ -55,6 +56,10 @@ async function api(path, options = {}) {
       // ignore non-JSON error body
     }
     throw new Error(`Błąd komunikacji z backendem (${response.status})${details}`);
+  }
+
+  if (path === "/api/yarns" || path.startsWith("/api/yarns/")) {
+    yarnVersion = response.headers.get("etag") || yarnVersion;
   }
 
   api.lastMatchScope = path === "/api/matches"
@@ -155,7 +160,10 @@ async function saveYarns() {
 
   for (const yarn of existing) {
     if (!localIds.has(yarn.id)) {
-      await api(`/api/yarns/${yarn.id}`, { method: "DELETE" });
+      await api(`/api/yarns/${yarn.id}`, {
+        method: "DELETE",
+        headers: { "If-Match": yarnVersion },
+      });
     }
   }
 
@@ -166,10 +174,12 @@ async function saveYarns() {
     savedYarns.push(yarn.id
       ? await api(`/api/yarns/${yarn.id}`, {
           method: "PATCH",
+          headers: { "If-Match": yarnVersion },
           body: JSON.stringify(body),
         })
       : await api("/api/yarns", {
           method: "POST",
+          headers: { "If-Match": yarnVersion },
           body: JSON.stringify(body),
         }));
   }
@@ -180,7 +190,10 @@ async function deleteYarn(id) {
   if (!isAuthenticated) {
     throw new Error("Zaloguj się, aby zmieniać swój magazyn włóczek.");
   }
-  await api(`/api/yarns/${id}`, { method: "DELETE" });
+  await api(`/api/yarns/${id}`, {
+    method: "DELETE",
+    headers: { "If-Match": yarnVersion },
+  });
 }
 
 function syncDomIds(savedYarns) {

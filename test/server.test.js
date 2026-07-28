@@ -292,9 +292,12 @@ test("serwer Motek działa bezpiecznie", async (t) => {
     await t.test("izoluje syntetyczne dane włóczek między użytkownikami", async () => {
       const userACookies = "motek_access_token=token-user-a";
       const userBCookies = "motek_access_token=token-user-b";
+      let userAVersion = (await fetch(`${baseUrl}/api/yarns`, {
+        headers: { Cookie: userACookies },
+      })).headers.get("etag");
       const createResponse = await fetch(`${baseUrl}/api/yarns`, {
         method: "POST",
-        headers: { "Content-Type": "application/json", Cookie: userACookies },
+        headers: { "Content-Type": "application/json", Cookie: userACookies, "If-Match": userAVersion },
         body: JSON.stringify({
           name: "Test automatyczny",
           color: "zielony",
@@ -305,12 +308,13 @@ test("serwer Motek działa bezpiecznie", async (t) => {
         }),
       });
       assert.equal(createResponse.status, 201);
+      userAVersion = createResponse.headers.get("etag");
       const created = await createResponse.json();
       assert.equal(created.name, "Test automatyczny");
 
       const updateResponse = await fetch(`${baseUrl}/api/yarns/${created.id}`, {
         method: "PATCH",
-        headers: { "Content-Type": "application/json", Cookie: userACookies },
+        headers: { "Content-Type": "application/json", Cookie: userACookies, "If-Match": userAVersion },
         body: JSON.stringify({
           name: "Test automatyczny — zmieniony",
           color: "niebieski",
@@ -321,7 +325,23 @@ test("serwer Motek działa bezpiecznie", async (t) => {
         }),
       });
       assert.equal(updateResponse.status, 200);
+      const staleVersion = userAVersion;
+      userAVersion = updateResponse.headers.get("etag");
       assert.equal((await updateResponse.json()).name, "Test automatyczny — zmieniony");
+
+      const conflictResponse = await fetch(`${baseUrl}/api/yarns/${created.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json", Cookie: userACookies, "If-Match": staleVersion },
+        body: JSON.stringify({
+          name: "Konflikt z drugiej karty",
+          color: "niebieski",
+          material: "wełna",
+          weightClass: "dk",
+          length: 300,
+          weight: 120,
+        }),
+      });
+      assert.equal(conflictResponse.status, 409);
 
       const userAList = await fetch(`${baseUrl}/api/yarns`, { headers: { Cookie: userACookies } });
       assert.deepEqual((await userAList.json()).map((yarn) => yarn.name), ["Test automatyczny — zmieniony"]);
@@ -341,13 +361,13 @@ test("serwer Motek działa bezpiecznie", async (t) => {
 
       const forbiddenDelete = await fetch(`${baseUrl}/api/yarns/${created.id}`, {
         method: "DELETE",
-        headers: { Cookie: userBCookies },
+        headers: { Cookie: userBCookies, "If-Match": userBList.headers.get("etag") },
       });
       assert.equal(forbiddenDelete.status, 404);
 
       const forbiddenUpdate = await fetch(`${baseUrl}/api/yarns/${created.id}`, {
         method: "PATCH",
-        headers: { "Content-Type": "application/json", Cookie: userBCookies },
+        headers: { "Content-Type": "application/json", Cookie: userBCookies, "If-Match": userBList.headers.get("etag") },
         body: JSON.stringify({
           name: "Nieautoryzowana zmiana",
           color: "czerwony",
@@ -361,9 +381,10 @@ test("serwer Motek działa bezpiecznie", async (t) => {
 
       const deleteResponse = await fetch(`${baseUrl}/api/yarns/${created.id}`, {
         method: "DELETE",
-        headers: { Cookie: userACookies },
+        headers: { Cookie: userACookies, "If-Match": userAVersion },
       });
       assert.equal(deleteResponse.status, 204);
+      userAVersion = deleteResponse.headers.get("etag");
 
       for (let id = 0; id < 500; id += 1) {
         syntheticYarns.push({
@@ -377,9 +398,12 @@ test("serwer Motek działa bezpiecznie", async (t) => {
           weight_grams: 20,
         });
       }
+      userAVersion = (await fetch(`${baseUrl}/api/yarns`, {
+        headers: { Cookie: userACookies },
+      })).headers.get("etag");
       const limitResponse = await fetch(`${baseUrl}/api/yarns`, {
         method: "POST",
-        headers: { "Content-Type": "application/json", Cookie: userACookies },
+        headers: { "Content-Type": "application/json", Cookie: userACookies, "If-Match": userAVersion },
         body: JSON.stringify({ name: "Po limicie" }),
       });
       assert.equal(limitResponse.status, 409);

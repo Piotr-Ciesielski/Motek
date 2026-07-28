@@ -328,6 +328,13 @@ zamiast udawać kompletny wynik. Zaktualizowano test wyboru kandydatów.
    odrzucać konflikt kodem 409 i odświeżać stan użytkownika. Rozważyć endpoint
    synchronizacji różnic z idempotency key zamiast pełnego porównania DOM.
 
+**Status po poprawce 2026-07-28:** częściowo zamknięte. Backend generuje
+wersję magazynu jako `ETag`, wymaga jej w `If-Match` przy POST/PATCH/DELETE i
+odrzuca nieaktualną kartę kodem 409. Frontend przekazuje aktualną wersję i
+odbiera nową po każdej operacji. Chroni to przed cichym nadpisaniem zmian z
+drugiej karty; cały autosave nadal składa się z wielu operacji i może wymagać
+ponowienia po konflikcie.
+
 ### AUD-20 — Brak timeoutów żądań i ochrony przed slowloris
 
 1. **Lokalizacja:** `server.js:666-709` (`readBody`) oraz `server.js:1099-1148`
