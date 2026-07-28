@@ -257,6 +257,11 @@ Skalowanie ponad obecne limity 500 włóczek na użytkownika i 300 wzorów jest
 opcjonalne. Wrócimy do paginacji, dalszej optymalizacji lub workera dopiero po
 benchmarku wskazującym realny problem albo po zmianie wymagań produktu.
 
+Najbliższym etapem operacyjnym jest przygotowanie stagingu z reverse proxy/WAF,
+limitami połączeń, monitoringiem i automatyczną kontrolą zgodności migracji.
+Przed wdrożeniem produkcyjnym pozostają także retry i obsługa konfliktów
+autosave oraz test pełnego importu katalogu z możliwością wycofania.
+
 ### Kolejny etap ochrony infrastruktury
 
 Przed wdrożeniem produkcyjnym trzeba uzupełnić ochronę przed rozproszonymi

@@ -6,7 +6,7 @@
 - ostatnia wersja wydana: `1.0.2`
 - aktualne źródło danych: Supabase
 - lokalny SQLite: usunięty z aplikacji
-- następny zakres: uzupełnienie i selektywny import kompletnych wymagań dopasowania dla wzorów
+- następny zakres: staging z ochroną brzegową oraz uzupełnienie i selektywny import kompletnych wymagań dopasowania dla wzorów
 - limit magazynu: 500 włóczek na użytkownika
 - limit katalogu: 300 wzorów
 

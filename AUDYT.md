@@ -686,12 +686,11 @@ staging table i manifest importu dla pełnego procesu operacyjnego.
 Kod ma dobre podstawy: sekrety są rozdzielone od frontendu, dane włóczek mają
 RLS i własność użytkownika, aplikacja sprawdza pochodzenie żądań, waliduje JSON,
 ma limity wejścia, timeouty HTTP i przypiętą zależność Supabase. Testy lokalne są
-zielone, a npm audit nie wykrywa podatności. Nie rekomenduję jednak wdrożenia
-produkcyjnego przed zamknięciem publicznej funkcji SECURITY DEFINER w zdalnym
-Supabase, włączeniem ochrony wyciekłych haseł, przygotowaniem rate limitingu na
-brzegu oraz poprawą obsługi błędów autosave i kosztu rankingu. Ocenę zdalnej
-funkcji rls_auto_enable trzeba traktować jako pilną hipotezę do weryfikacji,
-ponieważ nie jest obecnie częścią repozytorium.
+zielone, a npm audit nie wykrywa podatności. Funkcja SECURITY DEFINER wykryta
+w zdalnym Supabase ma już ograniczone uprawnienia i nie jest obecnie zgłaszana
+przez Security Advisor. Do wdrożenia produkcyjnego pozostają jednak kwestie
+infrastruktury, ochrony haseł zależnej od planu Supabase, odporności autosave oraz
+obsługi kosztownych i wyjątkowo trudnych obliczeń rankingu.
 
 ## TOP 5 najpilniejszych spraw przed produkcją — iteracja 3
 
@@ -700,20 +699,24 @@ ponieważ nie jest obecnie częścią repozytorium.
 2. Dodać ochronę na reverse proxy/WAF i limiter współdzielony między instancjami
    — AUD-25 oraz plan ochrony DDoS.
 3. Ustawić limity połączeń na reverse proxy i wykonać test slowloris — AUD-26.
-4. Zdefiniować dokładność i koszt rankingu oraz wykonać benchmark maksimum 500
-   włóczek / 300 wzorów — AUD-28.
-5. Ujednolicić walidację JSONB i zaplanować atomowy import katalogu — AUD-29,
-   AUD-31.
+4. Dodać retry oraz decyzję użytkownika przy konflikcie autosave — AUD-27.
+5. Dokończyć testy stagingowe i operacyjne: pełny import z możliwością wycofania,
+   współbieżność oraz kontrolę zgodności migracji — AUD-28, AUD-29, AUD-30, AUD-31.
 
 ## Ograniczenia audytu — iteracja 3
 
 Nie wykonano testu penetracyjnego, testu z wieloma procesami Node.js, testu
-slowloris, testu rzeczywistej współbieżności na produkcyjnym Supabase ani testu
-pełnego importu z rollbackiem. Ciało funkcji rls_auto_enable zostało ocenione;
-niezależnym ograniczeniem pozostaje brak testu jej działania w scenariuszu
-tworzenia tabeli przez operatora.
+slowloris na reverse proxy, testu rzeczywistej współbieżności na produkcyjnym
+Supabase ani testu pełnego importu z rollbackiem. Benchmark rankingu dla limitów
+500/300 został wykonany; nadal nie zweryfikowano zachowania całego wdrożenia
+stagingowego i automatycznej kontroli zgodności migracji.
 
 ## Przyszłe usprawnienia zależne od planu Supabase
 
 - Po przejściu na płatny plan włączyć leaked password protection w Supabase
   Auth i potwierdzić jej działanie testem rejestracji.
+- Przed wdrożeniem stagingowym skonfigurować reverse proxy/WAF, limity połączeń
+  i monitoring oraz wykonać testy wieloprocesowe i slowloris.
+- Uzupełnić retry autosave, obsługę konfliktów i operacyjny proces migracji/importu.
+- Workera rankingu nie wdrażać przy obecnych limitach bez nowego benchmarku;
+  pozostaje opcjonalny dla trudniejszych wzorów lub większych limitów produktu.
