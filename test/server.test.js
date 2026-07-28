@@ -31,6 +31,28 @@ test("ranking respektuje limity rozmiaru i może użyć kilku motków dla jednej
 
   assert.equal(result.doable, true);
   assert.equal(result.matchedYarns, 2);
+
+  const impossible = scorePattern(
+    {
+      requirements: [
+        {
+          yarnsNeeded: 1,
+          metersNeeded: 2_500,
+          gramsNeeded: 500,
+          materials: ["wełna"],
+          weightClasses: ["dk"],
+        },
+      ],
+    },
+    Array.from({ length: 20 }, (_, id) => ({
+      id,
+      material: "wełna",
+      weightClass: "dk",
+      length: 50,
+      weight: 10,
+    }))
+  );
+  assert.equal(impossible.doable, false);
 });
 
 test("serwer Motek działa bezpiecznie", async (t) => {

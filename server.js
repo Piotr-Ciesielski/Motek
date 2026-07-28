@@ -498,6 +498,24 @@ function scorePattern(pattern, yarns) {
 }
 
 function allocateRequirementYarns(requirements, yarns) {
+  for (const requirement of requirements) {
+    const eligible = yarns.filter(
+      (yarn) =>
+        requirement.materials.includes(yarn.material) &&
+        requirement.weightClasses.includes(yarn.weightClass)
+    );
+    const availableLength = eligible.reduce((sum, yarn) => sum + yarn.length, 0);
+    const availableWeight = eligible.reduce((sum, yarn) => sum + yarn.weight, 0);
+
+    if (
+      eligible.length < requirement.yarnsNeeded ||
+      availableLength < requirement.metersNeeded ||
+      availableWeight < requirement.gramsNeeded
+    ) {
+      return null;
+    }
+  }
+
   let searchNodes = 0;
 
   function choose(index, used, allocation) {
@@ -578,7 +596,7 @@ function validateMatchLimits(yarns, patterns) {
   if (yarns.length > MAX_MATCH_YARNS) {
     throw new ApiError(
       413,
-      `Magazyn zawiera zbyt wiele włóczek do jednego dopasowania (maksymalnie ${MAX_MATCH_YARNS}).`
+      `To obliczenie rankingu obsługuje maksymalnie ${MAX_MATCH_YARNS} włóczek. Magazyn nadal może zawierać więcej motków.`
     );
   }
 
