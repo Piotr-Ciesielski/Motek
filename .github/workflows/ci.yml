@@ -27,5 +27,8 @@ jobs:
       - name: Zainstaluj zależności
         run: npm ci
 
+      - name: Sprawdź podatności zależności
+        run: npm audit --omit=dev --audit-level=moderate
+
       - name: Sprawdź kod i uruchom testy
         run: npm run check

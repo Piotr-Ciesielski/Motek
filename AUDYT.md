@@ -134,7 +134,13 @@ trzeba wykonać kontrolę istniejących rekordów i test migracji na stagingu.
  2. **Kategoria:** Jakość / Supply chain.
  3. **Poziom krytyczności:** **Niski**.
  4. **Opis problemu:** `@supabase/supabase-js` i `sql.js` mają zakres `^`, więc przyszła instalacja może pobrać nowsze wersje niż te lokalnie zweryfikowane. Obecny `npm audit --omit=dev` nie znalazł CVE, ale wynik jest prawdziwy tylko dla obecnego lockfile i nie zastępuje ciągłego monitoringu.
- 5. **Rekomendacja:** Commitować i używać `npm ci`, utrzymywać automatyczny Dependabot/Renovate lub skan SCA w CI, testować aktualizacje i rozważyć przypięcie wersji w aplikacji o podwyższonych wymaganiach powtarzalności.
+5. **Rekomendacja:** Commitować i używać `npm ci`, utrzymywać automatyczny Dependabot/Renovate lub skan SCA w CI, testować aktualizacje i rozważyć przypięcie wersji w aplikacji o podwyższonych wymaganiach powtarzalności.
+
+**Status po poprawce 2026-07-28:** częściowo zamknięte. Bezpośrednia zależność
+`@supabase/supabase-js` jest przypięta do `2.110.8`, CI używa `npm ci` oraz
+wykonuje `npm audit --omit=dev --audit-level=moderate`. Nadal potrzebny jest
+ciągły proces aktualizacji i przeglądu zmian zależności, np. Dependabot lub
+Renovate; bieżący audyt dotyczy aktualnego lockfile.
 
  ## Dodatkowe obserwacje pozytywne
 

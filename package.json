@@ -12,6 +12,6 @@
     "patterns:import": "node --env-file-if-exists=.env scripts/import-patterns.js --execute"
   },
   "dependencies": {
-    "@supabase/supabase-js": "^2.110.8"
+    "@supabase/supabase-js": "2.110.8"
   }
 }
