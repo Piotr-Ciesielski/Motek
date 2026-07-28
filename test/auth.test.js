@@ -7,6 +7,7 @@ const {
   validateAuthPassword,
   buildAuthCookie,
   createAuthRateLimiter,
+  createRequestRateLimiter,
   shouldUseSecureCookies,
   validateCookieSecurityConfig,
 } = require("../server");
@@ -93,4 +94,24 @@ test("rate limiter usuwa wygasłe wpisy i nie przekracza limitu pamięci", () =>
 
   now = 100;
   assert.equal(limiter.size(), 0);
+});
+
+test("limiter żądań blokuje zalewanie endpointu i wygasa", () => {
+  let now = 0;
+  const limiter = createRequestRateLimiter({
+    windowMs: 100,
+    maxRequests: 3,
+    blockMs: 50,
+    maxEntries: 2,
+    now: () => now,
+  });
+
+  limiter.recordRequest("ip:127.0.0.1");
+  limiter.recordRequest("ip:127.0.0.1");
+  assert.equal(limiter.getRetryAfterMs("ip:127.0.0.1"), 0);
+  limiter.recordRequest("ip:127.0.0.1");
+  assert.equal(limiter.getRetryAfterMs("ip:127.0.0.1"), 50);
+
+  now = 150;
+  assert.equal(limiter.getRetryAfterMs("ip:127.0.0.1"), 0);
 });

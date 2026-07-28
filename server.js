@@ -25,12 +25,31 @@ const AUTH_RATE_LIMIT_WINDOW_MS = 15 * 60 * 1000;
 const AUTH_RATE_LIMIT_MAX_FAILURES = 5;
 const AUTH_RATE_LIMIT_BLOCK_MS = 15 * 60 * 1000;
 const AUTH_RATE_LIMIT_MAX_ENTRIES = 10_000;
+const AUTH_REQUEST_WINDOW_MS = 60 * 1000;
+const AUTH_REQUEST_MAX = 30;
+const AUTH_REQUEST_BLOCK_MS = 60 * 1000;
+const YARN_WRITE_WINDOW_MS = 60 * 1000;
+const YARN_WRITE_MAX = 600;
+const YARN_WRITE_BLOCK_MS = 60 * 1000;
+const HTTP_REQUEST_TIMEOUT_MS = 30 * 1000;
+const HTTP_HEADERS_TIMEOUT_MS = 10 * 1000;
+const HTTP_KEEP_ALIVE_TIMEOUT_MS = 5 * 1000;
 const MAX_MATCH_VARIANTS = 250;
 const MAX_MATCH_ROLE_REQUIREMENTS = 8;
 const MAX_MATCH_SEARCH_NODES = 25_000;
 const MAX_YARNS_PER_USER = 500;
 const MAX_PATTERN_CATALOG_RECORDS = 300;
 const authRateLimiter = createAuthRateLimiter();
+const authRequestRateLimiter = createRequestRateLimiter({
+  windowMs: AUTH_REQUEST_WINDOW_MS,
+  maxRequests: AUTH_REQUEST_MAX,
+  blockMs: AUTH_REQUEST_BLOCK_MS,
+});
+const yarnWriteRateLimiter = createRequestRateLimiter({
+  windowMs: YARN_WRITE_WINDOW_MS,
+  maxRequests: YARN_WRITE_MAX,
+  blockMs: YARN_WRITE_BLOCK_MS,
+});
 const MAX_TEXT_LENGTH = {
   name: 100,
   color: 50,
@@ -173,6 +192,22 @@ function createAuthRateLimiter(options = {}) {
   };
 }
 
+function createRequestRateLimiter(options = {}) {
+  const limiter = createAuthRateLimiter({
+    windowMs: options.windowMs,
+    maxFailures: options.maxRequests,
+    blockMs: options.blockMs,
+    maxEntries: options.maxEntries,
+    now: options.now,
+  });
+
+  return {
+    getRetryAfterMs: limiter.getRetryAfterMs,
+    recordRequest: limiter.recordFailure,
+    size: limiter.size,
+  };
+}
+
 function getClientAddress(req) {
   const address = req.socket?.remoteAddress || "unknown";
   return address.startsWith("::ffff:") ? address.slice(7) : address;
@@ -188,6 +223,15 @@ function enforceAuthRateLimit(keys, res) {
     res?.setHeader("Retry-After", String(Math.ceil(retryAfterMs / 1000)));
     throw new ApiError(429, "Zbyt wiele nieudanych prób. Spróbuj ponownie później.");
   }
+}
+
+function enforceRequestRateLimit(keys, limiter, res) {
+  const retryAfterMs = Math.max(...keys.map((key) => limiter.getRetryAfterMs(key)));
+  if (retryAfterMs > 0) {
+    res?.setHeader("Retry-After", String(Math.ceil(retryAfterMs / 1000)));
+    throw new ApiError(429, "Zbyt wiele żądań. Spróbuj ponownie później.");
+  }
+  keys.forEach((key) => limiter.recordRequest(key));
 }
 
 function recordAuthFailure(keys) {
@@ -977,6 +1021,7 @@ async function handleAuthApi(req, res, url) {
     const login = normalizeAuthLogin(body.login);
     const fullName = normalizeFullName(body.full_name);
     const rateLimitKeys = getAuthRateLimitKeys(req, email);
+    enforceRequestRateLimit(rateLimitKeys, authRequestRateLimiter, res);
     enforceAuthRateLimit(rateLimitKeys, res);
 
     const { data, error } = await authClient().auth.signUp({
@@ -1013,6 +1058,7 @@ async function handleAuthApi(req, res, url) {
     const email = normalizeAuthEmail(body.email);
     const password = validateAuthPassword(body.password);
     const rateLimitKeys = getAuthRateLimitKeys(req, email);
+    enforceRequestRateLimit(rateLimitKeys, authRequestRateLimiter, res);
     enforceAuthRateLimit(rateLimitKeys, res);
     const { data, error } = await authClient().auth.signInWithPassword({ email, password });
 
@@ -1058,6 +1104,13 @@ async function handleApi(req, res, url) {
     return handleAuthApi(req, res, url);
   }
 
+  const isYarnWrite =
+    (req.method === "POST" && url.pathname === "/api/yarns") ||
+    ((req.method === "PATCH" || req.method === "DELETE") && url.pathname.startsWith("/api/yarns/"));
+  if (isYarnWrite) {
+    enforceRequestRateLimit([`ip:${getClientAddress(req)}`], yarnWriteRateLimiter, res);
+  }
+
   if (req.method === "GET" && url.pathname === "/api/yarns") {
     const session = await requireAuthenticatedSession(req, res);
     const yarns = await getSupabaseYarns(session);
@@ -1069,6 +1122,7 @@ async function handleApi(req, res, url) {
     const body = await readBody(req);
     const yarn = validateYarn(body);
     const session = await requireAuthenticatedSession(req, res);
+    enforceRequestRateLimit([`user:${session.user.id}`], yarnWriteRateLimiter, res);
     await requireCurrentYarnVersion(req, session);
     return sendYarnMutationResponse(res, 201, await insertSupabaseYarn(session, yarn), session);
   }
@@ -1081,6 +1135,7 @@ async function handleApi(req, res, url) {
     const body = await readBody(req);
     const yarn = validateYarn(body);
     const session = await requireAuthenticatedSession(req, res);
+    enforceRequestRateLimit([`user:${session.user.id}`], yarnWriteRateLimiter, res);
     await requireCurrentYarnVersion(req, session);
     return sendYarnMutationResponse(res, 200, await updateSupabaseYarn(session, id, yarn), session);
   }
@@ -1091,6 +1146,7 @@ async function handleApi(req, res, url) {
       throw new ApiError(400, "Identyfikator włóczki musi być dodatnią liczbą całkowitą.");
     }
     const session = await requireAuthenticatedSession(req, res);
+    enforceRequestRateLimit([`user:${session.user.id}`], yarnWriteRateLimiter, res);
     await requireCurrentYarnVersion(req, session);
     await deleteSupabaseYarn(session, id);
     return sendYarnMutationResponse(res, 204, null, session);
@@ -1209,6 +1265,9 @@ async function main(options = {}) {
       return sendText(res, 500, "Wewnętrzny błąd serwera.");
     }
   });
+  server.requestTimeout = HTTP_REQUEST_TIMEOUT_MS;
+  server.headersTimeout = HTTP_HEADERS_TIMEOUT_MS;
+  server.keepAliveTimeout = HTTP_KEEP_ALIVE_TIMEOUT_MS;
 
   const { host, port } = getRuntimeConfig();
   const boundPort = await listen(server, port, host);
@@ -1268,6 +1327,7 @@ module.exports = {
   toSupabaseYarn,
   buildAuthCookie,
   createAuthRateLimiter,
+  createRequestRateLimiter,
   validateMatchLimits,
   shouldUseSecureCookies,
   shutdown,

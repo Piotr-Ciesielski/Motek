@@ -351,6 +351,14 @@ ponowienia po konflikcie.
    powolnego klienta. Timeouty zewnętrznych wywołań Supabase również powinny być
    jawnie kontrolowane.
 
+**Status po poprawce 2026-07-28:** częściowo zamknięte. Serwer ma timeout
+żądania 30 s, nagłówków 10 s i keep-alive 5 s. Dodano ograniczenia żądań:
+rejestracja/logowanie do 30 prób na minutę dla kluczy IP/e-mail oraz zapisy
+włóczek do 600 operacji na minutę dla IP i użytkownika, z limitem pamięci i
+`Retry-After`. Chroni to aplikację przed typowym zalewaniem endpointów, ale nie
+jest pełną ochroną DDoS przed rozproszonym atakiem; przed produkcją potrzebny
+jest reverse proxy/WAF/CDN z limitem połączeń i ruchem filtrowanym przed Node.js.
+
 ### AUD-21 — Brak osobnej ochrony CSRF i kontroli Origin
 
 1. **Lokalizacja:** `server.js:184-203` (ciasteczka), `server.js:912-990`
