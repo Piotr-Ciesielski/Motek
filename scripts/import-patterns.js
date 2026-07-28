@@ -10,6 +10,16 @@ const SOURCE_FILTER = process.argv
   .find((argument) => argument.startsWith("--source="))
   ?.slice("--source=".length);
 const BATCH_SIZE = 50;
+const MAX_PATTERN_CATALOG_RECORDS = 300;
+
+function validateImportCapacity(target) {
+  const finalCount = target.tableRecordCount + target.newRecordCount;
+  if (finalCount > MAX_PATTERN_CATALOG_RECORDS) {
+    throw new Error(
+      `Import przekroczył limit katalogu: maksymalnie ${MAX_PATTERN_CATALOG_RECORDS} rekordów, wynik wyniósłby ${finalCount}.`
+    );
+  }
+}
 
 function readImportData() {
   const document = JSON.parse(fs.readFileSync(IMPORT_PATH, "utf8"));
@@ -119,6 +129,7 @@ async function main() {
   const records = readImportData();
   await connection.verify();
   const target = await inspectTarget(connection.client, records);
+  validateImportCapacity(target);
 
   console.log(`RECORDS_IN_FILE=${records.length}`);
   console.log(`RECORDS_IN_TABLE=${target.tableRecordCount}`);
@@ -144,12 +155,24 @@ async function main() {
     );
   }
 
+  if ((finalCount ?? 0) > MAX_PATTERN_CATALOG_RECORDS) {
+    throw new Error(
+      `Dane zapisano, ale katalog przekracza limit ${MAX_PATTERN_CATALOG_RECORDS} rekordów.`
+    );
+  }
+
   console.log("MODE=EXECUTE");
   console.log(`SAVED_RECORDS=${savedCount}`);
   console.log(`FINAL_TABLE_RECORDS=${finalCount ?? 0}`);
 }
 
-main().catch((error) => {
-  console.error(`PATTERNS_IMPORT_ERROR=${error.message}`);
-  process.exitCode = 1;
-});
+if (require.main === module) {
+  main().catch((error) => {
+    console.error(`PATTERNS_IMPORT_ERROR=${error.message}`);
+    process.exitCode = 1;
+  });
+}
+
+module.exports = {
+  validateImportCapacity,
+};

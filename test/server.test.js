@@ -242,7 +242,11 @@ test("serwer Motek działa bezpiecznie", async (t) => {
       from(table) {
         assert.equal(table, "patterns");
         return {
-          select(columns) {
+          select(columns, options) {
+            if (options?.head) {
+              assert.equal(columns, "id");
+              return Promise.resolve({ count: supabasePatterns.length, error: null });
+            }
             assert.match(columns, /meters_per_100g/);
             return {
               async order(field, options) {

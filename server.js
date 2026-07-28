@@ -869,6 +869,16 @@ function normalizeMatchingRequirement(value) {
 }
 
 async function getCatalogPatterns() {
+  const patternClient = supabaseConnection.client.from("patterns");
+  const { count, error: countError } = await patternClient
+    .select("id", { count: "exact", head: true });
+
+  if (countError) {
+    throw new Error(`Nie udało się sprawdzić liczby wzorów w Supabase: ${countError.message}`);
+  }
+
+  validatePatternCatalogSize(count ?? 0);
+
   const { data, error } = await supabaseConnection.client
     .from("patterns")
     .select(
@@ -879,8 +889,6 @@ async function getCatalogPatterns() {
   if (error) {
     throw new Error(`Nie udało się pobrać wzorów z Supabase: ${error.message}`);
   }
-
-  validatePatternCatalogSize(data.length);
 
   return data.map(normalizeCatalogPattern);
 }

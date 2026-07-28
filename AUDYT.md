@@ -281,6 +281,12 @@ zastosować przed wdrożeniem nowej wersji backendu.
    Docelowo dodać administracyjną funkcję importu z kontrolą transakcyjną lub
    wersjonowaniem zestawu danych.
 
+**Status po poprawce 2026-07-28:** naprawione dla endpointu katalogu i
+importera. Endpoint sprawdza `count/head` przed pobraniem rekordów. Importer
+wylicza przewidywany stan po upsertach i odrzuca przekroczenie limitu już w
+trybie `patterns:check`, a po zapisie wykonuje dodatkową kontrolę finalnego
+count. Dodano test walidacji pojemności importu.
+
 ### AUD-18 — Ranking na podzbiorze może zwrócić fałszywy brak dopasowania
 
 1. **Lokalizacja:** `server.js:619-664` (`selectMatchingYarns`),
