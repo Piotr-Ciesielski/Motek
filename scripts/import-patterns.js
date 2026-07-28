@@ -2,7 +2,12 @@ const fs = require("node:fs");
 const path = require("node:path");
 
 const { createSupabaseConnection } = require("../supabase");
-const { maxPatternCatalogRecords: MAX_PATTERN_CATALOG_RECORDS } = require("../limits");
+const {
+  maxPatternCatalogRecords: MAX_PATTERN_CATALOG_RECORDS,
+  maxMatchingVariantsPerPattern: MAX_MATCHING_VARIANTS_PER_PATTERN,
+  maxMatchingRoleRequirements: MAX_MATCHING_ROLE_REQUIREMENTS,
+  maxMatchingTextLength: MAX_MATCHING_TEXT_LENGTH,
+} = require("../limits");
 
 const PROJECT_DIR = path.resolve(__dirname, "..");
 const IMPORT_PATH = path.join(PROJECT_DIR, "data", "patterns-import.json");
@@ -33,7 +38,16 @@ function validateRequirement(requirement, context) {
   }
 
   for (const field of ["materials", "weight_classes"]) {
-    if (!Array.isArray(requirement[field]) || requirement[field].length === 0 || requirement[field].some((value) => typeof value !== "string" || !value.trim())) {
+    if (
+      !Array.isArray(requirement[field]) ||
+      requirement[field].length === 0 ||
+      requirement[field].some(
+        (value) =>
+          typeof value !== "string" ||
+          !value.trim() ||
+          value.trim().length > MAX_MATCHING_TEXT_LENGTH
+      )
+    ) {
       throw new Error(`${context}.${field} musi być niepustą tablicą tekstów.`);
     }
   }
@@ -44,12 +58,31 @@ function validateMatchingRequirements(value, sourceFilename) {
     throw new Error(`Rekord ${sourceFilename} nie zawiera poprawnego matching_requirements.`);
   }
 
+  if (value.variants.length > MAX_MATCHING_VARIANTS_PER_PATTERN) {
+    throw new Error(
+      `Rekord ${sourceFilename} zawiera więcej niż ${MAX_MATCHING_VARIANTS_PER_PATTERN} wariantów.`
+    );
+  }
+
   value.variants.forEach((variant, index) => {
     const context = `Rekord ${sourceFilename}, wariant ${index + 1}`;
     validateRequirement(variant, context);
+    for (const field of ["id", "label"]) {
+      if (
+        variant[field] !== undefined &&
+        (typeof variant[field] !== "string" || variant[field].trim().length > MAX_MATCHING_TEXT_LENGTH)
+      ) {
+        throw new Error(`${context}.${field} ma niepoprawną długość.`);
+      }
+    }
     if (variant.yarn_requirements !== undefined) {
-      if (!Array.isArray(variant.yarn_requirements) || variant.yarn_requirements.length > 8) {
-        throw new Error(`${context}.yarn_requirements musi zawierać od 0 do 8 elementów.`);
+      if (
+        !Array.isArray(variant.yarn_requirements) ||
+        variant.yarn_requirements.length > MAX_MATCHING_ROLE_REQUIREMENTS
+      ) {
+        throw new Error(
+          `${context}.yarn_requirements musi zawierać od 0 do ${MAX_MATCHING_ROLE_REQUIREMENTS} elementów.`
+        );
       }
       variant.yarn_requirements.forEach((requirement, requirementIndex) =>
         validateRequirement(requirement, `${context}.yarn_requirements[${requirementIndex}]`)
