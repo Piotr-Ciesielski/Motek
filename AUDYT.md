@@ -87,6 +87,7 @@
  3. **Poziom krytyczności:** **Średni**.
  4. **Opis problemu:** `/api/patterns` pobiera cały katalog, a frontend tworzy kartę dla każdego rekordu w DOM. Obecne 116 rekordów jest małe, ale katalog ma rosnąć. Brak paginacji, limitu, serwerowego wyszukiwania i cache kontrolowanego przez serwer powoduje wzrost pamięci, czasu odpowiedzi i kosztu transferu. Ten sam wzorzec pełnego odczytu występuje w dopasowaniu.
  5. **Rekomendacja:** Dodać `limit/offset` lub cursor pagination, maksymalny limit serwerowy, serwerowe `q/status`, indeksy i ewentualnie endpoint podsumowania. Nie przyjmować dowolnego limitu z klienta.
+ 6. **Stan po zmianie 2026-07-28:** Ustalono limit katalogu 300 rekordów oraz limit magazynu 500 włóczek na użytkownika. Paginacja pozostaje opcją na przyszłość, jeśli limity produktu zostaną zwiększone.
 
  ### AUD-09 — Spójność danych `matching_requirements` jest egzekwowana głównie w kodzie aplikacji
 

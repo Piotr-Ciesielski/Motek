@@ -7,6 +7,8 @@
 - aktualne źródło danych: Supabase
 - lokalny SQLite: usunięty z aplikacji
 - następny zakres: uzupełnienie i selektywny import kompletnych wymagań dopasowania dla wzorów
+- limit magazynu: 500 włóczek na użytkownika
+- limit katalogu: 300 wzorów
 
 Motek jest aplikacją webową dla osób robiących na drutach i szydełku. Pomaga
 odpowiedzieć na pytanie: który wzór można wykonać z włóczek znajdujących się w
@@ -141,6 +143,9 @@ uzupełnione i zweryfikowane.
 Jeśli magazyn użytkownika jest większy niż bieżący limit obliczeń, ranking
 wybiera najlepiej pasujący podzbiór dla konkretnego wariantu. Limit dotyczy
 obliczenia, a nie liczby motków, które użytkownik może zapisać.
+
+Niezależnie od limitu obliczeń aplikacja pozwala zapisać do 500 włóczek na
+użytkownika. Katalog aplikacji może zawierać do 300 wzorów.
 
 ## 8. API
 

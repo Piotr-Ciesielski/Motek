@@ -8,10 +8,17 @@ const {
   scorePattern,
   selectMatchingYarns,
   shutdown,
+  validatePatternCatalogSize,
   validateMatchLimits,
+  validateYarnStorageCapacity,
 } = require("../server");
 
 test("ranking respektuje limity rozmiaru i może użyć kilku motków dla jednej roli", () => {
+  assert.doesNotThrow(() => validateYarnStorageCapacity(499));
+  assert.throws(() => validateYarnStorageCapacity(500), /500 włóczek/);
+  assert.doesNotThrow(() => validatePatternCatalogSize(300));
+  assert.throws(() => validatePatternCatalogSize(301), /300 rekordów/);
+
   assert.throws(
     () => validateMatchLimits(
       Array.from({ length: 251 }, () => ({ matchingRequirements: [{}] }))

@@ -79,6 +79,9 @@ Supabase jest obecnie jedynym źródłem danych aplikacji:
 - `yarns` przechowuje prywatny magazyn włóczek,
 - `patterns` przechowuje wspólny katalog wzorów.
 
+Obowiązujące limity produktu to maksymalnie 500 włóczek na użytkownika oraz
+300 rekordów w katalogu wzorów.
+
 Dostęp do magazynu włóczek ogranicza Row Level Security (RLS): użytkownik może
 czytać i zmieniać wyłącznie rekordy należące do niego. Backend przekazuje token
 sesji do klienta Supabase, a właściciel rekordu jest ustalany na podstawie

@@ -27,6 +27,8 @@ const MAX_MATCH_CANDIDATE_YARNS = 50;
 const MAX_MATCH_VARIANTS = 250;
 const MAX_MATCH_ROLE_REQUIREMENTS = 8;
 const MAX_MATCH_SEARCH_NODES = 25_000;
+const MAX_YARNS_PER_USER = 500;
+const MAX_PATTERN_CATALOG_RECORDS = 300;
 const authRateLimiter = createAuthRateLimiter();
 const MAX_TEXT_LENGTH = {
   name: 100,
@@ -389,6 +391,9 @@ async function getSupabaseYarns(session) {
 }
 
 async function insertSupabaseYarn(session, yarn) {
+  const existingYarns = await getSupabaseYarns(session);
+  validateYarnStorageCapacity(existingYarns.length);
+
   const { data, error } = await supabaseAuthClientFactory(
     supabaseAuthConfig,
     session.accessToken
@@ -833,7 +838,27 @@ async function getCatalogPatterns() {
     throw new Error(`Nie udało się pobrać wzorów z Supabase: ${error.message}`);
   }
 
+  validatePatternCatalogSize(data.length);
+
   return data.map(normalizeCatalogPattern);
+}
+
+function validateYarnStorageCapacity(count) {
+  if (count >= MAX_YARNS_PER_USER) {
+    throw new ApiError(
+      409,
+      `Magazyn osiągnął limit ${MAX_YARNS_PER_USER} włóczek na użytkownika.`
+    );
+  }
+}
+
+function validatePatternCatalogSize(count) {
+  if (count > MAX_PATTERN_CATALOG_RECORDS) {
+    throw new ApiError(
+      503,
+      `Katalog wzorów przekracza limit aplikacji: maksymalnie ${MAX_PATTERN_CATALOG_RECORDS} rekordów.`
+    );
+  }
 }
 
 function normalizeText(value, field, fallback) {
@@ -1173,6 +1198,8 @@ module.exports = {
   normalizeSupabaseYarn,
   scorePattern,
   selectMatchingYarns,
+  validatePatternCatalogSize,
+  validateYarnStorageCapacity,
   toSupabaseYarn,
   buildAuthCookie,
   createAuthRateLimiter,

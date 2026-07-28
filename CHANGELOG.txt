@@ -15,6 +15,7 @@ Wersja 2.0.0-alpha.8 (w przygotowaniu) - Supabase jako jedyne źródło danych
 - Dodano limity wejścia rankingu oraz poprawiono alokację kilku motków dla jednej roli.
 - Dodano szybkie odrzucanie niewykonalnych dopasowań i komunikat rozróżniający limit obliczenia od wielkości magazynu.
 - Rozdzielono limit obliczenia od magazynu: większy magazyn jest zapisywany, a ranking analizuje najlepiej pasujący podzbiór.
+- Ustalono limity produktu: 500 włóczek na użytkownika i 300 wzorów w katalogu.
 
 Wersja 2.0.0-alpha.7 (w przygotowaniu) - role włóczek w rankingu
 - Rozszerzono lokalny format importu o kompletne wymagania wariantów.
