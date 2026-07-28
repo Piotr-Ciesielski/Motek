@@ -1,5 +1,14 @@
 Motek - log zmian
 
+Wersja 2.0.0-alpha.11 (w przygotowaniu) - stabilizacja audytu i operacji
+- Dodano obsługę błędów autosave z widocznym stanem zapisu w interfejsie.
+- Ograniczono czas odbioru body żądania i przycięto niemożliwe gałęzie rankingu.
+- Ujednolicono limity wymagań wzorów w importerze, backendzie i Supabase.
+- Import katalogu wykonuje jeden zbiorczy upsert i ma test regresyjny.
+- Brakującą migrację magazynu backend zgłasza jako kontrolowany błąd 503.
+- Potwierdzono benchmark: typowe 500 włóczek i 300 wzorów mieści się w 83,48 ms.
+- Punkty wymagające reverse proxy/WAF, Redis, stagingu lub płatnego planu Supabase pozostają odłożone.
+
 Wersja 2.0.0-alpha.10 (w przygotowaniu) - stabilizacja zapisu magazynu
 - Naprawiono zachowanie nagłówka `Content-Type: application/json` przy żądaniach z nagłówkiem wersji magazynu.
 - Zastosowano na zdalnym Supabase migracje atomowego limitu 500 włóczek, limitu 300 wzorów oraz walidacji wymagań dopasowania.

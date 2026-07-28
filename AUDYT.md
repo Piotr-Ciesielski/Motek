@@ -498,7 +498,7 @@ Zadanie odłożone do etapu konfiguracji produkcyjnej:
 Limity i timeouty w aplikacji Motek pozostają warstwą dodatkową i nie zastępują
 ochrony infrastrukturalnej przed atakiem rozproszonym.
 
-## Audyt iteracja 3 — wykonany na podstawie PROMPTS.md
+## Audyt iteracja 3 — wersja 2.0.0-alpha.11
 
 Data audytu: 2026-07-28. Zakres obejmował server.js, app.js, supabase.js,
 limits.js, skrypt importu, migracje Supabase, testy, konfigurację npm oraz
