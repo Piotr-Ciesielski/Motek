@@ -143,7 +143,7 @@
  2. **Wymusić HTTPS i HSTS na reverse proxy** po potwierdzeniu konfiguracji domeny (AUD-02).
  3. **Dodać rate limiting na reverse proxy, monitoring i ochronę rozproszoną** dla logowania i rejestracji (AUD-03).
  4. **Dodać wersjonowanie i retry dla autosave** oraz rozważyć atomowość całej serii zmian (AUD-04).
- 5. **Dodać benchmark i ewentualnego workera dla `/api/matches`** po wprowadzonych limitach i poprawie alokacji (AUD-05, AUD-06).
+ 5. **Opcjonalnie skalować `/api/matches`** przez paginację, dalszą optymalizację lub workera, jeśli benchmark albo wzrost limitów pokaże taką potrzebę (AUD-05, AUD-06).
 
  ## Podsumowanie końcowe
 

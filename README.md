@@ -250,6 +250,10 @@ zużycia dla rozmiarów i wariantów wybranych wzorów oraz ich selektywny impor
 Supabase. Ranking automatycznie pomija rekordy bez pełnych, zweryfikowanych
 wymagań.
 
+Skalowanie ponad obecne limity 500 włóczek na użytkownika i 300 wzorów jest
+opcjonalne. Wrócimy do paginacji, dalszej optymalizacji lub workera dopiero po
+benchmarku wskazującym realny problem albo po zmianie wymagań produktu.
+
 ## Struktura projektu
 
 ```text

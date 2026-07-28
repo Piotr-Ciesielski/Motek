@@ -234,6 +234,17 @@ Do wykonania pozostają przede wszystkim:
 - dalsze ograniczenie kosztu rankingu, testy obciążenia i ewentualny worker,
 - uporządkowanie konfiguracji wdrożenia produkcyjnego.
 
+### Opcjonalny plan skalowania
+
+Przy obecnych limitach 500 włóczek na użytkownika i 300 wzorów worker ani
+paginacja nie są wymagane. Skalowanie ponad te wartości pozostaje opcjonalne i
+powinno zostać uruchomione dopiero, gdy benchmark pokaże realne opóźnienia albo
+produkt będzie wymagał większych magazynów lub katalogu. Możliwe kierunki to:
+
+- paginacja katalogu i magazynu,
+- dalsza optymalizacja wyboru podzbioru włóczek,
+- przeniesienie rankingu do workera lub kolejki zadań.
+
 ## 12. Historia migracji
 
 Wersja `1.0.x` była lokalną aplikacją z SQLite. W wersji `2.0.0` rozpoczęto
