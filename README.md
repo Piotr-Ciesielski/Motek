@@ -262,6 +262,10 @@ limitami połączeń, monitoringiem i automatyczną kontrolą zgodności migracj
 Przed wdrożeniem produkcyjnym pozostają także retry i obsługa konfliktów
 autosave oraz test pełnego importu katalogu z możliwością wycofania.
 
+CAPTCHA w Supabase Auth jest obecnie wyłączona dla działającego środowiska
+testowego. Przed publicznym wdrożeniem należy zintegrować token CAPTCHA z
+formularzami logowania i rejestracji, a następnie ponownie włączyć ochronę.
+
 ### Kolejny etap ochrony infrastruktury
 
 Przed wdrożeniem produkcyjnym trzeba uzupełnić ochronę przed rozproszonymi

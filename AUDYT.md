@@ -720,3 +720,18 @@ stagingowego i automatycznej kontroli zgodności migracji.
 - Uzupełnić retry autosave, obsługę konfliktów i operacyjny proces migracji/importu.
 - Workera rankingu nie wdrażać przy obecnych limitach bez nowego benchmarku;
   pozostaje opcjonalny dla trudniejszych wzorów lub większych limitów produktu.
+
+### AUD-32 — Integracja CAPTCHA z Auth
+
+1. **Lokalizacja:** zdalne ustawienia Supabase Auth oraz formularze logowania i
+   rejestracji w `index.html` / `app.js`.
+2. **Kategoria:** Bezpieczeństwo / uwierzytelnianie / UX.
+3. **Poziom krytyczności:** Średni przed wdrożeniem publicznym.
+4. **Stan obecny:** CAPTCHA została ręcznie wyłączona w Supabase, ponieważ
+   aplikacja nie przekazuje `captcha_token`. Po wyłączeniu logowanie działa
+   poprawnie. Przy włączonej ochronie Supabase odrzuca żądanie jako
+   `captcha_failed`, a backend zwraca użytkownikowi ogólny błąd 401.
+5. **Plan:** wybrać dostawcę CAPTCHA, dodać widget lub integrację tokenu do
+   formularzy logowania i rejestracji, przekazywać token do Supabase oraz dodać
+   test poprawnego i odrzuconego tokenu. Po wdrożeniu ponownie włączyć CAPTCHA
+   w środowisku stagingowym i produkcyjnym.
