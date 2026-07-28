@@ -1,5 +1,13 @@
 Motek - log zmian
 
+2026-07-28 — UX/UI: dodano odzyskiwanie hasła przez Supabase Auth oraz timeout
+komunikacji Auth. Niedostępne API lub SMTP nie pozostawia formularza w stanie
+„Wysyłam instrukcję...” bez odpowiedzi.
+Po kliknięciu linku recovery frontend przewija do formularza „Ustaw nowe hasło”,
+podświetla okno odzyskiwania niebieską ramką i ustawia kursor w polu nowego hasła.
+Naprawiono zapis nowego hasła: backend ustanawia pełną sesję recovery przed
+wywołaniem `updateUser`, dzięki czemu poprawny link nie kończy się błędem 400.
+
 Wersja 2.0.0-alpha.11 (w przygotowaniu) - stabilizacja audytu i operacji
 - Dodano obsługę błędów autosave z widocznym stanem zapisu w interfejsie.
 - Ograniczono czas odbioru body żądania i przycięto niemożliwe gałęzie rankingu.

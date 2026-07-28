@@ -4,6 +4,7 @@ const assert = require("node:assert/strict");
 const {
   createSupabaseAuthClient,
   createSupabaseConnection,
+  createTimedFetch,
   readSupabaseAuthConfig,
   readSupabaseConfig,
   verifySupabaseDataApi,
@@ -34,6 +35,21 @@ test("konfiguracja Supabase Auth używa wyłącznie klucza publishable", () => {
 
 test("parser konfiguracji rozpoznaje brak ustawień przed startem aplikacji", () => {
   assert.equal(readSupabaseConfig({}), null);
+});
+
+test("przerywa zawieszone żądanie Supabase po własnym timeoutcie", async () => {
+  const timedFetch = createTimedFetch((input, { signal }) => new Promise((resolve, reject) => {
+    signal.addEventListener("abort", () => {
+      const error = new Error("The operation was aborted.");
+      error.name = "AbortError";
+      reject(error);
+    }, { once: true });
+  }), 10);
+
+  await assert.rejects(
+    timedFetch("https://projekt.supabase.co/auth/v1/recover"),
+    (error) => error.name === "AbortError"
+  );
 });
 
 test("konfiguracja Supabase wymaga obu wartości", () => {

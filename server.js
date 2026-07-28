@@ -332,6 +332,13 @@ function normalizeAuthEmail(value) {
   return email;
 }
 
+function normalizeRecoveryToken(value, field) {
+  if (typeof value !== "string" || !value.trim() || value.length > 4096) {
+    throw new ApiError(400, `Token ${field} jest nieprawidłowy lub wygasł.`);
+  }
+  return value.trim();
+}
+
 function normalizeAuthLogin(value) {
   if (typeof value !== "string") {
     throw new ApiError(400, "Login musi mieć 3-30 znaków: litery, cyfry lub podkreślenie.");
@@ -1206,6 +1213,69 @@ async function handleAuthApi(req, res, url) {
     return sendJson(res, 200, { user: sanitizeAuthUser(data.user) });
   }
 
+  if (req.method === "POST" && url.pathname === "/api/auth/password-reset-request") {
+    const body = await readBody(req);
+    const email = normalizeAuthEmail(body.email);
+    const rateLimitKeys = getAuthRateLimitKeys(req, email);
+    enforceRequestRateLimit(rateLimitKeys, authRequestRateLimiter, res);
+
+    const redirectTo = new URL("/?recovery=1", getExpectedOrigin(req)).toString();
+    const { error } = await authClient().auth.resetPasswordForEmail(email, { redirectTo });
+    if (error) {
+      console.warn("Nie udało się wysłać wiadomości odzyskiwania hasła.");
+      throw new ApiError(503, "Odzyskiwanie hasła jest chwilowo niedostępne. Spróbuj ponownie później.");
+    }
+
+    return sendJson(res, 202, {
+      message: "Jeśli konto z tym adresem istnieje, wyślemy na nie instrukcję zmiany hasła.",
+    });
+  }
+
+  if (req.method === "POST" && url.pathname === "/api/auth/recovery") {
+    const body = await readBody(req);
+    const accessToken = normalizeRecoveryToken(body.access_token, "dostępu");
+    const refreshToken = normalizeRecoveryToken(body.refresh_token, "odświeżania");
+    const client = authClient();
+    const { data, error } = await client.auth.getUser(accessToken);
+    if (error || !data?.user) {
+      throw new ApiError(400, "Link odzyskiwania hasła jest nieprawidłowy lub wygasł.");
+    }
+
+    setAuthCookies(res, {
+      access_token: accessToken,
+      refresh_token: refreshToken,
+    });
+    return sendJson(res, 200, { user: sanitizeAuthUser(data.user) });
+  }
+
+  if (req.method === "POST" && url.pathname === "/api/auth/password") {
+    const session = await requireAuthenticatedSession(req, res);
+    const body = await readBody(req);
+    const password = validateAuthPassword(body.password);
+    const cookies = parseCookies(req.headers.cookie);
+    const refreshToken = cookies[AUTH_REFRESH_COOKIE];
+    if (!refreshToken) {
+      throw new ApiError(400, "Link odzyskiwania hasła jest nieprawidłowy lub wygasł.");
+    }
+
+    const client = supabaseAuthClientFactory(supabaseAuthConfig, session.accessToken);
+    const { error: sessionError } = await client.auth.setSession({
+      access_token: session.accessToken,
+      refresh_token: refreshToken,
+    });
+    if (sessionError) {
+      throw new ApiError(400, "Link odzyskiwania hasła jest nieprawidłowy lub wygasł.");
+    }
+
+    const { error } = await client.auth.updateUser({ password });
+    if (error) {
+      throw new ApiError(400, "Nie udało się zmienić hasła. Sprawdź hasło i spróbuj ponownie.");
+    }
+
+    clearAuthCookies(res);
+    return sendJson(res, 200, { passwordUpdated: true, authenticated: false });
+  }
+
   if (req.method === "POST" && url.pathname === "/api/auth/logout") {
     const cookies = parseCookies(req.headers.cookie);
     if (supabaseAuthConfig && cookies[AUTH_ACCESS_COOKIE]) {
@@ -1470,4 +1540,5 @@ module.exports = {
   shutdown,
   validateCookieSecurityConfig,
   validateAuthPassword,
+  normalizeRecoveryToken,
 };

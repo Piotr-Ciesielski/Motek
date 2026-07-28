@@ -110,6 +110,42 @@ h1 {
   margin-bottom: 22px;
 }
 
+.auth-panel--recovery {
+  border-color: rgba(92, 89, 232, 0.72);
+  box-shadow:
+    0 0 0 5px rgba(92, 89, 232, 0.16),
+    0 22px 56px rgba(64, 28, 71, 0.24),
+    inset 0 1px 0 rgba(255, 255, 255, 0.72);
+  animation: recovery-highlight 1.8s ease-out 2;
+  scroll-margin-top: 24px;
+}
+
+.auth-form--recovery {
+  border-color: rgba(92, 89, 232, 0.55);
+  box-shadow: 0 0 0 3px rgba(92, 89, 232, 0.1);
+}
+
+@keyframes recovery-highlight {
+  0%, 100% {
+    box-shadow:
+      0 0 0 5px rgba(92, 89, 232, 0.16),
+      0 22px 56px rgba(64, 28, 71, 0.24),
+      inset 0 1px 0 rgba(255, 255, 255, 0.72);
+  }
+  50% {
+    box-shadow:
+      0 0 0 10px rgba(92, 89, 232, 0.28),
+      0 22px 56px rgba(64, 28, 71, 0.24),
+      inset 0 1px 0 rgba(255, 255, 255, 0.72);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .auth-panel--recovery {
+    animation: none;
+  }
+}
+
 .auth-forms {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -267,6 +303,35 @@ input, select {
 
 .summary strong {
   color: var(--text);
+}
+
+.auth-form--recovery {
+  max-width: 520px;
+  margin-top: 18px;
+}
+
+.auth-form--recovery p {
+  margin: 0;
+}
+
+.form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.link-button {
+  justify-self: start;
+  border: 0;
+  padding: 4px 0;
+  background: transparent;
+  color: var(--accent-3);
+  font: inherit;
+  font-size: 0.86rem;
+  font-weight: 700;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 
 .storage-message {

@@ -16,10 +16,15 @@ const registerForm = document.getElementById("registerForm");
 const authForms = document.getElementById("authForms");
 const authLoggedIn = document.getElementById("authLoggedIn");
 const authUser = document.getElementById("authUser");
+const authPanel = document.querySelector(".auth-panel");
 const authProfileSummary = document.getElementById("authProfileSummary");
 const authMessage = document.getElementById("authMessage");
 const authLead = document.getElementById("authLead");
 const logoutBtn = document.getElementById("logoutBtn");
+const forgotPasswordBtn = document.getElementById("forgotPasswordBtn");
+const passwordResetForm = document.getElementById("passwordResetForm");
+const passwordUpdateForm = document.getElementById("passwordUpdateForm");
+const cancelPasswordResetBtn = document.getElementById("cancelPasswordResetBtn");
 
 let baseUrl = window.location.origin;
 let isAuthenticated = false;
@@ -433,6 +438,44 @@ function setAuthBusy(form, busy) {
   form.querySelector('button[type="submit"]').disabled = busy;
 }
 
+function showAuthForm(form) {
+  [loginForm, registerForm, passwordResetForm, passwordUpdateForm].forEach((candidate) => {
+    candidate.hidden = candidate !== form;
+  });
+  authPanel.classList.toggle("auth-panel--recovery", form === passwordUpdateForm);
+}
+
+async function startPasswordRecovery() {
+  const hash = new URLSearchParams(window.location.hash.slice(1));
+  const accessToken = hash.get("access_token");
+  const refreshToken = hash.get("refresh_token");
+  if (!accessToken || !refreshToken || new URLSearchParams(window.location.search).get("recovery") !== "1") {
+    return false;
+  }
+
+  try {
+    setAuthMessage("Sprawdzam link odzyskiwania hasła...");
+    await api("/api/auth/recovery", {
+      method: "POST",
+      body: JSON.stringify({ access_token: accessToken, refresh_token: refreshToken }),
+    });
+    window.history.replaceState({}, document.title, window.location.pathname);
+    authForms.hidden = false;
+    showAuthForm(passwordUpdateForm);
+    passwordUpdateForm.scrollIntoView({ behavior: "smooth", block: "center" });
+    setAuthMessage("Ustaw nowe hasło.");
+    window.setTimeout(() => {
+      passwordUpdateForm.querySelector('input[name="password"]').focus({ preventScroll: true });
+    }, 0);
+    return true;
+  } catch (error) {
+    window.history.replaceState({}, document.title, window.location.pathname);
+    showAuthForm(loginForm);
+    setAuthMessage(`${error.message} Poproś o nowy link.`, "error");
+    return true;
+  }
+}
+
 function renderAuthState(payload) {
   const authenticated = Boolean(payload?.authenticated && payload.user);
   isAuthenticated = authenticated;
@@ -505,6 +548,58 @@ loginForm.addEventListener("submit", async (event) => {
   await submitAuthForm(loginForm, "/api/auth/login", "Zalogowano.");
 });
 
+forgotPasswordBtn.addEventListener("click", () => {
+  showAuthForm(passwordResetForm);
+  setAuthMessage("Podaj adres e-mail, na który wyślemy instrukcję.");
+  passwordResetForm.querySelector("input").focus();
+});
+
+cancelPasswordResetBtn.addEventListener("click", () => {
+  showAuthForm(loginForm);
+  setAuthMessage("");
+  loginForm.querySelector('input[name="email"]').focus();
+});
+
+passwordResetForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  setAuthBusy(passwordResetForm, true);
+  setAuthMessage("Wysyłam instrukcję...");
+  try {
+    const body = Object.fromEntries(new FormData(passwordResetForm).entries());
+    const payload = await api("/api/auth/password-reset-request", {
+      method: "POST",
+      body: JSON.stringify(body),
+    });
+    setAuthMessage(payload.message, "success");
+    passwordResetForm.reset();
+  } catch (error) {
+    setAuthMessage(error.message, "error");
+  } finally {
+    setAuthBusy(passwordResetForm, false);
+  }
+});
+
+passwordUpdateForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  setAuthBusy(passwordUpdateForm, true);
+  setAuthMessage("Zmieniam hasło...");
+  try {
+    const body = Object.fromEntries(new FormData(passwordUpdateForm).entries());
+    await api("/api/auth/password", {
+      method: "POST",
+      body: JSON.stringify(body),
+    });
+    passwordUpdateForm.reset();
+    showAuthForm(loginForm);
+    renderAuthState({ authenticated: false });
+    setAuthMessage("Hasło zmienione. Zaloguj się nowym hasłem.", "success");
+  } catch (error) {
+    setAuthMessage(error.message, "error");
+  } finally {
+    setAuthBusy(passwordUpdateForm, false);
+  }
+});
+
 registerForm.addEventListener("submit", async (event) => {
   event.preventDefault();
   await submitAuthForm(registerForm, "/api/auth/register", "Konto utworzone.");
@@ -561,6 +656,8 @@ patternReviewFilter.addEventListener("change", renderPatternCatalog);
 
 detectRuntimeMode()
   .then(async () => {
+    const recoveryHandled = await startPasswordRecovery();
+    if (recoveryHandled) return;
     await Promise.all([
       refreshAuthSession(),
       refresh(),
