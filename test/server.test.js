@@ -42,8 +42,8 @@ test("ranking respektuje limity rozmiaru i może użyć kilku motków dla jednej
       weight: 20,
     }))
   );
-  assert.equal(selected.yarns.length, 50);
-  assert.equal(selected.limited, true);
+  assert.equal(selected.yarns.length, 75);
+  assert.equal(selected.limited, false);
 
   const result = scorePattern(
     {

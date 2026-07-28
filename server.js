@@ -24,7 +24,6 @@ const AUTH_RATE_LIMIT_WINDOW_MS = 15 * 60 * 1000;
 const AUTH_RATE_LIMIT_MAX_FAILURES = 5;
 const AUTH_RATE_LIMIT_BLOCK_MS = 15 * 60 * 1000;
 const AUTH_RATE_LIMIT_MAX_ENTRIES = 10_000;
-const MAX_MATCH_CANDIDATE_YARNS = 50;
 const MAX_MATCH_VARIANTS = 250;
 const MAX_MATCH_ROLE_REQUIREMENTS = 8;
 const MAX_MATCH_SEARCH_NODES = 25_000;
@@ -676,33 +675,7 @@ function selectMatchingYarns(pattern, yarns) {
     )
   );
 
-  if (eligible.length <= MAX_MATCH_CANDIDATE_YARNS) {
-    return { yarns: eligible, limited: false };
-  }
-
-  const ranked = eligible
-    .map((yarn) => {
-      const relevance = Math.max(
-        ...requirements.map((requirement) => {
-          if (
-            !requirement.materials.includes(yarn.material) ||
-            !requirement.weightClasses.includes(yarn.weightClass)
-          ) {
-            return 0;
-          }
-          return (
-            yarn.length / Math.max(requirement.metersNeeded, 1) +
-            yarn.weight / Math.max(requirement.gramsNeeded, 1)
-          );
-        })
-      );
-      return { yarn, relevance };
-    })
-    .sort((a, b) => b.relevance - a.relevance || b.yarn.length - a.yarn.length || b.yarn.weight - a.yarn.weight)
-    .slice(0, MAX_MATCH_CANDIDATE_YARNS)
-    .map(({ yarn }) => yarn);
-
-  return { yarns: ranked, limited: true };
+  return { yarns: eligible, limited: false };
 }
 
 async function readBody(req) {

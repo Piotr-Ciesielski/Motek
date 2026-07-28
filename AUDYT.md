@@ -306,6 +306,13 @@ count. Dodano test walidacji pojemności importu.
    całego magazynu”. Dodać testy fałszywego braku dopasowania dla wielu małych
    motków i wielu ról.
 
+**Status po poprawce 2026-07-28:** naprawione dla obecnego limitu 500 włóczek.
+Usunięto heurystyczne obcinanie kwalifikujących się rekordów do 50, więc ranking
+analizuje cały magazyn i nie zwraca fałszywego braku tylko z powodu liczby
+włóczek. Limit złożoności wyszukiwania pozostaje ochroną przed nadmiernie
+trudnymi wzorami; w takim przypadku aplikacja zwraca kontrolowany błąd 503,
+zamiast udawać kompletny wynik. Zaktualizowano test wyboru kandydatów.
+
 ### AUD-19 — Autosave nadal może usuwać zmiany z innej karty
 
 1. **Lokalizacja:** `app.js:146-177` (`saveYarns`), endpointy `PATCH/DELETE`
