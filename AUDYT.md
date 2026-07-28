@@ -657,6 +657,11 @@ walidacją importera.
    komunikatem operacyjnym bez szczegółów bazy. W CI/CD sprawdzać zgodność
    migracji przed startem backendu.
 
+**Status po poprawce 2026-07-28:** częściowo zamknięte. Backend rozpoznaje
+typowe kody brakującej funkcji RPC (`PGRST202` i `42883`) i zwraca kontrolowany
+503 z komunikatem o wymaganej migracji. Pozostaje automatyczna kontrola zgodności
+migracji w procesie wdrożenia.
+
 ### AUD-31 — Import katalogu nie jest atomowy
 
 1. Lokalizacja: scripts/import-patterns.js:138-157, importRecords.

@@ -560,6 +560,12 @@ async function insertSupabaseYarn(session, yarn) {
     if (error.code === "P0001") {
       throw new ApiError(409, "Magazyn osiągnął limit 500 włóczek na użytkownika.");
     }
+    if (error.code === "PGRST202" || error.code === "42883") {
+      throw new ApiError(
+        503,
+        "Backend Supabase nie ma wymaganej migracji magazynu. Skontaktuj się z administratorem."
+      );
+    }
     throw new Error(`Nie udało się zapisać włóczki w Supabase: ${error.message}`);
   }
 
