@@ -255,6 +255,13 @@ Skalowanie ponad obecne limity 500 włóczek na użytkownika i 300 wzorów jest
 opcjonalne. Wrócimy do paginacji, dalszej optymalizacji lub workera dopiero po
 benchmarku wskazującym realny problem albo po zmianie wymagań produktu.
 
+### Kolejny etap ochrony infrastruktury
+
+Przed wdrożeniem produkcyjnym trzeba uzupełnić ochronę przed rozproszonymi
+atakami DDoS poza aplikacją: skonfigurować CDN/WAF lub reverse proxy, limity
+ruchu na brzegu, ukryć bezpośredni adres originu, dodać monitoring i procedurę
+reakcji na incydenty. Limity aplikacyjne w Node.js są tylko dodatkową warstwą.
+
 ## Struktura projektu
 
 ```text

@@ -485,3 +485,16 @@ z wielu procesów Node.js, testów z rzeczywistym reverse proxy, testów awarii
 sieci podczas autosave ani testów obciążeniowych z 500 włóczkami i 300 wzorami.
 Wnioski dotyczące RLS, providerów Auth, HTTPS, HSTS i limitów infrastruktury
 wymagają potwierdzenia w docelowym środowisku wdrożeniowym.
+
+## Kolejny krok rozwojowy — pełna ochrona DDoS
+
+Zadanie odłożone do etapu konfiguracji produkcyjnej:
+
+- wybrać CDN/WAF lub reverse proxy przed Node.js;
+- skonfigurować limity połączeń i rate limiting na brzegu dla Auth, API i zasobów;
+- nie udostępniać bezpośredniego adresu originu aplikacji;
+- dodać monitoring ruchu, alerty i procedurę reakcji na incydent;
+- wykonać testy konfiguracji z rzeczywistej sieci i sprawdzić odporność pod obciążeniem.
+
+Limity i timeouty w aplikacji Motek pozostają warstwą dodatkową i nie zastępują
+ochrony infrastrukturalnej przed atakiem rozproszonym.

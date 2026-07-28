@@ -232,6 +232,8 @@ Do wykonania pozostają przede wszystkim:
 - uzupełnienie rate limitingu na reverse proxy oraz monitoring prób Auth,
 - wymuszenie HTTPS i HSTS na reverse proxy w produkcji,
 - dalsze ograniczenie kosztu rankingu, testy obciążenia i ewentualny worker,
+- pełna ochrona DDoS przed warstwą aplikacji: CDN/WAF lub reverse proxy,
+  limity ruchu na brzegu, ukrycie originu, monitoring i procedura reakcji,
 - uporządkowanie konfiguracji wdrożenia produkcyjnego.
 
 ### Opcjonalny plan skalowania
