@@ -590,6 +590,11 @@ hasła względem baz wycieków.
    zapisano / zapisywanie / konflikt / błąd. Przy konflikcie odświeżać magazyn
    dopiero po decyzji użytkownika.
 
+**Status po poprawce 2026-07-28:** częściowo zamknięte. Autosave przechwytuje
+ błędy, pokazuje stan zapisu i pozostawia zmiany w formularzu. Pełne retry,
+ atomowość serii operacji i interaktywny wybór przy konflikcie pozostają do
+ dalszego usprawnienia.
+
 ### AUD-28 — Ranking nadal wykonuje pełny odczyt i wyszukiwanie magazynu
 
 1. Lokalizacja: server.js:741-769, getSupabaseMatches; server.js:785-804,
@@ -655,22 +660,23 @@ ponieważ nie jest obecnie częścią repozytorium.
 
 ## TOP 5 najpilniejszych spraw przed produkcją — iteracja 3
 
-1. Zabezpieczyć lub usunąć public.rls_auto_enable() i ponownie uruchomić
-   Security Advisor — AUD-23.
-2. Po przejściu na plan Supabase obsługujący tę funkcję włączyć leaked password
+1. Po przejściu na plan Supabase obsługujący tę funkcję włączyć leaked password
    protection i wykonać test rejestracji — AUD-24.
-3. Dodać ochronę na reverse proxy/WAF i limiter współdzielony między instancjami
+2. Dodać ochronę na reverse proxy/WAF i limiter współdzielony między instancjami
    — AUD-25 oraz plan ochrony DDoS.
-4. Naprawić autosave i dodać testy awarii, konfliktu i retry — AUD-27.
-5. Zdefiniować dokładność i koszt rankingu oraz wykonać benchmark maksimum 500
-   włóczek / 300 wzorów — AUD-28; równolegle ujednolicić walidację JSONB — AUD-29.
+3. Dodać deadline dla powolnego body i test slowloris — AUD-26.
+4. Zdefiniować dokładność i koszt rankingu oraz wykonać benchmark maksimum 500
+   włóczek / 300 wzorów — AUD-28.
+5. Ujednolicić walidację JSONB i zaplanować atomowy import katalogu — AUD-29,
+   AUD-31.
 
 ## Ograniczenia audytu — iteracja 3
 
 Nie wykonano testu penetracyjnego, testu z wieloma procesami Node.js, testu
 slowloris, testu rzeczywistej współbieżności na produkcyjnym Supabase ani testu
-pełnego importu z rollbackiem. Nie odczytano ciała zdalnej funkcji
-rls_auto_enable, dlatego jej rzeczywisty wpływ pozostaje do potwierdzenia.
+pełnego importu z rollbackiem. Ciało funkcji rls_auto_enable zostało ocenione;
+niezależnym ograniczeniem pozostaje brak testu jej działania w scenariuszu
+tworzenia tabeli przez operatora.
 
 ## Przyszłe usprawnienia zależne od planu Supabase
 

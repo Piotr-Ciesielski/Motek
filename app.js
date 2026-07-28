@@ -3,6 +3,7 @@ const resultTemplate = document.getElementById("resultTemplate");
 const yarnList = document.getElementById("yarnList");
 const results = document.getElementById("results");
 const summary = document.getElementById("summary");
+const storageMessage = document.getElementById("storageMessage");
 const addYarnBtn = document.getElementById("addYarnBtn");
 const findBtn = document.getElementById("findBtn");
 const patternTemplate = document.getElementById("patternTemplate");
@@ -79,6 +80,11 @@ function showMessage(container, message) {
   container.replaceChildren(element);
 }
 
+function setStorageMessage(message, kind = "") {
+  storageMessage.textContent = message;
+  storageMessage.dataset.kind = kind;
+}
+
 function createRequirement(text) {
   const item = document.createElement("li");
   item.textContent = text;
@@ -87,12 +93,19 @@ function createRequirement(text) {
 
 function scheduleAutosave() {
   clearTimeout(autosaveTimer);
-  autosaveTimer = setTimeout(async () => {
-    if (autosaveInFlight) {
-      autosavePending = true;
-      return;
-    }
+  autosaveTimer = setTimeout(() => {
+    flushAutosave();
+  }, 350);
+}
 
+async function flushAutosave() {
+  if (autosaveInFlight) {
+    autosavePending = true;
+    return;
+  }
+
+  setStorageMessage("Zapisuję magazyn...");
+  try {
     do {
       autosavePending = false;
       autosaveInFlight = saveYarns()
@@ -105,7 +118,14 @@ function scheduleAutosave() {
         });
       await autosaveInFlight;
     } while (autosavePending);
-  }, 350);
+    setStorageMessage("Magazyn zapisany.", "success");
+  } catch (error) {
+    autosavePending = false;
+    setStorageMessage(
+      `${error.message} Zmiany pozostały w formularzu — popraw połączenie i spróbuj ponownie.`,
+      "error"
+    );
+  }
 }
 
 function addYarnCard(yarn = {}) {
@@ -119,11 +139,20 @@ function addYarnCard(yarn = {}) {
   node.querySelector('[data-field="weight"]').value = yarn.weight ?? 0;
 
   node.querySelector(".yarn-remove").addEventListener("click", async () => {
-    if (node.dataset.id) {
-      await deleteYarn(node.dataset.id);
+    try {
+      setStorageMessage("Zapisuję zmianę...");
+      if (node.dataset.id) {
+        await deleteYarn(node.dataset.id);
+      }
+      node.remove();
+      await refresh();
+      setStorageMessage("Magazyn zapisany.", "success");
+    } catch (error) {
+      setStorageMessage(
+        `${error.message} Włóczka pozostała w formularzu.`,
+        "error"
+      );
     }
-    node.remove();
-    await refresh();
   });
 
   node.querySelectorAll("input, select").forEach((field) => {

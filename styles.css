@@ -269,6 +269,20 @@ input, select {
   color: var(--text);
 }
 
+.storage-message {
+  min-height: 1.4em;
+  margin: 8px 0 0;
+  font-size: 0.86rem;
+}
+
+.storage-message[data-kind="success"] {
+  color: var(--good);
+}
+
+.storage-message[data-kind="error"] {
+  color: var(--accent);
+}
+
 .result-card {
   padding: 18px;
 }
