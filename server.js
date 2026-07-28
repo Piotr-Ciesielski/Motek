@@ -705,10 +705,24 @@ function allocateRequirementYarns(requirements, yarns) {
         requirement.weightClasses.includes(yarn.weightClass)
     );
 
+    const remainingLength = new Array(eligible.length + 1).fill(0);
+    const remainingWeight = new Array(eligible.length + 1).fill(0);
+    for (let candidate = eligible.length - 1; candidate >= 0; candidate -= 1) {
+      remainingLength[candidate] = remainingLength[candidate + 1] + eligible[candidate].length;
+      remainingWeight[candidate] = remainingWeight[candidate + 1] + eligible[candidate].weight;
+    }
+
     function chooseGroup(start, group, length, weight) {
       searchNodes += 1;
       if (searchNodes > MAX_MATCH_SEARCH_NODES) {
         throw new ApiError(503, "Dopasowanie jest zbyt złożone. Zmniejsz magazyn lub wybierz prostszy wzór.");
+      }
+      if (
+        group.length + eligible.length - start < requirement.yarnsNeeded ||
+        length + remainingLength[start] < requirement.metersNeeded ||
+        weight + remainingWeight[start] < requirement.gramsNeeded
+      ) {
+        return null;
       }
       if (
         group.length >= requirement.yarnsNeeded &&

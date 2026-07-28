@@ -613,6 +613,11 @@ Pozostają limity połączeń i test slowloris na reverse proxy.
    bounded search/DP, selekcję kandydatów z jawnym oznaczeniem podzbioru albo
    workera z limitem czasu i anulowaniem. Dodać benchmark dla 500 włóczek.
 
+**Status po poprawce 2026-07-28:** częściowo zamknięte. Ranking nadal zachowuje
+pełny zestaw kandydatów i dokładność w ramach limitu węzłów, ale dodano bezpieczne
+przycinanie gałęzi bez wystarczającej liczby włóczek, metrów lub gramów. Pozostaje
+benchmark maksimum i decyzja o dalszej optymalizacji lub workerze.
+
 ### AUD-29 — Walidacja JSONB w bazie jest słabsza niż walidacja importera
 
 1. Lokalizacja: migracja 20260728000002_validate_pattern_matching_requirements.sql,
