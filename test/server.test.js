@@ -292,12 +292,13 @@ test("serwer Motek działa bezpiecznie", async (t) => {
     await t.test("izoluje syntetyczne dane włóczek między użytkownikami", async () => {
       const userACookies = "motek_access_token=token-user-a";
       const userBCookies = "motek_access_token=token-user-b";
+      const originHeaders = { Origin: baseUrl };
       let userAVersion = (await fetch(`${baseUrl}/api/yarns`, {
         headers: { Cookie: userACookies },
       })).headers.get("etag");
       const createResponse = await fetch(`${baseUrl}/api/yarns`, {
         method: "POST",
-        headers: { "Content-Type": "application/json", Cookie: userACookies, "If-Match": userAVersion },
+        headers: { ...originHeaders, "Content-Type": "application/json", Cookie: userACookies, "If-Match": userAVersion },
         body: JSON.stringify({
           name: "Test automatyczny",
           color: "zielony",
@@ -314,7 +315,7 @@ test("serwer Motek działa bezpiecznie", async (t) => {
 
       const updateResponse = await fetch(`${baseUrl}/api/yarns/${created.id}`, {
         method: "PATCH",
-        headers: { "Content-Type": "application/json", Cookie: userACookies, "If-Match": userAVersion },
+        headers: { ...originHeaders, "Content-Type": "application/json", Cookie: userACookies, "If-Match": userAVersion },
         body: JSON.stringify({
           name: "Test automatyczny — zmieniony",
           color: "niebieski",
@@ -331,7 +332,7 @@ test("serwer Motek działa bezpiecznie", async (t) => {
 
       const conflictResponse = await fetch(`${baseUrl}/api/yarns/${created.id}`, {
         method: "PATCH",
-        headers: { "Content-Type": "application/json", Cookie: userACookies, "If-Match": staleVersion },
+        headers: { ...originHeaders, "Content-Type": "application/json", Cookie: userACookies, "If-Match": staleVersion },
         body: JSON.stringify({
           name: "Konflikt z drugiej karty",
           color: "niebieski",
@@ -361,13 +362,13 @@ test("serwer Motek działa bezpiecznie", async (t) => {
 
       const forbiddenDelete = await fetch(`${baseUrl}/api/yarns/${created.id}`, {
         method: "DELETE",
-        headers: { Cookie: userBCookies, "If-Match": userBList.headers.get("etag") },
+        headers: { ...originHeaders, Cookie: userBCookies, "If-Match": userBList.headers.get("etag") },
       });
       assert.equal(forbiddenDelete.status, 404);
 
       const forbiddenUpdate = await fetch(`${baseUrl}/api/yarns/${created.id}`, {
         method: "PATCH",
-        headers: { "Content-Type": "application/json", Cookie: userBCookies, "If-Match": userBList.headers.get("etag") },
+        headers: { ...originHeaders, "Content-Type": "application/json", Cookie: userBCookies, "If-Match": userBList.headers.get("etag") },
         body: JSON.stringify({
           name: "Nieautoryzowana zmiana",
           color: "czerwony",
@@ -381,7 +382,7 @@ test("serwer Motek działa bezpiecznie", async (t) => {
 
       const deleteResponse = await fetch(`${baseUrl}/api/yarns/${created.id}`, {
         method: "DELETE",
-        headers: { Cookie: userACookies, "If-Match": userAVersion },
+        headers: { ...originHeaders, Cookie: userACookies, "If-Match": userAVersion },
       });
       assert.equal(deleteResponse.status, 204);
       userAVersion = deleteResponse.headers.get("etag");
@@ -403,7 +404,7 @@ test("serwer Motek działa bezpiecznie", async (t) => {
       })).headers.get("etag");
       const limitResponse = await fetch(`${baseUrl}/api/yarns`, {
         method: "POST",
-        headers: { "Content-Type": "application/json", Cookie: userACookies, "If-Match": userAVersion },
+        headers: { ...originHeaders, "Content-Type": "application/json", Cookie: userACookies, "If-Match": userAVersion },
         body: JSON.stringify({ name: "Po limicie" }),
       });
       assert.equal(limitResponse.status, 409);
@@ -463,9 +464,23 @@ test("serwer Motek działa bezpiecznie", async (t) => {
     });
 
     await t.test("odrzuca nieprawidłowe i zbyt duże dane", async () => {
-      const invalidResponse = await fetch(`${baseUrl}/api/yarns`, {
+      const missingOriginResponse = await fetch(`${baseUrl}/api/yarns`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({}),
+      });
+      assert.equal(missingOriginResponse.status, 403);
+
+      const foreignOriginResponse = await fetch(`${baseUrl}/api/yarns`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Origin: "https://evil.example" },
+        body: JSON.stringify({}),
+      });
+      assert.equal(foreignOriginResponse.status, 403);
+
+      const invalidResponse = await fetch(`${baseUrl}/api/yarns`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Origin: baseUrl },
         body: JSON.stringify({
           name: "Błędny test",
           color: "zielony",
@@ -479,7 +494,7 @@ test("serwer Motek działa bezpiecznie", async (t) => {
 
       const oversizedResponse = await fetch(`${baseUrl}/api/yarns`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", Origin: baseUrl },
         body: JSON.stringify({ name: "x".repeat(17_000) }),
       });
       assert.equal(oversizedResponse.status, 413);

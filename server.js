@@ -248,6 +248,47 @@ function validateCookieSecurityConfig(env = process.env) {
   }
 }
 
+function validateOriginConfig(env = process.env) {
+  if (env.NODE_ENV !== "production") return;
+  const configured = String(env.APP_ORIGIN || "").trim();
+  if (!configured) {
+    throw new Error("W środowisku produkcyjnym APP_ORIGIN jest wymagane dla ochrony CSRF.");
+  }
+  try {
+    const origin = new URL(configured);
+    if (!origin.origin || origin.pathname !== "/" || origin.search || origin.hash) {
+      throw new Error("invalid origin");
+    }
+  } catch {
+    throw new Error("APP_ORIGIN musi być pełnym adresem origin, np. https://motek.example.com.");
+  }
+}
+
+function getExpectedOrigin(req) {
+  const configured = String(process.env.APP_ORIGIN || "").trim();
+  if (configured) return new URL(configured).origin;
+  const protocol = process.env.NODE_ENV === "production" ? "https" : "http";
+  return `${protocol}://${req.headers.host}`;
+}
+
+function requireTrustedOrigin(req) {
+  const suppliedOrigin = req.headers.origin || req.headers.referer;
+  if (!suppliedOrigin) {
+    throw new ApiError(403, "Brak wymaganego zabezpieczenia pochodzenia żądania.");
+  }
+
+  let actualOrigin;
+  try {
+    actualOrigin = new URL(suppliedOrigin).origin;
+  } catch {
+    throw new ApiError(403, "Nieprawidłowe pochodzenie żądania.");
+  }
+
+  if (actualOrigin !== getExpectedOrigin(req)) {
+    throw new ApiError(403, "Żądanie pochodzi z niedozwolonego źródła.");
+  }
+}
+
 function buildAuthCookie(name, value, maxAge, env = process.env) {
   const secure = shouldUseSecureCookies(env) ? "; Secure" : "";
   return `${name}=${encodeURIComponent(value)}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${maxAge}${secure}`;
@@ -1014,6 +1055,10 @@ function validateYarn(body) {
 }
 
 async function handleAuthApi(req, res, url) {
+  if (req.method === "POST") {
+    requireTrustedOrigin(req);
+  }
+
   if (req.method === "POST" && url.pathname === "/api/auth/register") {
     const body = await readBody(req);
     const email = normalizeAuthEmail(body.email);
@@ -1102,6 +1147,10 @@ async function handleAuthApi(req, res, url) {
 async function handleApi(req, res, url) {
   if (url.pathname.startsWith("/api/auth/")) {
     return handleAuthApi(req, res, url);
+  }
+
+  if (["POST", "PATCH", "DELETE"].includes(req.method)) {
+    requireTrustedOrigin(req);
   }
 
   const isYarnWrite =
@@ -1201,6 +1250,7 @@ function getRuntimeConfig() {
 
 async function main(options = {}) {
   validateCookieSecurityConfig();
+  validateOriginConfig();
   supabaseConnection = Object.prototype.hasOwnProperty.call(
     options,
     "supabaseConnection"

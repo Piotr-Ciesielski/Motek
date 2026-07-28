@@ -374,6 +374,13 @@ jest reverse proxy/WAF/CDN z limitem połączeń i ruchem filtrowanym przed Node
    stan oraz synchronizer token albo signed double-submit cookie. Dodać testy
    żądań z obcym i brakującym Origin.
 
+**Status po poprawce 2026-07-28:** częściowo zamknięte. Żądania POST/PATCH/DELETE
+muszą mieć zgodny `Origin` albo `Referer`; brak nagłówka i obce źródło kończą się
+odpowiedzią 403. W produkcji wymagane jest jawne `APP_ORIGIN`, a w środowisku
+lokalnym origin jest wyliczany z hosta testowego. Ciasteczka nadal korzystają z
+`SameSite=Lax`; pełny synchronizer token CSRF pozostaje opcjonalnym kolejnym
+wzmocnieniem, jeśli aplikacja będzie obsługiwać złożone scenariusze subdomen.
+
 ### AUD-22 — Brak egzekwowania profilu i statusu w testach integracyjnych
 
 1. **Lokalizacja:** `test/server.test.js`, `test/auth.test.js`,
