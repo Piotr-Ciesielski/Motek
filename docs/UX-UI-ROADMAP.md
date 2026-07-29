@@ -42,35 +42,43 @@
 ## Sprawdzenie
 
 - `npm run check` przechodzi: 29/29 testów;
+- start redesignu frontu zapisano w commicie `2a0c94c` na branchu
+  `feat/frontend-design-refresh`, a branch został wypchnięty na GitHub;
 - import katalogu demo został sprawdzony w trybie kontrolnym;
 - Supabase zawiera 119 rekordów, w tym 3 wzory demo;
 - interaktywny test wbudowaną przeglądarką nie był dostępny w środowisku Codex.
 
 ## Następne zadania UX/UI
 
-1. **Kontrast i touch targety**
+1. **Dokończenie redesignu frontu**
+   - ujednolicenie języka wizualnego ekranów aplikacji;
+   - dopracowanie widoku logowania i rejestracji;
+   - sprawdzenie stanów pustych, onboardingu i magazynu po zmianie layoutu;
+   - test ręczny na desktopie i urządzeniach mobilnych.
+
+2. **Kontrast i touch targety**
    - pomiary WCAG na rzeczywistych tłach;
    - poprawa kontrastu tekstów pomocniczych, statusów i ghost buttons;
    - minimum 44×44 px dla przycisków i odstępy między akcjami.
 
-2. **Responsywność i długie dane**
+3. **Responsywność i długie dane**
    - testy 375, 768 i 1440 px;
    - zoom 200% i 400%;
    - długie imiona, e-maile, Unicode, emoji i tekst RTL;
    - bezpieczne zawijanie oraz formatowanie liczb.
 
-3. **Model stanów interfejsu**
+4. **Model stanów interfejsu**
    - loading, sukces, błąd, częściowy sukces i offline;
    - `aria-live`, `aria-busy` i `role="alert"` tam, gdzie potrzebne;
    - komunikaty wskazujące następny możliwy krok.
 
-4. **Sieć i autosave**
+5. **Sieć i autosave**
    - timeout, retry i powrót po offline;
    - zachowanie formularza przy wygasłej sesji;
    - ostrzeżenie przed zamknięciem przy niezapisanych danych;
    - pełna obsługa konfliktu wersji.
 
-5. **Katalog wzorów**
+6. **Katalog wzorów**
    - serwerowe filtrowanie i paginacja przed zwiększeniem katalogu;
    - dalsza ręczna weryfikacja rzeczywistych wzorów jest wstrzymana.
 
@@ -78,4 +86,4 @@
 
 Po zakończeniu każdego większego pakietu należy wykonać test ręczny w
 przeglądarce, a następnie zapisać osobny commit. Push na GitHub wykonuje
-użytkownik skryptem z katalogu `tmp/` na branch `feat/audit-ux-ui`.
+użytkownik skryptem z katalogu `tmp/` na aktualnym branchu zadaniowym.
