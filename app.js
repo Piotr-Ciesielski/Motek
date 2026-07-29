@@ -37,6 +37,7 @@ let autosavePending = false;
 let catalogPatterns = [];
 let yarnVersion = null;
 let onboardingDismissed = false;
+let yarnFormSequence = 0;
 
 async function detectRuntimeMode() {
   if (window.location.protocol === "file:") {
@@ -85,6 +86,8 @@ async function api(path, options = {}) {
 function showMessage(container, message) {
   const element = document.createElement("div");
   element.className = "empty-state";
+  element.setAttribute("role", "status");
+  element.setAttribute("aria-live", "polite");
   element.textContent = message;
   container.replaceChildren(element);
 }
@@ -243,6 +246,10 @@ function addYarnCard(yarn = {}, { isNew = false } = {}) {
   node.querySelector('[data-field="length"]').value = isNew ? "" : yarn.length ?? 0;
   node.querySelector('[data-field="weight"]').value = isNew ? "" : yarn.weight ?? 0;
   node._originalYarn = isNew ? null : collectYarnFromCard(node);
+  node.querySelectorAll("[data-field]").forEach((field) => {
+    field.id = `yarn-${++yarnFormSequence}-${field.dataset.field}`;
+    field.closest("label").htmlFor = field.id;
+  });
 
   node.querySelector(".yarn-remove").addEventListener("click", async () => {
     try {
@@ -282,8 +289,12 @@ function addYarnCard(yarn = {}, { isNew = false } = {}) {
   });
 
   node.querySelectorAll("input, select").forEach((field) => {
-    field.addEventListener("input", () => updateYarnSaveButton(node));
+    field.addEventListener("input", () => {
+      field.removeAttribute("aria-invalid");
+      updateYarnSaveButton(node);
+    });
     field.addEventListener("change", () => updateYarnSaveButton(node));
+    field.addEventListener("invalid", () => field.setAttribute("aria-invalid", "true"));
   });
 
   updateYarnSaveButton(node);
@@ -295,6 +306,11 @@ function addYarnCard(yarn = {}, { isNew = false } = {}) {
 function collectYarnsFromDom() {
   return [...yarnList.querySelectorAll('.yarn-card[data-saved="true"]')].map(collectYarnFromCard);
 }
+
+document.querySelectorAll("label").forEach((label) => {
+  const field = label.querySelector("input, select");
+  if (field?.id) label.htmlFor = field.id;
+});
 
 async function loadYarns() {
   if (!isAuthenticated) return [];
@@ -583,6 +599,10 @@ async function renderSummary() {
 function setAuthMessage(message, kind = "") {
   authMessage.textContent = message;
   authMessage.dataset.kind = kind;
+  authMessage.setAttribute("role", kind === "error" ? "alert" : "status");
+  if (kind === "error" && message) {
+    authMessage.focus({ preventScroll: true });
+  }
 }
 
 function setAuthBusy(form, busy) {

@@ -14,7 +14,8 @@
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
-    <main class="shell">
+    <a class="skip-link" href="#main-content">Przejdź do głównej treści</a>
+    <main id="main-content" class="shell" tabindex="-1">
       <section class="hero">
         <div>
           <p class="eyebrow">Motek</p>
@@ -49,11 +50,11 @@
             <h3>Logowanie</h3>
             <label>
               E-mail
-              <input name="email" type="email" maxlength="254" autocomplete="email" required />
+              <input id="login-email" name="email" type="email" maxlength="254" autocomplete="email" required aria-describedby="authMessage" />
             </label>
             <label>
               Hasło
-              <input name="password" type="password" minlength="8" maxlength="256" autocomplete="current-password" required />
+              <input id="login-password" name="password" type="password" minlength="8" maxlength="256" autocomplete="current-password" required aria-describedby="authMessage" />
             </label>
             <button class="button" type="submit">Zaloguj się</button>
             <button id="forgotPasswordBtn" class="link-button" type="button">Nie pamiętasz hasła?</button>
@@ -63,19 +64,19 @@
             <h3>Nowe konto</h3>
             <label>
               Login
-              <input name="login" type="text" minlength="3" maxlength="30" pattern="[A-Za-z0-9_]{3,30}" autocomplete="username" required />
+              <input id="register-login" name="login" type="text" minlength="3" maxlength="30" pattern="[A-Za-z0-9_]{3,30}" autocomplete="username" required aria-describedby="authMessage" />
             </label>
             <label>
               E-mail
-              <input name="email" type="email" maxlength="254" autocomplete="email" required />
+              <input id="register-email" name="email" type="email" maxlength="254" autocomplete="email" required aria-describedby="authMessage" />
             </label>
             <label>
               Imię i nazwisko
-              <input name="full_name" type="text" maxlength="200" autocomplete="name" />
+              <input id="register-full-name" name="full_name" type="text" maxlength="200" autocomplete="name" aria-describedby="authMessage" />
             </label>
             <label>
               Hasło
-              <input name="password" type="password" minlength="8" maxlength="256" autocomplete="new-password" required />
+              <input id="register-password" name="password" type="password" minlength="8" maxlength="256" autocomplete="new-password" required aria-describedby="authMessage" />
             </label>
             <button class="button button--secondary" type="submit">Załóż konto</button>
           </form>
@@ -86,7 +87,7 @@
           <p>Podaj e-mail użyty przy rejestracji. Jeśli konto istnieje, wyślemy instrukcję zmiany hasła.</p>
           <label>
             E-mail
-            <input name="email" type="email" maxlength="254" autocomplete="email" required />
+            <input id="reset-email" name="email" type="email" maxlength="254" autocomplete="email" required aria-describedby="authMessage" />
           </label>
           <div class="form-actions">
             <button class="button" type="submit">Wyślij instrukcję</button>
@@ -99,7 +100,7 @@
           <p>Link jest ważny przez ograniczony czas. Ustaw nowe hasło, a następnie zaloguj się ponownie.</p>
           <label>
             Nowe hasło
-            <input name="password" type="password" minlength="8" maxlength="256" autocomplete="new-password" required />
+            <input id="update-password" name="password" type="password" minlength="8" maxlength="256" autocomplete="new-password" required aria-describedby="authMessage" />
           </label>
           <button class="button" type="submit">Zmień hasło</button>
         </form>
@@ -108,7 +109,7 @@
           <p id="authProfileSummary"></p>
           <button id="logoutBtn" class="button button--ghost" type="button">Wyloguj się</button>
         </div>
-        <p id="authMessage" class="auth-message" role="status" aria-live="polite"></p>
+        <p id="authMessage" class="auth-message" role="status" aria-live="polite" tabindex="-1"></p>
       </section>
 
       <section id="onboarding" class="panel onboarding" aria-labelledby="onboardingTitle" hidden>
