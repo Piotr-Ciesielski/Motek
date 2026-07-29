@@ -1,0 +1,58 @@
+{
+  "records": [
+    {
+      "name": "Wzór demo — Leśny kardigan",
+      "description": "Syntetyczny wzór demonstracyjny na prosty kardigan z dzianiny o średniej grubości. Rekord służy wyłącznie do testowania dopasowania włóczek.",
+      "materials": ["wełna"],
+      "meters_per_100g": 400,
+      "yarn_requirements": [
+        {"role": "główna", "materials": ["wełna"], "meters_per_100g": 400}
+      ],
+      "matching_requirements": {
+        "variants": [
+          {"id": "S", "label": "S", "yarns_needed": 2, "meters_needed": 800, "grams_needed": 200, "materials": ["wełna"], "weight_classes": ["dk"]},
+          {"id": "M", "label": "M", "yarns_needed": 3, "meters_needed": 1100, "grams_needed": 300, "materials": ["wełna"], "weight_classes": ["dk"]},
+          {"id": "L", "label": "L", "yarns_needed": 4, "meters_needed": 1400, "grams_needed": 400, "materials": ["wełna"], "weight_classes": ["dk"]}
+        ]
+      },
+      "source_filename": "motek-demo-lesny-kardigan.synthetic.json",
+      "source_language": "pl",
+      "needs_review": false
+    },
+    {
+      "name": "Wzór demo — Bawełniany top",
+      "description": "Syntetyczny wzór demonstracyjny na lekki top z bawełnianej włóczki. Rekord służy wyłącznie do testowania materiału, grubości i ilości włóczki.",
+      "materials": ["bawełna"],
+      "meters_per_100g": 300,
+      "yarn_requirements": [
+        {"role": "główna", "materials": ["bawełna"], "meters_per_100g": 300}
+      ],
+      "matching_requirements": {
+        "variants": [
+          {"id": "S", "label": "S", "yarns_needed": 2, "meters_needed": 600, "grams_needed": 200, "materials": ["bawełna"], "weight_classes": ["sport"]},
+          {"id": "M", "label": "M", "yarns_needed": 3, "meters_needed": 900, "grams_needed": 300, "materials": ["bawełna"], "weight_classes": ["sport"]}
+        ]
+      },
+      "source_filename": "motek-demo-bawelniany-top.synthetic.json",
+      "source_language": "pl",
+      "needs_review": false
+    },
+    {
+      "name": "Wzór demo — Moherowa chusta",
+      "description": "Syntetyczny wzór demonstracyjny na lekką chustę z delikatnej włóczki. Rekord służy wyłącznie do testowania dopasowania włóczek o małej gramaturze.",
+      "materials": ["moher"],
+      "meters_per_100g": 800,
+      "yarn_requirements": [
+        {"role": "główna", "materials": ["moher"], "meters_per_100g": 800}
+      ],
+      "matching_requirements": {
+        "variants": [
+          {"id": "jedna", "label": "jedna wersja", "yarns_needed": 2, "meters_needed": 1000, "grams_needed": 250, "materials": ["moher"], "weight_classes": ["lace"]}
+        ]
+      },
+      "source_filename": "motek-demo-moherowa-chusta.synthetic.json",
+      "source_language": "pl",
+      "needs_review": false
+    }
+  ]
+}

@@ -819,7 +819,7 @@ findBtn.addEventListener("click", async () => {
       return;
     }
     findBtn.disabled = true;
-    findBtn.textContent = "Szukam...";
+    findBtn.textContent = "Dobieram...";
     showMessage(results, "Zapisuję włóczki...");
     await saveYarns();
     showMessage(results, "Pobieram dopasowane wzory...");
@@ -828,7 +828,7 @@ findBtn.addEventListener("click", async () => {
     showMessage(results, error.message);
   } finally {
     findBtn.disabled = false;
-    findBtn.textContent = "Szukaj wzoru";
+    findBtn.textContent = "Dobierz wzór";
   }
 });
 

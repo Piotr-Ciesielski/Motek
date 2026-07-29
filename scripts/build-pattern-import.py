@@ -5,6 +5,7 @@ from pathlib import Path
 PROJECT_DIR = Path(__file__).resolve().parent.parent
 CANDIDATES_PATH = PROJECT_DIR / "tmp" / "pdfs" / "pattern-candidates.json"
 OVERRIDES_PATH = PROJECT_DIR / "data" / "pattern-manual-overrides.json"
+DEMO_PATH = PROJECT_DIR / "data" / "pattern-demo.json"
 OUTPUT_PATH = PROJECT_DIR / "data" / "patterns-import.json"
 
 DATABASE_FIELDS = (
@@ -108,7 +109,9 @@ def validate_record(record: dict) -> list[str]:
 def main() -> None:
     candidate_document = load_json(CANDIDATES_PATH)
     overrides = load_json(OVERRIDES_PATH)
+    demo_document = load_json(DEMO_PATH)
     candidates = candidate_document["candidates"]
+    demo_records = demo_document["records"]
     candidate_filenames = {candidate["source_filename"] for candidate in candidates}
 
     unknown_overrides = sorted(set(overrides) - candidate_filenames)
@@ -146,6 +149,19 @@ def main() -> None:
             }
         )
 
+    for demo_record in demo_records:
+        validation_errors.extend(validate_record(demo_record))
+        records.append(demo_record)
+        audit.append(
+            {
+                "source_filename": demo_record["source_filename"],
+                "manual_override": False,
+                "synthetic_demo": True,
+                "review_reasons": [],
+                "review_notes": [],
+            }
+        )
+
     if len({record["source_filename"] for record in records}) != len(records):
         validation_errors.append("Nazwy plików źródłowych nie są unikalne.")
 
@@ -158,6 +174,7 @@ def main() -> None:
         "metadata": {
             "record_count": len(records),
             "manual_override_count": len(overrides),
+            "synthetic_demo_count": len(demo_records),
             "needs_review_count": sum(record["needs_review"] for record in records),
             "complete_material_count": sum(bool(record["materials"]) for record in records),
             "complete_ratio_count": sum(
