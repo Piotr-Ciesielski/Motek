@@ -17,6 +17,9 @@ const authForms = document.getElementById("authForms");
 const authLoggedIn = document.getElementById("authLoggedIn");
 const authUser = document.getElementById("authUser");
 const authPanel = document.querySelector(".auth-panel");
+const authModeSwitch = document.querySelector(".auth-mode-switch");
+const loginModeBtn = document.getElementById("loginModeBtn");
+const registerModeBtn = document.getElementById("registerModeBtn");
 const authProfileSummary = document.getElementById("authProfileSummary");
 const authMessage = document.getElementById("authMessage");
 const authLead = document.getElementById("authLead");
@@ -613,6 +616,10 @@ function showAuthForm(form) {
   [loginForm, registerForm, passwordResetForm, passwordUpdateForm].forEach((candidate) => {
     candidate.hidden = candidate !== form;
   });
+  const isRecoveryForm = form === passwordResetForm || form === passwordUpdateForm;
+  authModeSwitch.hidden = isRecoveryForm || isAuthenticated;
+  loginModeBtn.setAttribute("aria-selected", String(form === loginForm));
+  registerModeBtn.setAttribute("aria-selected", String(form === registerForm));
   authPanel.classList.toggle("auth-panel--recovery", form === passwordUpdateForm);
 }
 
@@ -651,6 +658,7 @@ function renderAuthState(payload) {
   const authenticated = Boolean(payload?.authenticated && payload.user);
   isAuthenticated = authenticated;
   authForms.hidden = authenticated;
+  authModeSwitch.hidden = authenticated;
   authLoggedIn.hidden = !authenticated;
   authUser.hidden = !authenticated;
   addYarnBtn.disabled = !authenticated;
@@ -664,6 +672,7 @@ function renderAuthState(payload) {
     authUser.textContent = "";
     authProfileSummary.textContent = "";
     authLead.textContent = "Załóż konto, aby przygotować aplikację do prywatnego magazynu włóczek.";
+    showAuthForm(loginForm);
     return;
   }
 
@@ -725,6 +734,17 @@ loginForm.addEventListener("submit", async (event) => {
   await submitAuthForm(loginForm, "/api/auth/login", "Zalogowano.");
 });
 
+loginModeBtn.addEventListener("click", () => {
+  showAuthForm(loginForm);
+  setAuthMessage("");
+  loginForm.querySelector('input[name="email"]').focus();
+});
+
+registerModeBtn.addEventListener("click", () => {
+  showAuthForm(registerForm);
+  setAuthMessage("");
+  registerForm.querySelector('input[name="login"]').focus();
+});
 forgotPasswordBtn.addEventListener("click", () => {
   showAuthForm(passwordResetForm);
   setAuthMessage("Podaj adres e-mail, na który wyślemy instrukcję.");

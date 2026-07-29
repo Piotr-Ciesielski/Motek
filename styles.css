@@ -63,22 +63,66 @@ body {
   padding: 40px 20px 56px;
 }
 
-.hero {
+.auth-layout {
   display: grid;
-  grid-template-columns: 1.4fr 0.9fr;
-  gap: 24px;
-  align-items: end;
-  margin-bottom: 28px;
+  grid-template-columns: minmax(0, 1.08fr) minmax(420px, 0.92fr);
+  min-height: 620px;
+  margin-bottom: 22px;
+  overflow: hidden;
+  border: 1px solid rgba(92, 89, 232, 0.18);
+  border-radius: 28px;
+  box-shadow: var(--shadow);
 }
 
-.eyebrow {
-  margin: 0 0 10px;
+.auth-visual {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  overflow: hidden;
+  padding: clamp(34px, 6vw, 76px);
+  color: white;
+  background:
+    radial-gradient(circle at 75% 18%, rgba(255, 255, 255, 0.2), transparent 20%),
+    radial-gradient(circle at 20% 82%, rgba(255, 140, 58, 0.24), transparent 25%),
+    linear-gradient(145deg, #3023bd, #5c59e8 58%, #251a8b);
+}
+
+.auth-visual::after {
+  position: absolute;
+  inset: -20% -15%;
+  content: "";
+  background: repeating-radial-gradient(ellipse at 35% 30%, transparent 0 42px, rgba(255, 255, 255, 0.08) 43px 45px, transparent 46px 82px);
+  opacity: 0.65;
+  pointer-events: none;
+  transform: rotate(-18deg);
+}
+
+.auth-visual > * {
+  position: relative;
+  z-index: 1;
+}
+
+.auth-visual__brand {
+  margin: 0 0 42px;
+  font-size: clamp(1.45rem, 2.5vw, 2rem);
   font-weight: 700;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: var(--accent-3);
+  letter-spacing: 0.08em;
 }
 
+.auth-visual h1 {
+  max-width: 9ch;
+  color: white;
+  font-size: clamp(3rem, 5vw, 5.4rem);
+  line-height: 0.94;
+}
+
+.auth-visual .lead {
+  max-width: 34ch;
+  margin-top: 28px;
+  color: rgba(255, 255, 255, 0.82);
+  font-size: 1.08rem;
+}
 h1, h2, h3 {
   font-family: "Fraunces", serif;
   margin: 0;
@@ -101,25 +145,12 @@ h1 {
   margin: 18px 0 0;
 }
 
-.hero-card, .panel, .result-card {
+.panel, .result-card {
   background: var(--panel);
   border: 1px solid var(--border);
   backdrop-filter: blur(10px);
   box-shadow: var(--shadow), inset 0 1px 0 rgba(255, 255, 255, 0.6);
   border-radius: 24px;
-}
-
-.hero-card {
-  padding: 22px 24px;
-}
-
-.hero-card__label {
-  font-size: 0.8rem;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--accent);
-  margin-bottom: 12px;
 }
 
 .grid {
@@ -199,7 +230,12 @@ h1 {
 }
 
 .auth-panel {
-  margin-bottom: 22px;
+  margin: 0;
+  padding: clamp(28px, 4vw, 58px);
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  background: rgba(255, 252, 250, 0.92);
 }
 
 .auth-panel--recovery {
@@ -239,20 +275,48 @@ h1 {
 }
 
 .auth-forms {
+  display: block;
+}
+
+.auth-mode-switch {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 18px;
+  gap: 5px;
+  margin-bottom: 28px;
+  padding: 4px;
+  border-radius: 14px;
+  background: rgba(92, 89, 232, 0.08);
 }
 
+.auth-mode-button {
+  border: 0;
+  border-radius: 10px;
+  padding: 10px 12px;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.auth-mode-button[aria-selected="true"] {
+  background: white;
+  color: var(--text);
+  box-shadow: 0 4px 12px rgba(64, 28, 71, 0.1);
+}
 .auth-form {
   display: grid;
-  gap: 12px;
-  padding: 18px;
-  border: 1px solid var(--border);
-  border-radius: 18px;
-  background: rgba(255, 255, 255, 0.45);
+  gap: 15px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
 }
-
+.auth-form > .button {
+  width: 100%;
+  margin-top: 4px;
+}
 .auth-form h3 {
   font-size: 1.35rem;
 }
@@ -629,8 +693,12 @@ body::before {
 }
 
 @media (max-width: 960px) {
-  .hero, .grid, .catalog-header {
+  .auth-layout, .grid, .catalog-header {
     grid-template-columns: 1fr;
+  }
+
+  .auth-visual {
+    min-height: 390px;
   }
 
   .auth-forms {
@@ -649,6 +717,19 @@ body::before {
 @media (max-width: 640px) {
   .shell {
     padding-inline: 14px;
+  }
+
+  .auth-visual {
+    min-height: 340px;
+    padding: 34px 26px;
+  }
+
+  .auth-visual__brand {
+    margin-bottom: 28px;
+  }
+
+  .auth-panel {
+    padding: 28px 22px;
   }
 
   .panel__header, .result-card__top, .yarn-card__row:last-child {
