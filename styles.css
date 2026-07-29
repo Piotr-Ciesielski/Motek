@@ -106,6 +106,72 @@ h1 {
   padding: 22px;
 }
 
+.onboarding {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  margin-bottom: 22px;
+  border-color: rgba(92, 89, 232, 0.3);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(246, 242, 255, 0.86));
+}
+
+.onboarding__content {
+  max-width: 760px;
+}
+
+.onboarding h2 {
+  margin-bottom: 8px;
+}
+
+.onboarding__steps {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  margin: 20px 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: onboarding-step;
+}
+
+.onboarding__steps li {
+  display: grid;
+  gap: 5px;
+  padding: 14px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(92, 89, 232, 0.14);
+  counter-increment: onboarding-step;
+}
+
+.onboarding__steps li::before {
+  content: counter(onboarding-step);
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: white;
+  font-weight: 700;
+}
+
+.onboarding__steps span {
+  color: var(--muted);
+  font-size: 0.92rem;
+}
+
+.onboarding__actions,
+.yarn-empty-state {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+
+.yarn-empty-state p {
+  flex-basis: 100%;
+  margin: 8px 0 4px;
+}
+
 .auth-panel {
   margin-bottom: 22px;
 }
@@ -557,6 +623,10 @@ body::before {
   }
 
   .catalog-controls, .pattern-catalog {
+    grid-template-columns: 1fr;
+  }
+
+  .onboarding__steps {
     grid-template-columns: 1fr;
   }
 }

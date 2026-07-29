@@ -20,6 +20,9 @@ const authPanel = document.querySelector(".auth-panel");
 const authProfileSummary = document.getElementById("authProfileSummary");
 const authMessage = document.getElementById("authMessage");
 const authLead = document.getElementById("authLead");
+const onboarding = document.getElementById("onboarding");
+const onboardingAddYarnBtn = document.getElementById("onboardingAddYarnBtn");
+const onboardingSkipBtn = document.getElementById("onboardingSkipBtn");
 const logoutBtn = document.getElementById("logoutBtn");
 const forgotPasswordBtn = document.getElementById("forgotPasswordBtn");
 const passwordResetForm = document.getElementById("passwordResetForm");
@@ -33,6 +36,7 @@ let autosaveInFlight = null;
 let autosavePending = false;
 let catalogPatterns = [];
 let yarnVersion = null;
+let onboardingDismissed = false;
 
 async function detectRuntimeMode() {
   if (window.location.protocol === "file:") {
@@ -184,6 +188,42 @@ function collectYarnsFromDom() {
 async function loadYarns() {
   if (!isAuthenticated) return [];
   return api("/api/yarns");
+}
+
+function renderYarnEmptyState() {
+  const emptyState = document.createElement("div");
+  emptyState.className = "empty-state yarn-empty-state";
+
+  const title = document.createElement("strong");
+  title.textContent = isAuthenticated
+    ? "Twój magazyn jest jeszcze pusty."
+    : "Zaloguj się, aby używać magazynu.";
+  emptyState.appendChild(title);
+
+  const message = document.createElement("p");
+  message.textContent = isAuthenticated
+    ? "Dodaj pierwszy motek, a potem sprawdź, które wzory możesz wykonać."
+    : "Załóż konto lub zaloguj się, żeby zapisywać włóczki i korzystać z dopasowania.";
+  emptyState.appendChild(message);
+
+  const action = document.createElement("button");
+  action.className = "button button--ghost";
+  action.type = "button";
+  action.textContent = isAuthenticated ? "Dodaj pierwszy motek" : "Zaloguj się lub załóż konto";
+  action.addEventListener("click", () => {
+    if (isAuthenticated) {
+      addYarnBtn.click();
+      return;
+    }
+    loginForm.scrollIntoView({ behavior: "smooth", block: "center" });
+    loginForm.querySelector('input[name="email"]').focus({ preventScroll: true });
+  });
+  emptyState.appendChild(action);
+  yarnList.appendChild(emptyState);
+}
+
+function renderOnboarding(yarns) {
+  onboarding.hidden = !isAuthenticated || yarns.length > 0 || onboardingDismissed;
 }
 
 async function saveYarns() {
@@ -482,6 +522,12 @@ function renderAuthState(payload) {
   authForms.hidden = authenticated;
   authLoggedIn.hidden = !authenticated;
   authUser.hidden = !authenticated;
+  addYarnBtn.disabled = !authenticated;
+  findBtn.disabled = !authenticated;
+  if (!authenticated) {
+    onboardingDismissed = false;
+    onboarding.hidden = true;
+  }
 
   if (!authenticated) {
     authUser.textContent = "";
@@ -623,16 +669,33 @@ logoutBtn.addEventListener("click", async () => {
 async function refresh() {
   const yarns = await loadYarns();
   yarnList.replaceChildren();
-  yarns.forEach(addYarnCard);
+  if (yarns.length) {
+    yarns.forEach(addYarnCard);
+  } else {
+    renderYarnEmptyState();
+  }
+  renderOnboarding(yarns);
   await renderSummary();
   await renderResults();
 }
 
 addYarnBtn.addEventListener("click", async () => {
+  yarnList.querySelector(".yarn-empty-state")?.remove();
+  onboarding.hidden = true;
   const card = addYarnCard();
   card.scrollIntoView({ behavior: "smooth", block: "center" });
   card.querySelector('[data-field="name"]').focus();
   scheduleAutosave();
+});
+
+onboardingAddYarnBtn.addEventListener("click", () => {
+  onboarding.hidden = true;
+  addYarnBtn.click();
+});
+
+onboardingSkipBtn.addEventListener("click", () => {
+  onboardingDismissed = true;
+  onboarding.hidden = true;
 });
 
 findBtn.addEventListener("click", async () => {

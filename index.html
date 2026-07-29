@@ -111,6 +111,23 @@
         <p id="authMessage" class="auth-message" role="status" aria-live="polite"></p>
       </section>
 
+      <section id="onboarding" class="panel onboarding" aria-labelledby="onboardingTitle" hidden>
+        <div class="onboarding__content">
+          <p class="eyebrow">Pierwszy krok</p>
+          <h2 id="onboardingTitle">Zacznij od dodania pierwszego motka</h2>
+          <p>Wystarczą trzy krótkie kroki, żeby Motek mógł znaleźć wzór dla Twoich włóczek.</p>
+          <ol class="onboarding__steps">
+            <li><strong>Dodaj motek</strong><span>Podaj długość, wagę i podstawowe parametry.</span></li>
+            <li><strong>Zapisz parametry</strong><span>Twój prywatny magazyn zachowa je na później.</span></li>
+            <li><strong>Uruchom dopasowanie</strong><span>Zobacz wzory pasujące do Twojego zapasu.</span></li>
+          </ol>
+          <div class="onboarding__actions">
+            <button id="onboardingAddYarnBtn" class="button" type="button">Dodaj pierwszy motek</button>
+            <button id="onboardingSkipBtn" class="button button--ghost" type="button">Pomiń instrukcję</button>
+          </div>
+        </div>
+      </section>
+
       <section class="grid">
         <article class="panel">
           <div class="panel__header">
