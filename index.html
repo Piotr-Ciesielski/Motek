@@ -14,7 +14,8 @@
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
-    <main class="shell">
+    <a class="skip-link" href="#main-content">Przejdź do głównej treści</a>
+    <main id="main-content" class="shell" tabindex="-1">
       <section class="hero">
         <div>
           <p class="eyebrow">Motek</p>
@@ -49,42 +50,83 @@
             <h3>Logowanie</h3>
             <label>
               E-mail
-              <input name="email" type="email" maxlength="254" autocomplete="email" required />
+              <input id="login-email" name="email" type="email" maxlength="254" autocomplete="email" required aria-describedby="authMessage" />
             </label>
             <label>
               Hasło
-              <input name="password" type="password" minlength="8" maxlength="256" autocomplete="current-password" required />
+              <input id="login-password" name="password" type="password" minlength="8" maxlength="256" autocomplete="current-password" required aria-describedby="authMessage" />
             </label>
             <button class="button" type="submit">Zaloguj się</button>
+            <button id="forgotPasswordBtn" class="link-button" type="button">Nie pamiętasz hasła?</button>
           </form>
 
           <form id="registerForm" class="auth-form">
             <h3>Nowe konto</h3>
             <label>
               Login
-              <input name="login" type="text" minlength="3" maxlength="30" pattern="[A-Za-z0-9_]{3,30}" autocomplete="username" required />
+              <input id="register-login" name="login" type="text" minlength="3" maxlength="30" pattern="[A-Za-z0-9_]{3,30}" autocomplete="username" required aria-describedby="authMessage" />
             </label>
             <label>
               E-mail
-              <input name="email" type="email" maxlength="254" autocomplete="email" required />
+              <input id="register-email" name="email" type="email" maxlength="254" autocomplete="email" required aria-describedby="authMessage" />
             </label>
             <label>
               Imię i nazwisko
-              <input name="full_name" type="text" maxlength="200" autocomplete="name" />
+              <input id="register-full-name" name="full_name" type="text" maxlength="200" autocomplete="name" aria-describedby="authMessage" />
             </label>
             <label>
               Hasło
-              <input name="password" type="password" minlength="8" maxlength="256" autocomplete="new-password" required />
+              <input id="register-password" name="password" type="password" minlength="8" maxlength="256" autocomplete="new-password" required aria-describedby="authMessage" />
             </label>
             <button class="button button--secondary" type="submit">Załóż konto</button>
           </form>
         </div>
 
+        <form id="passwordResetForm" class="auth-form auth-form--recovery" hidden>
+          <h3>Odzyskaj dostęp</h3>
+          <p>Podaj e-mail użyty przy rejestracji. Jeśli konto istnieje, wyślemy instrukcję zmiany hasła.</p>
+          <label>
+            E-mail
+            <input id="reset-email" name="email" type="email" maxlength="254" autocomplete="email" required aria-describedby="authMessage" />
+          </label>
+          <div class="form-actions">
+            <button class="button" type="submit">Wyślij instrukcję</button>
+            <button id="cancelPasswordResetBtn" class="button button--ghost" type="button">Wróć do logowania</button>
+          </div>
+        </form>
+
+        <form id="passwordUpdateForm" class="auth-form auth-form--recovery" hidden>
+          <h3>Ustaw nowe hasło</h3>
+          <p>Link jest ważny przez ograniczony czas. Ustaw nowe hasło, a następnie zaloguj się ponownie.</p>
+          <label>
+            Nowe hasło
+            <input id="update-password" name="password" type="password" minlength="8" maxlength="256" autocomplete="new-password" required aria-describedby="authMessage" />
+          </label>
+          <button class="button" type="submit">Zmień hasło</button>
+        </form>
+
         <div id="authLoggedIn" class="auth-logged-in" hidden>
           <p id="authProfileSummary"></p>
           <button id="logoutBtn" class="button button--ghost" type="button">Wyloguj się</button>
         </div>
-        <p id="authMessage" class="auth-message" role="status" aria-live="polite"></p>
+        <p id="authMessage" class="auth-message" role="status" aria-live="polite" tabindex="-1"></p>
+      </section>
+
+      <section id="onboarding" class="panel onboarding" aria-labelledby="onboardingTitle" hidden>
+        <div class="onboarding__content">
+          <p class="eyebrow">Pierwszy krok</p>
+          <h2 id="onboardingTitle">Zacznij od dodania pierwszego motka</h2>
+          <p>Wystarczą trzy krótkie kroki, żeby Motek mógł znaleźć wzór dla Twoich włóczek.</p>
+          <ol class="onboarding__steps">
+            <li><strong>Dodaj motek</strong><span>Podaj długość, wagę i podstawowe parametry.</span></li>
+            <li><strong>Zapisz parametry</strong><span>Twój prywatny magazyn zachowa je na później.</span></li>
+            <li><strong>Uruchom dopasowanie</strong><span>Zobacz wzory pasujące do Twojego zapasu.</span></li>
+          </ol>
+          <div class="onboarding__actions">
+            <button id="onboardingAddYarnBtn" class="button" type="button">Dodaj pierwszy motek</button>
+            <button id="onboardingSkipBtn" class="button button--ghost" type="button">Pomiń instrukcję</button>
+          </div>
+        </div>
       </section>
 
       <section class="grid">
@@ -108,7 +150,7 @@
               <p>Najpierw zobaczysz wzory możliwe do wykonania.</p>
             </div>
             <button id="findBtn" class="button" type="button">
-              Szukaj wzoru
+              Dobierz wzór
             </button>
           </div>
           <div id="summary" class="summary"></div>
@@ -158,11 +200,11 @@
         <div class="yarn-card__row">
           <label>
             Nazwa
-            <input type="text" data-field="name" maxlength="100" placeholder="np. Merino Soft" />
+            <input type="text" data-field="name" maxlength="100" placeholder="np. Merino Soft" required />
           </label>
           <label>
             Kolor
-            <input type="text" data-field="color" maxlength="50" placeholder="np. ecru" />
+            <input type="text" data-field="color" maxlength="50" placeholder="np. ecru" required />
           </label>
         </div>
         <div class="yarn-card__row">
@@ -191,15 +233,26 @@
         <div class="yarn-card__row">
           <label>
             Długość (m)
-            <input type="number" min="0" max="1000000" step="1" data-field="length" value="200" />
+            <input type="number" min="0" max="1000000" step="1" data-field="length" value="200" required />
           </label>
           <label>
             Waga (g)
-            <input type="number" min="0" max="1000000" step="1" data-field="weight" value="50" />
+            <input type="number" min="0" max="1000000" step="1" data-field="weight" value="50" required />
           </label>
-          <button class="button button--danger yarn-remove" type="button">
-            Usuń
-          </button>
+          <div class="yarn-card__actions">
+            <button class="button button--ghost yarn-edit" type="button">
+              Modyfikuj
+            </button>
+            <button class="button yarn-save" type="button" hidden>
+              Zapisz
+            </button>
+            <button class="button button--ghost yarn-cancel" type="button" hidden>
+              Anuluj
+            </button>
+            <button class="button button--danger yarn-remove" type="button">
+              Usuń
+            </button>
+          </div>
         </div>
       </div>
     </template>

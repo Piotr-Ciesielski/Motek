@@ -16,10 +16,18 @@ const registerForm = document.getElementById("registerForm");
 const authForms = document.getElementById("authForms");
 const authLoggedIn = document.getElementById("authLoggedIn");
 const authUser = document.getElementById("authUser");
+const authPanel = document.querySelector(".auth-panel");
 const authProfileSummary = document.getElementById("authProfileSummary");
 const authMessage = document.getElementById("authMessage");
 const authLead = document.getElementById("authLead");
+const onboarding = document.getElementById("onboarding");
+const onboardingAddYarnBtn = document.getElementById("onboardingAddYarnBtn");
+const onboardingSkipBtn = document.getElementById("onboardingSkipBtn");
 const logoutBtn = document.getElementById("logoutBtn");
+const forgotPasswordBtn = document.getElementById("forgotPasswordBtn");
+const passwordResetForm = document.getElementById("passwordResetForm");
+const passwordUpdateForm = document.getElementById("passwordUpdateForm");
+const cancelPasswordResetBtn = document.getElementById("cancelPasswordResetBtn");
 
 let baseUrl = window.location.origin;
 let isAuthenticated = false;
@@ -28,6 +36,8 @@ let autosaveInFlight = null;
 let autosavePending = false;
 let catalogPatterns = [];
 let yarnVersion = null;
+let onboardingDismissed = false;
+let yarnFormSequence = 0;
 
 async function detectRuntimeMode() {
   if (window.location.protocol === "file:") {
@@ -76,6 +86,8 @@ async function api(path, options = {}) {
 function showMessage(container, message) {
   const element = document.createElement("div");
   element.className = "empty-state";
+  element.setAttribute("role", "status");
+  element.setAttribute("aria-live", "polite");
   element.textContent = message;
   container.replaceChildren(element);
 }
@@ -128,15 +140,116 @@ async function flushAutosave() {
   }
 }
 
-function addYarnCard(yarn = {}) {
+function collectYarnFromCard(card) {
+  return {
+    id: card.dataset.id ? Number(card.dataset.id) : null,
+    name: card.querySelector('[data-field="name"]').value.trim(),
+    color: card.querySelector('[data-field="color"]').value.trim(),
+    material: card.querySelector('[data-field="material"]').value,
+    weightClass: card.querySelector('[data-field="weightClass"]').value,
+    length: Number(card.querySelector('[data-field="length"]').value || 0),
+    weight: Number(card.querySelector('[data-field="weight"]').value || 0),
+  };
+}
+
+function isYarnComplete(card) {
+  return [...card.querySelectorAll("[data-field]")].every((field) => field.checkValidity()) &&
+    card.querySelector('[data-field="name"]').value.trim() !== "" &&
+    card.querySelector('[data-field="color"]').value.trim() !== "";
+}
+
+function isYarnChanged(card) {
+  return JSON.stringify(collectYarnFromCard(card)) !== JSON.stringify(card._originalYarn);
+}
+
+function setYarnFieldsDisabled(card, disabled) {
+  card.querySelectorAll("[data-field]").forEach((field) => {
+    field.disabled = disabled;
+  });
+}
+
+function updateYarnSaveButton(card) {
+  const saveButton = card.querySelector(".yarn-save");
+  const complete = isYarnComplete(card);
+  const isNew = card.dataset.saved !== "true";
+  const isEditing = isNew || card.dataset.editing === "true";
+  const changed = isNew || isYarnChanged(card);
+  card.querySelector(".yarn-edit").hidden = isNew || isEditing;
+  card.querySelector(".yarn-cancel").hidden = !isEditing || isNew;
+  saveButton.hidden = !isEditing || !complete || !changed;
+  saveButton.disabled = !complete || !changed;
+}
+
+async function saveNewYarn(card) {
+  const saveButton = card.querySelector(".yarn-save");
+  if (!isYarnComplete(card)) {
+    card.querySelector('[data-field="name"]').reportValidity();
+    return;
+  }
+
+  saveButton.disabled = true;
+  setStorageMessage("Zapisuję motek...");
+  try {
+    const savedYarn = await api("/api/yarns", {
+      method: "POST",
+      headers: { "If-Match": yarnVersion },
+      body: JSON.stringify(collectYarnFromCard(card)),
+    });
+    card.dataset.id = savedYarn.id;
+    card.dataset.saved = "true";
+    card.dataset.editing = "false";
+    card._originalYarn = collectYarnFromCard(card);
+    setYarnFieldsDisabled(card, true);
+    updateYarnSaveButton(card);
+    setStorageMessage("Motek zapisany w magazynie.", "success");
+    await renderSummary();
+    renderOnboarding(collectYarnsFromDom());
+  } catch (error) {
+    saveButton.disabled = false;
+    setStorageMessage(`${error.message} Motek pozostał w formularzu.`, "error");
+  }
+}
+
+async function saveExistingYarn(card) {
+  const saveButton = card.querySelector(".yarn-save");
+  if (!isYarnComplete(card) || !isYarnChanged(card)) return;
+
+  saveButton.disabled = true;
+  setStorageMessage("Zapisuję zmiany motka...");
+  try {
+    await api(`/api/yarns/${card.dataset.id}`, {
+      method: "PATCH",
+      headers: { "If-Match": yarnVersion },
+      body: JSON.stringify(collectYarnFromCard(card)),
+    });
+    card._originalYarn = collectYarnFromCard(card);
+    card.dataset.editing = "false";
+    setYarnFieldsDisabled(card, true);
+    updateYarnSaveButton(card);
+    setStorageMessage("Zmiany motka zapisane.", "success");
+    await renderSummary();
+  } catch (error) {
+    saveButton.disabled = false;
+    setStorageMessage(`${error.message} Zmiany pozostały w formularzu.`, "error");
+  }
+}
+
+function addYarnCard(yarn = {}, { isNew = false } = {}) {
   const node = yarnTemplate.content.firstElementChild.cloneNode(true);
   node.dataset.id = yarn.id || "";
+  node.dataset.saved = isNew ? "false" : "true";
+  node.dataset.editing = isNew ? "true" : "false";
   node.querySelector('[data-field="name"]').value = yarn.name || "";
   node.querySelector('[data-field="color"]').value = yarn.color || "";
   node.querySelector('[data-field="material"]').value = yarn.material || "wełna";
   node.querySelector('[data-field="weightClass"]').value = yarn.weightClass || "dk";
-  node.querySelector('[data-field="length"]').value = yarn.length ?? 0;
-  node.querySelector('[data-field="weight"]').value = yarn.weight ?? 0;
+  node.querySelector('[data-field="length"]').value = isNew ? "" : yarn.length ?? 0;
+  node.querySelector('[data-field="weight"]').value = isNew ? "" : yarn.weight ?? 0;
+  node._originalYarn = isNew ? null : collectYarnFromCard(node);
+  node.querySelectorAll("[data-field]").forEach((field) => {
+    field.id = `yarn-${++yarnFormSequence}-${field.dataset.field}`;
+    field.closest("label").htmlFor = field.id;
+  });
 
   node.querySelector(".yarn-remove").addEventListener("click", async () => {
     try {
@@ -155,30 +268,89 @@ function addYarnCard(yarn = {}) {
     }
   });
 
-  node.querySelectorAll("input, select").forEach((field) => {
-    field.addEventListener("input", scheduleAutosave);
-    field.addEventListener("change", scheduleAutosave);
+  node.querySelector(".yarn-save").addEventListener("click", () => {
+    if (node.dataset.saved === "true") saveExistingYarn(node);
+    else saveNewYarn(node);
+  });
+  node.querySelector(".yarn-edit").addEventListener("click", () => {
+    node.dataset.editing = "true";
+    setYarnFieldsDisabled(node, false);
+    updateYarnSaveButton(node);
+    node.querySelector('[data-field="name"]').focus();
+  });
+  node.querySelector(".yarn-cancel").addEventListener("click", () => {
+    Object.entries(node._originalYarn).forEach(([field, value]) => {
+      if (field === "id") return;
+      node.querySelector(`[data-field="${field}"]`).value = value;
+    });
+    node.dataset.editing = "false";
+    setYarnFieldsDisabled(node, true);
+    updateYarnSaveButton(node);
   });
 
+  node.querySelectorAll("input, select").forEach((field) => {
+    field.addEventListener("input", () => {
+      field.removeAttribute("aria-invalid");
+      updateYarnSaveButton(node);
+    });
+    field.addEventListener("change", () => updateYarnSaveButton(node));
+    field.addEventListener("invalid", () => field.setAttribute("aria-invalid", "true"));
+  });
+
+  updateYarnSaveButton(node);
+  setYarnFieldsDisabled(node, !isNew);
   yarnList.appendChild(node);
   return node;
 }
 
 function collectYarnsFromDom() {
-  return [...yarnList.querySelectorAll(".yarn-card")].map((card) => ({
-    id: card.dataset.id ? Number(card.dataset.id) : null,
-    name: card.querySelector('[data-field="name"]').value.trim(),
-    color: card.querySelector('[data-field="color"]').value.trim(),
-    material: card.querySelector('[data-field="material"]').value,
-    weightClass: card.querySelector('[data-field="weightClass"]').value,
-    length: Number(card.querySelector('[data-field="length"]').value || 0),
-    weight: Number(card.querySelector('[data-field="weight"]').value || 0),
-  }));
+  return [...yarnList.querySelectorAll('.yarn-card[data-saved="true"]')].map(collectYarnFromCard);
 }
+
+document.querySelectorAll("label").forEach((label) => {
+  const field = label.querySelector("input, select");
+  if (field?.id) label.htmlFor = field.id;
+});
 
 async function loadYarns() {
   if (!isAuthenticated) return [];
   return api("/api/yarns");
+}
+
+function renderYarnEmptyState() {
+  const emptyState = document.createElement("div");
+  emptyState.className = "empty-state yarn-empty-state";
+
+  const title = document.createElement("strong");
+  title.textContent = isAuthenticated
+    ? "Twój magazyn jest jeszcze pusty."
+    : "Zaloguj się, aby używać magazynu.";
+  emptyState.appendChild(title);
+
+  const message = document.createElement("p");
+  message.textContent = isAuthenticated
+    ? "Dodaj pierwszy motek, a potem sprawdź, które wzory możesz wykonać."
+    : "Załóż konto lub zaloguj się, żeby zapisywać włóczki i korzystać z dopasowania.";
+  emptyState.appendChild(message);
+
+  const action = document.createElement("button");
+  action.className = "button button--ghost";
+  action.type = "button";
+  action.textContent = isAuthenticated ? "Dodaj pierwszy motek" : "Zaloguj się lub załóż konto";
+  action.addEventListener("click", () => {
+    if (isAuthenticated) {
+      addYarnBtn.click();
+      return;
+    }
+    loginForm.scrollIntoView({ behavior: "smooth", block: "center" });
+    loginForm.querySelector('input[name="email"]').focus({ preventScroll: true });
+  });
+  emptyState.appendChild(action);
+  yarnList.appendChild(emptyState);
+}
+
+function renderOnboarding(yarns) {
+  onboarding.hidden = !isAuthenticated || yarns.length > 0 || onboardingDismissed;
 }
 
 async function saveYarns() {
@@ -427,10 +599,52 @@ async function renderSummary() {
 function setAuthMessage(message, kind = "") {
   authMessage.textContent = message;
   authMessage.dataset.kind = kind;
+  authMessage.setAttribute("role", kind === "error" ? "alert" : "status");
+  if (kind === "error" && message) {
+    authMessage.focus({ preventScroll: true });
+  }
 }
 
 function setAuthBusy(form, busy) {
   form.querySelector('button[type="submit"]').disabled = busy;
+}
+
+function showAuthForm(form) {
+  [loginForm, registerForm, passwordResetForm, passwordUpdateForm].forEach((candidate) => {
+    candidate.hidden = candidate !== form;
+  });
+  authPanel.classList.toggle("auth-panel--recovery", form === passwordUpdateForm);
+}
+
+async function startPasswordRecovery() {
+  const hash = new URLSearchParams(window.location.hash.slice(1));
+  const accessToken = hash.get("access_token");
+  const refreshToken = hash.get("refresh_token");
+  if (!accessToken || !refreshToken || new URLSearchParams(window.location.search).get("recovery") !== "1") {
+    return false;
+  }
+
+  try {
+    setAuthMessage("Sprawdzam link odzyskiwania hasła...");
+    await api("/api/auth/recovery", {
+      method: "POST",
+      body: JSON.stringify({ access_token: accessToken, refresh_token: refreshToken }),
+    });
+    window.history.replaceState({}, document.title, window.location.pathname);
+    authForms.hidden = false;
+    showAuthForm(passwordUpdateForm);
+    passwordUpdateForm.scrollIntoView({ behavior: "smooth", block: "center" });
+    setAuthMessage("Ustaw nowe hasło.");
+    window.setTimeout(() => {
+      passwordUpdateForm.querySelector('input[name="password"]').focus({ preventScroll: true });
+    }, 0);
+    return true;
+  } catch (error) {
+    window.history.replaceState({}, document.title, window.location.pathname);
+    showAuthForm(loginForm);
+    setAuthMessage(`${error.message} Poproś o nowy link.`, "error");
+    return true;
+  }
 }
 
 function renderAuthState(payload) {
@@ -439,6 +653,12 @@ function renderAuthState(payload) {
   authForms.hidden = authenticated;
   authLoggedIn.hidden = !authenticated;
   authUser.hidden = !authenticated;
+  addYarnBtn.disabled = !authenticated;
+  findBtn.disabled = !authenticated;
+  if (!authenticated) {
+    onboardingDismissed = false;
+    onboarding.hidden = true;
+  }
 
   if (!authenticated) {
     authUser.textContent = "";
@@ -505,6 +725,58 @@ loginForm.addEventListener("submit", async (event) => {
   await submitAuthForm(loginForm, "/api/auth/login", "Zalogowano.");
 });
 
+forgotPasswordBtn.addEventListener("click", () => {
+  showAuthForm(passwordResetForm);
+  setAuthMessage("Podaj adres e-mail, na który wyślemy instrukcję.");
+  passwordResetForm.querySelector("input").focus();
+});
+
+cancelPasswordResetBtn.addEventListener("click", () => {
+  showAuthForm(loginForm);
+  setAuthMessage("");
+  loginForm.querySelector('input[name="email"]').focus();
+});
+
+passwordResetForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  setAuthBusy(passwordResetForm, true);
+  setAuthMessage("Wysyłam instrukcję...");
+  try {
+    const body = Object.fromEntries(new FormData(passwordResetForm).entries());
+    const payload = await api("/api/auth/password-reset-request", {
+      method: "POST",
+      body: JSON.stringify(body),
+    });
+    setAuthMessage(payload.message, "success");
+    passwordResetForm.reset();
+  } catch (error) {
+    setAuthMessage(error.message, "error");
+  } finally {
+    setAuthBusy(passwordResetForm, false);
+  }
+});
+
+passwordUpdateForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  setAuthBusy(passwordUpdateForm, true);
+  setAuthMessage("Zmieniam hasło...");
+  try {
+    const body = Object.fromEntries(new FormData(passwordUpdateForm).entries());
+    await api("/api/auth/password", {
+      method: "POST",
+      body: JSON.stringify(body),
+    });
+    passwordUpdateForm.reset();
+    showAuthForm(loginForm);
+    renderAuthState({ authenticated: false });
+    setAuthMessage("Hasło zmienione. Zaloguj się nowym hasłem.", "success");
+  } catch (error) {
+    setAuthMessage(error.message, "error");
+  } finally {
+    setAuthBusy(passwordUpdateForm, false);
+  }
+});
+
 registerForm.addEventListener("submit", async (event) => {
   event.preventDefault();
   await submitAuthForm(registerForm, "/api/auth/register", "Konto utworzone.");
@@ -528,22 +800,46 @@ logoutBtn.addEventListener("click", async () => {
 async function refresh() {
   const yarns = await loadYarns();
   yarnList.replaceChildren();
-  yarns.forEach(addYarnCard);
+  if (yarns.length) {
+    yarns.forEach(addYarnCard);
+  } else {
+    renderYarnEmptyState();
+  }
+  renderOnboarding(yarns);
   await renderSummary();
   await renderResults();
 }
 
 addYarnBtn.addEventListener("click", async () => {
-  const card = addYarnCard();
+  yarnList.querySelector(".yarn-empty-state")?.remove();
+  onboarding.hidden = true;
+  const card = addYarnCard({}, { isNew: true });
   card.scrollIntoView({ behavior: "smooth", block: "center" });
   card.querySelector('[data-field="name"]').focus();
-  scheduleAutosave();
+});
+
+onboardingAddYarnBtn.addEventListener("click", () => {
+  onboarding.hidden = true;
+  addYarnBtn.click();
+});
+
+onboardingSkipBtn.addEventListener("click", () => {
+  onboardingDismissed = true;
+  onboarding.hidden = true;
 });
 
 findBtn.addEventListener("click", async () => {
   try {
+    if (yarnList.querySelector('.yarn-card[data-saved="false"]')) {
+      showMessage(results, "Uzupełnij dane nowego motka i kliknij „Zapisz”, zanim uruchomisz dopasowanie.");
+      return;
+    }
+    if (yarnList.querySelector('.yarn-card[data-editing="true"]')) {
+      showMessage(results, "Zapisz albo anuluj modyfikację motka, zanim uruchomisz dopasowanie.");
+      return;
+    }
     findBtn.disabled = true;
-    findBtn.textContent = "Szukam...";
+    findBtn.textContent = "Dobieram...";
     showMessage(results, "Zapisuję włóczki...");
     await saveYarns();
     showMessage(results, "Pobieram dopasowane wzory...");
@@ -552,7 +848,7 @@ findBtn.addEventListener("click", async () => {
     showMessage(results, error.message);
   } finally {
     findBtn.disabled = false;
-    findBtn.textContent = "Szukaj wzoru";
+    findBtn.textContent = "Dobierz wzór";
   }
 });
 
@@ -561,6 +857,8 @@ patternReviewFilter.addEventListener("change", renderPatternCatalog);
 
 detectRuntimeMode()
   .then(async () => {
+    const recoveryHandled = await startPasswordRecovery();
+    if (recoveryHandled) return;
     await Promise.all([
       refreshAuthSession(),
       refresh(),

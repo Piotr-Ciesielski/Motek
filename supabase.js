@@ -1,5 +1,27 @@
 const { createClient } = require("@supabase/supabase-js");
 
+const SUPABASE_AUTH_REQUEST_TIMEOUT_MS = 10 * 1000;
+
+function createTimedFetch(fetchImpl = globalThis.fetch, timeoutMs = SUPABASE_AUTH_REQUEST_TIMEOUT_MS) {
+  if (typeof fetchImpl !== "function") {
+    throw new Error("Ta wersja Node.js nie udostępnia funkcji fetch wymaganej przez Supabase Auth.");
+  }
+
+  return async (input, init = {}) => {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), timeoutMs);
+    const signal = init.signal && typeof AbortSignal.any === "function"
+      ? AbortSignal.any([init.signal, controller.signal])
+      : controller.signal;
+
+    try {
+      return await fetchImpl(input, { ...init, signal });
+    } finally {
+      clearTimeout(timeout);
+    }
+  };
+}
+
 function readSupabaseConfig(env = process.env) {
   const url = env.SUPABASE_URL?.trim();
   const secretKey = env.SUPABASE_SECRET_KEY?.trim();
@@ -86,20 +108,21 @@ function readSupabaseAuthConfig(env = process.env) {
   };
 }
 
-function createSupabaseAuthClient(config, accessToken) {
+function createSupabaseAuthClient(config, accessToken, clientOptions = {}) {
   const options = {
     auth: {
       persistSession: false,
       autoRefreshToken: false,
       detectSessionInUrl: false,
     },
+    global: {
+      fetch: createTimedFetch(clientOptions.fetchImpl, clientOptions.timeoutMs),
+    },
   };
 
   if (accessToken) {
-    options.global = {
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-      },
+    options.global.headers = {
+      Authorization: `Bearer ${accessToken}`,
     };
   }
 
@@ -158,6 +181,7 @@ function createSupabaseConnection(options = {}) {
 module.exports = {
   createSupabaseConnection,
   createSupabaseAuthClient,
+  createTimedFetch,
   readSupabaseConfig,
   readSupabaseAuthConfig,
   verifySupabaseDataApi,

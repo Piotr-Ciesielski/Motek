@@ -136,6 +136,7 @@ test("serwer Motek działa bezpiecznie", async (t) => {
   );
   const syntheticYarns = [];
   let nextSyntheticYarnId = 1;
+  const recoveryRequests = [];
 
     function createSyntheticQuery(table, token) {
       const filters = [];
@@ -225,6 +226,19 @@ test("serwer Motek działa bezpiecznie", async (t) => {
         },
         async signInWithPassword() {
           return { data: null, error: new Error("invalid credentials") };
+        },
+        async resetPasswordForEmail(email, options) {
+          recoveryRequests.push({ email, options });
+          return { data: {}, error: null };
+        },
+        async setSession({ access_token, refresh_token }) {
+          assert.equal(access_token, token);
+          assert.equal(refresh_token, "refresh-user-a");
+          return { data: { session: { access_token, refresh_token } }, error: null };
+        },
+        async updateUser({ password }) {
+          assert.equal(password, "NoweHaslo123!");
+          return { data: { user: syntheticUsers[token] }, error: null };
         },
       },
       from(table) {
@@ -347,6 +361,52 @@ test("serwer Motek działa bezpiecznie", async (t) => {
       assert.equal(loginResponse.status, 401);
       assert.deepEqual(await loginResponse.json(), {
         error: "Nieprawidłowy e-mail lub hasło.",
+      });
+    });
+
+    await t.test("obsługuje żądanie i zmianę hasła bez ujawniania istnienia konta", async () => {
+      const resetResponse = await fetch(`${baseUrl}/api/auth/password-reset-request`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Origin: baseUrl },
+        body: JSON.stringify({ email: " A@EXAMPLE.COM " }),
+      });
+      assert.equal(resetResponse.status, 202);
+      assert.match(
+        (await resetResponse.json()).message,
+        /Jeśli konto z tym adresem istnieje/
+      );
+      assert.deepEqual(recoveryRequests[0], {
+        email: "a@example.com",
+        options: { redirectTo: `${baseUrl}/?recovery=1` },
+      });
+
+      const recoveryResponse = await fetch(`${baseUrl}/api/auth/recovery`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Origin: baseUrl },
+        body: JSON.stringify({
+          access_token: "token-user-a",
+          refresh_token: "refresh-user-a",
+        }),
+      });
+      assert.equal(recoveryResponse.status, 200);
+      const recoveryCookies = recoveryResponse.headers
+        .getSetCookie()
+        .map((cookie) => cookie.split(";", 1)[0])
+        .join("; ");
+
+      const updateResponse = await fetch(`${baseUrl}/api/auth/password`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Origin: baseUrl,
+          Cookie: recoveryCookies,
+        },
+        body: JSON.stringify({ password: "NoweHaslo123!" }),
+      });
+      assert.equal(updateResponse.status, 200);
+      assert.deepEqual(await updateResponse.json(), {
+        passwordUpdated: true,
+        authenticated: false,
       });
     });
 

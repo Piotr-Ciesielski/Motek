@@ -102,6 +102,9 @@ Najważniejsze endpointy backendu:
 | `GET /api/auth/session` | Sprawdzenie aktywnej sesji |
 | `POST /api/auth/register` | Rejestracja użytkownika |
 | `POST /api/auth/login` | Logowanie |
+| `POST /api/auth/password-reset-request` | Wysłanie instrukcji odzyskania hasła |
+| `POST /api/auth/recovery` | Ustanowienie krótkiej sesji z linku recovery |
+| `POST /api/auth/password` | Ustawienie nowego hasła i wyczyszczenie sesji |
 | `POST /api/auth/logout` | Wylogowanie |
 | `GET /api/yarns` | Pobranie własnego magazynu |
 | `POST /api/yarns` | Dodanie motka |
@@ -211,6 +214,24 @@ W produkcji ustaw `COOKIE_SECURE=true` i używaj wyłącznie HTTPS.
 ```bash
 npm run check
 ```
+
+### Odzyskiwanie hasła
+
+Formularz logowania zawiera link „Nie pamiętasz hasła?”. Motek wysyła żądanie
+resetu przez Supabase Auth, a link z wiadomości wraca na stronę z parametrem
+`recovery=1`. Frontend przekazuje jednorazowe tokeny do backendu, który ustanawia
+sesję tylko na czas ustawienia nowego hasła. Frontend automatycznie przewija
+ekran do formularza „Ustaw nowe hasło”, podświetla okno odzyskiwania niebieską
+ramką i ustawia fokus w polu nowego hasła. Po zmianie hasła sesja jest czyszczona
+i użytkownik loguje się ponownie.
+
+W ustawieniach Supabase Auth trzeba dodać adres aplikacji z `/?recovery=1` do
+dozwolonych redirect URL. Produkcja powinna używać własnego SMTP i własnego
+szablonu wiadomości recovery; lokalny domyślny SMTP służy wyłącznie do testów.
+Komunikacja backendu z Supabase Auth ma timeout 10 sekund, więc niedostępny
+SMTP lub API kończy się kontrolowanym błędem zamiast wiszącego żądania.
+Przed zapisaniem nowego hasła backend ustanawia pełną sesję recovery z access i
+refresh tokenu, ponieważ Supabase Auth wymaga aktywnej sesji dla `updateUser`.
 
 Polecenie sprawdza składnię backendu i frontendu oraz uruchamia testy
 automatyczne. Aktualny zestaw obejmuje między innymi sesje Auth, izolację

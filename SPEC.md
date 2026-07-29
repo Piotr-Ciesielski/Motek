@@ -155,6 +155,9 @@ użytkownika. Katalog aplikacji może zawierać do 300 wzorów.
 | `GET /api/auth/session` | Sprawdzenie aktywnej sesji |
 | `POST /api/auth/register` | Rejestracja użytkownika |
 | `POST /api/auth/login` | Logowanie |
+| `POST /api/auth/password-reset-request` | Wysłanie instrukcji odzyskania hasła |
+| `POST /api/auth/recovery` | Ustanowienie sesji z tokenów linku recovery |
+| `POST /api/auth/password` | Ustawienie nowego hasła |
 | `POST /api/auth/logout` | Wylogowanie |
 | `GET /api/yarns` | Pobranie własnego magazynu |
 | `POST /api/yarns` | Dodanie włóczki |
@@ -207,6 +210,21 @@ Podstawowe sprawdzenie projektu:
 ```bash
 npm run check
 ```
+
+### 10.1 Odzyskiwanie hasła
+
+Użytkownik może rozpocząć odzyskiwanie hasła z formularza logowania. Backend
+udostępnia `POST /api/auth/password-reset-request`, który wysyła wiadomość przez
+Supabase Auth bez ujawniania, czy wskazany e-mail istnieje. Link recovery wraca
+do aplikacji, a `POST /api/auth/recovery` ustanawia sesję z tokenów linku.
+Frontend przewija ekran do formularza „Ustaw nowe hasło”, podświetla okno
+odzyskiwania niebieską ramką i ustawia fokus w polu hasła. Nowe hasło zapisuje
+`POST /api/auth/password`; po udanej zmianie backend usuwa
+ciasteczka sesji, aby wymusić ponowne logowanie.
+Wywołania backendu do Supabase Auth są przerywane po 10 sekundach i zwracają
+kontrolowany błąd, jeśli usługa Auth nie odpowiada.
+Przed `updateUser` backend odtwarza pełną sesję recovery z obu tokenów linku;
+brak refresh tokenu lub nieważna sesja kończy się kontrolowanym błędem 400.
 
 Kontrola danych wzorów bez wykonywania importu:
 
