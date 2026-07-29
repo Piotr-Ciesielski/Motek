@@ -199,11 +199,11 @@
         <div class="yarn-card__row">
           <label>
             Nazwa
-            <input type="text" data-field="name" maxlength="100" placeholder="np. Merino Soft" />
+            <input type="text" data-field="name" maxlength="100" placeholder="np. Merino Soft" required />
           </label>
           <label>
             Kolor
-            <input type="text" data-field="color" maxlength="50" placeholder="np. ecru" />
+            <input type="text" data-field="color" maxlength="50" placeholder="np. ecru" required />
           </label>
         </div>
         <div class="yarn-card__row">
@@ -232,15 +232,26 @@
         <div class="yarn-card__row">
           <label>
             Długość (m)
-            <input type="number" min="0" max="1000000" step="1" data-field="length" value="200" />
+            <input type="number" min="0" max="1000000" step="1" data-field="length" value="200" required />
           </label>
           <label>
             Waga (g)
-            <input type="number" min="0" max="1000000" step="1" data-field="weight" value="50" />
+            <input type="number" min="0" max="1000000" step="1" data-field="weight" value="50" required />
           </label>
-          <button class="button button--danger yarn-remove" type="button">
-            Usuń
-          </button>
+          <div class="yarn-card__actions">
+            <button class="button button--ghost yarn-edit" type="button">
+              Modyfikuj
+            </button>
+            <button class="button yarn-save" type="button" hidden>
+              Zapisz
+            </button>
+            <button class="button button--ghost yarn-cancel" type="button" hidden>
+              Anuluj
+            </button>
+            <button class="button button--danger yarn-remove" type="button">
+              Usuń
+            </button>
+          </div>
         </div>
       </div>
     </template>

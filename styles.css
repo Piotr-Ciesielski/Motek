@@ -347,6 +347,18 @@ h1 {
   grid-template-columns: 1fr 1fr auto;
 }
 
+.yarn-save {
+  background: var(--good);
+}
+
+.yarn-card__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  justify-content: flex-end;
+}
+
 label {
   display: grid;
   gap: 6px;

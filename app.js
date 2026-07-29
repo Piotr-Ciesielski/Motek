@@ -137,15 +137,112 @@ async function flushAutosave() {
   }
 }
 
-function addYarnCard(yarn = {}) {
+function collectYarnFromCard(card) {
+  return {
+    id: card.dataset.id ? Number(card.dataset.id) : null,
+    name: card.querySelector('[data-field="name"]').value.trim(),
+    color: card.querySelector('[data-field="color"]').value.trim(),
+    material: card.querySelector('[data-field="material"]').value,
+    weightClass: card.querySelector('[data-field="weightClass"]').value,
+    length: Number(card.querySelector('[data-field="length"]').value || 0),
+    weight: Number(card.querySelector('[data-field="weight"]').value || 0),
+  };
+}
+
+function isYarnComplete(card) {
+  return [...card.querySelectorAll("[data-field]")].every((field) => field.checkValidity()) &&
+    card.querySelector('[data-field="name"]').value.trim() !== "" &&
+    card.querySelector('[data-field="color"]').value.trim() !== "";
+}
+
+function isYarnChanged(card) {
+  return JSON.stringify(collectYarnFromCard(card)) !== JSON.stringify(card._originalYarn);
+}
+
+function setYarnFieldsDisabled(card, disabled) {
+  card.querySelectorAll("[data-field]").forEach((field) => {
+    field.disabled = disabled;
+  });
+}
+
+function updateYarnSaveButton(card) {
+  const saveButton = card.querySelector(".yarn-save");
+  const complete = isYarnComplete(card);
+  const isNew = card.dataset.saved !== "true";
+  const isEditing = isNew || card.dataset.editing === "true";
+  const changed = isNew || isYarnChanged(card);
+  card.querySelector(".yarn-edit").hidden = isNew || isEditing;
+  card.querySelector(".yarn-cancel").hidden = !isEditing || isNew;
+  saveButton.hidden = !isEditing || !complete || !changed;
+  saveButton.disabled = !complete || !changed;
+}
+
+async function saveNewYarn(card) {
+  const saveButton = card.querySelector(".yarn-save");
+  if (!isYarnComplete(card)) {
+    card.querySelector('[data-field="name"]').reportValidity();
+    return;
+  }
+
+  saveButton.disabled = true;
+  setStorageMessage("Zapisuję motek...");
+  try {
+    const savedYarn = await api("/api/yarns", {
+      method: "POST",
+      headers: { "If-Match": yarnVersion },
+      body: JSON.stringify(collectYarnFromCard(card)),
+    });
+    card.dataset.id = savedYarn.id;
+    card.dataset.saved = "true";
+    card.dataset.editing = "false";
+    card._originalYarn = collectYarnFromCard(card);
+    setYarnFieldsDisabled(card, true);
+    updateYarnSaveButton(card);
+    setStorageMessage("Motek zapisany w magazynie.", "success");
+    await renderSummary();
+    renderOnboarding(collectYarnsFromDom());
+  } catch (error) {
+    saveButton.disabled = false;
+    setStorageMessage(`${error.message} Motek pozostał w formularzu.`, "error");
+  }
+}
+
+async function saveExistingYarn(card) {
+  const saveButton = card.querySelector(".yarn-save");
+  if (!isYarnComplete(card) || !isYarnChanged(card)) return;
+
+  saveButton.disabled = true;
+  setStorageMessage("Zapisuję zmiany motka...");
+  try {
+    await api(`/api/yarns/${card.dataset.id}`, {
+      method: "PATCH",
+      headers: { "If-Match": yarnVersion },
+      body: JSON.stringify(collectYarnFromCard(card)),
+    });
+    card._originalYarn = collectYarnFromCard(card);
+    card.dataset.editing = "false";
+    setYarnFieldsDisabled(card, true);
+    updateYarnSaveButton(card);
+    setStorageMessage("Zmiany motka zapisane.", "success");
+    await renderSummary();
+  } catch (error) {
+    saveButton.disabled = false;
+    setStorageMessage(`${error.message} Zmiany pozostały w formularzu.`, "error");
+  }
+}
+
+function addYarnCard(yarn = {}, { isNew = false } = {}) {
   const node = yarnTemplate.content.firstElementChild.cloneNode(true);
   node.dataset.id = yarn.id || "";
+  node.dataset.saved = isNew ? "false" : "true";
+  node.dataset.editing = isNew ? "true" : "false";
   node.querySelector('[data-field="name"]').value = yarn.name || "";
   node.querySelector('[data-field="color"]').value = yarn.color || "";
   node.querySelector('[data-field="material"]').value = yarn.material || "wełna";
   node.querySelector('[data-field="weightClass"]').value = yarn.weightClass || "dk";
-  node.querySelector('[data-field="length"]').value = yarn.length ?? 0;
-  node.querySelector('[data-field="weight"]').value = yarn.weight ?? 0;
+  node.querySelector('[data-field="length"]').value = isNew ? "" : yarn.length ?? 0;
+  node.querySelector('[data-field="weight"]').value = isNew ? "" : yarn.weight ?? 0;
+  node._originalYarn = isNew ? null : collectYarnFromCard(node);
 
   node.querySelector(".yarn-remove").addEventListener("click", async () => {
     try {
@@ -164,25 +261,39 @@ function addYarnCard(yarn = {}) {
     }
   });
 
-  node.querySelectorAll("input, select").forEach((field) => {
-    field.addEventListener("input", scheduleAutosave);
-    field.addEventListener("change", scheduleAutosave);
+  node.querySelector(".yarn-save").addEventListener("click", () => {
+    if (node.dataset.saved === "true") saveExistingYarn(node);
+    else saveNewYarn(node);
+  });
+  node.querySelector(".yarn-edit").addEventListener("click", () => {
+    node.dataset.editing = "true";
+    setYarnFieldsDisabled(node, false);
+    updateYarnSaveButton(node);
+    node.querySelector('[data-field="name"]').focus();
+  });
+  node.querySelector(".yarn-cancel").addEventListener("click", () => {
+    Object.entries(node._originalYarn).forEach(([field, value]) => {
+      if (field === "id") return;
+      node.querySelector(`[data-field="${field}"]`).value = value;
+    });
+    node.dataset.editing = "false";
+    setYarnFieldsDisabled(node, true);
+    updateYarnSaveButton(node);
   });
 
+  node.querySelectorAll("input, select").forEach((field) => {
+    field.addEventListener("input", () => updateYarnSaveButton(node));
+    field.addEventListener("change", () => updateYarnSaveButton(node));
+  });
+
+  updateYarnSaveButton(node);
+  setYarnFieldsDisabled(node, !isNew);
   yarnList.appendChild(node);
   return node;
 }
 
 function collectYarnsFromDom() {
-  return [...yarnList.querySelectorAll(".yarn-card")].map((card) => ({
-    id: card.dataset.id ? Number(card.dataset.id) : null,
-    name: card.querySelector('[data-field="name"]').value.trim(),
-    color: card.querySelector('[data-field="color"]').value.trim(),
-    material: card.querySelector('[data-field="material"]').value,
-    weightClass: card.querySelector('[data-field="weightClass"]').value,
-    length: Number(card.querySelector('[data-field="length"]').value || 0),
-    weight: Number(card.querySelector('[data-field="weight"]').value || 0),
-  }));
+  return [...yarnList.querySelectorAll('.yarn-card[data-saved="true"]')].map(collectYarnFromCard);
 }
 
 async function loadYarns() {
@@ -682,10 +793,9 @@ async function refresh() {
 addYarnBtn.addEventListener("click", async () => {
   yarnList.querySelector(".yarn-empty-state")?.remove();
   onboarding.hidden = true;
-  const card = addYarnCard();
+  const card = addYarnCard({}, { isNew: true });
   card.scrollIntoView({ behavior: "smooth", block: "center" });
   card.querySelector('[data-field="name"]').focus();
-  scheduleAutosave();
 });
 
 onboardingAddYarnBtn.addEventListener("click", () => {
@@ -700,6 +810,14 @@ onboardingSkipBtn.addEventListener("click", () => {
 
 findBtn.addEventListener("click", async () => {
   try {
+    if (yarnList.querySelector('.yarn-card[data-saved="false"]')) {
+      showMessage(results, "Uzupełnij dane nowego motka i kliknij „Zapisz”, zanim uruchomisz dopasowanie.");
+      return;
+    }
+    if (yarnList.querySelector('.yarn-card[data-editing="true"]')) {
+      showMessage(results, "Zapisz albo anuluj modyfikację motka, zanim uruchomisz dopasowanie.");
+      return;
+    }
     findBtn.disabled = true;
     findBtn.textContent = "Szukam...";
     showMessage(results, "Zapisuję włóczki...");
