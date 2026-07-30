@@ -1,0 +1,177 @@
+.theme-forest {
+  --canvas: #efe7d8;
+  --surface: #f8f1e6;
+  --surface-soft: #dfe3d3;
+  --ink: #17382f;
+  --muted: #667067;
+  --line: #cfc3ad;
+  --accent: #24513e;
+  --accent-ink: #fff8e8;
+  --focus: #a95838;
+  --serif: Georgia, "Times New Roman", serif;
+}
+
+.theme-forest .topbar {
+  width: 220px;
+  min-height: 100vh;
+  padding: 30px 18px;
+  position: fixed;
+  inset: 0 auto 0 0;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  background: #123a2d;
+  color: #f7edda;
+  border: 0;
+}
+
+.theme-forest .brand {
+  color: #f7edda;
+}
+
+.theme-forest .brand-mark {
+  color: #17382f;
+  background: #d9a84f;
+}
+
+.theme-forest .desktop-nav {
+  margin-top: 34px;
+  display: grid;
+  gap: 8px;
+}
+
+.theme-forest .nav-button {
+  justify-content: flex-start;
+  color: #e9dfce;
+  border-radius: 10px;
+}
+
+.theme-forest .nav-button:hover,
+.theme-forest .nav-button[aria-current="page"] {
+  color: #fff9e9;
+  background: #315b49;
+}
+
+.theme-forest .account-button {
+  margin-top: 8px;
+  justify-content: flex-start;
+  color: #e9dfce;
+}
+
+.theme-forest .variant-note {
+  margin-top: auto;
+  padding: 18px;
+  display: block;
+  color: #e9dfce;
+  border: 1px solid #5c755e;
+  border-radius: 14px;
+  font: 16px/1.55 var(--serif);
+}
+
+.theme-forest .app-body {
+  width: min(1320px, calc(100% - 268px));
+  margin-left: 244px;
+}
+
+.theme-forest .inventory-view {
+  grid-template-columns: minmax(0, 1fr) minmax(390px, 0.58fr);
+  grid-template-rows: auto auto minmax(600px, auto);
+  align-items: stretch;
+  gap: 18px;
+}
+
+.theme-forest .page-hero {
+  display: contents;
+}
+
+.theme-forest .hero-copy {
+  grid-column: 1;
+  min-height: 160px;
+  padding: 22px 26px;
+  border-radius: 18px;
+}
+
+.theme-forest .visual-card {
+  grid-column: 2;
+  grid-row: 1 / span 3;
+  border-left: 1px solid var(--line);
+  border-radius: 18px;
+}
+
+.theme-forest .visual-card img {
+  height: 100%;
+  min-height: 0;
+  object-position: right center;
+}
+
+.theme-forest .hero-copy h1 {
+  font-size: clamp(44px, 4.2vw, 66px);
+}
+
+.theme-forest .summary-grid,
+.theme-forest .inventory-panel {
+  grid-column: 1;
+}
+
+.theme-forest .summary-card {
+  min-height: 96px;
+  padding: 14px 16px;
+}
+
+.theme-forest .summary-card {
+  border-bottom: 4px solid #a95838;
+}
+
+.theme-forest .button-secondary {
+  background: #f8f1e6;
+}
+
+@media (max-width: 980px) {
+  .theme-forest .topbar {
+    width: auto;
+    min-height: 66px;
+    padding: 0 18px;
+    position: relative;
+    display: grid;
+    grid-template-columns: 1fr auto;
+  }
+
+  .theme-forest .desktop-nav,
+  .theme-forest .account-button,
+  .theme-forest .variant-note {
+    display: none;
+  }
+
+  .theme-forest .app-body {
+    width: min(100% - 32px, 820px);
+    margin: 0 auto;
+  }
+
+  .theme-forest .inventory-view {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto;
+  }
+
+  .theme-forest .page-hero {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .theme-forest .hero-copy {
+    grid-column: 1;
+    grid-row: auto;
+    min-height: 0;
+    padding: 34px 24px;
+    border-radius: 22px 22px 0 0;
+  }
+
+  .theme-forest .visual-card {
+    grid-column: 1;
+    grid-row: auto;
+    border-radius: 0 0 22px 22px;
+  }
+
+  .theme-forest .visual-card img {
+    min-height: 320px;
+  }
+}

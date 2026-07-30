@@ -1,0 +1,112 @@
+.theme-nordic {
+  --canvas: #f8fafb;
+  --surface: #ffffff;
+  --surface-soft: #e9f1f7;
+  --ink: #172335;
+  --muted: #5f6b79;
+  --line: #d7e0e7;
+  --accent: #285b91;
+  --accent-ink: #ffffff;
+  --focus: #b63f35;
+  --serif: Inter, ui-sans-serif, system-ui, sans-serif;
+}
+
+.theme-nordic .topbar,
+.theme-nordic .surface,
+.theme-nordic .summary-card,
+.theme-nordic .pattern-card {
+  border-radius: 0;
+}
+
+.theme-nordic .inventory-view {
+  grid-template-columns: minmax(0, 1fr) 360px;
+  grid-template-rows: auto auto minmax(520px, auto);
+  align-items: stretch;
+  gap: 20px 24px;
+}
+
+.theme-nordic .page-hero {
+  display: contents;
+}
+
+.theme-nordic .hero-copy,
+.theme-nordic .visual-card {
+  border-radius: 8px;
+}
+
+.theme-nordic .hero-copy {
+  grid-column: 1;
+  min-height: 150px;
+  padding: 10px 0 6px;
+  border-color: transparent;
+  background: transparent;
+}
+
+.theme-nordic .hero-copy h1 {
+  font-size: clamp(42px, 4vw, 64px);
+}
+
+.theme-nordic .visual-card {
+  grid-column: 2;
+  grid-row: 1 / span 3;
+  border-left: 1px solid var(--line);
+}
+
+.theme-nordic .visual-card img {
+  height: 100%;
+  min-height: 0;
+  object-position: 72% center;
+}
+
+.theme-nordic .button-primary {
+  background: #b63f35;
+}
+
+.theme-nordic .summary-grid {
+  grid-column: 1;
+  gap: 10px;
+}
+
+.theme-nordic .summary-card {
+  min-height: 98px;
+  padding: 14px 16px;
+  border-top: 3px solid var(--accent);
+}
+
+.theme-nordic .inventory-panel {
+  grid-column: 1;
+  padding: 22px;
+  border-radius: 8px;
+}
+
+.theme-nordic .yarn-row {
+  padding-block: 13px;
+}
+
+@media (max-width: 980px) {
+  .theme-nordic .inventory-view {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto;
+  }
+
+  .theme-nordic .page-hero {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .theme-nordic .hero-copy {
+    grid-column: 1;
+    grid-row: auto;
+    min-height: 0;
+    padding: 34px 24px;
+  }
+
+  .theme-nordic .visual-card {
+    grid-column: 1;
+    grid-row: auto;
+  }
+
+  .theme-nordic .visual-card img {
+    min-height: 320px;
+  }
+}
