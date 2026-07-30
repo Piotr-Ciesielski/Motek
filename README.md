@@ -28,7 +28,8 @@ główną funkcją jest świadome dopasowanie zapasu włóczek do wymagań wzoru
 
 1. Użytkownik zakłada konto lub loguje się.
 2. Dodaje motki, podając nazwę, kolor, materiał, klasę grubości, długość i wagę.
-3. Przegląda katalog wzorów, wyszukuje je i filtruje według statusu danych.
+3. Przegląda katalog wzorów, wyszukuje je i łączy filtry statusu, języka,
+   typu projektu oraz materiału.
 4. Uruchamia dopasowanie.
 5. Backend pobiera prywatny magazyn użytkownika oraz katalog wzorów i zwraca
    tylko potwierdzone warianty, które spełniają wymagania.
@@ -152,8 +153,9 @@ Proces przygotowania danych obejmuje:
 6. selektywny import do Supabase.
 
 W projekcie służą do tego między innymi `scripts/build-pattern-import.py` oraz
-`scripts/import-patterns.js`. Szczegółowy wynik ponownej analizy znajduje się w
-`WZORY_AUDYT_DANYCH.md`.
+`scripts/import-patterns.js`. Rozkład kategorii i pozycje z kategorii „Inne”
+można sprawdzić przez `scripts/report-pattern-categories.py`. Szczegółowy wynik
+ponownej analizy znajduje się w `WZORY_AUDYT_DANYCH.md`.
 
 Wzór może mieć jedno przeliczenie włóczki, kilka równorzędnych alternatyw albo
 celowo elastyczny dobór materiału i grubości. Te przypadki są przechowywane
@@ -259,7 +261,7 @@ npm run patterns:import
 
 ## Stan projektu i wersjonowanie
 
-Aktualna wersja rozwojowa: **2.0.0-alpha.15**.
+Aktualna wersja rozwojowa: **2.0.0-alpha.34**.
 
 Najważniejsze etapy zapisane w `CHANGELOG.txt`:
 
@@ -272,6 +274,7 @@ Najważniejsze etapy zapisane w `CHANGELOG.txt`:
 - `2.0.0-alpha.8` — Supabase jako jedyne źródło danych i usunięcie SQLite.
 - `2.0.0-alpha.9` — bezpieczny autosave, zabezpieczenia Auth, limity produktu i ograniczenie kosztu rankingu.
 - `2.0.0-alpha.10` — naprawa nagłówków żądań magazynu i synchronizacja wymaganych migracji zdalnego Supabase.
+- `2.0.0-alpha.34` — poprawione kategorie oraz dynamiczne, łączone filtry typu projektu i materiału.
 - `2.0.0-alpha.33` — ponowny audyt wszystkich PDF-ów i kompletny, oczyszczony katalog danych włóczek.
 - `2.0.0-alpha.15` — sortowanie katalogu i dostępny stan ładowania ze szkieletami.
 - `2.0.0-alpha.14` — filtry języka i materiału oraz rozwijane szczegóły wzorów.

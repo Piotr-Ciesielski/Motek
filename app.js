@@ -54,13 +54,31 @@ const networkStatus = document.getElementById("networkStatus");
 const REQUEST_TIMEOUT_MS = 12_000;
 const READ_RETRY_DELAY_MS = 700;
 const {
+  buildPatternFacetCounts,
+  buildPatternFacetOptions,
+  filterPatterns,
   findNewlySavedYarn,
   formatPatternYarnFact,
+  getProjectTypeFilterLabel,
+  getProjectTypeLabel,
   getExistingYarnState,
   isDeleteConfirmed,
   loadPaginatedItems,
   shouldRetryRead,
 } = window.MotekClientPolicy;
+const PROJECT_TYPE_ORDER = [
+  "socks",
+  "sweater",
+  "cardigan",
+  "top",
+  "shawl_scarf",
+  "head_accessory",
+  "gloves",
+  "vest",
+  "skirt_dress",
+  "blanket",
+  "other",
+];
 
 class ApiError extends Error {
   constructor(message, status) {
@@ -1179,24 +1197,39 @@ function formatPatternLanguage(value) {
 }
 
 function formatProjectType(value) {
-  const labels = {
-    socks: "Skarpety",
-    sweater: "Sweter",
-    cardigan: "Kardigan",
-    top: "Top lub bluzka",
-    shawl_scarf: "Chusta lub szal",
-    head_accessory: "Czapka, opaska lub komin",
-    gloves: "Rękawiczki",
-    vest: "Kamizelka",
-    skirt_dress: "Spódnica lub sukienka",
-    blanket: "Koc",
-    other: "Inny projekt",
-  };
-  return labels[value] || labels.other;
+  return getProjectTypeLabel(value);
 }
 
-function populatePatternMaterialFilter() {
-  const selectedMaterial = patternMaterialFilter.value;
+function readPatternFilters() {
+  return {
+    phrase: patternSearch.value,
+    review: patternReviewFilter.value,
+    language: patternLanguageFilter.value,
+    type: patternTypeFilter.value,
+    material: patternMaterialFilter.value,
+  };
+}
+
+function createPatternFacetOption({ value, count, disabled }, getLabel) {
+  const option = document.createElement("option");
+  option.value = value;
+  option.textContent = `${getLabel(value)} (${formatNumber(count)})`;
+  option.disabled = disabled;
+  return option;
+}
+
+function updatePatternFacetOptions(filters, facetCounts) {
+  const availableTypes = new Set(
+    catalogPatterns.map((pattern) => pattern.projectType || "other")
+  );
+  const typeValues = [
+    ...PROJECT_TYPE_ORDER,
+    ...[...availableTypes].filter((type) => !PROJECT_TYPE_ORDER.includes(type)),
+  ];
+  if (filters.type !== "all" && !typeValues.includes(filters.type)) {
+    typeValues.push(filters.type);
+  }
+
   const materials = [...new Set(
     catalogPatterns.flatMap((pattern) =>
       Array.isArray(pattern.materials) ? pattern.materials : []
@@ -1204,31 +1237,60 @@ function populatePatternMaterialFilter() {
   )]
     .filter(Boolean)
     .sort((left, right) => left.localeCompare(right, "pl"));
-  const options = materials.map((material) => {
-    const option = document.createElement("option");
-    option.value = material;
-    option.textContent = material;
-    return option;
-  });
+  if (filters.material !== "all" && !materials.includes(filters.material)) {
+    materials.push(filters.material);
+    materials.sort((left, right) => left.localeCompare(right, "pl"));
+  }
+
+  const typeOptions = buildPatternFacetOptions(
+    typeValues,
+    facetCounts.types,
+    filters.type,
+  ).map((option) =>
+    createPatternFacetOption(option, getProjectTypeFilterLabel)
+  );
+  const materialOptions = buildPatternFacetOptions(
+    materials,
+    facetCounts.materials,
+    filters.material,
+  ).map((option) => createPatternFacetOption(option, (value) => value));
+  const typeTotal = filterPatterns(catalogPatterns, filters, "type").length;
+  const materialTotal = filterPatterns(
+    catalogPatterns,
+    filters,
+    "material",
+  ).length;
+
+  patternTypeFilter.replaceChildren(
+    Object.assign(document.createElement("option"), {
+      value: "all",
+      textContent: `Wszystkie typy (${formatNumber(typeTotal)})`,
+    }),
+    ...typeOptions
+  );
   patternMaterialFilter.replaceChildren(
     Object.assign(document.createElement("option"), {
       value: "all",
-      textContent: "Wszystkie materiały",
+      textContent: `Wszystkie materiały (${formatNumber(materialTotal)})`,
     }),
-    ...options
+    ...materialOptions
   );
-  if (materials.includes(selectedMaterial)) {
-    patternMaterialFilter.value = selectedMaterial;
-  }
+  patternTypeFilter.value = filters.type;
+  patternMaterialFilter.value = filters.material;
 }
 
 function renderPatternCatalog() {
-  const phrase = patternSearch.value.trim().toLocaleLowerCase("pl");
-  const reviewFilter = patternReviewFilter.value;
-  const languageFilter = patternLanguageFilter.value;
-  const typeFilter = patternTypeFilter.value;
-  const materialFilter = patternMaterialFilter.value;
+  const filters = readPatternFilters();
+  const phrase = filters.phrase.trim();
+  const reviewFilter = filters.review;
+  const languageFilter = filters.language;
+  const typeFilter = filters.type;
+  const materialFilter = filters.material;
   const sortMode = patternSort.value;
+  updatePatternFacetOptions(
+    filters,
+    buildPatternFacetCounts(catalogPatterns, filters),
+  );
   resetCatalogFiltersBtn.disabled =
     !phrase &&
     reviewFilter === "verified" &&
@@ -1236,37 +1298,7 @@ function renderPatternCatalog() {
     typeFilter === "all" &&
     materialFilter === "all" &&
     sortMode === "recommended";
-  const matchingPatterns = catalogPatterns
-    .filter((pattern) => {
-      const searchable = [
-        pattern.name,
-        pattern.description,
-        formatProjectType(pattern.projectType),
-        ...(Array.isArray(pattern.materials) ? pattern.materials : []),
-      ]
-        .join(" ")
-        .toLocaleLowerCase("pl");
-      const matchesPhrase = !phrase || searchable.includes(phrase);
-      const matchesStatus =
-        reviewFilter === "all" ||
-        (reviewFilter === "review" && pattern.needsReview) ||
-        (reviewFilter === "verified" && !pattern.needsReview);
-      const matchesLanguage =
-        languageFilter === "all" || pattern.sourceLanguage === languageFilter;
-      const matchesType =
-        typeFilter === "all" || pattern.projectType === typeFilter;
-      const matchesMaterial =
-        materialFilter === "all" ||
-        (Array.isArray(pattern.materials) &&
-          pattern.materials.includes(materialFilter));
-      return (
-        matchesPhrase &&
-        matchesStatus &&
-        matchesLanguage &&
-        matchesType &&
-        matchesMaterial
-      );
-    })
+  const matchingPatterns = filterPatterns(catalogPatterns, filters)
     .sort((left, right) => {
       const nameOrder = formatPatternName(left.name).localeCompare(
         formatPatternName(right.name),
@@ -1398,7 +1430,6 @@ async function refreshPatternCatalog({ resume = false } = {}) {
         catalogNextOffset = progress.nextOffset;
         catalogTotal = progress.total;
         catalogComplete = progress.complete;
-        populatePatternMaterialFilter();
         renderPatternCatalog();
       },
     });
@@ -1406,7 +1437,6 @@ async function refreshPatternCatalog({ resume = false } = {}) {
     catalogNextOffset = result.nextOffset;
     catalogTotal = result.total;
     catalogComplete = result.complete;
-    populatePatternMaterialFilter();
     renderPatternCatalog();
     if (catalogComplete) hidePatternCatalogNotice();
     else showPartialPatternCatalog(result.error);

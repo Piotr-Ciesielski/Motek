@@ -2,6 +2,9 @@ const test = require("node:test");
 const assert = require("node:assert/strict");
 
 const {
+  buildPatternFacetCounts,
+  buildPatternFacetOptions,
+  filterPatterns,
   findNewlySavedYarn,
   formatPatternYarnFact,
   getExistingYarnState,
@@ -9,6 +12,33 @@ const {
   loadPaginatedItems,
   shouldRetryRead,
 } = require("../client-policy");
+
+const filterPatternsFixture = [
+  {
+    name: "Bawełniany top",
+    description: "Letnia bluzka",
+    projectType: "top",
+    materials: ["bawełna", "bambus"],
+    sourceLanguage: "pl",
+    needsReview: false,
+  },
+  {
+    name: "Wełniany top",
+    description: "Ciepła bluzka",
+    projectType: "top",
+    materials: ["wełna"],
+    sourceLanguage: "pl",
+    needsReview: false,
+  },
+  {
+    name: "Bawełniane skarpety",
+    description: "Skarpetki",
+    projectType: "socks",
+    materials: ["bawełna"],
+    sourceLanguage: "pl",
+    needsReview: false,
+  },
+];
 
 const draft = {
   name: "Merino",
@@ -167,4 +197,80 @@ test("udostępnia kolejne strony katalogu od razu po ich pobraniu", async () => 
   );
   assert.deepEqual(result.items, [{ id: 1 }, { id: 2 }, { id: 3 }]);
   assert.equal(result.total, 3);
+});
+
+test("łączy typ projektu i materiał jako wspólne kryteria", () => {
+  const result = filterPatterns?.(filterPatternsFixture, {
+    phrase: "",
+    review: "all",
+    language: "all",
+    type: "top",
+    material: "bawełna",
+  });
+
+  assert.deepEqual(
+    result?.map((pattern) => pattern.name),
+    ["Bawełniany top"],
+  );
+});
+
+test("wzór z kilkoma materiałami pasuje do każdego z nich tylko raz", () => {
+  const filters = {
+    phrase: "",
+    review: "all",
+    language: "all",
+    type: "top",
+  };
+
+  assert.deepEqual(
+    filterPatterns?.(filterPatternsFixture, {
+      ...filters,
+      material: "bawełna",
+    })?.map((pattern) => pattern.name),
+    ["Bawełniany top"],
+  );
+  assert.deepEqual(
+    filterPatterns?.(filterPatternsFixture, {
+      ...filters,
+      material: "bambus",
+    })?.map((pattern) => pattern.name),
+    ["Bawełniany top"],
+  );
+  assert.deepEqual(
+    filterPatterns?.(filterPatternsFixture, {
+      ...filters,
+      material: "wełna",
+    })?.map((pattern) => pattern.name),
+    ["Wełniany top"],
+  );
+});
+
+test("liczy dynamiczne opcje typu i materiału względem pozostałych filtrów", () => {
+  const counts = buildPatternFacetCounts?.(filterPatternsFixture, {
+    phrase: "",
+    review: "all",
+    language: "all",
+    type: "top",
+    material: "bawełna",
+  });
+
+  assert.deepEqual(counts, {
+    types: { top: 1, socks: 1 },
+    materials: { "bawełna": 1, bambus: 1, "wełna": 1 },
+  });
+});
+
+test("wyłącza niemożliwe opcje, ale zachowuje aktualnie wybraną", () => {
+  assert.deepEqual(
+    buildPatternFacetOptions?.(
+      ["bawełna", "bambus", "wełna"],
+      { "bawełna": 1 },
+      "wełna",
+    ),
+    [
+      { value: "bawełna", count: 1, disabled: false },
+      { value: "bambus", count: 0, disabled: true },
+      { value: "wełna", count: 0, disabled: false },
+    ],
+  );
 });
