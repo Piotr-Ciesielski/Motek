@@ -109,9 +109,18 @@
 - niezapisany lub niepotwierdzony formularz pozostaje na ekranie;
 - scenariusze nowego motka, modyfikacji i usunięcia są objęte testami.
 
+### Częściowy sukces operacji wieloetapowych
+
+- katalog zachowuje strony pobrane przed chwilowym błędem;
+- dostępna część katalogu pozostaje widoczna i możliwa do filtrowania;
+- komunikat podaje liczbę pobranych wzorów oraz pozwala wznowić operację;
+- wznowienie zaczyna się od miejsca błędu i nie tworzy duplikatów;
+- błąd pierwszej strony nadal jest pełnym błędem, a nie częściowym sukcesem;
+- potwierdzony zapis motka pozostaje sukcesem, nawet jeśli nie odświeży się podsumowanie.
+
 ## Sprawdzenie
 
-- `npm run check` przechodzi: 32/32 testy;
+- `npm run check` przechodzi: 34/34 testy;
 - start redesignu frontu zapisano w commicie `2a0c94c` na branchu
   `feat/frontend-design-refresh`, a branch został wypchnięty na GitHub;
 - import katalogu demo został sprawdzony w trybie kontrolnym;
@@ -127,7 +136,6 @@
    - test ręczny na desktopie i urządzeniach mobilnych.
 
 2. **Model stanów interfejsu**
-   - dokończenie stanów częściowego sukcesu dla złożonych operacji;
    - ręczny test czytnikiem ekranu.
 
 3. **Katalog wzorów**

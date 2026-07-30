@@ -5,6 +5,7 @@ const {
   findNewlySavedYarn,
   getExistingYarnState,
   isDeleteConfirmed,
+  loadPaginatedItems,
   shouldRetryRead,
 } = require("../client-policy");
 
@@ -77,4 +78,48 @@ test("rozpoznaje wynik przerwanej modyfikacji i usunięcia", () => {
   assert.equal(getExistingYarnState([], 7, draft).state, "missing");
   assert.equal(isDeleteConfirmed([], 7), true);
   assert.equal(isDeleteConfirmed([{ id: 7, ...draft }], 7), false);
+});
+
+test("zachowuje częściowo pobrany katalog i wznawia od miejsca błędu", async () => {
+  const firstAttempt = await loadPaginatedItems(async (offset) => {
+    if (offset === 0) {
+      return {
+        items: [{ id: 1 }, { id: 2 }],
+        hasMore: true,
+      };
+    }
+    throw new Error("chwilowy błąd");
+  });
+
+  assert.deepEqual(firstAttempt.items, [{ id: 1 }, { id: 2 }]);
+  assert.equal(firstAttempt.nextOffset, 2);
+  assert.equal(firstAttempt.complete, false);
+  assert.match(firstAttempt.error.message, /chwilowy błąd/);
+
+  const resumed = await loadPaginatedItems(
+    async (offset) => {
+      assert.equal(offset, 2);
+      return {
+        items: [{ id: 2 }, { id: 3 }],
+        hasMore: false,
+      };
+    },
+    {
+      items: firstAttempt.items,
+      offset: firstAttempt.nextOffset,
+    }
+  );
+
+  assert.deepEqual(resumed.items, [{ id: 1 }, { id: 2 }, { id: 3 }]);
+  assert.equal(resumed.complete, true);
+  assert.equal(resumed.error, null);
+});
+
+test("nie przedstawia błędu pierwszej strony jako częściowego sukcesu", async () => {
+  await assert.rejects(
+    loadPaginatedItems(async () => {
+      throw new Error("brak katalogu");
+    }),
+    /brak katalogu/
+  );
 });

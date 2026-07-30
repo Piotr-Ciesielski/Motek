@@ -1,5 +1,13 @@
 Motek - log zmian
 
+Wersja 2.0.0-alpha.27 (w przygotowaniu) - częściowy sukces i wznawianie katalogu
+- Katalog zachowuje poprawnie pobrane strony, jeśli dalsza część chwilowo nie odpowiada.
+- Widoczny komunikat wskazuje liczbę dostępnych wzorów i pozwala dokończyć pobieranie.
+- Ponowienie zaczyna się od miejsca błędu i nie dubluje wcześniej pobranych rekordów.
+- Wybrany filtr materiału pozostaje aktywny po dokończeniu pobierania.
+- Potwierdzony zapis motka nie jest mylony z błędem, gdy nie odświeży się samo podsumowanie.
+- Dodano testy częściowego pobrania, wznowienia i błędu pierwszej strony katalogu.
+
 Wersja 2.0.0-alpha.26 (w przygotowaniu) - bezpieczny zapis po przerwanym połączeniu
 - Odczyty danych są jednokrotnie ponawiane po krótkim, przejściowym błędzie sieci.
 - Zapisy nie są automatycznie powtarzane, dzięki czemu utrata odpowiedzi nie tworzy duplikatu.

@@ -55,10 +55,49 @@
     return !yarns.some((yarn) => yarn.id === yarnId);
   }
 
+  async function loadPaginatedItems(fetchPage, { items = [], offset = 0 } = {}) {
+    const loadedItems = [...items];
+    const knownIds = new Set(loadedItems.map((item) => String(item.id)));
+    let nextOffset = offset;
+    let hasMore = true;
+
+    while (hasMore) {
+      let page;
+      try {
+        page = await fetchPage(nextOffset);
+      } catch (error) {
+        if (!loadedItems.length) throw error;
+        return {
+          items: loadedItems,
+          nextOffset,
+          complete: false,
+          error,
+        };
+      }
+
+      page.items.forEach((item) => {
+        const id = String(item.id);
+        if (knownIds.has(id)) return;
+        knownIds.add(id);
+        loadedItems.push(item);
+      });
+      nextOffset += page.items.length;
+      hasMore = Boolean(page.hasMore) && page.items.length > 0;
+    }
+
+    return {
+      items: loadedItems,
+      nextOffset,
+      complete: true,
+      error: null,
+    };
+  }
+
   return {
     findNewlySavedYarn,
     getExistingYarnState,
     isDeleteConfirmed,
+    loadPaginatedItems,
     shouldRetryRead,
     yarnsHaveSameValues,
   };

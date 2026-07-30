@@ -804,6 +804,10 @@ input, select {
   color: var(--accent);
 }
 
+.storage-message[data-kind="warning"] {
+  color: #694d16;
+}
+
 .result-card {
   padding: 18px;
 }
@@ -906,6 +910,13 @@ input, select {
   color: #7b2938;
 }
 
+.empty-state[data-kind="warning"] {
+  border-style: solid;
+  border-color: #d9bc79;
+  background: #fff9e9;
+  color: #694d16;
+}
+
 .catalog-panel {
   margin-top: 10px;
 }
@@ -934,6 +945,14 @@ input, select {
   color: var(--muted);
   font-size: 0.92rem;
   font-weight: 600;
+}
+
+.catalog-notice {
+  margin-bottom: 16px;
+}
+
+.catalog-notice[hidden] {
+  display: none;
 }
 
 .pattern-catalog {

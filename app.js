@@ -14,6 +14,7 @@ const patternLanguageFilter = document.getElementById("patternLanguageFilter");
 const patternMaterialFilter = document.getElementById("patternMaterialFilter");
 const patternSort = document.getElementById("patternSort");
 const patternCatalogSummary = document.getElementById("patternCatalogSummary");
+const patternCatalogNotice = document.getElementById("patternCatalogNotice");
 const patternCatalog = document.getElementById("patternCatalog");
 const patternCatalogActions = document.getElementById("patternCatalogActions");
 const loadMorePatternsBtn = document.getElementById("loadMorePatternsBtn");
@@ -54,6 +55,7 @@ const {
   findNewlySavedYarn,
   getExistingYarnState,
   isDeleteConfirmed,
+  loadPaginatedItems,
   shouldRetryRead,
 } = window.MotekClientPolicy;
 
@@ -77,6 +79,8 @@ let baseUrl = window.location.origin;
 let isAuthenticated = false;
 let pendingWriteCount = 0;
 let catalogPatterns = [];
+let catalogNextOffset = 0;
+let catalogComplete = false;
 let yarnVersion = null;
 let onboardingDismissed = false;
 let yarnFormSequence = 0;
@@ -709,6 +713,24 @@ function updateYarnSaveButton(card) {
   saveButton.disabled = !complete || !changed;
 }
 
+async function refreshSummaryAfterConfirmedSave(successMessage) {
+  try {
+    await renderSummary();
+    setStorageMessage(successMessage, "success");
+  } catch (error) {
+    setStorageMessage(
+      `${successMessage} Nie udało się odświeżyć podsumowania: ${error.message}`,
+      "warning",
+      [
+        {
+          label: "Odśwież podsumowanie",
+          onClick: () => refreshSummaryAfterConfirmedSave(successMessage),
+        },
+      ]
+    );
+  }
+}
+
 async function saveNewYarn(card) {
   const saveButton = card.querySelector(".yarn-save");
   if (!isYarnComplete(card)) {
@@ -723,16 +745,13 @@ async function saveNewYarn(card) {
   );
   saveButton.disabled = true;
   setStorageMessage("Zapisuję motek...");
+  let savedYarn;
   try {
-    const savedYarn = await api("/api/yarns", {
+    savedYarn = await api("/api/yarns", {
       method: "POST",
       headers: { "If-Match": yarnVersion },
       body: JSON.stringify(draft),
     });
-    markYarnCardAsSaved(card, savedYarn);
-    setStorageMessage("Motek zapisany w magazynie.", "success");
-    await renderSummary();
-    renderOnboarding(collectYarnsFromDom());
   } catch (error) {
     saveButton.disabled = false;
     if (isYarnVersionConflict(error)) {
@@ -753,7 +772,12 @@ async function saveNewYarn(card) {
       return;
     }
     setStorageMessage(`${error.message} Motek pozostał w formularzu.`, "error");
+    return;
   }
+
+  markYarnCardAsSaved(card, savedYarn);
+  renderOnboarding(collectYarnsFromDom());
+  await refreshSummaryAfterConfirmedSave("Motek zapisany w magazynie.");
 }
 
 async function saveExistingYarn(card) {
@@ -763,15 +787,13 @@ async function saveExistingYarn(card) {
   const draft = collectYarnFromCard(card);
   saveButton.disabled = true;
   setStorageMessage("Zapisuję zmiany motka...");
+  let savedYarn;
   try {
-    const savedYarn = await api(`/api/yarns/${card.dataset.id}`, {
+    savedYarn = await api(`/api/yarns/${card.dataset.id}`, {
       method: "PATCH",
       headers: { "If-Match": yarnVersion },
       body: JSON.stringify(draft),
     });
-    markYarnCardAsSaved(card, savedYarn);
-    setStorageMessage("Zmiany motka zapisane.", "success");
-    await renderSummary();
   } catch (error) {
     saveButton.disabled = false;
     if (isYarnVersionConflict(error)) {
@@ -793,7 +815,11 @@ async function saveExistingYarn(card) {
       return;
     }
     setStorageMessage(`${error.message} Zmiany pozostały w formularzu.`, "error");
+    return;
   }
+
+  markYarnCardAsSaved(card, savedYarn);
+  await refreshSummaryAfterConfirmedSave("Zmiany motka zapisane.");
 }
 
 async function refreshAfterConfirmedMutation(successMessage) {
@@ -1033,20 +1059,14 @@ async function loadMatches() {
   return api("/api/matches");
 }
 
-async function loadPatternCatalog() {
-  const patterns = [];
-  let offset = 0;
-  let hasMore = true;
-
-  while (hasMore) {
-    const page = await api(`/api/patterns?limit=50&offset=${offset}`);
-    patterns.push(...page.items);
-    hasMore = page.hasMore;
-    offset += page.items.length;
-    if (!page.items.length) break;
-  }
-
-  return patterns;
+async function loadPatternCatalog({ resume = false } = {}) {
+  return loadPaginatedItems(
+    (offset) => api(`/api/patterns?limit=50&offset=${offset}`),
+    {
+      items: resume ? catalogPatterns : [],
+      offset: resume ? catalogNextOffset : 0,
+    }
+  );
 }
 
 function formatRatio(value) {
@@ -1117,6 +1137,7 @@ function formatPatternLanguage(value) {
 }
 
 function populatePatternMaterialFilter() {
+  const selectedMaterial = patternMaterialFilter.value;
   const materials = [...new Set(
     catalogPatterns.flatMap((pattern) =>
       Array.isArray(pattern.materials) ? pattern.materials : []
@@ -1137,6 +1158,9 @@ function populatePatternMaterialFilter() {
     }),
     ...options
   );
+  if (materials.includes(selectedMaterial)) {
+    patternMaterialFilter.value = selectedMaterial;
+  }
 }
 
 function renderPatternCatalog() {
@@ -1244,7 +1268,28 @@ function renderPatternCatalogLoading() {
   patternCatalogActions.hidden = true;
 }
 
+function hidePatternCatalogNotice() {
+  patternCatalogNotice.hidden = true;
+  patternCatalogNotice.replaceChildren();
+  patternCatalogNotice.removeAttribute("aria-busy");
+}
+
+function showPartialPatternCatalog(error) {
+  patternCatalogNotice.hidden = false;
+  showMessage(
+    patternCatalogNotice,
+    `Pokazujemy ${formatNumber(catalogPatterns.length)} pobranych wzorów. ${error.message} Nie udało się pobrać reszty katalogu.`,
+    "warning",
+    {
+      label: "Dokończ pobieranie",
+      onClick: () =>
+        refreshPatternCatalog({ resume: true }).catch(showPatternCatalogError),
+    }
+  );
+}
+
 function showPatternCatalogError(error) {
+  hidePatternCatalogNotice();
   patternCatalogSummary.textContent = "";
   showMessage(
     patternCatalog,
@@ -1257,12 +1302,22 @@ function showPatternCatalogError(error) {
   );
 }
 
-async function refreshPatternCatalog() {
-  renderPatternCatalogLoading();
+async function refreshPatternCatalog({ resume = false } = {}) {
+  if (resume) {
+    patternCatalogNotice.hidden = false;
+    showMessage(patternCatalogNotice, "Dokańczam pobieranie katalogu...", "loading");
+  } else {
+    renderPatternCatalogLoading();
+  }
   try {
-    catalogPatterns = await loadPatternCatalog();
+    const result = await loadPatternCatalog({ resume });
+    catalogPatterns = result.items;
+    catalogNextOffset = result.nextOffset;
+    catalogComplete = result.complete;
     populatePatternMaterialFilter();
     renderPatternCatalog();
+    if (catalogComplete) hidePatternCatalogNotice();
+    else showPartialPatternCatalog(result.error);
   } finally {
     patternCatalog.removeAttribute("aria-busy");
   }
