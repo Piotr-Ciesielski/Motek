@@ -482,21 +482,39 @@ h1 {
   align-items: center;
 }
 
-.password-toggle {
-  min-width: 68px;
+.password-field input::-ms-reveal,
+.password-field input::-ms-clear {
+  display: none;
+}
+
+.password-reveal {
+  display: inline-grid;
+  place-items: center;
+  width: 44px;
   min-height: 44px;
-  padding: 8px 12px;
+  padding: 8px;
   border: 1px solid var(--border);
   border-radius: 12px;
   background: white;
   color: var(--accent);
-  font: inherit;
-  font-size: 0.86rem;
-  font-weight: 800;
   cursor: pointer;
+  touch-action: none;
+  user-select: none;
 }
 
-.password-toggle:hover {
+.password-reveal svg {
+  width: 22px;
+  height: 22px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.password-reveal:hover,
+.password-reveal:focus-visible,
+.password-reveal[aria-pressed="true"] {
   border-color: var(--accent);
   background: #f5ecef;
 }

@@ -36,6 +36,33 @@
     other: { card: "Inny projekt", filter: "Inne" },
   };
 
+  function bindHoldToReveal(button, field) {
+    if (!button || !field) return;
+
+    const reveal = (event) => {
+      event?.preventDefault();
+      field.type = "text";
+      button.setAttribute("aria-pressed", "true");
+    };
+    const mask = (event) => {
+      event?.preventDefault();
+      field.type = "password";
+      button.setAttribute("aria-pressed", "false");
+    };
+    const isRevealKey = (event) => event.key === " " || event.key === "Enter";
+
+    button.addEventListener("pointerdown", reveal);
+    ["pointerup", "pointercancel", "pointerleave", "blur", "click"].forEach(
+      (eventName) => button.addEventListener(eventName, mask),
+    );
+    button.addEventListener("keydown", (event) => {
+      if (isRevealKey(event) && !event.repeat) reveal(event);
+    });
+    button.addEventListener("keyup", (event) => {
+      if (isRevealKey(event)) mask(event);
+    });
+  }
+
   function getProjectTypeLabel(value) {
     return (projectTypeLabels[value] || projectTypeLabels.other).card;
   }
@@ -126,6 +153,15 @@
         disabled: count === 0 && value !== selectedValue,
       };
     });
+  }
+
+  function ensureSingleNewYarnCard(cards, createCard) {
+    const existing = [...cards].find(
+      (card) => card?.dataset?.saved !== "true",
+    );
+    return existing
+      ? { card: existing, created: false }
+      : { card: createCard(), created: true };
   }
 
   function shouldRetryRead({
@@ -241,8 +277,10 @@
   }
 
   return {
+    bindHoldToReveal,
     buildPatternFacetCounts,
     buildPatternFacetOptions,
+    ensureSingleNewYarnCard,
     filterPatterns,
     findNewlySavedYarn,
     formatPatternYarnFact,

@@ -54,8 +54,10 @@ const networkStatus = document.getElementById("networkStatus");
 const REQUEST_TIMEOUT_MS = 12_000;
 const READ_RETRY_DELAY_MS = 700;
 const {
+  bindHoldToReveal,
   buildPatternFacetCounts,
   buildPatternFacetOptions,
+  ensureSingleNewYarnCard,
   filterPatterns,
   findNewlySavedYarn,
   formatPatternYarnFact,
@@ -1028,15 +1030,9 @@ document.querySelectorAll("label").forEach((label) => {
   if (field?.id) label.htmlFor = field.id;
 });
 
-document.querySelectorAll("[data-password-toggle]").forEach((button) => {
-  button.addEventListener("click", () => {
-    const field = document.getElementById(button.dataset.passwordToggle);
-    const showing = field.type === "text";
-    field.type = showing ? "password" : "text";
-    button.textContent = showing ? "Pokaż" : "Ukryj";
-    button.setAttribute("aria-pressed", String(!showing));
-    button.setAttribute("aria-label", showing ? "Pokaż hasło" : "Ukryj hasło");
-  });
+document.querySelectorAll("[data-password-reveal]").forEach((button) => {
+  const field = document.getElementById(button.dataset.passwordReveal);
+  bindHoldToReveal(button, field);
 });
 
 async function loadYarns() {
@@ -1879,10 +1875,19 @@ async function refresh() {
   }
 }
 
-addYarnBtn.addEventListener("click", async () => {
-  yarnList.querySelector(".yarn-empty-state")?.remove();
-  onboarding.hidden = true;
-  const card = addYarnCard({}, { isNew: true });
+addYarnBtn.addEventListener("click", () => {
+  const { card, created } = ensureSingleNewYarnCard(
+    yarnList.querySelectorAll(".yarn-card"),
+    () => {
+      yarnList.querySelector(".yarn-empty-state")?.remove();
+      onboarding.hidden = true;
+      return addYarnCard({}, { isNew: true });
+    },
+  );
+
+  if (!created) {
+    setStorageMessage("Formularz nowego motka jest już otwarty.");
+  }
   card.scrollIntoView({ behavior: "smooth", block: "center" });
   card.querySelector('[data-field="name"]').focus();
 });

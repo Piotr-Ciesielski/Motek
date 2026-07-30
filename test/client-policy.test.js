@@ -2,8 +2,10 @@ const test = require("node:test");
 const assert = require("node:assert/strict");
 
 const {
+  bindHoldToReveal,
   buildPatternFacetCounts,
   buildPatternFacetOptions,
+  ensureSingleNewYarnCard,
   filterPatterns,
   findNewlySavedYarn,
   formatPatternYarnFact,
@@ -12,6 +14,76 @@ const {
   loadPaginatedItems,
   shouldRetryRead,
 } = require("../client-policy");
+
+class PasswordRevealControl extends EventTarget {
+  constructor() {
+    super();
+    this.attributes = new Map();
+  }
+
+  setAttribute(name, value) {
+    this.attributes.set(name, value);
+  }
+
+  getAttribute(name) {
+    return this.attributes.get(name);
+  }
+}
+
+test("hasło jest widoczne tylko podczas przytrzymania kontrolki", () => {
+  const button = new PasswordRevealControl();
+  const field = { type: "password" };
+
+  bindHoldToReveal(button, field);
+
+  button.dispatchEvent(new Event("click", { cancelable: true }));
+  assert.equal(field.type, "password");
+
+  button.dispatchEvent(new Event("pointerdown", { cancelable: true }));
+  assert.equal(field.type, "text");
+  assert.equal(button.getAttribute("aria-pressed"), "true");
+
+  button.dispatchEvent(new Event("pointerup"));
+  assert.equal(field.type, "password");
+  assert.equal(button.getAttribute("aria-pressed"), "false");
+
+  button.dispatchEvent(new Event("pointerdown", { cancelable: true }));
+  button.dispatchEvent(new Event("pointerleave"));
+  assert.equal(field.type, "password");
+
+  button.dispatchEvent(new Event("pointerdown", { cancelable: true }));
+  button.dispatchEvent(new Event("blur"));
+  assert.equal(field.type, "password");
+
+  const keyDown = new Event("keydown", { cancelable: true });
+  Object.defineProperty(keyDown, "key", { value: " " });
+  button.dispatchEvent(keyDown);
+  assert.equal(field.type, "text");
+
+  const keyUp = new Event("keyup", { cancelable: true });
+  Object.defineProperty(keyUp, "key", { value: " " });
+  button.dispatchEvent(keyUp);
+  assert.equal(field.type, "password");
+});
+
+test("wielokrotne dodawanie wskazuje jeden formularz nowego motka", () => {
+  const cards = [];
+  let createdCards = 0;
+  const createCard = () => {
+    const card = { dataset: { saved: "false" } };
+    cards.push(card);
+    createdCards += 1;
+    return card;
+  };
+
+  const first = ensureSingleNewYarnCard(cards, createCard);
+  const second = ensureSingleNewYarnCard(cards, createCard);
+
+  assert.equal(createdCards, 1);
+  assert.equal(first.created, true);
+  assert.equal(second.created, false);
+  assert.equal(second.card, first.card);
+});
 
 const filterPatternsFixture = [
   {

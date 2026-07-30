@@ -83,7 +83,12 @@
               <label for="login-password">Hasło</label>
               <span class="password-field">
                 <input id="login-password" name="password" type="password" minlength="8" maxlength="256" autocomplete="current-password" required aria-describedby="authMessage" />
-                <button class="password-toggle" type="button" data-password-toggle="login-password" aria-controls="login-password" aria-pressed="false" aria-label="Pokaż hasło">Pokaż</button>
+                <button class="password-reveal" type="button" data-password-reveal="login-password" aria-controls="login-password" aria-pressed="false" aria-label="Przytrzymaj, aby pokazać hasło">
+                  <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                    <path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12Z"></path>
+                    <circle cx="12" cy="12" r="3"></circle>
+                  </svg>
+                </button>
               </span>
             </div>
             <button class="button" type="submit">Zaloguj się</button>
@@ -109,7 +114,12 @@
               <label for="register-password">Hasło</label>
               <span class="password-field">
                 <input id="register-password" name="password" type="password" minlength="8" maxlength="256" autocomplete="new-password" required aria-describedby="registerPasswordHint authMessage" />
-                <button class="password-toggle" type="button" data-password-toggle="register-password" aria-controls="register-password" aria-pressed="false" aria-label="Pokaż hasło">Pokaż</button>
+                <button class="password-reveal" type="button" data-password-reveal="register-password" aria-controls="register-password" aria-pressed="false" aria-label="Przytrzymaj, aby pokazać hasło">
+                  <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                    <path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12Z"></path>
+                    <circle cx="12" cy="12" r="3"></circle>
+                  </svg>
+                </button>
               </span>
               <span id="registerPasswordHint" class="field-hint">Minimum 8 znaków, w tym mała i wielka litera, cyfra oraz znak specjalny.</span>
             </div>
@@ -137,7 +147,12 @@
             <label for="update-password">Nowe hasło</label>
             <span class="password-field">
               <input id="update-password" name="password" type="password" minlength="8" maxlength="256" autocomplete="new-password" required aria-describedby="updatePasswordHint authMessage" />
-              <button class="password-toggle" type="button" data-password-toggle="update-password" aria-controls="update-password" aria-pressed="false" aria-label="Pokaż hasło">Pokaż</button>
+              <button class="password-reveal" type="button" data-password-reveal="update-password" aria-controls="update-password" aria-pressed="false" aria-label="Przytrzymaj, aby pokazać hasło">
+                <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                  <path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12Z"></path>
+                  <circle cx="12" cy="12" r="3"></circle>
+                </svg>
+              </button>
             </span>
             <span id="updatePasswordHint" class="field-hint">Minimum 8 znaków, w tym mała i wielka litera, cyfra oraz znak specjalny.</span>
           </div>
