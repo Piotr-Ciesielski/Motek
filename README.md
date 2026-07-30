@@ -136,9 +136,11 @@ decyzję „da się wykonać”.
 
 ## Źródła katalogu wzorów
 
-Katalog został przygotowany z 116 lokalnych dokumentów PDF znajdujących się w
-roboczym folderze `Wzory`. Pliki źródłowe są ignorowane przez Git i nie są
-serwowane publicznie przez aplikację.
+Katalog został przygotowany po audycie 116 lokalnych dokumentów PDF znajdujących
+się w roboczym folderze `Wzory`. Do katalogu trafiły 103 samodzielne wzory oraz
+3 rekordy demonstracyjne. Trzynaście plików wykluczono jako duplikaty, kupony
+dostępu, instrukcję techniczną albo materiały pomocnicze. Pliki źródłowe są
+ignorowane przez Git i nie są serwowane publicznie przez aplikację.
 
 Proces przygotowania danych obejmuje:
 
@@ -150,7 +152,12 @@ Proces przygotowania danych obejmuje:
 6. selektywny import do Supabase.
 
 W projekcie służą do tego między innymi `scripts/build-pattern-import.py` oraz
-`scripts/import-patterns.js`.
+`scripts/import-patterns.js`. Szczegółowy wynik ponownej analizy znajduje się w
+`WZORY_AUDYT_DANYCH.md`.
+
+Wzór może mieć jedno przeliczenie włóczki, kilka równorzędnych alternatyw albo
+celowo elastyczny dobór materiału i grubości. Te przypadki są przechowywane
+oddzielnie, aby jedna uśredniona wartość nie wprowadzała użytkownika w błąd.
 
 ## Dlaczego architektura jest przejściowa
 
@@ -265,6 +272,7 @@ Najważniejsze etapy zapisane w `CHANGELOG.txt`:
 - `2.0.0-alpha.8` — Supabase jako jedyne źródło danych i usunięcie SQLite.
 - `2.0.0-alpha.9` — bezpieczny autosave, zabezpieczenia Auth, limity produktu i ograniczenie kosztu rankingu.
 - `2.0.0-alpha.10` — naprawa nagłówków żądań magazynu i synchronizacja wymaganych migracji zdalnego Supabase.
+- `2.0.0-alpha.33` — ponowny audyt wszystkich PDF-ów i kompletny, oczyszczony katalog danych włóczek.
 - `2.0.0-alpha.15` — sortowanie katalogu i dostępny stan ładowania ze szkieletami.
 - `2.0.0-alpha.14` — filtry języka i materiału oraz rozwijane szczegóły wzorów.
 - `2.0.0-alpha.13` — porcjowanie katalogu i domyślne eksponowanie zweryfikowanych wzorów.
@@ -273,10 +281,10 @@ Najważniejsze etapy zapisane w `CHANGELOG.txt`:
 
 ## Najbliższy etap rozwoju
 
-Następnym krokiem jest ręczne uzupełnienie kompletnych, potwierdzonych danych
-zużycia dla rozmiarów i wariantów wybranych wzorów oraz ich selektywny import do
-Supabase. Ranking automatycznie pomija rekordy bez pełnych, zweryfikowanych
-wymagań.
+Parametry użytych włóczek zostały potwierdzone dla wszystkich wzorów w katalogu.
+Następnym krokiem jest uzupełnienie kompletnych danych zużycia dla rozmiarów i
+wariantów wybranych wzorów. Ranking automatycznie pomija rekordy bez pełnych,
+zweryfikowanych wymagań ilościowych.
 
 Skalowanie ponad obecne limity 500 włóczek na użytkownika i 300 wzorów jest
 opcjonalne. Wrócimy do paginacji, dalszej optymalizacji lub workera dopiero po

@@ -1,0 +1,43 @@
+{
+  "exclusions": {
+    "48121b_76193f9fc7a34173bf81ea1ae1c28b28.pdf": {
+      "reason": "Poradnik techniczny o konstruowaniu dekoltu V, a nie samodzielny wzór projektu."
+    },
+    "Basic Kardigan Kod Dostępu.pdf": {
+      "reason": "Kupon z kodem dostępu, a nie treść wzoru."
+    },
+    "Kardigan All Day Long Kod Dostępu.pdf": {
+      "reason": "Kupon z kodem dostępu, a nie treść wzoru."
+    },
+    "Kardigan Simple as That Kod Dostępu.pdf": {
+      "reason": "Kupon z kodem dostępu, a nie treść wzoru."
+    },
+    "Kardigan_20no_201_20Kod_20Dost_C4_99pu.pdf": {
+      "reason": "Kupon z kodem dostępu, a nie treść wzoru."
+    },
+    "HAPPY-TRIO-SWEATER-Tkane-na-okraglo-Wzor-na-druty-exxadt(1).pdf": {
+      "reason": "Bajtowo identyczna kopia wzoru; zachowano plik bez dopisku (1)."
+    },
+    "Kopia pliku SweetTreatsSocks_NBielińska(1).pdf": {
+      "reason": "Bajtowo identyczna kopia wzoru; zachowano plik o właściwej nazwie."
+    },
+    "Kopia pliku SweetTreatsSocks_NBielińska.pdf": {
+      "reason": "Bajtowo identyczna kopia wzoru; zachowano plik o właściwej nazwie."
+    },
+    "Sweter_Kikimora_Moracraft(1).pdf": {
+      "reason": "Bajtowo identyczna kopia wzoru; zachowano plik bez dopisku (1)."
+    },
+    "BIG-BIG-BUBBLES-WZOR-INSTRUKCJA-WYKONANIA06.23-tbto93.pdf": {
+      "reason": "Druga wersja tego samego projektu; zachowano pełniejszy dokument z tabelami i schematami rozmiarów."
+    },
+    "Diamond Fade Socks.pdf": {
+      "reason": "Starsza wersja tego samego projektu; zachowano poprawioną wersję z 2025 roku."
+    },
+    "Teddy Bear Socks - wzór PL (ang skróty).pdf.pdf": {
+      "reason": "Starsza wersja tego samego projektu; zachowano plik oznaczony jako poprawiona wersja."
+    },
+    "You Make Me (W)hole Cardigan - Schematy.pdf": {
+      "reason": "Załącznik ze schematami do wzoru; katalog reprezentuje projekt przez pełny plik opisowy."
+    }
+  }
+}

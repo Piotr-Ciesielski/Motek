@@ -55,6 +55,24 @@
     return !yarns.some((yarn) => yarn.id === yarnId);
   }
 
+  function formatPatternYarnFact(pattern, formatRatio) {
+    const requirements = Array.isArray(pattern?.yarnRequirements)
+      ? pattern.yarnRequirements
+      : [];
+    const ratio = Number(pattern?.metersPer100g);
+
+    if (Number.isFinite(ratio) && ratio > 0) {
+      return `Główna włóczka: ${formatRatio(ratio)}`;
+    }
+    if (requirements.some((requirement) => requirement?.flexible === true)) {
+      return "Włóczka: dobierana elastycznie według szczegółów wzoru";
+    }
+    if (requirements.length > 1) {
+      return `Włóczka: ${requirements.length} warianty opisane w szczegółach`;
+    }
+    return `Główna włóczka: ${formatRatio(null)}`;
+  }
+
   async function loadPaginatedItems(
     fetchPage,
     { items = [], offset = 0, total = items.length, onPage = null } = {},
@@ -112,6 +130,7 @@
 
   return {
     findNewlySavedYarn,
+    formatPatternYarnFact,
     getExistingYarnState,
     isDeleteConfirmed,
     loadPaginatedItems,

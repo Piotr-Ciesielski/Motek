@@ -7,6 +7,7 @@ from pattern_taxonomy import infer_project_type
 PROJECT_DIR = Path(__file__).resolve().parent.parent
 CANDIDATES_PATH = PROJECT_DIR / "tmp" / "pdfs" / "pattern-candidates.json"
 OVERRIDES_PATH = PROJECT_DIR / "data" / "pattern-manual-overrides.json"
+EXCLUSIONS_PATH = PROJECT_DIR / "data" / "pattern-catalog-exclusions.json"
 DEMO_PATH = PROJECT_DIR / "data" / "pattern-demo.json"
 OUTPUT_PATH = PROJECT_DIR / "data" / "patterns-import.json"
 
@@ -107,15 +108,24 @@ def validate_record(record: dict) -> list[str]:
     if not isinstance(record.get("needs_review"), bool):
         errors.append(f"{source}: needs_review musi mieć wartość true albo false")
 
-    requirements_have_ratios = bool(requirements) and all(
+    requirements_are_complete = bool(requirements) and all(
         isinstance(requirement, dict)
-        and isinstance(requirement.get("meters_per_100g"), (int, float))
-        and requirement["meters_per_100g"] > 0
+        and (
+            (
+                isinstance(requirement.get("meters_per_100g"), (int, float))
+                and requirement["meters_per_100g"] > 0
+            )
+            or (
+                requirement.get("flexible") is True
+                and isinstance(requirement.get("quantity_note"), str)
+                and requirement["quantity_note"].strip()
+            )
+        )
         for requirement in requirements
     )
 
     is_incomplete = not materials or (
-        ratio is None and not requirements_have_ratios
+        ratio is None and not requirements_are_complete
     )
     if is_incomplete and record.get("needs_review") is not True:
         errors.append(
@@ -128,6 +138,7 @@ def validate_record(record: dict) -> list[str]:
 def main() -> None:
     candidate_document = load_json(CANDIDATES_PATH)
     overrides = load_json(OVERRIDES_PATH)
+    exclusions = load_json(EXCLUSIONS_PATH)["exclusions"]
     demo_document = load_json(DEMO_PATH)
     candidates = candidate_document["candidates"]
     demo_records = demo_document["records"]
@@ -140,12 +151,40 @@ def main() -> None:
             + ", ".join(unknown_overrides)
         )
 
+    unknown_exclusions = sorted(set(exclusions) - candidate_filenames)
+    if unknown_exclusions:
+        raise ValueError(
+            "Wykluczenia wskazują nieistniejące pliki PDF: "
+            + ", ".join(unknown_exclusions)
+        )
+
+    overlapping_rules = sorted(set(overrides) & set(exclusions))
+    if overlapping_rules:
+        raise ValueError(
+            "Plik nie może mieć jednocześnie poprawki i wykluczenia: "
+            + ", ".join(overlapping_rules)
+        )
+
     records = []
     audit = []
     validation_errors = []
 
     for candidate in candidates:
         source_filename = candidate["source_filename"]
+        if source_filename in exclusions:
+            audit.append(
+                {
+                    "source_filename": source_filename,
+                    "excluded": True,
+                    "exclusion_reason": exclusions[source_filename]["reason"],
+                    "manual_override": False,
+                    "review_reasons": candidate.get("review_reasons", []),
+                    "review_notes": [],
+                    "reference_sources": candidate.get("reference_sources", []),
+                }
+            )
+            continue
+
         merged = {**candidate, **overrides.get(source_filename, {})}
         merged["source_filename"] = source_filename
         merged["project_type"] = merged.get("project_type") or infer_project_type(
@@ -169,6 +208,7 @@ def main() -> None:
                 "manual_override": source_filename in overrides,
                 "review_reasons": candidate.get("review_reasons", []),
                 "review_notes": merged.get("review_notes", []),
+                "reference_sources": candidate.get("reference_sources", []),
             }
         )
 
@@ -197,6 +237,7 @@ def main() -> None:
         "metadata": {
             "record_count": len(records),
             "manual_override_count": len(overrides),
+            "excluded_pdf_count": len(exclusions),
             "synthetic_demo_count": len(demo_records),
             "needs_review_count": sum(record["needs_review"] for record in records),
             "complete_material_count": sum(bool(record["materials"]) for record in records),

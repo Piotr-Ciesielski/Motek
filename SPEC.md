@@ -2,7 +2,7 @@
 
 ## 1. Status projektu
 
-- bieżąca wersja rozwojowa: `2.0.0-alpha.15`
+- bieżąca wersja rozwojowa: `2.0.0-alpha.33`
 - ostatnia wersja wydana: `1.0.2`
 - aktualne źródło danych: Supabase
 - lokalny SQLite: usunięty z aplikacji
@@ -171,8 +171,11 @@ frontendu.
 
 ## 9. Katalog wzorów i import
 
-Katalog powstał na podstawie 116 lokalnych dokumentów PDF w folderze `Wzory`.
-Folder jest roboczy, ignorowany przez Git i nie jest serwowany przez aplikację.
+Katalog powstał na podstawie audytu 116 lokalnych dokumentów PDF w folderze
+`Wzory`. Zawiera 103 samodzielne wzory z tych plików oraz 3 rekordy
+demonstracyjne. Trzynaście plików wykluczono jako duplikaty, kupony dostępu,
+instrukcję techniczną albo materiały pomocnicze do innego wzoru. Folder jest
+roboczy, ignorowany przez Git i nie jest serwowany przez aplikację.
 
 Proces przygotowania danych obejmuje:
 
@@ -185,6 +188,16 @@ Proces przygotowania danych obejmuje:
 
 Narzędzia importowe znajdują się w `scripts/`. Import powinien być wykonywany
 dopiero po sprawdzeniu podsumowania zmian.
+
+Audyt odróżnia:
+
+- włóczkę o jednym jednoznacznym przeliczeniu,
+- kilka poprawnych włóczek alternatywnych,
+- elastyczny dobór włóczki określony przez autora wzoru.
+
+Brak jednej wartości `meters_per_100g` nie oznacza braku danych, jeżeli wzór
+zawiera kilka alternatyw lub świadomie dopuszcza dowolną włóczkę. Szczegółowy
+wynik i lista wykluczeń znajdują się w `WZORY_AUDYT_DANYCH.md`.
 
 ## 10. Uruchomienie i sprawdzanie
 
@@ -237,6 +250,7 @@ npm run patterns:check
 Zrealizowano:
 
 - katalog wzorów w Supabase,
+- zweryfikowane materiały oraz parametry motków dla 103 wzorów źródłowych,
 - Supabase Auth i profile użytkowników,
 - prywatny magazyn włóczek z RLS,
 - zapis i usuwanie włóczek przez aplikację,
@@ -246,7 +260,8 @@ Zrealizowano:
 
 Do wykonania pozostają przede wszystkim:
 
-- uzupełnienie kompletnych wymagań dopasowania dla wybranych wzorów,
+- uzupełnienie kompletnych wymagań zużycia dla rozmiarów i wariantów wybranych
+  wzorów, aby mogły brać udział w automatycznym dopasowaniu,
 - uzupełnienie rate limitingu na reverse proxy oraz monitoring prób Auth,
 - wymuszenie HTTPS i HSTS na reverse proxy w produkcji,
 - dalsze ograniczenie kosztu rankingu, testy obciążenia i ewentualny worker,

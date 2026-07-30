@@ -55,6 +55,7 @@ const REQUEST_TIMEOUT_MS = 12_000;
 const READ_RETRY_DELAY_MS = 700;
 const {
   findNewlySavedYarn,
+  formatPatternYarnFact,
   getExistingYarnState,
   isDeleteConfirmed,
   loadPaginatedItems,
@@ -1127,7 +1128,16 @@ function formatRequirement(requirement, index) {
   const materials = Array.isArray(requirement.materials)
     ? requirement.materials.join(", ")
     : "";
-  const details = [materials, formatRatio(requirement.meters_per_100g)]
+  const ratio = Number(requirement.meters_per_100g);
+  const weightClass = requirement.yarn_weight
+    ? `grubość ${requirement.yarn_weight}`
+    : "";
+  const details = [
+    materials,
+    weightClass,
+    Number.isFinite(ratio) && ratio > 0 ? formatRatio(ratio) : "",
+    requirement.quantity_note || "",
+  ]
     .filter(Boolean)
     .join(" · ");
 
@@ -1301,7 +1311,7 @@ function renderPatternCatalog() {
     card.querySelector(".pattern-card__description").textContent =
       pattern.description;
     card.querySelector(".pattern-card__facts").textContent =
-      `Główna włóczka: ${formatRatio(pattern.metersPer100g)}`;
+      formatPatternYarnFact(pattern, formatRatio);
 
     const status = card.querySelector(".status-pill");
     status.textContent = pattern.needsReview ? "Do sprawdzenia" : "Zweryfikowany";

@@ -3,6 +3,7 @@ const assert = require("node:assert/strict");
 
 const {
   findNewlySavedYarn,
+  formatPatternYarnFact,
   getExistingYarnState,
   isDeleteConfirmed,
   loadPaginatedItems,
@@ -17,6 +18,22 @@ const draft = {
   length: 200,
   weight: 100,
 };
+
+test("wzór z kilkoma alternatywami nie jest opisany jako brak danych", () => {
+  assert.equal(
+    formatPatternYarnFact?.(
+      {
+        metersPer100g: null,
+        yarnRequirements: [
+          { yarnName: "Wariant pierwszy", metersPer100g: 320 },
+          { yarnName: "Wariant drugi", metersPer100g: 250 },
+        ],
+      },
+      () => "brak danych",
+    ),
+    "Włóczka: 2 warianty opisane w szczegółach",
+  );
+});
 
 test("ponawia tylko bezpieczny odczyt po przejściowym błędzie", () => {
   assert.equal(

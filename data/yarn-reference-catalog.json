@@ -1,0 +1,382 @@
+{
+  "references": [
+    {
+      "yarn_name": "Rowan Summerlite DK",
+      "aliases": ["summerlite dk"],
+      "materials": ["bawełna"],
+      "skein_weight_grams": 50,
+      "skein_length_meters": 130,
+      "meters_per_100g": 260,
+      "source_url": "https://knitrowan.com/en/products/summerlite-dk"
+    },
+    {
+      "yarn_name": "Rowan Summerlite 4ply",
+      "aliases": ["summerlite 4ply", "summerlite 4 ply"],
+      "materials": ["bawełna"],
+      "skein_weight_grams": 50,
+      "skein_length_meters": 175,
+      "meters_per_100g": 350,
+      "source_url": "https://knitrowan.com/products/summerlite-4ply"
+    },
+    {
+      "yarn_name": "Rowan Cotton Glacé",
+      "aliases": ["cotton glace", "cotton glacé"],
+      "materials": ["bawełna"],
+      "skein_weight_grams": 50,
+      "skein_length_meters": 115,
+      "meters_per_100g": 230,
+      "source_url": "https://knitrowan.com/en/products/cotton-glace"
+    },
+    {
+      "yarn_name": "Rowan Kidsilk Haze",
+      "aliases": ["kidsilk haze", "kid silk haze"],
+      "materials": ["moher", "jedwab"],
+      "skein_weight_grams": 25,
+      "skein_length_meters": 210,
+      "meters_per_100g": 840,
+      "source_url": "https://knitrowan.com/products/kidsilk-haze"
+    },
+    {
+      "yarn_name": "Hobbii Rainbow Cotton 8/4",
+      "aliases": ["rainbow cotton 8/4"],
+      "materials": ["bawełna"],
+      "skein_weight_grams": 50,
+      "skein_length_meters": 170,
+      "meters_per_100g": 340,
+      "source_url": "https://hobbii.com/rainbow-cotton-8-4"
+    },
+    {
+      "yarn_name": "Hobbii Rainbow Deluxe 8/4",
+      "aliases": ["rainbow deluxe 8/4"],
+      "materials": ["bawełna"],
+      "skein_weight_grams": 50,
+      "skein_length_meters": 170,
+      "meters_per_100g": 340,
+      "source_url": "https://hobbii.com/products/hp-1004513-rainbow-deluxe-8-4"
+    },
+    {
+      "yarn_name": "Hobbii Unicorn Solid",
+      "aliases": ["unicorn solid"],
+      "materials": ["wełna", "poliamid"],
+      "skein_weight_grams": 100,
+      "skein_length_meters": 400,
+      "meters_per_100g": 400,
+      "source_url": "https://hobbii.com/collections/hanks/products/hp-1004439-unicorn-solid"
+    },
+    {
+      "yarn_name": "Hobbii Soft Alpaca Lace",
+      "aliases": ["soft alpaca lace"],
+      "materials": ["alpaka"],
+      "skein_weight_grams": 50,
+      "skein_length_meters": 400,
+      "meters_per_100g": 800,
+      "source_url": "https://hobbii.com/products/hp-1004533-soft-alpaca-lace"
+    },
+    {
+      "yarn_name": "Hobbii Rainbow Bamboo",
+      "aliases": ["rainbow bamboo"],
+      "materials": ["wiskoza", "bawełna"],
+      "skein_weight_grams": 100,
+      "skein_length_meters": 250,
+      "meters_per_100g": 250,
+      "source_url": "https://hobbii.com/products/hp-1004098-rainbow-bamboo-1004098"
+    },
+    {
+      "yarn_name": "Hobbii Snowstorm",
+      "aliases": ["snowstorm"],
+      "materials": ["wełna"],
+      "skein_weight_grams": 50,
+      "skein_length_meters": 50,
+      "meters_per_100g": 100,
+      "source_url": "https://hobbii.com/products/hp-1001867-snowstorm"
+    },
+    {
+      "yarn_name": "Hobbii Friends Wool",
+      "aliases": ["friends wool"],
+      "materials": ["wełna"],
+      "skein_weight_grams": 50,
+      "skein_length_meters": 100,
+      "meters_per_100g": 200,
+      "source_url": "https://hobbii.com/friends-wool"
+    },
+    {
+      "yarn_name": "Hobbii Friends Kid Silk",
+      "aliases": ["friends kid silk"],
+      "materials": ["moher", "jedwab", "wełna"],
+      "skein_weight_grams": 25,
+      "skein_length_meters": 200,
+      "meters_per_100g": 800,
+      "source_url": "https://hobbii.com/products/hp-1005541-friends-kid-silk"
+    },
+    {
+      "yarn_name": "DROPS Melody",
+      "aliases": ["drops melody"],
+      "materials": ["alpaka", "wełna", "poliamid"],
+      "skein_weight_grams": 50,
+      "skein_length_meters": 140,
+      "meters_per_100g": 280,
+      "source_url": "https://www.garnstudio.com/yarn.php?show=drops-melody"
+    },
+    {
+      "yarn_name": "DROPS Muskat",
+      "aliases": ["drops muskat"],
+      "materials": ["bawełna"],
+      "skein_weight_grams": 50,
+      "skein_length_meters": 100,
+      "meters_per_100g": 200,
+      "source_url": "https://www.garnstudio.com/yarn.php?cid=19&show=drops-muskat"
+    },
+    {
+      "yarn_name": "DROPS Nord",
+      "aliases": ["drops nord"],
+      "materials": ["alpaka", "poliamid", "wełna"],
+      "skein_weight_grams": 50,
+      "skein_length_meters": 170,
+      "meters_per_100g": 340,
+      "source_url": "https://www.garnstudio.com/yarn.php?show=drops-nord"
+    },
+    {
+      "yarn_name": "DROPS Kid-Silk",
+      "aliases": ["drops kid silk", "drops kid-silk"],
+      "materials": ["moher", "jedwab"],
+      "skein_weight_grams": 25,
+      "skein_length_meters": 210,
+      "meters_per_100g": 840,
+      "source_url": "https://www.garnstudio.com/yarn.php?show=drops-kid-silk"
+    },
+    {
+      "yarn_name": "DROPS Nepal",
+      "aliases": ["drops nepal"],
+      "materials": ["wełna", "alpaka"],
+      "skein_weight_grams": 50,
+      "skein_length_meters": 75,
+      "meters_per_100g": 150,
+      "source_url": "https://www.garnstudio.com/yarn.php?show=drops-nepal"
+    },
+    {
+      "yarn_name": "DROPS Fabel",
+      "aliases": ["drops fabel", "garnstudio drops fabel"],
+      "materials": ["wełna", "poliamid"],
+      "skein_weight_grams": 50,
+      "skein_length_meters": 205,
+      "meters_per_100g": 410,
+      "source_url": "https://www.garnstudio.com/yarn.php?show=drops-fabel"
+    },
+    {
+      "yarn_name": "DROPS Delight",
+      "aliases": ["drops delight", "garnstudio drops delight"],
+      "materials": ["wełna", "poliamid"],
+      "skein_weight_grams": 50,
+      "skein_length_meters": 175,
+      "meters_per_100g": 350,
+      "source_url": "https://www.garnstudio.com/yarn.php?show=drops-delight"
+    },
+    {
+      "yarn_name": "DROPS Soft Tweed",
+      "aliases": ["drops soft tweed"],
+      "materials": ["wełna", "alpaka", "wiskoza"],
+      "skein_weight_grams": 50,
+      "skein_length_meters": 130,
+      "meters_per_100g": 260,
+      "source_url": "https://www.garnstudio.com/yarn.php?show=drops-soft-tweed"
+    },
+    {
+      "yarn_name": "DROPS Brushed Alpaca Silk",
+      "aliases": ["drops brushed alpaca silk", "brushed alpaca silk"],
+      "materials": ["alpaka", "jedwab"],
+      "skein_weight_grams": 25,
+      "skein_length_meters": 140,
+      "meters_per_100g": 560,
+      "source_url": "https://www.garnstudio.com/yarn.php?show=drops-brushed-alpaca-silk"
+    },
+    {
+      "yarn_name": "Woollala Diamonds",
+      "aliases": ["woollala diamonds"],
+      "materials": ["wełna", "poliamid", "poliester"],
+      "skein_weight_grams": 100,
+      "skein_length_meters": 400,
+      "meters_per_100g": 400,
+      "source_url": "https://woollala.pl/kategoria-produktu/wloczki-recznie-farbowane/fingering/diamonds/"
+    },
+    {
+      "yarn_name": "Lankava Sulo",
+      "aliases": ["sulo lankava", "lankava sulo"],
+      "materials": ["wełna", "poliamid"],
+      "skein_weight_grams": 100,
+      "skein_length_meters": 400,
+      "meters_per_100g": 400,
+      "source_url": "https://www.lankava.fi/en/lankava-sulo-sock-yarn/"
+    },
+    {
+      "yarn_name": "Patons Canadiana",
+      "aliases": ["patons® canadiana", "patons canadiana"],
+      "materials": ["akryl"],
+      "skein_weight_grams": 100,
+      "skein_length_meters": 187,
+      "meters_per_100g": 187,
+      "source_url": "https://www.yarnspirations.com/en-ca/products/patons-canadiana-yarn"
+    },
+    {
+      "yarn_name": "DROPS Belle",
+      "aliases": ["drops belle"],
+      "materials": ["bawełna", "wiskoza", "len"],
+      "skein_weight_grams": 50,
+      "skein_length_meters": 120,
+      "meters_per_100g": 240,
+      "source_url": "https://www.garnstudio.com/yarn.php?show=drops-belle"
+    },
+    {
+      "yarn_name": "Ístex Léttlopi",
+      "aliases": ["léttlopi by istex", "lettlopi by istex"],
+      "materials": ["wełna"],
+      "skein_weight_grams": 50,
+      "skein_length_meters": 100,
+      "meters_per_100g": 200,
+      "source_url": "https://istex.is/en/vorur/lettlopi/"
+    },
+    {
+      "yarn_name": "mYak Fior di Lino",
+      "aliases": ["myak fior di lino"],
+      "materials": ["wełna", "jak", "len"],
+      "skein_weight_grams": 50,
+      "skein_length_meters": 200,
+      "meters_per_100g": 400,
+      "source_url": "https://myak.it/shop/yarns/fior-di-lino-collection-a-special-collaboration-with-isabell-kraemer/"
+    },
+    {
+      "yarn_name": "Hobbii Diablo Multi",
+      "aliases": ["diablo multi"],
+      "materials": ["moher", "poliamid", "akryl"],
+      "skein_weight_grams": 50,
+      "skein_length_meters": 90,
+      "meters_per_100g": 180,
+      "source_url": "https://hobbii.com/product/pattern/download?id=1005509"
+    },
+    {
+      "yarn_name": "Hobbii Umami Tweed",
+      "aliases": ["umami tweed"],
+      "materials": ["akryl", "wełna", "wiskoza"],
+      "skein_weight_grams": 150,
+      "skein_length_meters": 83,
+      "meters_per_100g": 55.33,
+      "source_url": "https://hobbii.com/"
+    },
+    {
+      "yarn_name": "Gepard Pura Lana",
+      "aliases": ["pura lana, gepard garn", "gepard pura lana"],
+      "materials": ["wełna", "alpaka"],
+      "skein_weight_grams": 50,
+      "skein_length_meters": 115,
+      "meters_per_100g": 230,
+      "source_url": "https://gepardgarn.com/en-gb/catalog/yarn/pura-lana"
+    },
+    {
+      "yarn_name": "Isager Alpaca 3",
+      "aliases": ["isager alpaca 3"],
+      "materials": ["alpaka", "wełna"],
+      "skein_weight_grams": 50,
+      "skein_length_meters": 125,
+      "meters_per_100g": 250,
+      "source_url": "https://isagerstrik.dk/en/product/alpaca-3/"
+    },
+    {
+      "yarn_name": "Isager Spinni",
+      "aliases": ["isager spinni"],
+      "materials": ["wełna"],
+      "skein_weight_grams": 50,
+      "skein_length_meters": 300,
+      "meters_per_100g": 600,
+      "source_url": "https://isagerstrik.dk/en/product/spinni/"
+    },
+    {
+      "yarn_name": "Isager Tvinni",
+      "aliases": ["isager tvinni"],
+      "materials": ["wełna"],
+      "skein_weight_grams": 50,
+      "skein_length_meters": 255,
+      "meters_per_100g": 510,
+      "source_url": "https://isagerstrik.dk/en/product/tvinni/"
+    },
+    {
+      "yarn_name": "Rauma Iris Alpakka",
+      "aliases": ["iris alpakka fra rauma garn"],
+      "materials": ["alpaka", "wełna"],
+      "skein_weight_grams": 50,
+      "skein_length_meters": 130,
+      "meters_per_100g": 260,
+      "source_url": "https://www.raumagarn.no/produkt/hefter/produkthefterpt-157-iris-dame"
+    },
+    {
+      "yarn_name": "Rauma Inca Alpakka",
+      "aliases": ["inca alpakka fra rauma garn"],
+      "materials": ["alpaka"],
+      "skein_weight_grams": 50,
+      "skein_length_meters": 175,
+      "meters_per_100g": 350,
+      "source_url": "https://www.raumagarn.no/produkt/hefter/produkthefter348-inca-herre"
+    },
+    {
+      "yarn_name": "Urth Uneek Sock",
+      "aliases": ["urth uneek sock", "kit urth uneek sock"],
+      "materials": ["wełna", "poliamid"],
+      "skein_weight_grams": 100,
+      "skein_length_meters": 400,
+      "meters_per_100g": 400,
+      "source_url": "https://urthyarns.com/products/uneek-sock-kit-69"
+    },
+    {
+      "yarn_name": "We Are Knitters The Pima Cotton",
+      "aliases": ["the pima cotton od wak", "the pima cotton from wak"],
+      "materials": ["bawełna"],
+      "skein_weight_grams": 100,
+      "skein_length_meters": 212,
+      "meters_per_100g": 212,
+      "source_url": "https://love.weareknitters.com/seqwjk/palm-scarf.pdf"
+    },
+    {
+      "yarn_name": "DROPS Paris",
+      "aliases": ["drops paris"],
+      "materials": ["bawełna"],
+      "skein_weight_grams": 50,
+      "skein_length_meters": 75,
+      "meters_per_100g": 150,
+      "source_url": "https://www.garnstudio.com/yarn.php?show=drops-paris"
+    },
+    {
+      "yarn_name": "Scheepjes Cahlista",
+      "aliases": ["scheepjes cahlista"],
+      "materials": ["bawełna"],
+      "skein_weight_grams": 50,
+      "skein_length_meters": 85,
+      "meters_per_100g": 170,
+      "source_url": "https://www.scheepjes.com/en/cahlista-2342/"
+    },
+    {
+      "yarn_name": "Sandnes Garn Mandarin Petit",
+      "aliases": ["mandarin petit"],
+      "materials": ["bawełna"],
+      "skein_weight_grams": 50,
+      "skein_length_meters": 180,
+      "meters_per_100g": 360,
+      "source_url": "https://www.sandnes-garn.com/downloadable/download/linkSample/link_id/2460/"
+    },
+    {
+      "yarn_name": "DROPS Safran",
+      "aliases": ["drops safran"],
+      "materials": ["bawełna"],
+      "skein_weight_grams": 50,
+      "skein_length_meters": 160,
+      "meters_per_100g": 320,
+      "source_url": "https://www.garnstudio.com/yarn.php?show=drops-safran"
+    },
+    {
+      "yarn_name": "KnitPicks CotLin",
+      "aliases": ["knitpicksotlin", "knitpicks cotlin"],
+      "materials": ["bawełna", "len"],
+      "skein_weight_grams": 50,
+      "skein_length_meters": 112,
+      "meters_per_100g": 224,
+      "source_url": "https://www.knitpicks.com/planetarium/p/24465"
+    }
+  ]
+}

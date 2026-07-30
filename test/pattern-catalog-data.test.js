@@ -19,7 +19,7 @@ const ALLOWED_PROJECT_TYPES = new Set([
 
 test("dane katalogu mają kompletne i kontrolowane typy projektów", () => {
   assert.equal(patternImport.records.length, patternImport.metadata.record_count);
-  assert.equal(patternImport.records.length, 119);
+  assert.equal(patternImport.records.length, 106);
 
   for (const record of patternImport.records) {
     assert.ok(
@@ -37,14 +37,14 @@ test("charakterystyczne wzory trafiają do właściwych kategorii", () => {
   const expectedTypes = new Map([
     ["Capucharpe EN", "shawl_scarf"],
     ["Chusta Erin kotek i motek", "shawl_scarf"],
-    ["Hunt-Hand-Knits Turtle-Town-Cowl", "head_accessory"],
-    ["Oslohuen 2.0 ENGELSK", "head_accessory"],
-    ["penguono 7", "cardigan"],
+    ["Turtle Town Cowl", "head_accessory"],
+    ["Oslo Hat", "head_accessory"],
+    ["Penguono", "cardigan"],
     ["Picot Headband Knitting Pattern - The Obsessed final", "head_accessory"],
     ["Starry Night Mittens PL-lo9p3u7q", "gloves"],
     ["Szal Queen of Spades Kokonki Pure", "shawl_scarf"],
     ["TEXTURE VEST hi UK-rm07er", "vest"],
-    ["Tromsø Hoodie NORSK", "other"],
+    ["Tromsø Hoodie", "other"],
   ]);
 
   for (const [name, expectedType] of expectedTypes) {

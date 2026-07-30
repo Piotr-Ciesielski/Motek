@@ -1,5 +1,15 @@
 Motek - log zmian
 
+Wersja 2.0.0-alpha.33 (w przygotowaniu) - zweryfikowane dane włóczek we wzorach
+
+- Ponownie przeanalizowano wszystkie 116 plików PDF, w tym skany i dane podane nie wprost.
+- Katalog zawiera 103 samodzielne wzory z PDF oraz 3 rekordy demonstracyjne.
+- Uzupełniono materiał, długość i wagę motka lub jawny opis elastycznego doboru włóczki.
+- Zachowano osobne alternatywy włóczek zamiast sprowadzać je do jednego mylącego przeliczenia.
+- Wykluczono 13 duplikatów, kuponów dostępu, instrukcji technicznych i plików pomocniczych.
+- Zaktualizowano Supabase do 106 sprawdzonych rekordów bez pozycji wymagających dalszej weryfikacji.
+- Karty katalogu poprawnie opisują wzory, w których włóczkę dobiera się elastycznie.
+
 Wersja 2.0.0-alpha.32 (w przygotowaniu) - kategorie katalogu wzorów
 
 - Dodano kontrolowane typy projektów dla 119 wzorów.
