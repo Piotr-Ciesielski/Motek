@@ -55,10 +55,14 @@
     return !yarns.some((yarn) => yarn.id === yarnId);
   }
 
-  async function loadPaginatedItems(fetchPage, { items = [], offset = 0 } = {}) {
+  async function loadPaginatedItems(
+    fetchPage,
+    { items = [], offset = 0, total = items.length, onPage = null } = {},
+  ) {
     const loadedItems = [...items];
     const knownIds = new Set(loadedItems.map((item) => String(item.id)));
     let nextOffset = offset;
+    let knownTotal = total;
     let hasMore = true;
 
     while (hasMore) {
@@ -70,6 +74,7 @@
         return {
           items: loadedItems,
           nextOffset,
+          total: knownTotal,
           complete: false,
           error,
         };
@@ -81,13 +86,25 @@
         knownIds.add(id);
         loadedItems.push(item);
       });
+      if (Number.isInteger(page.total) && page.total >= loadedItems.length) {
+        knownTotal = page.total;
+      }
       nextOffset += page.items.length;
       hasMore = Boolean(page.hasMore) && page.items.length > 0;
+      if (typeof onPage === "function") {
+        await onPage({
+          items: [...loadedItems],
+          nextOffset,
+          total: knownTotal,
+          complete: !hasMore,
+        });
+      }
     }
 
     return {
       items: loadedItems,
       nextOffset,
+      total: knownTotal,
       complete: true,
       error: null,
     };

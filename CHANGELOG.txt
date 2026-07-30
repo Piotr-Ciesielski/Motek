@@ -1,5 +1,11 @@
 Motek - log zmian
 
+Wersja 2.0.0-alpha.30 (w przygotowaniu) - stopniowe wyświetlanie katalogu
+- Pierwsza partia wzorów pojawia się od razu po pobraniu, bez czekania na cały katalog.
+- Kolejne strony są dołączane w tle bez duplikowania kart.
+- Podsumowanie pokazuje docelową liczbę rekordów i informuje o trwającym pobieraniu.
+- Dodano test kolejnych aktualizacji katalogu podczas pobierania stron.
+
 Wersja 2.0.0-alpha.29 (w przygotowaniu) - przejście od dopasowania do wzoru
 - Każda grupa wyników ma akcję „Zobacz w katalogu”.
 - Przejście otwiera katalog i zawęża go do wybranego wzoru.

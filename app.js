@@ -81,6 +81,7 @@ let pendingWriteCount = 0;
 let catalogPatterns = [];
 let catalogNextOffset = 0;
 let catalogComplete = false;
+let catalogTotal = 0;
 let yarnVersion = null;
 let onboardingDismissed = false;
 let yarnFormSequence = 0;
@@ -1074,12 +1075,14 @@ async function loadMatches() {
   return api("/api/matches");
 }
 
-async function loadPatternCatalog({ resume = false } = {}) {
+async function loadPatternCatalog({ resume = false, onPage = null } = {}) {
   return loadPaginatedItems(
     (offset) => api(`/api/patterns?limit=50&offset=${offset}`),
     {
       items: resume ? catalogPatterns : [],
       offset: resume ? catalogNextOffset : 0,
+      total: resume ? catalogTotal : 0,
+      onPage,
     }
   );
 }
@@ -1229,9 +1232,11 @@ function renderPatternCatalog() {
     });
   const visiblePatterns = matchingPatterns.slice(0, catalogVisibleLimit);
 
+  const totalCatalog = Math.max(catalogTotal, catalogPatterns.length);
   patternCatalogSummary.textContent =
     `Pokazano ${formatNumber(visiblePatterns.length)} z ${formatNumber(matchingPatterns.length)} pasujących wzorów. ` +
-    `Cały katalog: ${formatNumber(catalogPatterns.length)}.`;
+    `Cały katalog: ${formatNumber(totalCatalog)}.` +
+    (catalogComplete ? "" : " Pobieram kolejne wzory...");
   patternCatalog.replaceChildren();
   patternCatalogActions.hidden = matchingPatterns.length === 0;
   loadMorePatternsBtn.hidden = visiblePatterns.length >= matchingPatterns.length;
@@ -1339,9 +1344,20 @@ async function refreshPatternCatalog({ resume = false } = {}) {
     renderPatternCatalogLoading();
   }
   try {
-    const result = await loadPatternCatalog({ resume });
+    const result = await loadPatternCatalog({
+      resume,
+      onPage: (progress) => {
+        catalogPatterns = progress.items;
+        catalogNextOffset = progress.nextOffset;
+        catalogTotal = progress.total;
+        catalogComplete = progress.complete;
+        populatePatternMaterialFilter();
+        renderPatternCatalog();
+      },
+    });
     catalogPatterns = result.items;
     catalogNextOffset = result.nextOffset;
+    catalogTotal = result.total;
     catalogComplete = result.complete;
     populatePatternMaterialFilter();
     renderPatternCatalog();

@@ -123,3 +123,31 @@ test("nie przedstawia błędu pierwszej strony jako częściowego sukcesu", asyn
     /brak katalogu/
   );
 });
+
+test("udostępnia kolejne strony katalogu od razu po ich pobraniu", async () => {
+  const progress = [];
+  const result = await loadPaginatedItems(
+    async (offset) => ({
+      items: offset === 0 ? [{ id: 1 }, { id: 2 }] : [{ id: 3 }],
+      total: 3,
+      hasMore: offset === 0,
+    }),
+    {
+      onPage: (page) => progress.push(page),
+    },
+  );
+
+  assert.deepEqual(
+    progress.map((page) => ({
+      ids: page.items.map((item) => item.id),
+      total: page.total,
+      complete: page.complete,
+    })),
+    [
+      { ids: [1, 2], total: 3, complete: false },
+      { ids: [1, 2, 3], total: 3, complete: true },
+    ],
+  );
+  assert.deepEqual(result.items, [{ id: 1 }, { id: 2 }, { id: 3 }]);
+  assert.equal(result.total, 3);
+});

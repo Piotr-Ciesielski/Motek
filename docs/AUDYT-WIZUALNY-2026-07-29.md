@@ -367,6 +367,11 @@ Do chwili pobrania wszystkich stron danych widoczny jest wyłącznie tekst
 **Rekomendacja:** pokazać 3–6 szkieletów, renderować pierwszą partię od razu i
 dogrywać kolejne wyniki.
 
+**Stan po zmianie 2026-07-30:** katalog pokazuje sześć szkieletów podczas
+pierwszego odczytu, a po pobraniu pierwszej strony natychmiast udostępnia
+pierwsze karty. Pozostałe strony są dołączane w tle, a region katalogu zachowuje
+`aria-busy` do zakończenia całej operacji.
+
 ### UI-15 — Na małym ekranie pierwsza akcja jest poniżej załamania
 
 Przy 320×568 pierwszy ekran zajmuje niemal wyłącznie hero. Nie ma w nim

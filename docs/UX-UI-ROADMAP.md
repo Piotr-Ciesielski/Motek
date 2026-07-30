@@ -122,9 +122,16 @@
 - błąd pierwszej strony nadal jest pełnym błędem, a nie częściowym sukcesem;
 - potwierdzony zapis motka pozostaje sukcesem, nawet jeśli nie odświeży się podsumowanie.
 
+### Stopniowe ładowanie katalogu
+
+- szkielety kart znikają po pobraniu pierwszej strony danych;
+- pierwsze wzory są dostępne bez czekania na pozostałe strony;
+- kolejne strony aktualizują listę i filtry w tle;
+- podsumowanie pokazuje docelowy rozmiar katalogu oraz stan dalszego pobierania.
+
 ## Sprawdzenie
 
-- `npm run check` przechodzi: 34/34 testy;
+- `npm run check` przechodzi: 35/35 testów;
 - start redesignu frontu zapisano w commicie `2a0c94c` na branchu
   `feat/frontend-design-refresh`, a branch został wypchnięty na GitHub;
 - import katalogu demo został sprawdzony w trybie kontrolnym;
@@ -132,6 +139,8 @@
 - kolejne pakiety są sprawdzane interaktywnie w przeglądarce na desktopie i mobile.
 - techniczny test klawiatury potwierdził działanie skip linku i przejścia fokusu
   między głównymi ekranami; pełny odsłuch pozostaje do wykonania w NVDA lub VoiceOver.
+- test przeglądarkowy potwierdził widoczne karty już podczas pobierania oraz
+  zdjęcie stanu `aria-busy` po załadowaniu wszystkich 119 rekordów.
 
 ## Następne zadania UX/UI
 
