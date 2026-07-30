@@ -54,7 +54,7 @@ Rozszerzyć `expectedTypes` o wzory, które dziś błędnie pozostają w `other`
 
 ```js
 ["Na Pole Tee", "top"],
-["Black Lodge Socks wzór dziewiarski", "socks"],
+["Black Lodge Socks - wzór dziewiarski", "socks"],
 ["Autumn s Letter Cardigan by Amina Ali", "cardigan"],
 ["BABUSHKA SCARF", "shawl_scarf"],
 ["Bone", "vest"],

@@ -45,6 +45,11 @@ test("charakterystyczne wzory trafiają do właściwych kategorii", () => {
     ["Szal Queen of Spades Kokonki Pure", "shawl_scarf"],
     ["TEXTURE VEST hi UK-rm07er", "vest"],
     ["Tromsø Hoodie", "other"],
+    ["Na Pole Tee", "top"],
+    ["Black Lodge Socks - wzór dziewiarski", "socks"],
+    ["Autumn s Letter Cardigan by Amina Ali", "cardigan"],
+    ["BABUSHKA SCARF", "shawl_scarf"],
+    ["Bone", "vest"],
   ]);
 
   for (const [name, expectedType] of expectedTypes) {

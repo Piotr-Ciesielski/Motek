@@ -603,7 +603,7 @@
     {
       "name": "Bubble",
       "description": "Kardigan o wyrazistej fakturze tworzonej przez dekoracyjne bąbelki.",
-      "project_type": "other",
+      "project_type": "cardigan",
       "materials": [
         "moher",
         "jedwab"
@@ -1794,7 +1794,7 @@
     {
       "name": "Na Pole Tee",
       "description": "Koszulka z krótkim rękawem, okrągłym dekoltem i dekoracyjnym panelem warkoczowym.",
-      "project_type": "other",
+      "project_type": "top",
       "materials": [
         "bawełna",
         "bambus"
@@ -1867,7 +1867,7 @@
     {
       "name": "Lento",
       "description": "Prosty sweter raglanowy wykonywany od góry, z dwiema włóczkami przerabianymi razem.",
-      "project_type": "other",
+      "project_type": "sweater",
       "materials": [
         "wełna",
         "alpaka",
@@ -2114,7 +2114,7 @@
     {
       "name": "Mineral",
       "description": "Top z krótkim rękawem, teksturowanym wzorem i zaokrąglonym dołem.",
-      "project_type": "other",
+      "project_type": "top",
       "materials": [
         "bawełna"
       ],

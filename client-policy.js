@@ -16,6 +16,118 @@
     "weight",
   ];
 
+  const projectTypeLabels = {
+    socks: { card: "Skarpety", filter: "Skarpety" },
+    sweater: { card: "Sweter", filter: "Swetry" },
+    cardigan: { card: "Kardigan", filter: "Kardigany" },
+    top: { card: "Top lub bluzka", filter: "Topy i bluzki" },
+    shawl_scarf: { card: "Chusta lub szal", filter: "Chusty i szale" },
+    head_accessory: {
+      card: "Czapka, opaska lub komin",
+      filter: "Czapki, opaski i kominy",
+    },
+    gloves: { card: "Rękawiczki", filter: "Rękawiczki" },
+    vest: { card: "Kamizelka", filter: "Kamizelki" },
+    skirt_dress: {
+      card: "Spódnica lub sukienka",
+      filter: "Spódnice i sukienki",
+    },
+    blanket: { card: "Koc", filter: "Koce" },
+    other: { card: "Inny projekt", filter: "Inne" },
+  };
+
+  function getProjectTypeLabel(value) {
+    return (projectTypeLabels[value] || projectTypeLabels.other).card;
+  }
+
+  function getProjectTypeFilterLabel(value) {
+    return (projectTypeLabels[value] || projectTypeLabels.other).filter;
+  }
+
+  function matchesPatternFilters(pattern, filters = {}, ignoredFacet = null) {
+    const phrase = String(filters.phrase || "")
+      .trim()
+      .toLocaleLowerCase("pl");
+    const review = filters.review || "all";
+    const language = filters.language || "all";
+    const type = filters.type || "all";
+    const material = filters.material || "all";
+    const materials = Array.isArray(pattern?.materials) ? pattern.materials : [];
+    const searchable = [
+      pattern?.name,
+      pattern?.description,
+      getProjectTypeLabel(pattern?.projectType),
+      getProjectTypeFilterLabel(pattern?.projectType),
+      ...materials,
+    ]
+      .filter(Boolean)
+      .join(" ")
+      .toLocaleLowerCase("pl");
+
+    const matchesPhrase = !phrase || searchable.includes(phrase);
+    const matchesStatus =
+      review === "all"
+      || (review === "review" && pattern?.needsReview)
+      || (review === "verified" && !pattern?.needsReview);
+    const matchesLanguage =
+      language === "all" || pattern?.sourceLanguage === language;
+    const matchesType =
+      ignoredFacet === "type"
+      || type === "all"
+      || (pattern?.projectType || "other") === type;
+    const matchesMaterial =
+      ignoredFacet === "material"
+      || material === "all"
+      || materials.includes(material);
+
+    return (
+      matchesPhrase
+      && matchesStatus
+      && matchesLanguage
+      && matchesType
+      && matchesMaterial
+    );
+  }
+
+  function filterPatterns(patterns, filters = {}, ignoredFacet = null) {
+    return (Array.isArray(patterns) ? patterns : []).filter((pattern) =>
+      matchesPatternFilters(pattern, filters, ignoredFacet)
+    );
+  }
+
+  function buildPatternFacetCounts(patterns, filters = {}) {
+    const types = {};
+    const materials = {};
+
+    filterPatterns(patterns, filters, "type").forEach((pattern) => {
+      const type = pattern?.projectType || "other";
+      types[type] = (types[type] || 0) + 1;
+    });
+
+    filterPatterns(patterns, filters, "material").forEach((pattern) => {
+      const uniqueMaterials = new Set(
+        (Array.isArray(pattern?.materials) ? pattern.materials : [])
+          .filter(Boolean)
+      );
+      uniqueMaterials.forEach((material) => {
+        materials[material] = (materials[material] || 0) + 1;
+      });
+    });
+
+    return { types, materials };
+  }
+
+  function buildPatternFacetOptions(values, counts, selectedValue) {
+    return values.map((value) => {
+      const count = counts[value] || 0;
+      return {
+        value,
+        count,
+        disabled: count === 0 && value !== selectedValue,
+      };
+    });
+  }
+
   function shouldRetryRead({
     method,
     status = null,
@@ -129,11 +241,17 @@
   }
 
   return {
+    buildPatternFacetCounts,
+    buildPatternFacetOptions,
+    filterPatterns,
     findNewlySavedYarn,
     formatPatternYarnFact,
+    getProjectTypeFilterLabel,
+    getProjectTypeLabel,
     getExistingYarnState,
     isDeleteConfirmed,
     loadPaginatedItems,
+    matchesPatternFilters,
     shouldRetryRead,
     yarnsHaveSameValues,
   };

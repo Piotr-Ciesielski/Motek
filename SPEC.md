@@ -2,7 +2,7 @@
 
 ## 1. Status projektu
 
-- bieżąca wersja rozwojowa: `2.0.0-alpha.33`
+- bieżąca wersja rozwojowa: `2.0.0-alpha.34`
 - ostatnia wersja wydana: `1.0.2`
 - aktualne źródło danych: Supabase
 - lokalny SQLite: usunięty z aplikacji
@@ -21,7 +21,7 @@ Użytkownik może:
 - założyć konto i zalogować się,
 - prowadzić prywatny magazyn motków,
 - przeglądać katalog wzorów,
-- wyszukiwać wzory i filtrować je według statusu weryfikacji,
+- wyszukiwać wzory i łączyć filtry statusu, języka, typu projektu oraz materiału,
 - sprawdzać dopasowania wyłącznie dla wzorów z kompletnymi wymaganiami.
 
 Motek nie jest sklepem ani pełnym programem do projektowania dzianin. Jego
@@ -251,6 +251,9 @@ Zrealizowano:
 
 - katalog wzorów w Supabase,
 - zweryfikowane materiały oraz parametry motków dla 103 wzorów źródłowych,
+- dynamiczne filtry katalogu: wszystkie aktywne kryteria muszą pasować, typy
+  i materiały pokazują aktualne liczniki, a wzór wielomateriałowy jest dostępny
+  pod każdym swoim materiałem,
 - Supabase Auth i profile użytkowników,
 - prywatny magazyn włóczek z RLS,
 - zapis i usuwanie włóczek przez aplikację,

@@ -44,6 +44,19 @@ def load_json(path: Path):
     return json.loads(path.read_text(encoding="utf-8"))
 
 
+def resolve_project_type(candidate: dict, override: dict) -> str:
+    explicit_type = override.get("project_type")
+    if explicit_type:
+        return explicit_type
+
+    final_name = override.get("name", candidate.get("name", ""))
+    final_description = override.get(
+        "description",
+        candidate.get("description", ""),
+    )
+    return infer_project_type(final_name, final_description)[0]
+
+
 def validate_record(record: dict) -> list[str]:
     errors = []
     source = record.get("source_filename", "<brak nazwy pliku>")
@@ -185,12 +198,10 @@ def main() -> None:
             )
             continue
 
-        merged = {**candidate, **overrides.get(source_filename, {})}
+        override = overrides.get(source_filename, {})
+        merged = {**candidate, **override}
         merged["source_filename"] = source_filename
-        merged["project_type"] = merged.get("project_type") or infer_project_type(
-            f"{source_filename} {merged.get('name', '')}",
-            merged.get("description", ""),
-        )[0]
+        merged["project_type"] = resolve_project_type(candidate, override)
 
         record = {
             field: merged.get(

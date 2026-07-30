@@ -1,5 +1,15 @@
 Motek - log zmian
 
+Wersja 2.0.0-alpha.34 (w przygotowaniu) - dynamiczne filtry katalogu
+
+- Typ projektu, materiał, język, status i wyszukiwanie działają razem jako wspólne kryteria.
+- Typ projektu i materiał wzajemnie zawężają dostępne opcje.
+- Opcje typów i materiałów pokazują aktualną liczbę pasujących wzorów.
+- Niemożliwe opcje są wyszarzone, a aktywny wybór pozostaje widoczny.
+- Wzór z kilkoma materiałami można odnaleźć pod każdym z nich bez duplikowania wyników.
+- Kategorie są ponownie wyliczane z ostatecznej nazwy i opisu, z pierwszeństwem ręcznych poprawek.
+- Poprawiono kategorie czterech wzorów: Bubble, Na Pole Tee, Lento i Mineral.
+
 Wersja 2.0.0-alpha.33 (w przygotowaniu) - zweryfikowane dane włóczek we wzorach
 
 - Ponownie przeanalizowano wszystkie 116 plików PDF, w tym skany i dane podane nie wprost.
