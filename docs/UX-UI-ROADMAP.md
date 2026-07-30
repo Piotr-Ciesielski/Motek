@@ -40,7 +40,9 @@
 - pola formularzy mają stabilne identyfikatory i powiązane etykiety;
 - pola Auth są powiązane z regionem komunikatów przez `aria-describedby`;
 - błędy Auth są oznaczane jako `alert` i otrzymują fokus;
-- dynamiczne pola włóczek również dostają identyfikatory i etykiety.
+- dynamiczne pola włóczek również dostają identyfikatory i etykiety;
+- główne widoki mają własne nazwy w drzewie dostępności;
+- po zmianie widoku fokus klawiatury przechodzi na jego widoczny nagłówek.
 
 ### Drobne akcje i komunikaty
 
@@ -126,6 +128,8 @@
 - import katalogu demo został sprawdzony w trybie kontrolnym;
 - Supabase zawiera 119 rekordów, w tym 3 wzory demo;
 - kolejne pakiety są sprawdzane interaktywnie w przeglądarce na desktopie i mobile.
+- techniczny test klawiatury potwierdził działanie skip linku i przejścia fokusu
+  między głównymi ekranami; pełny odsłuch pozostaje do wykonania w NVDA lub VoiceOver.
 
 ## Następne zadania UX/UI
 
@@ -136,7 +140,7 @@
    - test ręczny na desktopie i urządzeniach mobilnych.
 
 2. **Model stanów interfejsu**
-   - ręczny test czytnikiem ekranu.
+   - ręczny odsłuch pełnego przepływu w NVDA lub VoiceOver.
 
 3. **Katalog wzorów**
    - serwerowe filtrowanie i paginacja przed zwiększeniem katalogu;

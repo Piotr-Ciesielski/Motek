@@ -46,7 +46,7 @@
     <p id="networkStatus" class="network-status" role="status" aria-live="polite" hidden></p>
 
     <main id="main-content" class="shell" tabindex="-1">
-      <section id="accountView" class="app-view account-view" data-view="account">
+      <section id="accountView" class="app-view account-view" data-view="account" aria-labelledby="authTitle">
       <section class="auth-layout">
         <aside class="auth-visual" aria-labelledby="heroTitle">
           <p class="auth-visual__brand">Motek</p>
@@ -153,11 +153,11 @@
       </section>
       </section>
 
-      <section id="inventoryView" class="app-view" data-view="inventory" hidden>
+      <section id="inventoryView" class="app-view" data-view="inventory" aria-labelledby="inventoryTitle" hidden>
       <div class="page-heading">
         <div>
           <p class="eyebrow">Twoja pracownia</p>
-          <h1>Magazyn włóczek</h1>
+          <h1 id="inventoryTitle">Magazyn włóczek</h1>
           <p>Zobacz swój zapas, uzupełnij go i wybierz włóczki do kolejnego projektu.</p>
         </div>
         <button id="inventoryMatchBtn" class="button" type="button">Dobierz wzór</button>
@@ -196,11 +196,11 @@
       </section>
       </section>
 
-      <section id="matchesView" class="app-view" data-view="matches" hidden>
+      <section id="matchesView" class="app-view" data-view="matches" aria-labelledby="matchesPageTitle" hidden>
         <div class="page-heading">
           <div>
             <p class="eyebrow">Pomysły z Twojego zapasu</p>
-            <h1>Dopasowanie</h1>
+            <h1 id="matchesPageTitle">Dopasowanie</h1>
             <p>Najpierw pokazujemy projekty, które możesz wykonać z zapisanych włóczek.</p>
           </div>
           <button id="backToInventoryBtn" class="button button--ghost" type="button">Wróć do magazynu</button>
@@ -220,12 +220,12 @@
         </article>
       </section>
 
-      <section id="catalogView" class="app-view" data-view="catalog" hidden>
+      <section id="catalogView" class="app-view" data-view="catalog" aria-labelledby="catalogTitle" hidden>
       <section class="panel catalog-panel">
         <div class="catalog-header">
           <div>
             <p class="eyebrow">Biblioteka inspiracji</p>
-            <h1>Katalog wzorów</h1>
+            <h1 id="catalogTitle">Katalog wzorów</h1>
             <p>
               Przeglądaj opisane wzory. Informacja
               „do sprawdzenia” oznacza, że część parametrów nie występowała

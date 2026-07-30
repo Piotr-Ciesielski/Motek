@@ -1,5 +1,11 @@
 Motek - log zmian
 
+Wersja 2.0.0-alpha.28 (w przygotowaniu) - pewna nawigacja klawiaturą
+- Każdy główny ekran ma jednoznaczną nazwę w strukturze dostępności.
+- Po zmianie ekranu fokus przechodzi na jego widoczny nagłówek.
+- Obsłużono również ekran konta, którego nagłówek zmienia się po zalogowaniu.
+- Skip link nadal prowadzi bezpośrednio do głównej treści.
+
 Wersja 2.0.0-alpha.27 (w przygotowaniu) - częściowy sukces i wznawianie katalogu
 - Katalog zachowuje poprawnie pobrane strony, jeśli dalsza część chwilowo nie odpowiada.
 - Widoczny komunikat wskazuje liczbę dostępnych wzorów i pozwala dokończyć pobieranie.

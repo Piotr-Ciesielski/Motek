@@ -95,6 +95,21 @@ const numberFormatter = new Intl.NumberFormat("pl-PL", {
   useGrouping: "always",
 });
 
+function focusViewHeading(target) {
+  const labelledBy = target.getAttribute("aria-labelledby");
+  const labelledHeading = labelledBy ? document.getElementById(labelledBy) : null;
+  const heading =
+    labelledHeading && target.contains(labelledHeading) && labelledHeading.getClientRects().length
+      ? labelledHeading
+      : [...target.querySelectorAll("h1, h2")].find(
+          (candidate) => candidate.getClientRects().length,
+        );
+
+  if (!heading) return;
+  heading.setAttribute("tabindex", "-1");
+  heading.focus({ preventScroll: true });
+}
+
 function setActiveView(requestedView, { focus = true } = {}) {
   const protectedViews = new Set(["inventory", "matches"]);
   const view = !isAuthenticated && protectedViews.has(requestedView)
@@ -116,7 +131,7 @@ function setActiveView(requestedView, { focus = true } = {}) {
 
   if (focus) {
     window.scrollTo({ top: 0, behavior: "smooth" });
-    target.querySelector("h1, h2")?.focus({ preventScroll: true });
+    focusViewHeading(target);
   }
 }
 
