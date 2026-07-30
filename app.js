@@ -469,6 +469,17 @@ document.querySelectorAll("label").forEach((label) => {
   if (field?.id) label.htmlFor = field.id;
 });
 
+document.querySelectorAll("[data-password-toggle]").forEach((button) => {
+  button.addEventListener("click", () => {
+    const field = document.getElementById(button.dataset.passwordToggle);
+    const showing = field.type === "text";
+    field.type = showing ? "password" : "text";
+    button.textContent = showing ? "Pokaż" : "Ukryj";
+    button.setAttribute("aria-pressed", String(!showing));
+    button.setAttribute("aria-label", showing ? "Pokaż hasło" : "Ukryj hasło");
+  });
+});
+
 async function loadYarns() {
   if (!isAuthenticated) return [];
   return api("/api/yarns");

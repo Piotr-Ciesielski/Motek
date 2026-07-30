@@ -77,10 +77,13 @@
               E-mail
               <input id="login-email" name="email" type="email" maxlength="254" autocomplete="email" required aria-describedby="authMessage" />
             </label>
-            <label>
-              Hasło
-              <input id="login-password" name="password" type="password" minlength="8" maxlength="256" autocomplete="current-password" required aria-describedby="authMessage" />
-            </label>
+            <div class="auth-field">
+              <label for="login-password">Hasło</label>
+              <span class="password-field">
+                <input id="login-password" name="password" type="password" minlength="8" maxlength="256" autocomplete="current-password" required aria-describedby="authMessage" />
+                <button class="password-toggle" type="button" data-password-toggle="login-password" aria-controls="login-password" aria-pressed="false" aria-label="Pokaż hasło">Pokaż</button>
+              </span>
+            </div>
             <button class="button" type="submit">Zaloguj się</button>
             <button id="forgotPasswordBtn" class="link-button" type="button">Nie pamiętasz hasła?</button>
           </form>
@@ -100,11 +103,14 @@
               Imię i nazwisko
               <input id="register-full-name" name="full_name" type="text" maxlength="200" autocomplete="name" aria-describedby="authMessage" />
             </label>
-            <label>
-              Hasło
-              <input id="register-password" name="password" type="password" minlength="8" maxlength="256" autocomplete="new-password" required aria-describedby="registerPasswordHint authMessage" />
+            <div class="auth-field">
+              <label for="register-password">Hasło</label>
+              <span class="password-field">
+                <input id="register-password" name="password" type="password" minlength="8" maxlength="256" autocomplete="new-password" required aria-describedby="registerPasswordHint authMessage" />
+                <button class="password-toggle" type="button" data-password-toggle="register-password" aria-controls="register-password" aria-pressed="false" aria-label="Pokaż hasło">Pokaż</button>
+              </span>
               <span id="registerPasswordHint" class="field-hint">Minimum 8 znaków, w tym mała i wielka litera, cyfra oraz znak specjalny.</span>
-            </label>
+            </div>
             <button class="button button--secondary" type="submit">Załóż konto</button>
           </form>
         </div>
@@ -125,10 +131,14 @@
         <form id="passwordUpdateForm" class="auth-form auth-form--recovery" hidden>
           <h3>Ustaw nowe hasło</h3>
           <p>Link jest ważny przez ograniczony czas. Ustaw nowe hasło, a następnie zaloguj się ponownie.</p>
-          <label>
-            Nowe hasło
-            <input id="update-password" name="password" type="password" minlength="8" maxlength="256" autocomplete="new-password" required aria-describedby="authMessage" />
-          </label>
+          <div class="auth-field">
+            <label for="update-password">Nowe hasło</label>
+            <span class="password-field">
+              <input id="update-password" name="password" type="password" minlength="8" maxlength="256" autocomplete="new-password" required aria-describedby="updatePasswordHint authMessage" />
+              <button class="password-toggle" type="button" data-password-toggle="update-password" aria-controls="update-password" aria-pressed="false" aria-label="Pokaż hasło">Pokaż</button>
+            </span>
+            <span id="updatePasswordHint" class="field-hint">Minimum 8 znaków, w tym mała i wielka litera, cyfra oraz znak specjalny.</span>
+          </div>
           <button class="button" type="submit">Zmień hasło</button>
         </form>
 

@@ -5,6 +5,8 @@
 ### Konto i pierwszy start
 
 - wdrożono odzyskiwanie hasła;
+- dodano możliwość pokazania i ponownego ukrycia hasła;
+- wymagania hasła są widoczne przy rejestracji i ustawianiu nowego hasła;
 - dodano onboarding pustego magazynu;
 - dodano checklistę pierwszych trzech kroków;
 - dodano empty state dla gościa i pustego magazynu;
