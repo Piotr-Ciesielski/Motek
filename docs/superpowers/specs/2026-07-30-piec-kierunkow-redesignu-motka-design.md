@@ -184,3 +184,14 @@ Każdy wariant przejdzie:
 - Wszystkie warianty działają na desktopie i telefonie.
 - Produkcyjny Motek i dane użytkowników pozostają niezmienione.
 - Pięć ponumerowanych wersji jest otwartych w osobnych kartach Chrome.
+
+## Decyzja po przeglądzie prototypów — 2026-07-30
+
+Do dalszego rozwoju wybrane zostały dwa kierunki:
+
+1. **4 — Koloroterapia** (`color`)
+2. **5 — Nocny Motek** (`night`)
+
+Kierunki 1–3 pozostają materiałem referencyjnym. Kolejne prace powinny
+koncentrować się na rozwijaniu i porównywaniu kierunków 4 i 5. Na tym etapie
+nie wskazano jednego ostatecznego zwycięzcy.
