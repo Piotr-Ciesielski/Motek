@@ -47,6 +47,12 @@
 - nowy, niezapisany formularz można zamknąć akcją `Anuluj dodawanie`;
 - anulowanie nowego formularza nie jest przedstawiane jako usunięcie danych ani zapis magazynu.
 
+### Responsywność danych
+
+- liczby w podsumowaniach i kartach korzystają z polskiego formatowania;
+- długie dane profilu oraz nazwy wzorów bezpiecznie zawijają się lub są skracane z dostępem do pełnej treści;
+- teksty Unicode i RTL zachowują własny kierunek pisma w kluczowych etykietach.
+
 ## Sprawdzenie
 
 - `npm run check` przechodzi: 29/29 testów;

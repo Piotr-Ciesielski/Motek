@@ -59,6 +59,10 @@ let yarnFormSequence = 0;
 let activeView = "account";
 let initialSessionResolved = false;
 let catalogVisibleLimit = 12;
+const numberFormatter = new Intl.NumberFormat("pl-PL", {
+  maximumFractionDigits: 2,
+  useGrouping: "always",
+});
 
 function setActiveView(requestedView, { focus = true } = {}) {
   const protectedViews = new Set(["inventory", "matches"]);
@@ -169,6 +173,11 @@ function createRequirement(text) {
   return item;
 }
 
+function formatNumber(value) {
+  const number = Number(value);
+  return Number.isFinite(number) ? numberFormatter.format(number) : "0";
+}
+
 function groupMatchesByPattern(matches) {
   const groups = new Map();
 
@@ -207,7 +216,7 @@ function createMatchVariant(item, open = false) {
   const meta = document.createElement("p");
   meta.className = "match-variant__meta";
   meta.textContent =
-    `${formatSkeinCount(item.pattern.yarnsNeeded)}, min. ${item.pattern.metersNeeded} m, ${item.pattern.gramsNeeded} g`;
+    `${formatSkeinCount(item.pattern.yarnsNeeded)}, min. ${formatNumber(item.pattern.metersNeeded)} m, ${formatNumber(item.pattern.gramsNeeded)} g`;
 
   const requirements = document.createElement("ul");
   requirements.className = "requirements";
@@ -277,8 +286,9 @@ function updateYarnCardSummary(card) {
   const swatch = card.querySelector(".yarn-card__swatch");
 
   name.textContent = yarn.name || "Nowy motek";
+  name.title = yarn.name || "Nowy motek";
   details.textContent = yarn.color
-    ? `${yarn.color} · ${yarn.material} · ${yarn.weightClass} · ${yarn.length} m · ${yarn.weight} g`
+    ? `${yarn.color} · ${yarn.material} · ${yarn.weightClass} · ${formatNumber(yarn.length)} m · ${formatNumber(yarn.weight)} g`
     : "Uzupełnij dane włóczki";
   swatch.title = yarn.color ? `Kolor: ${yarn.color}` : "Nowa włóczka";
 }
@@ -601,29 +611,31 @@ async function loadPatternCatalog() {
 function formatRatio(value) {
   const ratio = Number(value);
   return Number.isFinite(ratio) && ratio > 0
-    ? `${ratio.toLocaleString("pl-PL")} m/100 g`
+    ? `${formatNumber(ratio)} m/100 g`
     : "brak danych";
 }
 
 function formatSkeinCount(value) {
   const count = Number(value) || 0;
+  const formattedCount = formatNumber(count);
   const lastTwo = count % 100;
   const last = count % 10;
   if (count === 1) return "1 motek";
   if (last >= 2 && last <= 4 && !(lastTwo >= 12 && lastTwo <= 14)) {
-    return `${count} motki`;
+    return `${formattedCount} motki`;
   }
-  return `${count} motków`;
+  return `${formattedCount} motków`;
 }
 
 function formatVariantCount(value) {
+  const formattedValue = formatNumber(value);
   const lastTwo = value % 100;
   const last = value % 10;
   if (value === 1) return "1 pasujący rozmiar";
   if (last >= 2 && last <= 4 && !(lastTwo >= 12 && lastTwo <= 14)) {
-    return `${value} pasujące rozmiary`;
+    return `${formattedValue} pasujące rozmiary`;
   }
-  return `${value} pasujących rozmiarów`;
+  return `${formattedValue} pasujących rozmiarów`;
 }
 
 function formatRequirement(requirement, index) {
@@ -727,8 +739,8 @@ function renderPatternCatalog() {
   const visiblePatterns = matchingPatterns.slice(0, catalogVisibleLimit);
 
   patternCatalogSummary.textContent =
-    `Pokazano ${visiblePatterns.length} z ${matchingPatterns.length} pasujących wzorów. ` +
-    `Cały katalog: ${catalogPatterns.length}.`;
+    `Pokazano ${formatNumber(visiblePatterns.length)} z ${formatNumber(matchingPatterns.length)} pasujących wzorów. ` +
+    `Cały katalog: ${formatNumber(catalogPatterns.length)}.`;
   patternCatalog.replaceChildren();
   patternCatalogActions.hidden = matchingPatterns.length === 0;
   loadMorePatternsBtn.hidden = visiblePatterns.length >= matchingPatterns.length;
@@ -834,6 +846,7 @@ async function renderResults() {
     const variantCount = group.variants.length;
     const bestScore = Math.max(...group.variants.map((item) => item.total));
     card.querySelector("h3").textContent = group.name;
+    card.querySelector("h3").title = group.name;
     card.querySelector(".result-card__meta").textContent = formatVariantCount(variantCount);
     card.querySelector(".result-card__desc").textContent = group.description;
     card.querySelector(".score-pill").textContent = `Najlepiej ${bestScore}%`;
@@ -858,11 +871,11 @@ async function renderSummary() {
   const storageText = "Zapisane bezpiecznie na Twoim koncie.";
 
   const yarnCount = document.createElement("strong");
-  yarnCount.textContent = String(yarns.length);
+  yarnCount.textContent = formatNumber(yarns.length);
   const length = document.createElement("strong");
-  length.textContent = `${totalLength} m`;
+  length.textContent = `${formatNumber(totalLength)} m`;
   const weight = document.createElement("strong");
-  weight.textContent = `${totalWeight} g`;
+  weight.textContent = `${formatNumber(totalWeight)} g`;
 
   summary.replaceChildren(
     yarnCount,
@@ -975,7 +988,9 @@ function renderAuthState(payload) {
   const profile = payload.profile || {};
   const login = profile.login || payload.user.metadata?.login || payload.user.email;
   authUser.textContent = `Zalogowano jako ${login}`;
+  authUser.title = login;
   headerUser.textContent = login;
+  headerUser.title = login;
   headerUser.hidden = false;
   authProfileSummary.textContent = profile.full_name
     ? `${profile.full_name} (${profile.email || payload.user.email})`

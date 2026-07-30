@@ -132,6 +132,7 @@ body {
 }
 
 .header-user {
+  min-width: 0;
   max-width: 20ch;
   overflow: hidden;
   color: var(--accent);
@@ -512,13 +513,26 @@ h1 {
   gap: 14px;
 }
 
+.auth-logged-in > * {
+  min-width: 0;
+}
+
 .auth-user {
+  min-width: 0;
+  max-width: 100%;
   padding: 8px 12px;
   border-radius: 999px;
   background: #e0eee7;
   color: var(--good);
   font-size: 0.86rem;
   font-weight: 700;
+  overflow-wrap: anywhere;
+  unicode-bidi: plaintext;
+}
+
+#authProfileSummary {
+  overflow-wrap: anywhere;
+  unicode-bidi: plaintext;
 }
 
 .auth-message {
@@ -620,6 +634,7 @@ h1 {
   font-size: 1.15rem;
   text-overflow: ellipsis;
   white-space: nowrap;
+  unicode-bidi: plaintext;
 }
 
 .yarn-card__identity p {
@@ -932,7 +947,15 @@ input, select {
 .pattern-card__top h3 {
   font-size: 1.35rem;
   overflow-wrap: anywhere;
+  unicode-bidi: plaintext;
   word-break: break-word;
+}
+
+.result-card h3,
+.match-variant summary strong {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  unicode-bidi: plaintext;
 }
 
 .pattern-card__kicker {
