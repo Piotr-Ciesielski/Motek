@@ -473,6 +473,9 @@ test("serwer Motek działa bezpiecznie", async (t) => {
       assert.equal(userAMatches.status, 200);
       assert.equal(matches.length, 1);
       assert.equal(matches[0].pattern.name, "Testowy wzór Supabase — M");
+      assert.equal(matches[0].pattern.baseName, "Testowy wzór Supabase");
+      assert.equal(matches[0].pattern.variantLabel, "M");
+      assert.equal(matches[0].pattern.patternId, 21);
       assert.equal(matches[0].total, 100);
 
       const userBList = await fetch(`${baseUrl}/api/yarns`, { headers: { Cookie: userBCookies } });

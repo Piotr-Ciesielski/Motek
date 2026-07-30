@@ -1,5 +1,11 @@
 Motek - log zmian
 
+Wersja 2.0.0-alpha.16 (w przygotowaniu) - grupowanie wyników dopasowania
+- Połączono pasujące rozmiary tego samego wzoru w jedną kartę.
+- Najlepszy wariant jest rozwinięty od razu, a pozostałe można otworzyć osobno.
+- Każdy wariant zachowuje własną ocenę dopasowania i wymagania włóczki.
+- Grupowanie korzysta ze stabilnego identyfikatora wzoru zamiast podobieństwa nazw.
+
 Wersja 2.0.0-alpha.15 (w przygotowaniu) - sortowanie i ładowanie katalogu
 - Dodano sortowanie polecane oraz alfabetyczne A–Z i Z–A.
 - Podczas pobierania katalog pokazuje sześć kart-szkieletów.

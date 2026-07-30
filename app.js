@@ -169,6 +169,58 @@ function createRequirement(text) {
   return item;
 }
 
+function groupMatchesByPattern(matches) {
+  const groups = new Map();
+
+  matches.forEach((item) => {
+    const variantLabel = item.pattern.variantLabel || item.pattern.label || "";
+    const key = item.pattern.patternId || String(item.pattern.id).split(":")[0];
+    const fallbackName = variantLabel
+      ? item.pattern.name.replace(` — ${variantLabel}`, "")
+      : item.pattern.name;
+    if (!groups.has(key)) {
+      groups.set(key, {
+        name: item.pattern.baseName || fallbackName,
+        description: item.pattern.description,
+        variants: [],
+      });
+    }
+    groups.get(key).variants.push(item);
+  });
+
+  return [...groups.values()];
+}
+
+function createMatchVariant(item, open = false) {
+  const details = document.createElement("details");
+  details.className = "match-variant";
+  details.open = open;
+
+  const header = document.createElement("summary");
+  const label = document.createElement("strong");
+  const score = document.createElement("span");
+  label.textContent = item.pattern.variantLabel || item.pattern.label || item.pattern.name;
+  score.className = "match-variant__score";
+  score.textContent = `${item.total}%`;
+  header.append(label, score);
+
+  const meta = document.createElement("p");
+  meta.className = "match-variant__meta";
+  meta.textContent =
+    `${formatSkeinCount(item.pattern.yarnsNeeded)}, min. ${item.pattern.metersNeeded} m, ${item.pattern.gramsNeeded} g`;
+
+  const requirements = document.createElement("ul");
+  requirements.className = "requirements";
+  requirements.replaceChildren(
+    createRequirement(`Materiały: ${item.pattern.materials.join(", ")}`),
+    createRequirement(`Grubości: ${item.pattern.weightClasses.join(", ")}`),
+    createRequirement(`Pasujące włóczki w Twoim zestawie: ${item.matchedYarns}`)
+  );
+
+  details.append(header, meta, requirements);
+  return details;
+}
+
 function scheduleAutosave() {
   clearTimeout(autosaveTimer);
   autosaveTimer = setTimeout(() => {
@@ -544,6 +596,16 @@ function formatSkeinCount(value) {
   return `${count} motków`;
 }
 
+function formatVariantCount(value) {
+  const lastTwo = value % 100;
+  const last = value % 10;
+  if (value === 1) return "1 pasujący rozmiar";
+  if (last >= 2 && last <= 4 && !(lastTwo >= 12 && lastTwo <= 14)) {
+    return `${value} pasujące rozmiary`;
+  }
+  return `${value} pasujących rozmiarów`;
+}
+
 function formatRequirement(requirement, index) {
   const name = requirement.yarn_name || `Włóczka ${index + 1}`;
   const role = requirement.option
@@ -747,19 +809,18 @@ async function renderResults() {
     results.appendChild(notice);
   }
 
-  matches.forEach((item) => {
+  groupMatchesByPattern(matches).forEach((group) => {
     const card = resultTemplate.content.firstElementChild.cloneNode(true);
-    card.querySelector("h3").textContent = item.pattern.name;
-    card.querySelector(".result-card__meta").textContent =
-      `${formatSkeinCount(item.pattern.yarnsNeeded)}, min. ${item.pattern.metersNeeded} m, ${item.pattern.gramsNeeded} g`;
-    card.querySelector(".result-card__desc").textContent = item.pattern.description;
-    card.querySelector(".score-pill").textContent = `Dopasowanie ${item.total}%`;
+    const variantCount = group.variants.length;
+    const bestScore = Math.max(...group.variants.map((item) => item.total));
+    card.querySelector("h3").textContent = group.name;
+    card.querySelector(".result-card__meta").textContent = formatVariantCount(variantCount);
+    card.querySelector(".result-card__desc").textContent = group.description;
+    card.querySelector(".score-pill").textContent = `Najlepiej ${bestScore}%`;
     card
-      .querySelector(".requirements")
+      .querySelector(".match-variants")
       .replaceChildren(
-        createRequirement(`Materiały: ${item.pattern.materials.join(", ")}`),
-        createRequirement(`Grubości: ${item.pattern.weightClasses.join(", ")}`),
-        createRequirement(`Pasujące włóczki w Twoim zestawie: ${item.matchedYarns}`)
+        ...group.variants.map((item, index) => createMatchVariant(item, index === 0))
       );
     results.appendChild(card);
   });
