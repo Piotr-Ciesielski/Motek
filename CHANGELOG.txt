@@ -1,5 +1,12 @@
 Motek - log zmian
 
+Wersja 2.0.0-alpha.15 (w przygotowaniu) - sortowanie i ładowanie katalogu
+- Dodano sortowanie polecane oraz alfabetyczne A–Z i Z–A.
+- Podczas pobierania katalog pokazuje sześć kart-szkieletów.
+- Animacja szkieletów respektuje systemowe ograniczenie ruchu.
+- Filtry wykorzystują pełną szerokość katalogu i nie są ściskane na desktopie.
+- Na telefonie wszystkie kontrolki katalogu układają się w jedną kolumnę.
+
 Wersja 2.0.0-alpha.14 (w przygotowaniu) - filtry i szczegóły wzorów
 - Dodano łączone filtrowanie katalogu według języka i materiału.
 - Lista materiałów jest tworzona dynamicznie z aktualnych danych katalogu.

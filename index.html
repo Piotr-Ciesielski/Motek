@@ -253,6 +253,14 @@
                 <option value="all">Wszystkie materiały</option>
               </select>
             </label>
+            <label>
+              Sortowanie
+              <select id="patternSort">
+                <option value="recommended">Polecane</option>
+                <option value="name-asc">Nazwa A–Z</option>
+                <option value="name-desc">Nazwa Z–A</option>
+              </select>
+            </label>
           </div>
         </div>
         <div id="patternCatalogSummary" class="catalog-summary" aria-live="polite"></div>
@@ -375,6 +383,16 @@
           </div>
         </details>
       </article>
+    </template>
+
+    <template id="patternSkeletonTemplate">
+      <div class="pattern-card pattern-card--skeleton" aria-hidden="true">
+        <span class="skeleton-line skeleton-line--short"></span>
+        <span class="skeleton-line skeleton-line--title"></span>
+        <span class="skeleton-line"></span>
+        <span class="skeleton-line"></span>
+        <span class="skeleton-line skeleton-line--medium"></span>
+      </div>
     </template>
 
     <script src="app.js"></script>

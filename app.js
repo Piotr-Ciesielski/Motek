@@ -1,5 +1,6 @@
 const yarnTemplate = document.getElementById("yarnTemplate");
 const resultTemplate = document.getElementById("resultTemplate");
+const patternSkeletonTemplate = document.getElementById("patternSkeletonTemplate");
 const yarnList = document.getElementById("yarnList");
 const results = document.getElementById("results");
 const summary = document.getElementById("summary");
@@ -11,6 +12,7 @@ const patternSearch = document.getElementById("patternSearch");
 const patternReviewFilter = document.getElementById("patternReviewFilter");
 const patternLanguageFilter = document.getElementById("patternLanguageFilter");
 const patternMaterialFilter = document.getElementById("patternMaterialFilter");
+const patternSort = document.getElementById("patternSort");
 const patternCatalogSummary = document.getElementById("patternCatalogSummary");
 const patternCatalog = document.getElementById("patternCatalog");
 const patternCatalogActions = document.getElementById("patternCatalogActions");
@@ -607,6 +609,7 @@ function renderPatternCatalog() {
   const reviewFilter = patternReviewFilter.value;
   const languageFilter = patternLanguageFilter.value;
   const materialFilter = patternMaterialFilter.value;
+  const sortMode = patternSort.value;
   const matchingPatterns = catalogPatterns
     .filter((pattern) => {
       const searchable = [
@@ -630,11 +633,14 @@ function renderPatternCatalog() {
       return matchesPhrase && matchesStatus && matchesLanguage && matchesMaterial;
     })
     .sort((left, right) => {
-      const statusOrder = Number(left.needsReview) - Number(right.needsReview);
-      return statusOrder || formatPatternName(left.name).localeCompare(
+      const nameOrder = formatPatternName(left.name).localeCompare(
         formatPatternName(right.name),
         "pl"
       );
+      if (sortMode === "name-asc") return nameOrder;
+      if (sortMode === "name-desc") return -nameOrder;
+      const statusOrder = Number(left.needsReview) - Number(right.needsReview);
+      return statusOrder || nameOrder;
     });
   const visiblePatterns = matchingPatterns.slice(0, catalogVisibleLimit);
 
@@ -693,10 +699,18 @@ function renderPatternCatalog() {
   });
 }
 
-async function refreshPatternCatalog() {
-  showMessage(patternCatalog, "Pobieram wzory z bazy...");
+function renderPatternCatalogLoading() {
+  const skeletons = Array.from({ length: 6 }, () =>
+    patternSkeletonTemplate.content.firstElementChild.cloneNode(true)
+  );
+  patternCatalogSummary.textContent = "Pobieram i porządkuję wzory...";
+  patternCatalog.replaceChildren(...skeletons);
   patternCatalog.setAttribute("aria-busy", "true");
   patternCatalogActions.hidden = true;
+}
+
+async function refreshPatternCatalog() {
+  renderPatternCatalogLoading();
   try {
     catalogPatterns = await loadPatternCatalog();
     populatePatternMaterialFilter();
@@ -1100,6 +1114,7 @@ patternSearch.addEventListener("input", resetPatternCatalogView);
 patternReviewFilter.addEventListener("change", resetPatternCatalogView);
 patternLanguageFilter.addEventListener("change", resetPatternCatalogView);
 patternMaterialFilter.addEventListener("change", resetPatternCatalogView);
+patternSort.addEventListener("change", resetPatternCatalogView);
 loadMorePatternsBtn.addEventListener("click", () => {
   catalogVisibleLimit += 12;
   renderPatternCatalog();

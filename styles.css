@@ -753,7 +753,7 @@ input, select {
 
 .catalog-header {
   display: grid;
-  grid-template-columns: minmax(0, 1.2fr) minmax(320px, 0.8fr);
+  grid-template-columns: 1fr;
   gap: 28px;
   align-items: end;
   margin-bottom: 18px;
@@ -766,7 +766,7 @@ input, select {
 
 .catalog-controls {
   display: grid;
-  grid-template-columns: minmax(180px, 1.3fr) repeat(3, minmax(130px, 0.75fr));
+  grid-template-columns: minmax(200px, 1.35fr) repeat(4, minmax(130px, 0.75fr));
   gap: 12px;
 }
 
@@ -803,6 +803,53 @@ input, select {
   border-radius: 20px;
   background: #fff;
   box-shadow: 0 8px 22px rgba(58, 39, 48, 0.06);
+}
+
+.pattern-card--skeleton {
+  min-height: 255px;
+  justify-content: flex-start;
+  gap: 15px;
+  pointer-events: none;
+}
+
+.skeleton-line {
+  display: block;
+  width: 100%;
+  height: 14px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #eee7e1 25%, #f8f4ef 50%, #eee7e1 75%);
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.3s ease-in-out infinite;
+}
+
+.skeleton-line--short {
+  width: 36%;
+  height: 10px;
+}
+
+.skeleton-line--title {
+  width: 72%;
+  height: 27px;
+}
+
+.skeleton-line--medium {
+  width: 58%;
+}
+
+@keyframes skeleton-shimmer {
+  from {
+    background-position: 200% 0;
+  }
+
+  to {
+    background-position: -200% 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton-line {
+    animation: none;
+  }
 }
 
 .pattern-card__top {
