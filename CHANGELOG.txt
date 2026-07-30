@@ -1,5 +1,13 @@
 Motek - log zmian
 
+Wersja 2.0.0-alpha.12 (w przygotowaniu) - przebudowa głównego interfejsu
+- Podzielono konto, magazyn, dopasowania i katalog na osobne widoki.
+- Dodano nawigację aplikacji oraz szybki dostęp do wyników dopasowania.
+- Zapisane włóczki są prezentowane jako zwarte karty rozwijane do edycji.
+- Poprawiono stany gościa, nagłówki konta i zabezpieczenie usuwania włóczki.
+- Uporządkowano komunikaty błędów, w tym błędne dane logowania bez kodu HTTP.
+- Poprawiono mobilny układ, kontrast, stany nieaktywnych przycisków i odmianę liczby motków.
+
 2026-07-28 — UX/UI: dodano odzyskiwanie hasła przez Supabase Auth oraz timeout
 komunikacji Auth. Niedostępne API lub SMTP nie pozostawia formularza w stanie
 „Wysyłam instrukcję...” bez odpowiedzi.

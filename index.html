@@ -15,15 +15,45 @@
   </head>
   <body>
     <a class="skip-link" href="#main-content">Przejdź do głównej treści</a>
+    <header class="app-header">
+      <div class="app-header__inner">
+        <button class="brand-button" type="button" data-view-target="inventory" aria-label="Przejdź do magazynu">
+          <span class="brand-mark" aria-hidden="true">M</span>
+          <span>Motek</span>
+        </button>
+        <nav class="app-nav" aria-label="Główna nawigacja">
+          <button class="app-nav__button" type="button" data-view-target="inventory">
+            <span aria-hidden="true">⌂</span>
+            <span>Magazyn</span>
+          </button>
+          <button class="app-nav__button" type="button" data-view-target="matches">
+            <span aria-hidden="true">✦</span>
+            <span>Dopasowanie</span>
+          </button>
+          <button class="app-nav__button" type="button" data-view-target="catalog">
+            <span aria-hidden="true">▦</span>
+            <span>Katalog</span>
+          </button>
+          <button class="app-nav__button" type="button" data-view-target="account">
+            <span aria-hidden="true">○</span>
+            <span>Konto</span>
+          </button>
+        </nav>
+        <div id="headerUser" class="header-user" hidden></div>
+      </div>
+    </header>
+
     <main id="main-content" class="shell" tabindex="-1">
+      <section id="accountView" class="app-view account-view" data-view="account">
       <section class="auth-layout">
         <aside class="auth-visual" aria-labelledby="heroTitle">
           <p class="auth-visual__brand">Motek</p>
-          <h1 id="heroTitle">Dobierz wzór do zapasu włóczek</h1>
+          <h1 id="heroTitle">Twoja włóczka ma już swój następny projekt</h1>
           <p class="lead">
-            Wpisz parametry swoich motków, a aplikacja podpowie wzory, które
-            da się wykonać z tego, co masz w magazynie.
+            Uporządkuj domowy zapas, znajdź pasujący wzór i wróć do tego,
+            co najprzyjemniejsze — tworzenia.
           </p>
+          <button id="heroAuthBtn" class="hero-cta" type="button">Zacznij w Motku</button>
         </aside>
       <section class="panel auth-panel" aria-labelledby="authTitle">
         <div class="panel__header">
@@ -59,7 +89,8 @@
             <h3>Nowe konto</h3>
             <label>
               Login
-              <input id="register-login" name="login" type="text" minlength="3" maxlength="30" pattern="[A-Za-z0-9_]{3,30}" autocomplete="username" required aria-describedby="authMessage" />
+              <input id="register-login" name="login" type="text" minlength="3" maxlength="30" pattern="[A-Za-z0-9_]{3,30}" autocomplete="username" required aria-describedby="registerLoginHint authMessage" />
+              <span id="registerLoginHint" class="field-hint">3–30 znaków: litery bez polskich znaków, cyfry lub podkreślenie.</span>
             </label>
             <label>
               E-mail
@@ -71,7 +102,8 @@
             </label>
             <label>
               Hasło
-              <input id="register-password" name="password" type="password" minlength="8" maxlength="256" autocomplete="new-password" required aria-describedby="authMessage" />
+              <input id="register-password" name="password" type="password" minlength="8" maxlength="256" autocomplete="new-password" required aria-describedby="registerPasswordHint authMessage" />
+              <span id="registerPasswordHint" class="field-hint">Minimum 8 znaków, w tym mała i wielka litera, cyfra oraz znak specjalny.</span>
             </label>
             <button class="button button--secondary" type="submit">Załóż konto</button>
           </form>
@@ -107,7 +139,17 @@
         <p id="authMessage" class="auth-message" role="status" aria-live="polite" tabindex="-1"></p>
       </section>
       </section>
+      </section>
 
+      <section id="inventoryView" class="app-view" data-view="inventory" hidden>
+      <div class="page-heading">
+        <div>
+          <p class="eyebrow">Twoja pracownia</p>
+          <h1>Magazyn włóczek</h1>
+          <p>Zobacz swój zapas, uzupełnij go i wybierz włóczki do kolejnego projektu.</p>
+        </div>
+        <button id="inventoryMatchBtn" class="button" type="button">Dobierz wzór</button>
+      </div>
       <section id="onboarding" class="panel onboarding" aria-labelledby="onboardingTitle" hidden>
         <div class="onboarding__content">
           <p class="eyebrow">Pierwszy krok</p>
@@ -125,12 +167,12 @@
         </div>
       </section>
 
-      <section class="grid">
-        <article class="panel">
+      <section>
+        <article class="panel inventory-panel">
           <div class="panel__header">
             <div>
-              <h2>Twoje włóczki</h2>
-              <p>Dodaj tyle pozycji, ile chcesz. Możesz mieszać motki.</p>
+              <h2>Twój zapas</h2>
+              <p>Zapisane motki są pokazane w zwartej formie. Rozwiń tylko ten, który chcesz zmienić.</p>
             </div>
             <button id="addYarnBtn" class="button button--ghost" type="button">
               + Dodaj motek
@@ -138,12 +180,23 @@
           </div>
           <div id="yarnList" class="yarn-list"></div>
         </article>
+      </section>
+      </section>
 
-        <article class="panel panel--sticky">
+      <section id="matchesView" class="app-view" data-view="matches" hidden>
+        <div class="page-heading">
+          <div>
+            <p class="eyebrow">Pomysły z Twojego zapasu</p>
+            <h1>Dopasowanie</h1>
+            <p>Najpierw pokazujemy projekty, które możesz wykonać z zapisanych włóczek.</p>
+          </div>
+          <button id="backToInventoryBtn" class="button button--ghost" type="button">Wróć do magazynu</button>
+        </div>
+        <article class="panel matches-panel">
           <div class="panel__header">
             <div>
-              <h2>Wynik dopasowania</h2>
-              <p>Najpierw zobaczysz wzory możliwe do wykonania.</p>
+              <h2 id="matchesTitle">Wyniki dla Twoich włóczek</h2>
+              <p>Po zmianie magazynu uruchom dopasowanie ponownie.</p>
             </div>
             <button id="findBtn" class="button" type="button">
               Dobierz wzór
@@ -155,13 +208,14 @@
         </article>
       </section>
 
+      <section id="catalogView" class="app-view" data-view="catalog" hidden>
       <section class="panel catalog-panel">
         <div class="catalog-header">
           <div>
-            <p class="eyebrow">Supabase</p>
-            <h2>Baza wzorów</h2>
+            <p class="eyebrow">Biblioteka inspiracji</p>
+            <h1>Katalog wzorów</h1>
             <p>
-              Przeglądaj wzory zaimportowane z dokumentów PDF. Informacja
+              Przeglądaj opisane wzory. Informacja
               „do sprawdzenia” oznacza, że część parametrów nie występowała
               jednoznacznie w pliku źródłowym.
             </p>
@@ -189,10 +243,27 @@
         <div id="patternCatalogSummary" class="catalog-summary" aria-live="polite"></div>
         <div id="patternCatalog" class="pattern-catalog"></div>
       </section>
+      </section>
     </main>
 
     <template id="yarnTemplate">
       <div class="yarn-card">
+        <div class="yarn-card__summary">
+          <span class="yarn-card__swatch" aria-hidden="true"></span>
+          <div class="yarn-card__identity">
+            <h3 data-summary="name"></h3>
+            <p data-summary="details"></p>
+          </div>
+          <div class="yarn-card__actions">
+            <button class="button button--ghost yarn-edit" type="button">
+              Modyfikuj
+            </button>
+            <button class="button button--danger yarn-remove" type="button">
+              Usuń
+            </button>
+          </div>
+        </div>
+        <div class="yarn-card__form">
         <div class="yarn-card__row">
           <label>
             Nazwa
@@ -236,19 +307,14 @@
             <input type="number" min="0" max="1000000" step="1" data-field="weight" value="50" required />
           </label>
           <div class="yarn-card__actions">
-            <button class="button button--ghost yarn-edit" type="button">
-              Modyfikuj
-            </button>
             <button class="button yarn-save" type="button" hidden>
               Zapisz
             </button>
             <button class="button button--ghost yarn-cancel" type="button" hidden>
               Anuluj
             </button>
-            <button class="button button--danger yarn-remove" type="button">
-              Usuń
-            </button>
           </div>
+        </div>
         </div>
       </div>
     </template>

@@ -23,6 +23,7 @@ const registerModeBtn = document.getElementById("registerModeBtn");
 const authProfileSummary = document.getElementById("authProfileSummary");
 const authMessage = document.getElementById("authMessage");
 const authLead = document.getElementById("authLead");
+const authTitle = document.getElementById("authTitle");
 const onboarding = document.getElementById("onboarding");
 const onboardingAddYarnBtn = document.getElementById("onboardingAddYarnBtn");
 const onboardingSkipBtn = document.getElementById("onboardingSkipBtn");
@@ -31,6 +32,13 @@ const forgotPasswordBtn = document.getElementById("forgotPasswordBtn");
 const passwordResetForm = document.getElementById("passwordResetForm");
 const passwordUpdateForm = document.getElementById("passwordUpdateForm");
 const cancelPasswordResetBtn = document.getElementById("cancelPasswordResetBtn");
+const accountView = document.getElementById("accountView");
+const headerUser = document.getElementById("headerUser");
+const appViews = [...document.querySelectorAll(".app-view")];
+const viewButtons = [...document.querySelectorAll("[data-view-target]")];
+const inventoryMatchBtn = document.getElementById("inventoryMatchBtn");
+const backToInventoryBtn = document.getElementById("backToInventoryBtn");
+const heroAuthBtn = document.getElementById("heroAuthBtn");
 
 let baseUrl = window.location.origin;
 let isAuthenticated = false;
@@ -41,6 +49,53 @@ let catalogPatterns = [];
 let yarnVersion = null;
 let onboardingDismissed = false;
 let yarnFormSequence = 0;
+let activeView = "account";
+let initialSessionResolved = false;
+
+function setActiveView(requestedView, { focus = true } = {}) {
+  const protectedViews = new Set(["inventory", "matches"]);
+  const view = !isAuthenticated && protectedViews.has(requestedView)
+    ? "account"
+    : requestedView;
+  const target = appViews.find((candidate) => candidate.dataset.view === view);
+  if (!target) return;
+
+  activeView = view;
+  appViews.forEach((candidate) => {
+    candidate.hidden = candidate !== target;
+  });
+  viewButtons.forEach((button) => {
+    const current = button.dataset.viewTarget === view;
+    button.classList.toggle("is-active", current);
+    if (current) button.setAttribute("aria-current", "page");
+    else button.removeAttribute("aria-current");
+  });
+
+  if (focus) {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    target.querySelector("h1, h2")?.focus({ preventScroll: true });
+  }
+}
+
+function updateNavigationState() {
+  viewButtons.forEach((button) => {
+    const protectedView =
+      button.classList.contains("app-nav__button") &&
+      ["inventory", "matches"].includes(button.dataset.viewTarget);
+    button.disabled = protectedView && !isAuthenticated;
+  });
+}
+
+viewButtons.forEach((button) => {
+  button.addEventListener("click", () => setActiveView(button.dataset.viewTarget));
+});
+
+heroAuthBtn.addEventListener("click", () => {
+  authPanel.scrollIntoView({ behavior: "smooth", block: "start" });
+  window.setTimeout(() => {
+    loginForm.querySelector('input[name="email"]').focus({ preventScroll: true });
+  }, 250);
+});
 
 async function detectRuntimeMode() {
   if (window.location.protocol === "file:") {
@@ -66,14 +121,14 @@ async function api(path, options = {}) {
   });
 
   if (!response.ok && response.status !== 204) {
-    let details = "";
+    let message = "";
     try {
       const payload = await response.clone().json();
-      details = payload?.error ? `: ${payload.error}` : "";
+      message = typeof payload?.error === "string" ? payload.error.trim() : "";
     } catch {
       // ignore non-JSON error body
     }
-    throw new Error(`Błąd komunikacji z backendem (${response.status})${details}`);
+    throw new Error(message || "Nie udało się połączyć z Motkiem. Spróbuj ponownie.");
   }
 
   if (path === "/api/yarns" || path.startsWith("/api/yarns/")) {
@@ -155,6 +210,19 @@ function collectYarnFromCard(card) {
   };
 }
 
+function updateYarnCardSummary(card) {
+  const yarn = collectYarnFromCard(card);
+  const name = card.querySelector('[data-summary="name"]');
+  const details = card.querySelector('[data-summary="details"]');
+  const swatch = card.querySelector(".yarn-card__swatch");
+
+  name.textContent = yarn.name || "Nowy motek";
+  details.textContent = yarn.color
+    ? `${yarn.color} · ${yarn.material} · ${yarn.weightClass} · ${yarn.length} m · ${yarn.weight} g`
+    : "Uzupełnij dane włóczki";
+  swatch.title = yarn.color ? `Kolor: ${yarn.color}` : "Nowa włóczka";
+}
+
 function isYarnComplete(card) {
   return [...card.querySelectorAll("[data-field]")].every((field) => field.checkValidity()) &&
     card.querySelector('[data-field="name"]').value.trim() !== "" &&
@@ -203,6 +271,7 @@ async function saveNewYarn(card) {
     card.dataset.editing = "false";
     card._originalYarn = collectYarnFromCard(card);
     setYarnFieldsDisabled(card, true);
+    updateYarnCardSummary(card);
     updateYarnSaveButton(card);
     setStorageMessage("Motek zapisany w magazynie.", "success");
     await renderSummary();
@@ -228,6 +297,7 @@ async function saveExistingYarn(card) {
     card._originalYarn = collectYarnFromCard(card);
     card.dataset.editing = "false";
     setYarnFieldsDisabled(card, true);
+    updateYarnCardSummary(card);
     updateYarnSaveButton(card);
     setStorageMessage("Zmiany motka zapisane.", "success");
     await renderSummary();
@@ -255,14 +325,27 @@ function addYarnCard(yarn = {}, { isNew = false } = {}) {
   });
 
   node.querySelector(".yarn-remove").addEventListener("click", async () => {
+    const isSaved = node.dataset.saved === "true";
+    const yarnName = collectYarnFromCard(node).name || "tę włóczkę";
+    if (isSaved && !window.confirm(`Usunąć „${yarnName}” z magazynu? Tej operacji nie można cofnąć.`)) {
+      return;
+    }
+
     try {
-      setStorageMessage("Zapisuję zmianę...");
+      if (!isSaved) {
+        node.remove();
+        if (!yarnList.children.length) renderYarnEmptyState();
+        setStorageMessage("Anulowano dodawanie nowego motka.");
+        return;
+      }
+
+      setStorageMessage("Usuwam włóczkę...");
       if (node.dataset.id) {
         await deleteYarn(node.dataset.id);
       }
       node.remove();
       await refresh();
-      setStorageMessage("Magazyn zapisany.", "success");
+      setStorageMessage(`Usunięto „${yarnName}”.`, "success");
     } catch (error) {
       setStorageMessage(
         `${error.message} Włóczka pozostała w formularzu.`,
@@ -288,6 +371,7 @@ function addYarnCard(yarn = {}, { isNew = false } = {}) {
     });
     node.dataset.editing = "false";
     setYarnFieldsDisabled(node, true);
+    updateYarnCardSummary(node);
     updateYarnSaveButton(node);
   });
 
@@ -301,6 +385,7 @@ function addYarnCard(yarn = {}, { isNew = false } = {}) {
   });
 
   updateYarnSaveButton(node);
+  updateYarnCardSummary(node);
   setYarnFieldsDisabled(node, !isNew);
   yarnList.appendChild(node);
   return node;
@@ -345,6 +430,7 @@ function renderYarnEmptyState() {
       addYarnBtn.click();
       return;
     }
+    setActiveView("account");
     loginForm.scrollIntoView({ behavior: "smooth", block: "center" });
     loginForm.querySelector('input[name="email"]').focus({ preventScroll: true });
   });
@@ -437,6 +523,17 @@ function formatRatio(value) {
   return Number.isFinite(ratio) && ratio > 0
     ? `${ratio.toLocaleString("pl-PL")} m/100 g`
     : "brak danych";
+}
+
+function formatSkeinCount(value) {
+  const count = Number(value) || 0;
+  const lastTwo = count % 100;
+  const last = count % 10;
+  if (count === 1) return "1 motek";
+  if (last >= 2 && last <= 4 && !(lastTwo >= 12 && lastTwo <= 14)) {
+    return `${count} motki`;
+  }
+  return `${count} motków`;
 }
 
 function formatRequirement(requirement, index) {
@@ -537,6 +634,11 @@ async function refreshPatternCatalog() {
 }
 
 async function renderResults() {
+  if (!isAuthenticated) {
+    showMessage(results, "Zaloguj się i dodaj włóczki, aby zobaczyć pasujące wzory.");
+    return;
+  }
+
   const matches = await loadMatches();
   const matchScopeLimited = api.lastMatchScope === "subset";
   results.replaceChildren();
@@ -562,7 +664,7 @@ async function renderResults() {
     const card = resultTemplate.content.firstElementChild.cloneNode(true);
     card.querySelector("h3").textContent = item.pattern.name;
     card.querySelector(".result-card__meta").textContent =
-      `${item.pattern.yarnsNeeded} motek/motki, min. ${item.pattern.metersNeeded} m, ${item.pattern.gramsNeeded} g`;
+      `${formatSkeinCount(item.pattern.yarnsNeeded)}, min. ${item.pattern.metersNeeded} m, ${item.pattern.gramsNeeded} g`;
     card.querySelector(".result-card__desc").textContent = item.pattern.description;
     card.querySelector(".score-pill").textContent = `Dopasowanie ${item.total}%`;
     card
@@ -577,10 +679,15 @@ async function renderResults() {
 }
 
 async function renderSummary() {
+  if (!isAuthenticated) {
+    summary.textContent = "Twój prywatny magazyn pojawi się tutaj po zalogowaniu.";
+    return;
+  }
+
   const yarns = await loadYarns();
   const totalLength = yarns.reduce((sum, yarn) => sum + yarn.length, 0);
   const totalWeight = yarns.reduce((sum, yarn) => sum + yarn.weight, 0);
-  const storageText = "Zestaw jest przechowywany prywatnie w Supabase.";
+  const storageText = "Zapisane bezpiecznie na Twoim koncie.";
 
   const yarnCount = document.createElement("strong");
   yarnCount.textContent = String(yarns.length);
@@ -621,6 +728,16 @@ function showAuthForm(form) {
   loginModeBtn.setAttribute("aria-selected", String(form === loginForm));
   registerModeBtn.setAttribute("aria-selected", String(form === registerForm));
   authPanel.classList.toggle("auth-panel--recovery", form === passwordUpdateForm);
+
+  const content = new Map([
+    [loginForm, ["Zaloguj się do Motka", "Wróć do swojego magazynu i rozpoczętych projektów."]],
+    [registerForm, ["Załóż konto w Motku", "Zapisuj włóczki prywatnie i wracaj do nich na dowolnym urządzeniu."]],
+    [passwordResetForm, ["Odzyskaj dostęp do konta", "Wyślemy bezpieczny link pozwalający ustawić nowe hasło."]],
+    [passwordUpdateForm, ["Ustaw nowe hasło", "Wybierz nowe hasło, a następnie zaloguj się ponownie."]],
+  ]);
+  const [title, lead] = content.get(form);
+  authTitle.textContent = title;
+  authLead.textContent = lead;
 }
 
 async function startPasswordRecovery() {
@@ -639,6 +756,7 @@ async function startPasswordRecovery() {
     });
     window.history.replaceState({}, document.title, window.location.pathname);
     authForms.hidden = false;
+    setActiveView("account", { focus: false });
     showAuthForm(passwordUpdateForm);
     passwordUpdateForm.scrollIntoView({ behavior: "smooth", block: "center" });
     setAuthMessage("Ustaw nowe hasło.");
@@ -661,11 +779,19 @@ function renderAuthState(payload) {
   authModeSwitch.hidden = authenticated;
   authLoggedIn.hidden = !authenticated;
   authUser.hidden = !authenticated;
+  accountView.classList.toggle("is-authenticated", authenticated);
   addYarnBtn.disabled = !authenticated;
   findBtn.disabled = !authenticated;
+  inventoryMatchBtn.disabled = !authenticated;
+  updateNavigationState();
   if (!authenticated) {
     onboardingDismissed = false;
     onboarding.hidden = true;
+    headerUser.hidden = true;
+    headerUser.textContent = "";
+    if (["inventory", "matches"].includes(activeView)) {
+      setActiveView("account", { focus: false });
+    }
   }
 
   if (!authenticated) {
@@ -679,16 +805,23 @@ function renderAuthState(payload) {
   const profile = payload.profile || {};
   const login = profile.login || payload.user.metadata?.login || payload.user.email;
   authUser.textContent = `Zalogowano jako ${login}`;
+  headerUser.textContent = login;
+  headerUser.hidden = false;
   authProfileSummary.textContent = profile.full_name
     ? `${profile.full_name} (${profile.email || payload.user.email})`
     : profile.email || payload.user.email || "Zalogowany użytkownik";
-  authLead.textContent = "Sesja jest aktywna. Twój magazyn włóczek jest przechowywany prywatnie w Supabase.";
+  authTitle.textContent = "Twoje konto";
+  authLead.textContent = "Profil i bezpieczeństwo Twojego prywatnego magazynu.";
 }
 
 async function refreshAuthSession() {
   try {
     const payload = await api("/api/auth/session");
     renderAuthState(payload);
+    if (!initialSessionResolved) {
+      setActiveView(payload.authenticated ? "inventory" : "account", { focus: false });
+      initialSessionResolved = true;
+    }
     if (!payload.authenticated) {
       setAuthMessage("Możesz założyć konto lub zalogować się.");
     } else {
@@ -720,6 +853,7 @@ async function submitAuthForm(form, endpoint, successMessage) {
     } else {
       setAuthMessage(successMessage, "success");
       await refreshAuthSession();
+      setActiveView("inventory");
     }
     form.reset();
   } catch (error) {
@@ -808,6 +942,7 @@ logoutBtn.addEventListener("click", async () => {
   try {
     await api("/api/auth/logout", { method: "POST", body: "{}" });
     renderAuthState({ authenticated: false });
+    setActiveView("account");
     await refresh();
     setAuthMessage("Wylogowano.", "success");
   } catch (error) {
@@ -848,7 +983,17 @@ onboardingSkipBtn.addEventListener("click", () => {
   onboarding.hidden = true;
 });
 
+inventoryMatchBtn.addEventListener("click", () => {
+  setActiveView("matches");
+  findBtn.click();
+});
+
+backToInventoryBtn.addEventListener("click", () => {
+  setActiveView("inventory");
+});
+
 findBtn.addEventListener("click", async () => {
+  setActiveView("matches", { focus: false });
   try {
     if (yarnList.querySelector('.yarn-card[data-saved="false"]')) {
       showMessage(results, "Uzupełnij dane nowego motka i kliknij „Zapisz”, zanim uruchomisz dopasowanie.");
@@ -864,6 +1009,7 @@ findBtn.addEventListener("click", async () => {
     await saveYarns();
     showMessage(results, "Pobieram dopasowane wzory...");
     await refresh();
+    document.getElementById("matchesTitle").scrollIntoView({ behavior: "smooth", block: "start" });
   } catch (error) {
     showMessage(results, error.message);
   } finally {
