@@ -84,6 +84,14 @@
 - komunikat wskazuje następny krok: sprawdzenie formularza i użycie `Zapisz`;
 - ręczne wylogowanie ostrzega o niezapisanych zmianach.
 
+### Końcowa kontrola responsywności
+
+- sprawdzono szerokości 375, 768 i 1440 px;
+- katalog przechodzi odpowiednio między jedną, dwiema i trzema kolumnami;
+- reflow dla efektywnych szerokości powiększenia 200% i 400% nie tworzy poziomego przewijania;
+- długie nazwy, emoji, tekst arabski i chiński mieszczą się w formularzu;
+- na sprawdzonych ekranach nie występują kontrolki mniejsze niż 44×44 px.
+
 ## Sprawdzenie
 
 - `npm run check` przechodzi: 29/29 testów;
@@ -101,21 +109,15 @@
    - sprawdzenie stanów pustych, onboardingu i magazynu po zmianie layoutu;
    - test ręczny na desktopie i urządzeniach mobilnych.
 
-2. **Responsywność i długie dane**
-   - testy 375, 768 i 1440 px;
-   - zoom 200% i 400%;
-   - długie imiona, e-maile, Unicode, emoji i tekst RTL;
-   - bezpieczne zawijanie oraz formatowanie liczb.
-
-3. **Model stanów interfejsu**
+2. **Model stanów interfejsu**
    - dokończenie stanów częściowego sukcesu dla złożonych operacji;
    - ręczny test czytnikiem ekranu.
 
-4. **Sieć i spójność zapisu**
+3. **Sieć i spójność zapisu**
    - kontrolowany retry z opóźnieniem po błędzie sieci;
    - pełna obsługa konfliktu wersji.
 
-5. **Katalog wzorów**
+4. **Katalog wzorów**
    - serwerowe filtrowanie i paginacja przed zwiększeniem katalogu;
    - dalsza ręczna weryfikacja rzeczywistych wzorów jest wstrzymana.
 

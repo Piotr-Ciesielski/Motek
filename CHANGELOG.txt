@@ -1,5 +1,12 @@
 Motek - log zmian
 
+Wersja 2.0.0-alpha.24 (w przygotowaniu) - końcowa kontrola responsywności
+- Sprawdzono widoki 375, 768 i 1440 px bez poziomego przewijania.
+- Potwierdzono prawidłowe przejście katalogu z trzech do dwóch i jednej kolumny.
+- Reflow odpowiadający powiększeniu 200% i 400% zachowuje dostęp do całej treści.
+- Długi tekst, emoji oraz treści arabskie i chińskie nie rozszerzają układu.
+- Widoczne kontrolki zachowują minimalny obszar obsługi 44×44 px.
+
 Wersja 2.0.0-alpha.23 (w przygotowaniu) - bezpieczny powrót po wygaśnięciu sesji
 - Wygaśnięcie sesji podczas pracy prowadzi do ponownego logowania bez usuwania formularza.
 - Po zalogowaniu Motek wraca do magazynu i wskazuje zapisanie zachowanych zmian.
