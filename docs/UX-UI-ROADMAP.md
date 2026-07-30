@@ -150,18 +150,20 @@
 
 ## Następne zadania UX/UI
 
-1. **Dokończenie redesignu frontu**
-   - ujednolicenie języka wizualnego ekranów aplikacji;
-   - dopracowanie widoku logowania i rejestracji;
-   - sprawdzenie stanów pustych, onboardingu i magazynu po zmianie layoutu;
-   - test ręczny na desktopie i urządzeniach mobilnych.
+1. **Odbiór dostępności z prawdziwym czytnikiem**
+   - ręczny odsłuch pełnego przepływu w NVDA lub VoiceOver;
+   - potwierdzenie kolejności i treści komunikatów przy logowaniu, zapisie i błędach.
 
-2. **Model stanów interfejsu**
-   - ręczny odsłuch pełnego przepływu w NVDA lub VoiceOver.
+2. **Wzbogacenie danych katalogu**
+   - dodać zweryfikowane adresy źródeł oraz opcjonalny typ projektu;
+   - wznowić ręczną weryfikację 110 rzeczywistych wzorów;
+   - zdecydować, czy filtr „pasuje do mojego magazynu” ma dublować osobny widok
+     `Dopasowanie`.
 
-3. **Katalog wzorów**
-   - serwerowe filtrowanie i paginacja przed zwiększeniem katalogu;
-   - dalsza ręczna weryfikacja rzeczywistych wzorów jest wstrzymana.
+3. **Skalowanie katalogu dopiero przed zwiększeniem limitu**
+   - przenieść wyszukiwanie i filtrowanie na serwer;
+   - zastosować paginację sterowaną przez użytkownika lub kursor;
+   - wykonać test wydajności po przekroczeniu obecnego limitu 300 rekordów.
 
 ## Uwaga procesowa
 

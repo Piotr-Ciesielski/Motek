@@ -29,6 +29,42 @@ Rekomendacja: najpierw naprawić układ mobilnych kart i stany gościa, następn
 przebudować sposób przeglądania katalogu. Dopiero później dopracować kontrast,
 mikrotreści i szczegóły dostępności.
 
+## Aktualizacja realizacji — 2026-07-30
+
+Stan porównano z wersją `2.0.0-alpha.31`. Spośród 19 uwag 16 jest zamkniętych,
+a 3 są częściowo zamknięte i zależą od rozszerzenia danych albo decyzji
+produktowej.
+
+| Punkt | Stan | Zrealizowane w |
+|---|---|---|
+| UI-01 — długie nazwy | zamknięty | alpha.12, alpha.19, alpha.24 |
+| UI-02 — długość katalogu | zamknięty | alpha.13, alpha.30 |
+| UI-03 — wygląd zablokowanych akcji | zamknięty | alpha.12 |
+| UI-04 — stan gościa | zamknięty | alpha.12 |
+| UI-05 — nagłówki konta | zamknięty | alpha.12 |
+| UI-06 — ślepy zaułek kart | częściowy | alpha.14, alpha.29 |
+| UI-07 — zaufanie do danych | częściowy | alpha.13, alpha.14 |
+| UI-08 — wysokość kart włóczek | zamknięty | alpha.12 |
+| UI-09 — dostęp do wyników | zamknięty | alpha.12 |
+| UI-10 — zabezpieczenie usuwania | zamknięty | alpha.12 |
+| UI-11 — wymagania rejestracji | zamknięty | alpha.18 |
+| UI-12 — kontrast małego tekstu | zamknięty | alpha.20 |
+| UI-13 — klawiatura przełącznika konta | zamknięty | alpha.17, alpha.28 |
+| UI-14 — ładowanie katalogu | zamknięty | alpha.15, alpha.30 |
+| UI-15 — pierwsza akcja mobilna | zamknięty | alpha.12 |
+| UI-16 — filtry katalogu | częściowy | alpha.14, alpha.15, alpha.31 |
+| UI-17 — techniczny język dostawcy | zamknięty | alpha.12 |
+| UI-18 — powtarzające się warianty | zamknięty | alpha.16 |
+| UI-19 — anulowanie nowego formularza | zamknięty | alpha.17 |
+
+Pozostałe części wymagają:
+
+- zweryfikowanych adresów źródeł dla kart wzorów;
+- uzupełnienia danych o typ projektu, jeśli ma być osobnym filtrem;
+- decyzji, czy publiczny katalog ma mieć filtr „pasuje do mojego magazynu”, czy
+  tę funkcję pozostawiamy w osobnym widoku `Dopasowanie`;
+- dalszej ręcznej weryfikacji 110 rekordów oznaczonych jako „Do sprawdzenia”.
+
 ## Zakres i metoda
 
 Ręcznie sprawdzono:
