@@ -1,5 +1,20 @@
 Motek - log zmian
 
+Wersja 2.0.0-alpha.35 (w przygotowaniu) - dokładne dopasowanie rzeczywistych wzorów
+
+- Włóczka może mieć kilka materiałów wybranych ze wspólnej, kontrolowanej listy.
+- Formularz magazynu i filtr katalogu korzystają z tych samych nazw materiałów.
+- „Mieszanka — skład nieokreślony” jest rozłączna z konkretnymi materiałami.
+- Wielokrotne kliknięcie „Dodaj motek” otwiera tylko jeden formularz i przenosi do niego fokus.
+- Usunięto tekstowy przycisk „Pokaż”; ikona oka ujawnia hasło wyłącznie podczas przytrzymania.
+- Dodano walidowany format wymagań dopasowania v2 z rolami włóczek, kolorami,
+  rozmiarami, alternatywnymi włóczkami oraz niezależnymi wymaganiami metrów i gramów.
+- Ranking przydziela konkretne motki do ról bez ponownego użycia tego samego motka.
+- Dodano 21 potwierdzonych wariantów dla wzorów Holly, Na Pole i Oslo Hat.
+- Wynik pokazuje rozmiar, wariant włóczki, wymagania każdej roli i przydzielone motki.
+- Migracje i import zachowały 10 istniejących włóczek oraz zaktualizowały 106 wzorów
+  w Supabase; wszystkie rekordy korzystają z wymagań v2.
+
 Wersja 2.0.0-alpha.34 (w przygotowaniu) - dynamiczne filtry katalogu
 
 - Typ projektu, materiał, język, status i wyszukiwanie działają razem jako wspólne kryteria.

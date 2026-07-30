@@ -4,10 +4,8 @@ const path = require("node:path");
 const { createSupabaseConnection } = require("../supabase");
 const {
   maxPatternCatalogRecords: MAX_PATTERN_CATALOG_RECORDS,
-  maxMatchingVariantsPerPattern: MAX_MATCHING_VARIANTS_PER_PATTERN,
-  maxMatchingRoleRequirements: MAX_MATCHING_ROLE_REQUIREMENTS,
-  maxMatchingTextLength: MAX_MATCHING_TEXT_LENGTH,
 } = require("../limits");
+const { validateMatchingDocument } = require("../matching-policy");
 
 const PROJECT_DIR = path.resolve(__dirname, "..");
 const IMPORT_PATH = path.join(PROJECT_DIR, "data", "patterns-import.json");
@@ -39,69 +37,8 @@ function validateImportCapacity(target) {
   }
 }
 
-function validateRequirement(requirement, context) {
-  if (!requirement || typeof requirement !== "object" || Array.isArray(requirement)) {
-    throw new Error(`${context} musi być obiektem.`);
-  }
-
-  for (const field of ["yarns_needed", "meters_needed", "grams_needed"]) {
-    if (!Number.isInteger(requirement[field]) || requirement[field] < 1) {
-      throw new Error(`${context}.${field} musi być dodatnią liczbą całkowitą.`);
-    }
-  }
-
-  for (const field of ["materials", "weight_classes"]) {
-    if (
-      !Array.isArray(requirement[field]) ||
-      requirement[field].length === 0 ||
-      requirement[field].some(
-        (value) =>
-          typeof value !== "string" ||
-          !value.trim() ||
-          value.trim().length > MAX_MATCHING_TEXT_LENGTH
-      )
-    ) {
-      throw new Error(`${context}.${field} musi być niepustą tablicą tekstów.`);
-    }
-  }
-}
-
 function validateMatchingRequirements(value, sourceFilename) {
-  if (!value || typeof value !== "object" || Array.isArray(value) || !Array.isArray(value.variants)) {
-    throw new Error(`Rekord ${sourceFilename} nie zawiera poprawnego matching_requirements.`);
-  }
-
-  if (value.variants.length > MAX_MATCHING_VARIANTS_PER_PATTERN) {
-    throw new Error(
-      `Rekord ${sourceFilename} zawiera więcej niż ${MAX_MATCHING_VARIANTS_PER_PATTERN} wariantów.`
-    );
-  }
-
-  value.variants.forEach((variant, index) => {
-    const context = `Rekord ${sourceFilename}, wariant ${index + 1}`;
-    validateRequirement(variant, context);
-    for (const field of ["id", "label"]) {
-      if (
-        variant[field] !== undefined &&
-        (typeof variant[field] !== "string" || variant[field].trim().length > MAX_MATCHING_TEXT_LENGTH)
-      ) {
-        throw new Error(`${context}.${field} ma niepoprawną długość.`);
-      }
-    }
-    if (variant.yarn_requirements !== undefined) {
-      if (
-        !Array.isArray(variant.yarn_requirements) ||
-        variant.yarn_requirements.length > MAX_MATCHING_ROLE_REQUIREMENTS
-      ) {
-        throw new Error(
-          `${context}.yarn_requirements musi zawierać od 0 do ${MAX_MATCHING_ROLE_REQUIREMENTS} elementów.`
-        );
-      }
-      variant.yarn_requirements.forEach((requirement, requirementIndex) =>
-        validateRequirement(requirement, `${context}.yarn_requirements[${requirementIndex}]`)
-      );
-    }
-  });
+  validateMatchingDocument(value, `Rekord ${sourceFilename}`);
 }
 
 function validateProjectType(value, sourceFilename) {

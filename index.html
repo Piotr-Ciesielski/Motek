@@ -11,7 +11,7 @@
       href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Inter:wght@400;500;600;700&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="styles.css?v=2.0.0-alpha.32" />
+    <link rel="stylesheet" href="styles.css?v=2.0.0-alpha.35" />
   </head>
   <body>
     <a class="skip-link" href="#main-content">Przejdź do głównej treści</a>
@@ -356,16 +356,19 @@
           </label>
         </div>
         <div class="yarn-card__row">
-          <label>
-            Materiał
-            <select data-field="material">
-              <option value="wełna">Wełna</option>
-              <option value="bawełna">Bawełna</option>
-              <option value="akryl">Akryl</option>
-              <option value="alpaka">Alpaka</option>
-              <option value="mieszanka">Mieszanka</option>
-            </select>
-          </label>
+          <fieldset class="material-picker-field" data-material-field>
+            <legend>Materiały</legend>
+            <details class="material-picker" data-material-picker>
+              <summary>
+                <span data-material-summary>Wybierz materiały</span>
+              </summary>
+              <div class="material-picker__options" data-material-options></div>
+            </details>
+            <p class="field-hint">Możesz zaznaczyć kilka materiałów.</p>
+            <p class="field-error" data-material-error aria-live="polite" hidden>
+              Wybierz co najmniej jeden materiał.
+            </p>
+          </fieldset>
           <label>
             Grubość
             <select data-field="weightClass">
@@ -450,7 +453,8 @@
       </div>
     </template>
 
-    <script src="client-policy.js?v=2.0.0-alpha.32"></script>
-    <script src="app.js?v=2.0.0-alpha.32"></script>
+    <script src="material-policy.js?v=2.0.0-alpha.35"></script>
+    <script src="client-policy.js?v=2.0.0-alpha.35"></script>
+    <script src="app.js?v=2.0.0-alpha.35"></script>
   </body>
 </html>

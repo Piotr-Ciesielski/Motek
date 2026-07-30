@@ -60,6 +60,7 @@ const {
   ensureSingleNewYarnCard,
   filterPatterns,
   findNewlySavedYarn,
+  formatMatchingRequirement,
   formatPatternYarnFact,
   getProjectTypeFilterLabel,
   getProjectTypeLabel,
@@ -68,6 +69,14 @@ const {
   loadPaginatedItems,
   shouldRetryRead,
 } = window.MotekClientPolicy;
+const {
+  MATERIALS,
+  formatYarnMaterials,
+  normalizeYarnMaterials,
+} = window.MotekMaterialPolicy;
+const MATERIAL_LABEL_BY_VALUE = new Map(
+  MATERIALS.map(({ value, label }) => [value, label]),
+);
 const PROJECT_TYPE_ORDER = [
   "socks",
   "sweater",
@@ -511,15 +520,24 @@ function createMatchVariant(item, open = false) {
 
   const meta = document.createElement("p");
   meta.className = "match-variant__meta";
-  meta.textContent =
-    `${formatSkeinCount(item.pattern.yarnsNeeded)}, min. ${formatNumber(item.pattern.metersNeeded)} m, ${formatNumber(item.pattern.gramsNeeded)} g`;
+  meta.textContent = [
+    item.pattern.size ? `Rozmiar: ${item.pattern.size}` : null,
+    item.pattern.yarnOption ? `Wariant włóczki: ${item.pattern.yarnOption}` : null,
+  ].filter(Boolean).join(" · ");
 
   const requirements = document.createElement("ul");
   requirements.className = "requirements";
   requirements.replaceChildren(
-    createRequirement(`Materiały: ${item.pattern.materials.join(", ")}`),
-    createRequirement(`Grubości: ${item.pattern.weightClasses.join(", ")}`),
-    createRequirement(`Pasujące włóczki w Twoim zestawie: ${item.matchedYarns}`)
+    ...item.pattern.requirements.map((requirement, index) =>
+      createRequirement(
+        formatMatchingRequirement(
+          requirement,
+          item.allocation?.[index]?.yarns || [],
+          formatNumber,
+          formatSkeinCount,
+        ),
+      )
+    ),
   );
 
   details.append(header, meta, requirements);
@@ -531,11 +549,43 @@ function collectYarnFromCard(card) {
     id: card.dataset.id ? Number(card.dataset.id) : null,
     name: card.querySelector('[data-field="name"]').value.trim(),
     color: card.querySelector('[data-field="color"]').value.trim(),
-    material: card.querySelector('[data-field="material"]').value,
+    materials: getSelectedYarnMaterials(card),
     weightClass: card.querySelector('[data-field="weightClass"]').value,
     length: Number(card.querySelector('[data-field="length"]').value || 0),
     weight: Number(card.querySelector('[data-field="weight"]').value || 0),
   };
+}
+
+function getSelectedYarnMaterials(card) {
+  return [...card.querySelectorAll("[data-material-option]:checked")]
+    .map((field) => field.value);
+}
+
+function updateYarnMaterialPicker(card) {
+  const materials = getSelectedYarnMaterials(card);
+  const picker = card.querySelector("[data-material-picker]");
+  const summary = card.querySelector("[data-material-summary]");
+  const error = card.querySelector("[data-material-error]");
+  const isEmpty = materials.length === 0;
+
+  summary.textContent = formatYarnMaterials(materials);
+  picker.classList.toggle("material-picker--invalid", isEmpty);
+  picker.setAttribute("aria-invalid", String(isEmpty));
+  error.hidden = !isEmpty;
+}
+
+function setYarnMaterials(card, materials) {
+  let selected;
+  try {
+    selected = normalizeYarnMaterials(materials);
+  } catch {
+    selected = ["mieszanka"];
+  }
+  const selectedSet = new Set(selected);
+  card.querySelectorAll("[data-material-option]").forEach((field) => {
+    field.checked = selectedSet.has(field.value);
+  });
+  updateYarnMaterialPicker(card);
 }
 
 function updateYarnCardSummary(card) {
@@ -547,7 +597,7 @@ function updateYarnCardSummary(card) {
   name.textContent = yarn.name || "Nowy motek";
   name.title = yarn.name || "Nowy motek";
   details.textContent = yarn.color
-    ? `${yarn.color} · ${yarn.material} · ${yarn.weightClass} · ${formatNumber(yarn.length)} m · ${formatNumber(yarn.weight)} g`
+    ? `${yarn.color} · ${formatYarnMaterials(yarn.materials)} · ${yarn.weightClass} · ${formatNumber(yarn.length)} m · ${formatNumber(yarn.weight)} g`
     : "Uzupełnij dane włóczki";
   swatch.title = yarn.color ? `Kolor: ${yarn.color}` : "Nowa włóczka";
 }
@@ -555,7 +605,8 @@ function updateYarnCardSummary(card) {
 function isYarnComplete(card) {
   return [...card.querySelectorAll("[data-field]")].every((field) => field.checkValidity()) &&
     card.querySelector('[data-field="name"]').value.trim() !== "" &&
-    card.querySelector('[data-field="color"]').value.trim() !== "";
+    card.querySelector('[data-field="color"]').value.trim() !== "" &&
+    getSelectedYarnMaterials(card).length > 0;
 }
 
 function isYarnChanged(card) {
@@ -563,9 +614,10 @@ function isYarnChanged(card) {
 }
 
 function applyYarnToCard(card, yarn) {
-  ["name", "color", "material", "weightClass", "length", "weight"].forEach((field) => {
+  ["name", "color", "weightClass", "length", "weight"].forEach((field) => {
     card.querySelector(`[data-field="${field}"]`).value = yarn[field];
   });
+  setYarnMaterials(card, yarn.materials);
 }
 
 function markYarnCardAsSaved(card, yarn) {
@@ -736,6 +788,7 @@ function setYarnFieldsDisabled(card, disabled) {
   card.querySelectorAll("[data-field]").forEach((field) => {
     field.disabled = disabled;
   });
+  card.querySelector("[data-material-field]").disabled = disabled;
 }
 
 function updateYarnSaveButton(card) {
@@ -914,15 +967,35 @@ function addYarnCard(yarn = {}, { isNew = false } = {}) {
   node.dataset.editing = isNew ? "true" : "false";
   node.querySelector('[data-field="name"]').value = yarn.name || "";
   node.querySelector('[data-field="color"]').value = yarn.color || "";
-  node.querySelector('[data-field="material"]').value = yarn.material || "wełna";
   node.querySelector('[data-field="weightClass"]').value = yarn.weightClass || "dk";
   node.querySelector('[data-field="length"]').value = isNew ? "" : yarn.length ?? 0;
   node.querySelector('[data-field="weight"]').value = isNew ? "" : yarn.weight ?? 0;
-  node._originalYarn = isNew ? null : collectYarnFromCard(node);
   node.querySelectorAll("[data-field]").forEach((field) => {
     field.id = `yarn-${++yarnFormSequence}-${field.dataset.field}`;
     field.closest("label").htmlFor = field.id;
   });
+  const materialOptions = node.querySelector("[data-material-options]");
+  MATERIALS.forEach(({ value, label }) => {
+    const option = document.createElement("label");
+    const checkbox = document.createElement("input");
+    const optionLabel = document.createElement("span");
+    checkbox.type = "checkbox";
+    checkbox.value = value;
+    checkbox.dataset.materialOption = "";
+    checkbox.id = `yarn-${++yarnFormSequence}-material`;
+    option.htmlFor = checkbox.id;
+    option.className = "material-picker__option";
+    optionLabel.textContent = label;
+    option.append(checkbox, optionLabel);
+    materialOptions.appendChild(option);
+  });
+  const initialMaterials = Array.isArray(yarn.materials)
+    ? yarn.materials
+    : yarn.material
+      ? [yarn.material]
+      : ["wełna"];
+  setYarnMaterials(node, initialMaterials);
+  node._originalYarn = isNew ? null : collectYarnFromCard(node);
 
   node.querySelector(".yarn-remove").addEventListener("click", async () => {
     const isSaved = node.dataset.saved === "true";
@@ -995,10 +1068,7 @@ function addYarnCard(yarn = {}, { isNew = false } = {}) {
       return;
     }
 
-    Object.entries(node._originalYarn).forEach(([field, value]) => {
-      if (field === "id") return;
-      node.querySelector(`[data-field="${field}"]`).value = value;
-    });
+    applyYarnToCard(node, node._originalYarn);
     node.dataset.editing = "false";
     setYarnFieldsDisabled(node, true);
     updateYarnCardSummary(node);
@@ -1010,7 +1080,22 @@ function addYarnCard(yarn = {}, { isNew = false } = {}) {
       field.removeAttribute("aria-invalid");
       updateYarnSaveButton(node);
     });
-    field.addEventListener("change", () => updateYarnSaveButton(node));
+    field.addEventListener("change", () => {
+      if (field.matches("[data-material-option]")) {
+        if (field.value === "mieszanka" && field.checked) {
+          node.querySelectorAll("[data-material-option]").forEach((option) => {
+            if (option !== field) option.checked = false;
+          });
+        } else if (field.checked) {
+          const unspecified = node.querySelector(
+            '[data-material-option][value="mieszanka"]',
+          );
+          if (unspecified) unspecified.checked = false;
+        }
+        updateYarnMaterialPicker(node);
+      }
+      updateYarnSaveButton(node);
+    });
     field.addEventListener("invalid", () => field.setAttribute("aria-invalid", "true"));
   });
 
@@ -1226,16 +1311,9 @@ function updatePatternFacetOptions(filters, facetCounts) {
     typeValues.push(filters.type);
   }
 
-  const materials = [...new Set(
-    catalogPatterns.flatMap((pattern) =>
-      Array.isArray(pattern.materials) ? pattern.materials : []
-    )
-  )]
-    .filter(Boolean)
-    .sort((left, right) => left.localeCompare(right, "pl"));
+  const materials = MATERIALS.map(({ value }) => value);
   if (filters.material !== "all" && !materials.includes(filters.material)) {
     materials.push(filters.material);
-    materials.sort((left, right) => left.localeCompare(right, "pl"));
   }
 
   const typeOptions = buildPatternFacetOptions(
@@ -1249,7 +1327,12 @@ function updatePatternFacetOptions(filters, facetCounts) {
     materials,
     facetCounts.materials,
     filters.material,
-  ).map((option) => createPatternFacetOption(option, (value) => value));
+  ).map((option) =>
+    createPatternFacetOption(
+      option,
+      (value) => MATERIAL_LABEL_BY_VALUE.get(value) || value,
+    )
+  );
   const typeTotal = filterPatterns(catalogPatterns, filters, "type").length;
   const materialTotal = filterPatterns(
     catalogPatterns,

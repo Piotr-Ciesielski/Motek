@@ -27,7 +27,8 @@ główną funkcją jest świadome dopasowanie zapasu włóczek do wymagań wzoru
 ## Jak działa aplikacja
 
 1. Użytkownik zakłada konto lub loguje się.
-2. Dodaje motki, podając nazwę, kolor, materiał, klasę grubości, długość i wagę.
+2. Dodaje motki, podając nazwę, kolor, jeden lub kilka materiałów, klasę
+   grubości, długość i wagę.
 3. Przegląda katalog wzorów, wyszukuje je i łączy filtry statusu, języka,
    typu projektu oraz materiału.
 4. Uruchamia dopasowanie.
@@ -130,10 +131,10 @@ bezpiecznego rankingu:
 - `matching_requirements` — kompletne zużycie dla wariantów i rozmiarów,
 - `needs_review` — informacja o konieczności dalszej weryfikacji.
 
-`matching_requirements` zawiera między innymi liczbę motków, wymagane metry i
-gramy, materiały, klasy grubości oraz opcjonalne role włóczek. Dzięki temu
-opisowa informacja o wzorze jest oddzielona od danych, na których można oprzeć
-decyzję „da się wykonać”.
+`matching_requirements` w wersji 2 zawiera między innymi wymagane metry lub
+gramy, materiały, klasy grubości, role włóczek, relacje między kolorami,
+rozmiary i alternatywne włóczki. Dzięki temu opisowa informacja o wzorze jest
+oddzielona od danych, na których można oprzeć decyzję „da się wykonać”.
 
 ## Źródła katalogu wzorów
 
@@ -261,7 +262,7 @@ npm run patterns:import
 
 ## Stan projektu i wersjonowanie
 
-Aktualna wersja rozwojowa: **2.0.0-alpha.34**.
+Aktualna wersja rozwojowa: **2.0.0-alpha.35**.
 
 Najważniejsze etapy zapisane w `CHANGELOG.txt`:
 
@@ -274,6 +275,7 @@ Najważniejsze etapy zapisane w `CHANGELOG.txt`:
 - `2.0.0-alpha.8` — Supabase jako jedyne źródło danych i usunięcie SQLite.
 - `2.0.0-alpha.9` — bezpieczny autosave, zabezpieczenia Auth, limity produktu i ograniczenie kosztu rankingu.
 - `2.0.0-alpha.10` — naprawa nagłówków żądań magazynu i synchronizacja wymaganych migracji zdalnego Supabase.
+- `2.0.0-alpha.35` — wiele materiałów na motku i dokładne dopasowanie 21 wariantów rzeczywistych wzorów.
 - `2.0.0-alpha.34` — poprawione kategorie oraz dynamiczne, łączone filtry typu projektu i materiału.
 - `2.0.0-alpha.33` — ponowny audyt wszystkich PDF-ów i kompletny, oczyszczony katalog danych włóczek.
 - `2.0.0-alpha.15` — sortowanie katalogu i dostępny stan ładowania ze szkieletami.
@@ -285,9 +287,10 @@ Najważniejsze etapy zapisane w `CHANGELOG.txt`:
 ## Najbliższy etap rozwoju
 
 Parametry użytych włóczek zostały potwierdzone dla wszystkich wzorów w katalogu.
-Następnym krokiem jest uzupełnienie kompletnych danych zużycia dla rozmiarów i
-wariantów wybranych wzorów. Ranking automatycznie pomija rekordy bez pełnych,
-zweryfikowanych wymagań ilościowych.
+Dokładne wymagania zużycia wdrożono pilotażowo dla 21 wariantów wzorów Holly,
+Na Pole i Oslo Hat. Następnym krokiem jest rozszerzanie tej metody na kolejne
+wzory. Ranking automatycznie pomija rekordy bez pełnych, zweryfikowanych
+wymagań ilościowych.
 
 Skalowanie ponad obecne limity 500 włóczek na użytkownika i 300 wzorów jest
 opcjonalne. Wrócimy do paginacji, dalszej optymalizacji lub workera dopiero po
@@ -314,6 +317,8 @@ reakcji na incydenty. Limity aplikacyjne w Node.js są tylko dodatkową warstwą
 ```text
 Motek/
 ├── app.js                         # logika interfejsu
+├── material-policy.js             # wspólna lista i zasady materiałów
+├── matching-policy.js             # walidacja i dokładny przydział włóczek
 ├── index.html                     # widok aplikacji
 ├── styles.css                     # style
 ├── server.js                      # backend HTTP i API

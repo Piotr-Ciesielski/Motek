@@ -14,7 +14,9 @@ Aktualna kompletność danych:
 - 68 rekordów ma jednoznaczny przelicznik metrów na 100 gramów;
 - wszystkie 106 rekordów ma opis wymaganych włóczek lub jawnie elastycznego
   doboru materiału;
-- 3 wzory demo mają kompletne dane pozwalające na automatyczne dopasowanie;
+- 21 wariantów trzech rzeczywistych wzorów ma kompletne dane pozwalające na
+  automatyczne dopasowanie;
+- wszystkie 106 rekordów korzysta z walidowanego formatu wymagań v2;
 - język źródła rozpoznano jako polski dla 49 i angielski dla 57 rekordów;
 - każdy rekord ma kontrolowany typ projektu używany w karcie i filtrze katalogu;
 - katalog zawiera 35 par skarpet, 21 swetrów, 9 kardiganów, 19 topów i bluzek,
@@ -29,10 +31,24 @@ Mechanizm dopasowania korzysta wyłącznie z kompletnych danych w polu
 `matching_requirements`. Wzory bez potwierdzonych wymagań pozostają dostępne w
 katalogu opisowym, ale nie są używane w rankingu.
 
+## Dokładne dopasowanie — wdrożone
+
+Pierwszy zweryfikowany pakiet obejmuje 21 wariantów trzech rzeczywistych
+wzorów:
+
+- `Holly` — 1 wariant z włóczką główną i dwoma kontrastowymi kolorami;
+- `Na Pole` — 12 wariantów rozmiaru i rodzaju włóczki;
+- `Oslo Hat` — 8 wariantów rozmiaru i rodzaju włóczki, z dwiema nitkami.
+
+Wymagania rozdzielają metry lub gramy, klasy grubości, materiały, role i
+zależności kolorystyczne. Ranking wskazuje, które konkretne motki zostały
+przydzielone do każdej roli i nie wykorzystuje jednego motka ponownie.
+
 ## Wzory demo
 
-Wzory demo służą do testów end-to-end. Zawierają własne, krótkie opisy oraz
-kompletne warianty z liczbą motków, długością, wagą, materiałem i grubością.
+Wzory demo zachowują własne, krótkie opisy, ale nie uczestniczą już w rankingu.
+Testy dokładnego dopasowania korzystają z potwierdzonych danych rzeczywistych
+wzorów oraz osobnych danych testowych.
 
 - `Wzór demo — Leśny kardigan`
 - `Wzór demo — Bawełniany top`
@@ -83,13 +99,12 @@ Rekomendowane rozwiązanie:
 - nie pokazywać przycisku źródła, jeśli adres jest pusty;
 - wzory demo pozostawić bez zewnętrznego adresu.
 
-### 3. Dopasowanie rzeczywistych wzorów
+### 3. Dopasowanie rzeczywistych wzorów — pierwszy pakiet wdrożony
 
-Należy wybrać pierwszą małą partię rzeczywistych wzorów z jednoznacznymi
-tabelami rozmiarów i zużycia, przygotować dla nich kompletne warianty
-`matching_requirements`, przetestować je na przykładowych magazynach i dopiero
-potem przejść do kolejnych partii. Adres źródła jest przydatny prezentacyjnie,
-ale nie blokuje opracowania potwierdzonych wymagań ilościowych z dostępnego PDF.
+Pierwszy pakiet Holly, Na Pole i Oslo Hat został przygotowany, zwalidowany i
+zaimportowany. Kolejne wzory należy dodawać partiami tą samą metodą: potwierdzić
+tabele rozmiarów i zużycia w PDF, zapisać kompletne warianty, sprawdzić je na
+przykładowych magazynach i dopiero wtedy włączyć do rankingu.
 
 ## Narzędzie importu
 

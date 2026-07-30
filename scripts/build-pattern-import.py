@@ -38,6 +38,116 @@ ALLOWED_PROJECT_TYPES = {
     "blanket",
     "other",
 }
+ALLOWED_MATERIALS = {
+    "wełna",
+    "alpaka",
+    "moher",
+    "kaszmir",
+    "angora",
+    "jak",
+    "bawełna",
+    "len",
+    "bambus",
+    "wiskoza",
+    "jedwab",
+    "poliamid",
+    "poliester",
+    "akryl",
+    "mieszanka",
+}
+ALLOWED_WEIGHT_CLASSES = {"lace", "fingering", "sport", "dk", "worsted", "bulky"}
+
+
+def validate_matching_requirements(value: object, source: str) -> list[str]:
+    errors = []
+    if not isinstance(value, dict) or value.get("version") != 2:
+        return [f"{source}: matching_requirements musi mieć wersję 2"]
+
+    variants = value.get("variants")
+    if not isinstance(variants, list) or len(variants) > 250:
+        return [f"{source}: matching_requirements.variants musi być listą do 250 elementów"]
+
+    seen_ids = set()
+    for index, variant in enumerate(variants, start=1):
+        context = f"{source}: wariant {index}"
+        if not isinstance(variant, dict):
+            errors.append(f"{context} nie jest obiektem")
+            continue
+
+        variant_id = variant.get("id")
+        label = variant.get("label")
+        if not isinstance(variant_id, str) or not variant_id.strip() or len(variant_id.strip()) > 100:
+            errors.append(f"{context} ma nieprawidłowe id")
+        elif variant_id.strip() in seen_ids:
+            errors.append(f"{context} ma powtórzone id")
+        else:
+            seen_ids.add(variant_id.strip())
+        if not isinstance(label, str) or not label.strip() or len(label.strip()) > 100:
+            errors.append(f"{context} ma nieprawidłową etykietę")
+
+        requirements = variant.get("requirements")
+        if not isinstance(requirements, list) or not 1 <= len(requirements) <= 8:
+            errors.append(f"{context} musi zawierać od 1 do 8 ról")
+            continue
+
+        for role_index, requirement in enumerate(requirements, start=1):
+            role_context = f"{context}, rola {role_index}"
+            if not isinstance(requirement, dict):
+                errors.append(f"{role_context} nie jest obiektem")
+                continue
+
+            if not isinstance(requirement.get("role"), str) or not requirement["role"].strip():
+                errors.append(f"{role_context} nie ma nazwy")
+            basis = requirement.get("measurement_basis")
+            if basis not in {"meters", "grams"}:
+                errors.append(f"{role_context} ma nieprawidłową podstawę pomiaru")
+
+            for prefix in ("meters", "grams", "skeins"):
+                minimum = requirement.get(f"{prefix}_min")
+                maximum = requirement.get(f"{prefix}_max")
+                if minimum is not None and (
+                    not isinstance(minimum, int)
+                    or isinstance(minimum, bool)
+                    or minimum < 1
+                ):
+                    errors.append(f"{role_context}.{prefix}_min musi być dodatnią liczbą")
+                if maximum is not None and (
+                    not isinstance(maximum, int)
+                    or isinstance(maximum, bool)
+                    or maximum < 1
+                    or minimum is None
+                    or maximum < minimum
+                ):
+                    errors.append(f"{role_context}.{prefix}_max ma nieprawidłowy zakres")
+            if basis in {"meters", "grams"} and requirement.get(f"{basis}_min") is None:
+                errors.append(f"{role_context} nie ma {basis}_min")
+
+            material_match = requirement.get("material_match")
+            materials = requirement.get("materials")
+            if material_match not in {"all", "any", "any_material"}:
+                errors.append(f"{role_context} ma nieprawidłowy tryb materiału")
+            elif not isinstance(materials, list):
+                errors.append(f"{role_context}.materials musi być listą")
+            elif material_match == "any_material" and materials:
+                errors.append(f"{role_context}: any_material wymaga pustej listy")
+            elif material_match != "any_material" and (
+                not materials
+                or any(material not in ALLOWED_MATERIALS for material in materials)
+                or ("mieszanka" in materials and len(set(materials)) > 1)
+            ):
+                errors.append(f"{role_context} zawiera nieprawidłowy materiał")
+
+            if requirement.get("color_mode") not in {"same", "any"}:
+                errors.append(f"{role_context} ma nieprawidłowy tryb koloru")
+            weight_classes = requirement.get("weight_classes")
+            if (
+                not isinstance(weight_classes, list)
+                or not weight_classes
+                or any(value not in ALLOWED_WEIGHT_CLASSES for value in weight_classes)
+            ):
+                errors.append(f"{role_context} ma nieprawidłową grubość")
+
+    return errors
 
 
 def load_json(path: Path):
@@ -88,32 +198,7 @@ def validate_record(record: dict) -> list[str]:
     if not isinstance(requirements, list):
         errors.append(f"{source}: yarn_requirements musi być listą")
 
-    matching_requirements = record.get("matching_requirements")
-    if not isinstance(matching_requirements, dict) or not isinstance(
-        matching_requirements.get("variants"), list
-    ):
-        errors.append(
-            f"{source}: matching_requirements musi zawierać listę variants"
-        )
-    else:
-        for index, variant in enumerate(matching_requirements["variants"], start=1):
-            if not isinstance(variant, dict):
-                errors.append(f"{source}: wariant {index} nie jest obiektem")
-                continue
-            for field in ("yarns_needed", "meters_needed", "grams_needed"):
-                value = variant.get(field)
-                if not isinstance(value, int) or isinstance(value, bool) or value < 1:
-                    errors.append(
-                        f"{source}: wariant {index} ma nieprawidłowe pole {field}"
-                    )
-            for field in ("materials", "weight_classes"):
-                value = variant.get(field)
-                if not isinstance(value, list) or not all(
-                    isinstance(item, str) and item.strip() for item in value
-                ):
-                    errors.append(
-                        f"{source}: wariant {index} ma nieprawidłowe pole {field}"
-                    )
+    errors.extend(validate_matching_requirements(record.get("matching_requirements"), source))
 
     if record.get("source_language") not in ALLOWED_LANGUAGES:
         errors.append(f"{source}: nieobsługiwany język źródła")
@@ -206,10 +291,16 @@ def main() -> None:
         record = {
             field: merged.get(
                 field,
-                {"variants": []} if field == "matching_requirements" else None,
+                {"version": 2, "variants": []}
+                if field == "matching_requirements"
+                else None,
             )
             for field in DATABASE_FIELDS
         }
+        record["matching_requirements"] = override.get(
+            "matching_requirements",
+            {"version": 2, "variants": []},
+        )
         validation_errors.extend(validate_record(record))
         records.append(record)
 
@@ -224,6 +315,10 @@ def main() -> None:
         )
 
     for demo_record in demo_records:
+        demo_record = {
+            **demo_record,
+            "matching_requirements": {"version": 2, "variants": []},
+        }
         validation_errors.extend(validate_record(demo_record))
         records.append(demo_record)
         audit.append(
