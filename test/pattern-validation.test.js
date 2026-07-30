@@ -1,7 +1,10 @@
 const { test } = require("node:test");
 const assert = require("node:assert/strict");
 
-const { validateMatchingRequirements } = require("../scripts/import-patterns");
+const {
+  validateMatchingRequirements,
+  validateProjectType,
+} = require("../scripts/import-patterns");
 
 test("walidator importera odrzuca częściowo błędne wymagania wzoru", () => {
   assert.doesNotThrow(() => validateMatchingRequirements({
@@ -34,5 +37,14 @@ test("walidator importera odrzuca częściowo błędne wymagania wzoru", () => {
       yarn_requirements: Array.from({ length: 9 }, () => ({})),
     }] }, "zly-role.json"),
     /od 0 do 8/
+  );
+});
+
+test("walidator importera przyjmuje tylko obsługiwane typy projektów", () => {
+  assert.doesNotThrow(() => validateProjectType("cardigan", "dobry.json"));
+  assert.doesNotThrow(() => validateProjectType("other", "inny.json"));
+  assert.throws(
+    () => validateProjectType("nieznany-typ", "zly.json"),
+    /nieobsługiwany typ projektu/,
   );
 });

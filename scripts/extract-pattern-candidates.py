@@ -4,6 +4,8 @@ import re
 import unicodedata
 from pathlib import Path
 
+from pattern_taxonomy import infer_project_type
+
 import fitz
 
 
@@ -28,23 +30,6 @@ MATERIALS = {
     "poliamid": ("poliamid", "polyamide", "nylon"),
     "poliester": ("poliester", "polyester"),
 }
-
-PROJECT_TYPES = (
-    (("socks", "sock", "skarpet", "chaussettes"), "skarpetki"),
-    (("cardigan", "kardigan", "cardi"), "kardigan"),
-    (("sweater", "sweter", "jumper", "pullover"), "sweter"),
-    (("tee", "t-shirt", "tshirt", "top", "bluzka"), "top lub bluzkę"),
-    (("shawl", "chusta"), "chustę"),
-    (("scarf", "szal", "capucharpe"), "szal"),
-    (("hat", "czapka", "huen", "bonnet"), "czapkę"),
-    (("mittens", "rękawicz", "rekawicz"), "rękawiczki"),
-    (("vest", "kamizel"), "kamizelkę"),
-    (("skirt", "spódnic", "spodnic"), "spódnicę"),
-    (("dress", "sukien"), "sukienkę"),
-    (("cowl", "komin"), "komin"),
-    (("hoodie", "hood"), "projekt z kapturem"),
-    (("headband", "opaska"), "opaskę"),
-)
 
 TECHNIQUES = (
     (("colorwork", "fair isle", "żakard", "zakard"), "wzorem wielokolorowym"),
@@ -296,12 +281,7 @@ def build_yarn_requirements(
 
 def infer_description(title: str, text: str) -> str:
     folded = fold_text(f"{title}\n{text[:40_000]}")
-    project_type = "projekt dziewiarski"
-
-    for markers, label in PROJECT_TYPES:
-        if any(fold_text(marker) in folded for marker in markers):
-            project_type = label
-            break
+    _, project_type = infer_project_type(title, text)
 
     techniques = [
         label
@@ -385,6 +365,7 @@ def create_candidate(pdf_path: Path) -> dict:
     return {
         "name": title,
         "description": infer_description(title, text),
+        "project_type": infer_project_type(title, text)[0],
         "materials": materials,
         "meters_per_100g": ratios[0] if len(ratios) == 1 else None,
         "yarn_requirements": yarn_requirements,

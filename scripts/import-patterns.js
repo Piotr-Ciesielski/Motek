@@ -16,6 +16,19 @@ const SOURCE_FILTER = process.argv
   .find((argument) => argument.startsWith("--source="))
   ?.slice("--source=".length);
 const BATCH_SIZE = 50;
+const PROJECT_TYPES = new Set([
+  "socks",
+  "sweater",
+  "cardigan",
+  "top",
+  "shawl_scarf",
+  "head_accessory",
+  "gloves",
+  "vest",
+  "skirt_dress",
+  "blanket",
+  "other",
+]);
 
 function validateImportCapacity(target) {
   const finalCount = target.tableRecordCount + target.newRecordCount;
@@ -91,6 +104,12 @@ function validateMatchingRequirements(value, sourceFilename) {
   });
 }
 
+function validateProjectType(value, sourceFilename) {
+  if (!PROJECT_TYPES.has(value)) {
+    throw new Error(`Rekord ${sourceFilename} ma nieobsługiwany typ projektu.`);
+  }
+}
+
 function readImportData() {
   const document = JSON.parse(fs.readFileSync(IMPORT_PATH, "utf8"));
 
@@ -104,6 +123,7 @@ function readImportData() {
   }
 
   for (const record of document.records) {
+    validateProjectType(record.project_type, record.source_filename);
     validateMatchingRequirements(record.matching_requirements, record.source_filename);
   }
 
@@ -234,5 +254,6 @@ if (require.main === module) {
 module.exports = {
   validateImportCapacity,
   validateMatchingRequirements,
+  validateProjectType,
   importRecords,
 };

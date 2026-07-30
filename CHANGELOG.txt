@@ -1,5 +1,13 @@
 Motek - log zmian
 
+Wersja 2.0.0-alpha.32 (w przygotowaniu) - kategorie katalogu wzorów
+
+- Dodano kontrolowane typy projektów dla 119 wzorów.
+- Katalog pokazuje kategorię na karcie i pozwala filtrować po typie projektu.
+- Klasyfikacja preferuje nazwę wzoru i pełne słowa, aby ograniczyć błędne przypisania.
+- Dodano migrację Supabase oraz kontrolowany import kategorii.
+- Dodano testy kompletności danych i charakterystycznych kategorii.
+
 Wersja 2.0.0-alpha.31 (w przygotowaniu) - prosty powrót do całego katalogu
 - Dodano jedną akcję czyszczącą wyszukiwanie, filtry i niestandardowe sortowanie.
 - Przycisk jest nieaktywny, gdy katalog już korzysta z ustawień domyślnych.

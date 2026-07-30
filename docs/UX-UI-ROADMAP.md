@@ -137,7 +137,7 @@
 
 ## Sprawdzenie
 
-- `npm run check` przechodzi: 35/35 testów;
+- `npm run check` przechodzi: 38/38 testów;
 - start redesignu frontu zapisano w commicie `2a0c94c` na branchu
   `feat/frontend-design-refresh`, a branch został wypchnięty na GitHub;
 - import katalogu demo został sprawdzony w trybie kontrolnym;
@@ -145,25 +145,34 @@
 - kolejne pakiety są sprawdzane interaktywnie w przeglądarce na desktopie i mobile.
 - techniczny test klawiatury potwierdził działanie skip linku i przejścia fokusu
   między głównymi ekranami; pełny odsłuch pozostaje do wykonania w NVDA lub VoiceOver.
-- test przeglądarkowy potwierdził widoczne karty już podczas pobierania oraz
+- test przeglądarkowy potwierdził widoczne karty już podczas pobierania,
+  filtrowanie po typie projektu oraz
   zdjęcie stanu `aria-busy` po załadowaniu wszystkich 119 rekordów.
 
 ## Następne zadania UX/UI
 
-1. **Odbiór dostępności z prawdziwym czytnikiem**
-   - ręczny odsłuch pełnego przepływu w NVDA lub VoiceOver;
-   - potwierdzenie kolejności i treści komunikatów przy logowaniu, zapisie i błędach.
-
-2. **Wzbogacenie danych katalogu**
-   - dodać zweryfikowane adresy źródeł oraz opcjonalny typ projektu;
+1. **Wzbogacenie danych katalogu**
+   - dodać zweryfikowane adresy źródeł;
    - wznowić ręczną weryfikację 110 rzeczywistych wzorów;
    - zdecydować, czy filtr „pasuje do mojego magazynu” ma dublować osobny widok
      `Dopasowanie`.
 
-3. **Skalowanie katalogu dopiero przed zwiększeniem limitu**
+2. **Skalowanie katalogu dopiero przed zwiększeniem limitu**
    - przenieść wyszukiwanie i filtrowanie na serwer;
    - zastosować paginację sterowaną przez użytkownika lub kursor;
    - wykonać test wydajności po przekroczeniu obecnego limitu 300 rekordów.
+
+## Możliwy późniejszy krok rozwoju
+
+Test z prawdziwym czytnikiem ekranu został świadomie odłożony i nie blokuje
+obecnych prac nad katalogiem:
+
+- na Windows można użyć bezpłatnego NVDA;
+- na urządzeniach Apple można użyć wbudowanego VoiceOver;
+- przyszły test powinien objąć logowanie, komunikaty błędów, nawigację między
+  ekranami, formularz włóczki, dopasowanie i filtry katalogu;
+- celem będzie potwierdzenie kolejności oraz zrozumiałości komunikatów
+  odczytywanych na głos.
 
 ## Uwaga procesowa
 

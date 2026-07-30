@@ -24,6 +24,8 @@ build/
 coverage/
 .venv/
 tmp/
+__pycache__/
+*.py[cod]
 
 Wzory/
 PROMPTS.md

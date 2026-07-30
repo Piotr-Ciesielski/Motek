@@ -1,6 +1,8 @@
 import json
 from pathlib import Path
 
+from pattern_taxonomy import infer_project_type
+
 
 PROJECT_DIR = Path(__file__).resolve().parent.parent
 CANDIDATES_PATH = PROJECT_DIR / "tmp" / "pdfs" / "pattern-candidates.json"
@@ -11,6 +13,7 @@ OUTPUT_PATH = PROJECT_DIR / "data" / "patterns-import.json"
 DATABASE_FIELDS = (
     "name",
     "description",
+    "project_type",
     "materials",
     "meters_per_100g",
     "yarn_requirements",
@@ -21,6 +24,19 @@ DATABASE_FIELDS = (
 )
 
 ALLOWED_LANGUAGES = {"pl", "en", "mixed", "unknown"}
+ALLOWED_PROJECT_TYPES = {
+    "socks",
+    "sweater",
+    "cardigan",
+    "top",
+    "shawl_scarf",
+    "head_accessory",
+    "gloves",
+    "vest",
+    "skirt_dress",
+    "blanket",
+    "other",
+}
 
 
 def load_json(path: Path):
@@ -40,6 +56,9 @@ def validate_record(record: dict) -> list[str]:
         errors.append(f"{source}: brak opisu")
     elif len(record["description"].strip()) > 1000:
         errors.append(f"{source}: opis przekracza 1000 znaków")
+
+    if record.get("project_type") not in ALLOWED_PROJECT_TYPES:
+        errors.append(f"{source}: nieobsługiwany typ projektu")
 
     materials = record.get("materials")
     if not isinstance(materials, list) or not all(
@@ -129,6 +148,10 @@ def main() -> None:
         source_filename = candidate["source_filename"]
         merged = {**candidate, **overrides.get(source_filename, {})}
         merged["source_filename"] = source_filename
+        merged["project_type"] = merged.get("project_type") or infer_project_type(
+            f"{source_filename} {merged.get('name', '')}",
+            merged.get("description", ""),
+        )[0]
 
         record = {
             field: merged.get(

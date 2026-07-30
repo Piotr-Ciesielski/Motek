@@ -95,6 +95,7 @@ test("serwer Motek działa bezpiecznie", async (t) => {
       id: 21,
       name: "Testowy wzór Supabase",
       description: "Opis wzoru pobranego ze zdalnej bazy.",
+      project_type: "cardigan",
       materials: ["wełna", "jedwab"],
       meters_per_100g: 400,
       yarn_requirements: [
@@ -577,6 +578,7 @@ test("serwer Motek działa bezpiecznie", async (t) => {
         id: 21,
         name: "Testowy wzór Supabase",
         description: "Opis wzoru pobranego ze zdalnej bazy.",
+        projectType: "cardigan",
         materials: ["wełna", "jedwab"],
         metersPer100g: 400,
         yarnRequirements: [

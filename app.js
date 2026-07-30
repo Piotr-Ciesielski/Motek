@@ -11,6 +11,7 @@ const patternTemplate = document.getElementById("patternTemplate");
 const patternSearch = document.getElementById("patternSearch");
 const patternReviewFilter = document.getElementById("patternReviewFilter");
 const patternLanguageFilter = document.getElementById("patternLanguageFilter");
+const patternTypeFilter = document.getElementById("patternTypeFilter");
 const patternMaterialFilter = document.getElementById("patternMaterialFilter");
 const patternSort = document.getElementById("patternSort");
 const patternCatalogSummary = document.getElementById("patternCatalogSummary");
@@ -1144,6 +1145,7 @@ function showPatternInCatalog(patternName) {
   patternSearch.value = patternName;
   patternReviewFilter.value = "verified";
   patternLanguageFilter.value = "all";
+  patternTypeFilter.value = "all";
   patternMaterialFilter.value = "all";
   patternSort.value = "recommended";
   catalogVisibleLimit = 12;
@@ -1164,6 +1166,23 @@ function formatPatternLanguage(value) {
   if (value === "pl") return "Wzór po polsku";
   if (value === "en") return "Wzór po angielsku";
   return "Język nieustalony";
+}
+
+function formatProjectType(value) {
+  const labels = {
+    socks: "Skarpety",
+    sweater: "Sweter",
+    cardigan: "Kardigan",
+    top: "Top lub bluzka",
+    shawl_scarf: "Chusta lub szal",
+    head_accessory: "Czapka, opaska lub komin",
+    gloves: "Rękawiczki",
+    vest: "Kamizelka",
+    skirt_dress: "Spódnica lub sukienka",
+    blanket: "Koc",
+    other: "Inny projekt",
+  };
+  return labels[value] || labels.other;
 }
 
 function populatePatternMaterialFilter() {
@@ -1197,12 +1216,14 @@ function renderPatternCatalog() {
   const phrase = patternSearch.value.trim().toLocaleLowerCase("pl");
   const reviewFilter = patternReviewFilter.value;
   const languageFilter = patternLanguageFilter.value;
+  const typeFilter = patternTypeFilter.value;
   const materialFilter = patternMaterialFilter.value;
   const sortMode = patternSort.value;
   resetCatalogFiltersBtn.disabled =
     !phrase &&
     reviewFilter === "verified" &&
     languageFilter === "all" &&
+    typeFilter === "all" &&
     materialFilter === "all" &&
     sortMode === "recommended";
   const matchingPatterns = catalogPatterns
@@ -1210,6 +1231,7 @@ function renderPatternCatalog() {
       const searchable = [
         pattern.name,
         pattern.description,
+        formatProjectType(pattern.projectType),
         ...(Array.isArray(pattern.materials) ? pattern.materials : []),
       ]
         .join(" ")
@@ -1221,11 +1243,19 @@ function renderPatternCatalog() {
         (reviewFilter === "verified" && !pattern.needsReview);
       const matchesLanguage =
         languageFilter === "all" || pattern.sourceLanguage === languageFilter;
+      const matchesType =
+        typeFilter === "all" || pattern.projectType === typeFilter;
       const matchesMaterial =
         materialFilter === "all" ||
         (Array.isArray(pattern.materials) &&
           pattern.materials.includes(materialFilter));
-      return matchesPhrase && matchesStatus && matchesLanguage && matchesMaterial;
+      return (
+        matchesPhrase &&
+        matchesStatus &&
+        matchesLanguage &&
+        matchesType &&
+        matchesMaterial
+      );
     })
     .sort((left, right) => {
       const nameOrder = formatPatternName(left.name).localeCompare(
@@ -1267,7 +1297,7 @@ function renderPatternCatalog() {
       .querySelector(".pattern-card__details summary")
       .setAttribute("aria-label", `Parametry włóczki: ${formatPatternName(pattern.name)}`);
     card.querySelector(".pattern-card__kicker").textContent =
-      formatPatternLanguage(pattern.sourceLanguage);
+      `${formatProjectType(pattern.projectType)} · ${formatPatternLanguage(pattern.sourceLanguage)}`;
     card.querySelector(".pattern-card__description").textContent =
       pattern.description;
     card.querySelector(".pattern-card__facts").textContent =
@@ -1868,12 +1898,14 @@ function resetPatternCatalogView() {
 patternSearch.addEventListener("input", resetPatternCatalogView);
 patternReviewFilter.addEventListener("change", resetPatternCatalogView);
 patternLanguageFilter.addEventListener("change", resetPatternCatalogView);
+patternTypeFilter.addEventListener("change", resetPatternCatalogView);
 patternMaterialFilter.addEventListener("change", resetPatternCatalogView);
 patternSort.addEventListener("change", resetPatternCatalogView);
 resetCatalogFiltersBtn.addEventListener("click", () => {
   patternSearch.value = "";
   patternReviewFilter.value = "verified";
   patternLanguageFilter.value = "all";
+  patternTypeFilter.value = "all";
   patternMaterialFilter.value = "all";
   patternSort.value = "recommended";
   resetPatternCatalogView();

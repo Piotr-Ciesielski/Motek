@@ -65,6 +65,10 @@ Pozostałe części wymagają:
   tę funkcję pozostawiamy w osobnym widoku `Dopasowanie`;
 - dalszej ręcznej weryfikacji 110 rekordów oznaczonych jako „Do sprawdzenia”.
 
+Ręczny odsłuch pełnego przepływu w NVDA lub VoiceOver pozostaje możliwym
+późniejszym etapem rozwoju. Został świadomie odłożony i nie blokuje prac nad
+katalogiem oraz danymi wzorów.
+
 ## Zakres i metoda
 
 Ręcznie sprawdzono:

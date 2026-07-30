@@ -942,7 +942,7 @@ input, select {
 
 .catalog-controls {
   display: grid;
-  grid-template-columns: minmax(200px, 1.35fr) repeat(4, minmax(130px, 0.75fr));
+  grid-template-columns: minmax(200px, 1.35fr) repeat(5, minmax(130px, 0.75fr));
   gap: 12px;
 }
 

@@ -11,6 +11,7 @@
     {
       "name": "HINTERLAND",
       "description": "Instrukcja wykonania projektu: sweter, z wzorem wielokolorowym, ażurowymi detalami. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "project_type": "sweater",
       "materials": [
         "wełna"
       ],
@@ -34,6 +35,7 @@
     {
       "name": "suncatcher-square-neck-intarsia-tee",
       "description": "Instrukcja wykonania projektu: skarpetki, z intarsją, ażurowymi detalami. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "project_type": "top",
       "materials": [
         "bawełna"
       ],
@@ -57,6 +59,7 @@
     {
       "name": "rosmarino-eyelet-ankle-socks",
       "description": "Instrukcja wykonania projektu: skarpetki, z ażurowymi detalami, konstrukcją od góry. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "project_type": "socks",
       "materials": [
         "wełna",
         "poliamid"
@@ -82,6 +85,7 @@
     {
       "name": "Jak prosto zrobić dekolt V na drutach",
       "description": "Instrukcja formowania dekoltu V w swetrze lub kardiganie wykonywanym od góry, wraz z obliczeniami i kształtowaniem raglanów.",
+      "project_type": "cardigan",
       "materials": [],
       "meters_per_100g": null,
       "yarn_requirements": [],
@@ -95,6 +99,7 @@
     {
       "name": "Black Lodge Socks - wzór dziewiarski",
       "description": "Instrukcja wykonania projektu: skarpetki. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "project_type": "socks",
       "materials": [],
       "meters_per_100g": 400.0,
       "yarn_requirements": [
@@ -114,6 +119,7 @@
     {
       "name": "White Lodge Socks - wzór dziewiarski",
       "description": "Instrukcja wykonania projektu: skarpetki, z ażurowymi detalami. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "project_type": "socks",
       "materials": [
         "wełna",
         "moher",
@@ -159,6 +165,7 @@
     {
       "name": "Diamond Fade Socks 2025",
       "description": "Instrukcja wykonania projektu: skarpetki, z ażurowymi detalami. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "project_type": "socks",
       "materials": [
         "wełna",
         "poliamid"
@@ -184,6 +191,7 @@
     {
       "name": "Teddy Bear Socks - wzór PL (ang skróty)",
       "description": "Instrukcja wykonania projektu: skarpetki. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "project_type": "socks",
       "materials": [
         "wełna",
         "poliamid"
@@ -209,6 +217,7 @@
     {
       "name": "Alice in Wonderland July 2013",
       "description": "Instrukcja wykonania projektu: skarpetki, z ażurowymi detalami, warkoczami. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "project_type": "socks",
       "materials": [
         "wełna",
         "kaszmir"
@@ -234,6 +243,7 @@
     {
       "name": "ALTA socks (PL) dla WÅÃ³czkomaniaczki (poprawione)",
       "description": "Instrukcja wykonania projektu: skarpetki, z wzorem wielokolorowym, konstrukcją od góry. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "project_type": "socks",
       "materials": [],
       "meters_per_100g": 400.0,
       "yarn_requirements": [
@@ -253,6 +263,7 @@
     {
       "name": "Autumn s Letter Cardigan by Amina Ali",
       "description": "Instrukcja wykonania projektu: kardigan, z ażurowymi detalami, warkoczami. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "project_type": "cardigan",
       "materials": [
         "wełna",
         "jedwab"
@@ -284,6 +295,7 @@
     {
       "name": "b2b-pdf 2106-07abc-eng 1",
       "description": "Instrukcja wykonania projektu: skarpetki, z konstrukcją raglanową. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "project_type": "socks",
       "materials": [
         "bawełna"
       ],
@@ -307,6 +319,7 @@
     {
       "name": "BABUSHKA SCARF",
       "description": "Instrukcja wykonania projektu: szal. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "project_type": "shawl_scarf",
       "materials": [
         "wełna"
       ],
@@ -330,6 +343,7 @@
     {
       "name": "Basic Kardigan Kod Dostępu",
       "description": "Instrukcja wykonania projektu: kardigan. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "project_type": "cardigan",
       "materials": [],
       "meters_per_100g": null,
       "yarn_requirements": [],
@@ -343,6 +357,7 @@
     {
       "name": "bevelled-tank-sleeveless-intarsia-top",
       "description": "Instrukcja wykonania projektu: skarpetki, z wzorem wielokolorowym, intarsją. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "project_type": "top",
       "materials": [
         "bawełna"
       ],
@@ -366,6 +381,7 @@
     {
       "name": "BIG-BIG-BUBBLES-WZOR-INSTRUKCJA-WYKONANIA06.23-tbto93",
       "description": "Instrukcja wykonania projektu: kardigan. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "project_type": "cardigan",
       "materials": [
         "wełna"
       ],
@@ -389,6 +405,7 @@
     {
       "name": "Big-Big-BuBBles06.23-licnfm",
       "description": "Instrukcja wykonania projektu: kardigan. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "project_type": "cardigan",
       "materials": [
         "wełna"
       ],
@@ -412,6 +429,7 @@
     {
       "name": "Blush Basic Socks Listopad 2023 Wydanie pierwsze",
       "description": "Instrukcja wykonania projektu: skarpetki, z konstrukcją od góry. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "project_type": "socks",
       "materials": [
         "wełna"
       ],
@@ -435,6 +453,7 @@
     {
       "name": "bluzka saranda tee knitolog",
       "description": "Instrukcja wykonania projektu: sweter. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "project_type": "top",
       "materials": [
         "bawełna",
         "len",
@@ -462,6 +481,7 @@
     {
       "name": "bluzka Skuletant Iwona Eriksson",
       "description": "Instrukcja wykonania projektu: sweter, z ażurowymi detalami, warkoczami. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "project_type": "top",
       "materials": [],
       "meters_per_100g": 240.0,
       "yarn_requirements": [
@@ -481,6 +501,7 @@
     {
       "name": "Bone",
       "description": "Ażurowa kamizelka bez rękawów dostępna w wersji krótkiej lub dłuższej.",
+      "project_type": "vest",
       "materials": [],
       "meters_per_100g": null,
       "yarn_requirements": [
@@ -501,6 +522,7 @@
     {
       "name": "Bubble",
       "description": "Kardigan o wyrazistej fakturze tworzonej przez dekoracyjne bąbelki.",
+      "project_type": "cardigan",
       "materials": [],
       "meters_per_100g": null,
       "yarn_requirements": [
@@ -522,6 +544,7 @@
     {
       "name": "Canada",
       "description": "Instrukcja wykonania projektu: kardigan, z wzorem wielokolorowym, intarsją. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "project_type": "cardigan",
       "materials": [],
       "meters_per_100g": 187.45,
       "yarn_requirements": [
@@ -541,6 +564,7 @@
     {
       "name": "Capucharpe EN",
       "description": "Instrukcja wykonania projektu: top lub bluzkę, z ażurowymi detalami. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "project_type": "shawl_scarf",
       "materials": [],
       "meters_per_100g": 450.0,
       "yarn_requirements": [
@@ -560,6 +584,7 @@
     {
       "name": "Chaussettes PERCY final EN",
       "description": "Instrukcja wykonania projektu: skarpetki, z wzorem wielokolorowym, ażurowymi detalami. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "project_type": "socks",
       "materials": [
         "wełna",
         "poliamid"
@@ -585,6 +610,7 @@
     {
       "name": "Chusta Erin kotek i motek",
       "description": "Instrukcja wykonania projektu: top lub bluzkę, z konstrukcją od góry. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "project_type": "shawl_scarf",
       "materials": [],
       "meters_per_100g": null,
       "yarn_requirements": [
@@ -614,6 +640,7 @@
     {
       "name": "Cirro",
       "description": "Sweter wykonywany od góry, z ażurowym karczkiem i modelowaniem krótkimi rzędami.",
+      "project_type": "sweater",
       "materials": [
         "wełna",
         "moher",
@@ -649,6 +676,7 @@
     {
       "name": "Climb every Mountain socks Final Edit141122",
       "description": "Instrukcja wykonania projektu: skarpetki, z ażurowymi detalami, warkoczami. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "project_type": "socks",
       "materials": [
         "wełna",
         "poliamid"
@@ -698,6 +726,7 @@
     {
       "name": "Cloudberry Sweater",
       "description": "Instrukcja wykonania projektu: sweter, z ażurowymi detalami. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "project_type": "sweater",
       "materials": [],
       "meters_per_100g": 200.0,
       "yarn_requirements": [
@@ -717,6 +746,7 @@
     {
       "name": "Clue 1 Color Popportunity Socks",
       "description": "Instrukcja wykonania projektu: skarpetki, z ażurowymi detalami, warkoczami. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "project_type": "socks",
       "materials": [
         "wełna",
         "poliamid"
@@ -750,6 +780,7 @@
     {
       "name": "Cotton",
       "description": "Koszulka z krótkim rękawem i dekoltem w serek.",
+      "project_type": "top",
       "materials": [],
       "meters_per_100g": null,
       "yarn_requirements": [
@@ -770,6 +801,7 @@
     {
       "name": "Craigh Na Dun Shawl - Anna Kania (2)",
       "description": "Instrukcja wykonania projektu: chustę, z warkoczami. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "project_type": "shawl_scarf",
       "materials": [
         "wełna"
       ],
@@ -807,6 +839,7 @@
     {
       "name": "Diamond Fade Socks",
       "description": "Instrukcja wykonania projektu: skarpetki, z ażurowymi detalami. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "project_type": "socks",
       "materials": [
         "wełna",
         "poliamid"
@@ -832,6 +865,7 @@
     {
       "name": "diaphane-top-buttoned-shirt",
       "description": "Instrukcja wykonania projektu: kardigan, z intarsją, ażurowymi detalami. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "project_type": "top",
       "materials": [
         "alpaka"
       ],
@@ -855,6 +889,7 @@
     {
       "name": "Fallandenforestsocks",
       "description": "Instrukcja wykonania projektu: skarpetki, z ażurowymi detalami. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "project_type": "socks",
       "materials": [
         "wełna",
         "poliamid"
@@ -895,6 +930,7 @@
     {
       "name": "Fiorellino ENG1",
       "description": "Instrukcja wykonania projektu: sweter, z ażurowymi detalami, konstrukcją raglanową. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "project_type": "sweater",
       "materials": [],
       "meters_per_100g": 400.0,
       "yarn_requirements": [
@@ -914,6 +950,7 @@
     {
       "name": "floreale-top-lace-back-tee",
       "description": "Instrukcja wykonania projektu: top lub bluzkę, z ażurowymi detalami, warkoczami. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "project_type": "top",
       "materials": [
         "wełna",
         "bawełna",
@@ -945,6 +982,7 @@
     {
       "name": "Forest Light",
       "description": "Instrukcja wykonania projektu: sweter, z wzorem wielokolorowym, ażurowymi detalami. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "project_type": "sweater",
       "materials": [
         "wełna"
       ],
@@ -975,6 +1013,7 @@
     {
       "name": "Forever Autumn Sock Set Final",
       "description": "Instrukcja wykonania projektu: skarpetki, z wzorem wielokolorowym, ażurowymi detalami. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "project_type": "socks",
       "materials": [
         "wełna",
         "poliamid"
@@ -1016,6 +1055,7 @@
     {
       "name": "Gingerbreads Socks",
       "description": "Instrukcja wykonania projektu: skarpetki, z wzorem wielokolorowym, konstrukcją od góry. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "project_type": "socks",
       "materials": [
         "wełna",
         "poliamid"
@@ -1049,6 +1089,7 @@
     {
       "name": "Grassland Tee",
       "description": "Bezszwowa koszulka wykonywana od góry, z krótkimi rękawami i ażurowym panelem z przodu.",
+      "project_type": "top",
       "materials": [
         "wełna",
         "jedwab",
@@ -1085,6 +1126,7 @@
     {
       "name": "Greenbay",
       "description": "Teksturowany top bez rękawów, z rozcięciami po bokach.",
+      "project_type": "top",
       "materials": [],
       "meters_per_100g": null,
       "yarn_requirements": [
@@ -1105,6 +1147,7 @@
     {
       "name": "Handasa Top AminaAliHandmade",
       "description": "Instrukcja wykonania projektu: top lub bluzkę. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "project_type": "top",
       "materials": [
         "wełna",
         "bawełna"
@@ -1145,6 +1188,7 @@
     {
       "name": "HAPPY-TRIO-SWEATER-Tkane-na-okraglo-Wzor-na-druty-exxadt(1)",
       "description": "Instrukcja wykonania projektu: sweter, z konstrukcją od góry. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "project_type": "sweater",
       "materials": [
         "wełna"
       ],
@@ -1168,6 +1212,7 @@
     {
       "name": "HAPPY-TRIO-SWEATER-Tkane-na-okraglo-Wzor-na-druty-exxadt",
       "description": "Instrukcja wykonania projektu: sweter, z konstrukcją od góry. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "project_type": "sweater",
       "materials": [
         "wełna"
       ],
@@ -1191,6 +1236,7 @@
     {
       "name": "Happy Haunts Socks",
       "description": "Skarpetki wykonywane od palców, ozdobione wielokolorowym motywem duchów.",
+      "project_type": "socks",
       "materials": [],
       "meters_per_100g": null,
       "yarn_requirements": [
@@ -1217,6 +1263,7 @@
     {
       "name": "Highland Cardi",
       "description": "Instrukcja wykonania projektu: kardigan, z konstrukcją od góry. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "project_type": "cardigan",
       "materials": [
         "wełna"
       ],
@@ -1240,6 +1287,7 @@
     {
       "name": "HollyBerryCharitySocks",
       "description": "Instrukcja wykonania projektu: skarpetki, z wzorem wielokolorowym, ażurowymi detalami. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "project_type": "socks",
       "materials": [],
       "meters_per_100g": 365.76,
       "yarn_requirements": [
@@ -1259,6 +1307,7 @@
     {
       "name": "Hot chocolat finishing sugar EN",
       "description": "Instrukcja wykonania projektu: skarpetki, z ażurowymi detalami. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "project_type": "socks",
       "materials": [
         "poliamid"
       ],
@@ -1282,6 +1331,7 @@
     {
       "name": "Hunt-Hand-Knits Turtle-Town-Cowl",
       "description": "Instrukcja wykonania projektu: top lub bluzkę, z wzorem wielokolorowym, ażurowymi detalami. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "project_type": "head_accessory",
       "materials": [],
       "meters_per_100g": null,
       "yarn_requirements": [],
@@ -1295,6 +1345,7 @@
     {
       "name": "I m Batty for Halloween single pattern",
       "description": "Instrukcja wykonania projektu: skarpetki, z ażurowymi detalami, konstrukcją od góry. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "project_type": "socks",
       "materials": [
         "wełna"
       ],
@@ -1318,6 +1369,7 @@
     {
       "name": "ingrid-summer-sweater-A4",
       "description": "Instrukcja wykonania projektu: sweter, z ażurowymi detalami, warkoczami. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "project_type": "sweater",
       "materials": [
         "bawełna",
         "len",
@@ -1347,6 +1399,7 @@
     {
       "name": "ingrid-top-A4",
       "description": "Instrukcja wykonania projektu: top lub bluzkę, z ażurowymi detalami, warkoczami. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "project_type": "top",
       "materials": [
         "bawełna",
         "len",
@@ -1376,6 +1429,7 @@
     {
       "name": "JOAN FEST tee",
       "description": "Instrukcja wykonania projektu: top lub bluzkę, z ażurowymi detalami, konstrukcją raglanową. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "project_type": "top",
       "materials": [
         "wełna",
         "bawełna",
@@ -1454,6 +1508,7 @@
     {
       "name": "Kardigan All Day Long Kod Dostępu",
       "description": "Instrukcja wykonania projektu: kardigan. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "project_type": "cardigan",
       "materials": [],
       "meters_per_100g": null,
       "yarn_requirements": [],
@@ -1467,6 +1522,7 @@
     {
       "name": "kardigan Hobbii",
       "description": "Instrukcja wykonania projektu: kardigan, z konstrukcją raglanową, konstrukcją od góry. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "project_type": "cardigan",
       "materials": [
         "moher",
         "akryl",
@@ -1494,6 +1550,7 @@
     {
       "name": "Kardigan Simple as That Kod Dostępu",
       "description": "Instrukcja wykonania projektu: kardigan. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "project_type": "cardigan",
       "materials": [],
       "meters_per_100g": null,
       "yarn_requirements": [],
@@ -1507,6 +1564,7 @@
     {
       "name": "Kardigan 20no 201 20Kod 20Dost C4 99pu",
       "description": "Instrukcja wykonania projektu: kardigan. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "project_type": "cardigan",
       "materials": [],
       "meters_per_100g": null,
       "yarn_requirements": [],
@@ -1520,6 +1578,7 @@
     {
       "name": "na pole wzor",
       "description": "Instrukcja wykonania projektu dziewiarskiego. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "project_type": "other",
       "materials": [],
       "meters_per_100g": null,
       "yarn_requirements": [],
@@ -1533,6 +1592,7 @@
     {
       "name": "SweetTreatsSocks NBielińska(1)",
       "description": "Instrukcja wykonania projektu: skarpetki, z wzorem wielokolorowym, warkoczami. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "project_type": "socks",
       "materials": [
         "wełna",
         "poliamid"
@@ -1558,6 +1618,7 @@
     {
       "name": "SweetTreatsSocks NBielińska",
       "description": "Instrukcja wykonania projektu: skarpetki, z wzorem wielokolorowym, warkoczami. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "project_type": "socks",
       "materials": [
         "wełna",
         "poliamid"
@@ -1583,6 +1644,7 @@
     {
       "name": "Leafstream Socks - wzór PL (ang skróty)",
       "description": "Instrukcja wykonania projektu: skarpetki, z ażurowymi detalami, warkoczami. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "project_type": "socks",
       "materials": [
         "alpaka",
         "poliamid"
@@ -1608,6 +1670,7 @@
     {
       "name": "Lento",
       "description": "Prosty sweter raglanowy wykonywany od góry, z dwiema włóczkami przerabianymi razem.",
+      "project_type": "sweater",
       "materials": [
         "wełna",
         "alpaka",
@@ -1643,6 +1706,7 @@
     {
       "name": "LinearisSocksSet",
       "description": "Instrukcja wykonania projektu: skarpetki, z konstrukcją od góry. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "project_type": "socks",
       "materials": [],
       "meters_per_100g": null,
       "yarn_requirements": [
@@ -1667,6 +1731,7 @@
     {
       "name": "Lola Cardin gruby",
       "description": "Instrukcja wykonania projektu: kardigan, z konstrukcją raglanową, konstrukcją od góry. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "project_type": "cardigan",
       "materials": [
         "wełna",
         "akryl",
@@ -1694,6 +1759,7 @@
     {
       "name": "Lyon Sweater",
       "description": "Instrukcja wykonania projektu: sweter, z ażurowymi detalami, konstrukcją raglanową. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "project_type": "sweater",
       "materials": [
         "moher",
         "jedwab"
@@ -1732,6 +1798,7 @@
     {
       "name": "Made Me Puff Top",
       "description": "Dopasowany top z odkrytymi ramionami i bardzo bufiastymi, moherowymi rękawami.",
+      "project_type": "top",
       "materials": [
         "moher"
       ],
@@ -1762,6 +1829,7 @@
     {
       "name": "Magic Toadstool socks update 2023",
       "description": "Instrukcja wykonania projektu: skarpetki, z ażurowymi detalami, konstrukcją od góry. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "project_type": "socks",
       "materials": [
         "wełna",
         "poliamid"
@@ -1803,6 +1871,7 @@
     {
       "name": "Mikkeli Sweater Easter",
       "description": "Instrukcja wykonania projektu: sweter, z ażurowymi detalami. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "project_type": "sweater",
       "materials": [],
       "meters_per_100g": 200.0,
       "yarn_requirements": [
@@ -1822,6 +1891,7 @@
     {
       "name": "Mineral",
       "description": "Top z krótkim rękawem, teksturowanym wzorem i zaokrąglonym dołem.",
+      "project_type": "top",
       "materials": [],
       "meters_per_100g": null,
       "yarn_requirements": [
@@ -1842,6 +1912,7 @@
     {
       "name": "Mountain Pine socks",
       "description": "Instrukcja wykonania projektu: skarpetki, z ażurowymi detalami. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "project_type": "socks",
       "materials": [
         "wełna",
         "poliamid"
@@ -1891,6 +1962,7 @@
     {
       "name": "NBIELINKA LinearisHat Kokonki",
       "description": "Instrukcja wykonania projektu: kardigan. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "project_type": "cardigan",
       "materials": [
         "wełna",
         "alpaka",
@@ -1985,6 +2057,7 @@
     {
       "name": "Nova Skirt",
       "description": "Prążkowana spódnica dostępna w wersji krótkiej lub długiej.",
+      "project_type": "skirt_dress",
       "materials": [
         "wełna"
       ],
@@ -2009,6 +2082,7 @@
     {
       "name": "Oslohuen 2.0 ENGELSK",
       "description": "Instrukcja wykonania projektu: top lub bluzkę, z ażurowymi detalami. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "project_type": "head_accessory",
       "materials": [],
       "meters_per_100g": null,
       "yarn_requirements": [
@@ -2033,6 +2107,7 @@
     {
       "name": "Pani-Wiosna wzor HeartofCotton",
       "description": "Instrukcja wykonania projektu: sweter. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "project_type": "sweater",
       "materials": [
         "bawełna"
       ],
@@ -2056,6 +2131,7 @@
     {
       "name": "Pearl",
       "description": "Top bez rękawów z dekoltem w serek.",
+      "project_type": "top",
       "materials": [],
       "meters_per_100g": null,
       "yarn_requirements": [
@@ -2076,6 +2152,7 @@
     {
       "name": "penguono 7",
       "description": "Instrukcja wykonania projektu: top lub bluzkę, z ażurowymi detalami, warkoczami. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "project_type": "cardigan",
       "materials": [],
       "meters_per_100g": null,
       "yarn_requirements": [],
@@ -2089,6 +2166,7 @@
     {
       "name": "Picot Headband Knitting Pattern - The Obsessed final",
       "description": "Instrukcja wykonania projektu: top lub bluzkę, z ażurowymi detalami. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "project_type": "head_accessory",
       "materials": [
         "bawełna",
         "len"
@@ -2114,6 +2192,7 @@
     {
       "name": "PisankiSocks",
       "description": "Instrukcja wykonania projektu: skarpetki, z ażurowymi detalami. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "project_type": "socks",
       "materials": [
         "wełna"
       ],
@@ -2149,6 +2228,7 @@
     {
       "name": "PL I AM THE GIFT WZOR 1.1",
       "description": "Instrukcja wykonania projektu: opaskę. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "project_type": "head_accessory",
       "materials": [
         "jedwab"
       ],
@@ -2186,6 +2266,7 @@
     {
       "name": "polski HAVFRUESHAWL",
       "description": "Instrukcja wykonania projektu: chustę. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "project_type": "shawl_scarf",
       "materials": [],
       "meters_per_100g": null,
       "yarn_requirements": [],
@@ -2199,6 +2280,7 @@
     {
       "name": "POLSKI Venke skirt",
       "description": "Instrukcja wykonania projektu: spódnicę. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "project_type": "skirt_dress",
       "materials": [
         "wełna"
       ],
@@ -2222,6 +2304,7 @@
     {
       "name": "POLY-SWEATER-kingacrafts",
       "description": "Instrukcja wykonania projektu: sweter. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "project_type": "sweater",
       "materials": [
         "moher",
         "jedwab"
@@ -2255,6 +2338,7 @@
     {
       "name": "Poppy Tee",
       "description": "Instrukcja wykonania projektu: kardigan, z ażurowymi detalami, konstrukcją raglanową. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "project_type": "top",
       "materials": [
         "wełna",
         "moher",
@@ -2333,6 +2417,7 @@
     {
       "name": "Pull Iconic Leaf Sweater EN",
       "description": "Instrukcja wykonania projektu: sweter, z intarsją, ażurowymi detalami. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "project_type": "sweater",
       "materials": [
         "wełna",
         "poliamid"
@@ -2358,6 +2443,7 @@
     {
       "name": "Queen of Hearts Socks",
       "description": "Instrukcja wykonania projektu: skarpetki, z konstrukcją od góry. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "project_type": "socks",
       "materials": [
         "wełna"
       ],
@@ -2381,6 +2467,7 @@
     {
       "name": "Sheep socks 1 1 1",
       "description": "Instrukcja wykonania projektu: skarpetki, z wzorem wielokolorowym. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "project_type": "socks",
       "materials": [],
       "meters_per_100g": null,
       "yarn_requirements": [],
@@ -2394,6 +2481,7 @@
     {
       "name": "Silk",
       "description": "Prążkowana sukienka bez rękawów dostępna w wersji krótkiej lub długiej.",
+      "project_type": "skirt_dress",
       "materials": [],
       "meters_per_100g": null,
       "yarn_requirements": [
@@ -2414,6 +2502,7 @@
     {
       "name": "SkarpetkiTuby Czempik.knitwear",
       "description": "Instrukcja wykonania projektu: skarpetki, z konstrukcją od góry. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "project_type": "socks",
       "materials": [
         "wełna"
       ],
@@ -2437,6 +2526,7 @@
     {
       "name": "Skyward",
       "description": "Sweter wykonywany od góry, z warkoczowym karczkiem i korpusem przerabianym ściegiem lewym.",
+      "project_type": "sweater",
       "materials": [
         "wełna"
       ],
@@ -2471,6 +2561,7 @@
     {
       "name": "Sophie Scarf PL.Petiteknit",
       "description": "Instrukcja wykonania projektu: kardigan. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "project_type": "shawl_scarf",
       "materials": [
         "kaszmir"
       ],
@@ -2501,6 +2592,7 @@
     {
       "name": "The I’m So Basic Sock",
       "description": "Podstawowy wzór skarpet wykonywanych metodą magic loop, przeznaczony również dla osób uczących się tej konstrukcji.",
+      "project_type": "socks",
       "materials": [
         "wełna",
         "poliamid"
@@ -2532,6 +2624,7 @@
     {
       "name": "Space Feet Socks PL-lno7ucan",
       "description": "Instrukcja wykonania projektu: skarpetki, z wzorem wielokolorowym, ażurowymi detalami. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "project_type": "socks",
       "materials": [],
       "meters_per_100g": 410.0,
       "yarn_requirements": [
@@ -2551,6 +2644,7 @@
     {
       "name": "Spooky sock set final",
       "description": "Instrukcja wykonania projektu: skarpetki, z wzorem wielokolorowym, ażurowymi detalami. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "project_type": "socks",
       "materials": [
         "wełna",
         "wiskoza",
@@ -2611,6 +2705,7 @@
     {
       "name": "Starry Night Hat PL-ljvt8ze9",
       "description": "Instrukcja wykonania projektu: czapkę, z wzorem wielokolorowym. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "project_type": "head_accessory",
       "materials": [],
       "meters_per_100g": 150.0,
       "yarn_requirements": [
@@ -2630,6 +2725,7 @@
     {
       "name": "Starry Night Mittens PL-lo9p3u7q",
       "description": "Instrukcja wykonania projektu: top lub bluzkę, z wzorem wielokolorowym. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "project_type": "gloves",
       "materials": [
         "wełna",
         "alpaka"
@@ -2655,6 +2751,7 @@
     {
       "name": "Starry Night Socks PL-ljvt91ie",
       "description": "Instrukcja wykonania projektu: skarpetki, z wzorem wielokolorowym, ażurowymi detalami. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "project_type": "socks",
       "materials": [],
       "meters_per_100g": null,
       "yarn_requirements": [
@@ -2679,6 +2776,7 @@
     {
       "name": "Summer",
       "description": "Prążkowana spódnica wykonywana od góry.",
+      "project_type": "skirt_dress",
       "materials": [],
       "meters_per_100g": null,
       "yarn_requirements": [
@@ -2699,6 +2797,7 @@
     {
       "name": "SWAN TOP",
       "description": "Instrukcja wykonania projektu: kardigan, z ażurowymi detalami. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "project_type": "top",
       "materials": [
         "bawełna"
       ],
@@ -2722,6 +2821,7 @@
     {
       "name": "SWEATERNO9.LIGHT.ENG (2)",
       "description": "Instrukcja wykonania projektu: sweter, z ażurowymi detalami, konstrukcją raglanową. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "project_type": "sweater",
       "materials": [],
       "meters_per_100g": 230.0,
       "yarn_requirements": [
@@ -2741,6 +2841,7 @@
     {
       "name": "SweetTreatsSocks NBielińska",
       "description": "Instrukcja wykonania projektu: skarpetki, z wzorem wielokolorowym, warkoczami. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "project_type": "socks",
       "materials": [
         "wełna",
         "poliamid"
@@ -2766,6 +2867,7 @@
     {
       "name": "Sweter Kikimora Moracraft(1)",
       "description": "Instrukcja wykonania projektu: sweter. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "project_type": "sweater",
       "materials": [
         "wełna",
         "akryl"
@@ -2791,6 +2893,7 @@
     {
       "name": "Sweter Kikimora Moracraft",
       "description": "Instrukcja wykonania projektu: sweter. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "project_type": "sweater",
       "materials": [
         "wełna",
         "akryl"
@@ -2816,6 +2919,7 @@
     {
       "name": "sweterek z golfem Bobbie",
       "description": "Instrukcja wykonania projektu: sweter, z konstrukcją raglanową, konstrukcją od góry. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "project_type": "sweater",
       "materials": [
         "wełna",
         "moher",
@@ -2852,6 +2956,7 @@
     {
       "name": "Szal Queen of Spades Kokonki Pure",
       "description": "Instrukcja wykonania projektu: top lub bluzkę, z ażurowymi detalami. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "project_type": "shawl_scarf",
       "materials": [
         "wełna"
       ],
@@ -2875,6 +2980,7 @@
     {
       "name": "Teddy Bear Socks - wzór PL (ang skróty).pdf",
       "description": "Instrukcja wykonania projektu: skarpetki. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "project_type": "socks",
       "materials": [
         "wełna",
         "poliamid"
@@ -2900,6 +3006,7 @@
     {
       "name": "TEXTURE VEST hi UK-rm07er",
       "description": "Instrukcja wykonania projektu: top lub bluzkę, z ażurowymi detalami. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "project_type": "vest",
       "materials": [
         "alpaka"
       ],
@@ -2923,6 +3030,7 @@
     {
       "name": "The truth is out there Final edit",
       "description": "Instrukcja wykonania projektu: skarpetki, z ażurowymi detalami, konstrukcją od góry. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "project_type": "socks",
       "materials": [
         "wełna",
         "poliamid"
@@ -2964,6 +3072,7 @@
     {
       "name": "Tromsø Hoodie NORSK",
       "description": "Instrukcja wykonania projektu: top lub bluzkę. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "project_type": "other",
       "materials": [],
       "meters_per_100g": null,
       "yarn_requirements": [
@@ -2988,6 +3097,7 @@
     {
       "name": "Tropfen",
       "description": "Sweter z okrągłym karczkiem i wielokolorowym wzorem, o swobodnym fasonie.",
+      "project_type": "sweater",
       "materials": [
         "wełna"
       ],
@@ -3012,6 +3122,7 @@
     {
       "name": "UNDER THE SEA SOCKS PL-ljvt9559",
       "description": "Instrukcja wykonania projektu: skarpetki, z wzorem wielokolorowym, ażurowymi detalami. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "project_type": "socks",
       "materials": [],
       "meters_per_100g": null,
       "yarn_requirements": [
@@ -3036,6 +3147,7 @@
     {
       "name": "Urth Yarns skarpetki",
       "description": "Instrukcja wykonania projektu: skarpetki, z ażurowymi detalami, konstrukcją od góry. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "project_type": "socks",
       "materials": [],
       "meters_per_100g": null,
       "yarn_requirements": [],
@@ -3049,6 +3161,7 @@
     {
       "name": "Warm-Knit-Klara-wzor-dziewiarski-zulknh",
       "description": "Instrukcja wykonania projektu: sweter, z ażurowymi detalami, konstrukcją od góry. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "project_type": "sweater",
       "materials": [
         "jedwab"
       ],
@@ -3072,6 +3185,7 @@
     {
       "name": "You Make Me (W)hole Cardigan - opis",
       "description": "Instrukcja wykonania projektu: kardigan, z ażurowymi detalami. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "project_type": "cardigan",
       "materials": [
         "wełna",
         "bawełna",
@@ -3099,6 +3213,7 @@
     {
       "name": "You Make Me (W)hole Cardigan - Schematy",
       "description": "Instrukcja wykonania projektu: kardigan. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "project_type": "cardigan",
       "materials": [],
       "meters_per_100g": null,
       "yarn_requirements": [],
@@ -3112,6 +3227,7 @@
     {
       "name": "YouthVibeJumper nana.makes.it.all",
       "description": "Instrukcja wykonania projektu: sweter. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "project_type": "sweater",
       "materials": [
         "alpaka",
         "moher",
@@ -3139,6 +3255,7 @@
     {
       "name": "Wzór demo — Leśny kardigan",
       "description": "Syntetyczny wzór demonstracyjny na prosty kardigan z dzianiny o średniej grubości. Rekord służy wyłącznie do testowania dopasowania włóczek.",
+      "project_type": "cardigan",
       "materials": [
         "wełna"
       ],
@@ -3202,6 +3319,7 @@
     {
       "name": "Wzór demo — Bawełniany top",
       "description": "Syntetyczny wzór demonstracyjny na lekki top z bawełnianej włóczki. Rekord służy wyłącznie do testowania materiału, grubości i ilości włóczki.",
+      "project_type": "top",
       "materials": [
         "bawełna"
       ],
@@ -3252,6 +3370,7 @@
     {
       "name": "Wzór demo — Moherowa chusta",
       "description": "Syntetyczny wzór demonstracyjny na lekką chustę z delikatnej włóczki. Rekord służy wyłącznie do testowania dopasowania włóczek o małej gramaturze.",
+      "project_type": "shawl_scarf",
       "materials": [
         "moher"
       ],

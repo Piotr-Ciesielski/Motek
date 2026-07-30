@@ -7,6 +7,19 @@ Katalog zawiera 119 rekordów w Supabase:
 - 116 wzorów pochodzących z dotychczasowego importu;
 - 3 syntetyczne wzory testowe oznaczone w nazwie jako `Wzór demo`.
 
+Aktualna kompletność danych:
+
+- 9 rekordów ma status `Zweryfikowany`, w tym 3 wzory demo;
+- 110 rekordów nadal wymaga ręcznego sprawdzenia;
+- 49 rekordów ma jednoznaczny przelicznik metrów na 100 gramów;
+- 107 rekordów ma przynajmniej częściowy opis wymaganych włóczek;
+- 3 wzory demo mają kompletne dane pozwalające na automatyczne dopasowanie;
+- język źródła rozpoznano jako polski dla 62, angielski dla 56 i nieustalony
+  dla 1 rekordu.
+- każdy rekord ma kontrolowany typ projektu używany w karcie i filtrze katalogu;
+- kategorie obejmują skarpety, swetry, kardigany, topy i bluzki, chusty i szale,
+  nakrycia głowy, rękawiczki, kamizelki, spódnice i sukienki, koce oraz „inne”.
+
 Mechanizm dopasowania korzysta wyłącznie z kompletnych danych w polu
 `matching_requirements`. Wzory bez potwierdzonych wymagań pozostają dostępne w
 katalogu opisowym, ale nie są używane w rankingu.
@@ -37,10 +50,37 @@ domysłami.
 
 ## Następny etap
 
-Ręczna weryfikacja rzeczywistych wzorów jest wstrzymana. Po wznowieniu należy
-zacząć od sześciu rekordów oznaczonych jako kompletne, przygotować dla nich
-warianty `matching_requirements`, przetestować je na przykładowych magazynach
-i dopiero potem przejść do kolejnych partii.
+### 1. Typ projektu — wdrożone
+
+Typ projektu jest zapisywany w osobnym polu `project_type`, importowany do
+Supabase oraz pokazywany na karcie i w filtrze katalogu.
+
+Zasady klasyfikacji:
+
+- kategorie są ograniczone do zamkniętej listy wartości;
+- nazwa pliku i nazwa wzoru mają pierwszeństwo przed opisem automatycznym;
+- niejednoznaczne przypadki pozostają w kategorii `other`;
+- ręczne korekty nadal można dodawać w pliku nadpisań.
+
+### 2. Adres źródła
+
+Obecne rekordy przechowują nazwę lokalnego pliku PDF, ale nie wiarygodny adres
+publikacji. Adresów nie należy zgadywać na podstawie nazwy pliku.
+
+Rekomendowane rozwiązanie:
+
+- dodać opcjonalne pole `source_url`;
+- uzupełniać je wyłącznie po ręcznym potwierdzeniu oficjalnej strony autora,
+  wydawcy lub sklepu;
+- nie pokazywać przycisku źródła, jeśli adres jest pusty;
+- wzory demo pozostawić bez zewnętrznego adresu.
+
+### 3. Dopasowanie rzeczywistych wzorów
+
+Po uporządkowaniu typu projektu i źródeł należy wrócić do sześciu
+zweryfikowanych rzeczywistych rekordów, przygotować dla nich kompletne warianty
+`matching_requirements`, przetestować je na przykładowych magazynach i dopiero
+potem przejść do kolejnych partii.
 
 ## Narzędzie importu
 

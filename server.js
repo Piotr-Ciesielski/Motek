@@ -924,6 +924,7 @@ function normalizeCatalogPattern(pattern) {
     id: Number(pattern.id),
     name: pattern.name,
     description: pattern.description,
+    projectType: pattern.project_type || "other",
     materials: Array.isArray(pattern.materials) ? pattern.materials : [],
     metersPer100g: Number.isFinite(ratio) ? ratio : null,
     yarnRequirements: Array.isArray(pattern.yarn_requirements)
@@ -1048,7 +1049,7 @@ async function getCatalogPatterns({ limit = null, offset = 0 } = {}) {
   const { data, error } = await supabaseConnection.client
     .from("patterns")
     .select(
-      "id,name,description,materials,meters_per_100g,yarn_requirements,matching_requirements,source_language,needs_review"
+      "id,name,description,project_type,materials,meters_per_100g,yarn_requirements,matching_requirements,source_language,needs_review"
     )
     .range(offset, Math.max(offset, offset + effectiveLimit - 1))
     .order("name", { ascending: true });
