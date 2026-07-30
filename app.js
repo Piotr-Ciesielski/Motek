@@ -49,6 +49,14 @@ const heroAuthBtn = document.getElementById("heroAuthBtn");
 const networkStatus = document.getElementById("networkStatus");
 
 const REQUEST_TIMEOUT_MS = 12_000;
+class ApiError extends Error {
+  constructor(message, status) {
+    super(message);
+    this.name = "ApiError";
+    this.status = status;
+  }
+}
+
 let baseUrl = window.location.origin;
 let isAuthenticated = false;
 let pendingWriteCount = 0;
@@ -60,6 +68,8 @@ let activeView = "account";
 let initialSessionResolved = false;
 let catalogVisibleLimit = 12;
 let networkStatusTimer = null;
+let preserveDraftAfterLogin = false;
+let preservedDraftRequiresSave = false;
 const numberFormatter = new Intl.NumberFormat("pl-PL", {
   maximumFractionDigits: 2,
   useGrouping: "always",
@@ -159,7 +169,21 @@ async function api(path, options = {}) {
       } catch {
         // ignore non-JSON error body
       }
-      throw new Error(message || "Nie udało się połączyć z Motkiem. Spróbuj ponownie.");
+      const protectedPath =
+        path === "/api/matches" ||
+        path === "/api/yarns" ||
+        path.startsWith("/api/yarns/");
+      if (response.status === 401 && protectedPath) {
+        handleSessionExpired();
+        throw new ApiError(
+          "Sesja wygasła. Zaloguj się ponownie, aby dokończyć operację.",
+          response.status
+        );
+      }
+      throw new ApiError(
+        message || "Nie udało się połączyć z Motkiem. Spróbuj ponownie.",
+        response.status
+      );
     }
 
     if (path === "/api/yarns" || path.startsWith("/api/yarns/")) {
@@ -338,12 +362,31 @@ function isYarnChanged(card) {
   return JSON.stringify(collectYarnFromCard(card)) !== JSON.stringify(card._originalYarn);
 }
 
-function hasUnsavedYarnChanges() {
-  if (pendingWriteCount > 0) return true;
+function hasYarnFormDraft() {
   return [...yarnList.querySelectorAll(".yarn-card")].some((card) => {
     if (card.dataset.saved !== "true") return true;
     return card.dataset.editing === "true" && isYarnChanged(card);
   });
+}
+
+function hasUnsavedYarnChanges() {
+  return pendingWriteCount > 0 || hasYarnFormDraft();
+}
+
+function handleSessionExpired() {
+  if (!isAuthenticated) return;
+  preservedDraftRequiresSave = hasYarnFormDraft();
+  preserveDraftAfterLogin = hasUnsavedYarnChanges();
+  renderAuthState({ authenticated: false });
+  setAuthMessage(
+    preserveDraftAfterLogin
+      ? "Sesja wygasła. Zaloguj się ponownie — rozpoczęte zmiany pozostaną w formularzu."
+      : "Sesja wygasła. Zaloguj się ponownie, aby kontynuować.",
+    "error"
+  );
+  window.setTimeout(() => {
+    loginForm.querySelector('input[name="email"]').focus({ preventScroll: true });
+  }, 0);
 }
 
 window.addEventListener("beforeunload", (event) => {
@@ -1022,9 +1065,18 @@ function renderAuthState(payload) {
   headerUser.textContent = login;
   headerUser.title = login;
   headerUser.hidden = false;
-  authProfileSummary.textContent = profile.full_name
-    ? `${profile.full_name} (${profile.email || payload.user.email})`
-    : profile.email || payload.user.email || "Zalogowany użytkownik";
+  const profileEmail = profile.email || payload.user.email || "";
+  if (profile.full_name) {
+    const profileName = document.createElement("span");
+    const profileEmailLine = document.createElement("span");
+    profileName.className = "auth-profile__name";
+    profileEmailLine.className = "auth-profile__email";
+    profileName.textContent = profile.full_name;
+    profileEmailLine.textContent = profileEmail;
+    authProfileSummary.replaceChildren(profileName, profileEmailLine);
+  } else {
+    authProfileSummary.textContent = profileEmail || "Zalogowany użytkownik";
+  }
   authTitle.textContent = "Twoje konto";
   authLead.textContent = "Profil i bezpieczeństwo Twojego prywatnego magazynu.";
 }
@@ -1046,6 +1098,26 @@ async function refreshAuthSession() {
   }
   if (!payload.authenticated) {
     setAuthMessage("Możesz założyć konto lub zalogować się.");
+    return;
+  }
+
+  if (preserveDraftAfterLogin) {
+    const requiresSave = preservedDraftRequiresSave;
+    preserveDraftAfterLogin = false;
+    preservedDraftRequiresSave = false;
+    setActiveView("inventory", { focus: false });
+    setAuthMessage(
+      requiresSave
+        ? "Zalogowano ponownie. Twoje zmiany są nadal w formularzu — sprawdź je i kliknij „Zapisz”."
+        : "Zalogowano ponownie. Poprzednia operacja nie została wykonana — spróbuj ponownie.",
+      "success"
+    );
+    setStorageMessage(
+      requiresSave
+        ? "Sesja została przywrócona. Sprawdź rozpoczęte zmiany i kliknij „Zapisz”."
+        : "Sesja została przywrócona. Spróbuj ponownie wykonać ostatnią operację.",
+      "success"
+    );
     return;
   }
 
@@ -1189,10 +1261,19 @@ registerForm.addEventListener("submit", async (event) => {
 });
 
 logoutBtn.addEventListener("click", async () => {
+  if (
+    hasUnsavedYarnChanges() &&
+    !window.confirm("Wylogować się? Niezapisane zmiany w magazynie zostaną utracone.")
+  ) {
+    return;
+  }
+
   logoutBtn.disabled = true;
   setAuthMessage("Wylogowuję...");
   try {
     await api("/api/auth/logout", { method: "POST", body: "{}" });
+    preserveDraftAfterLogin = false;
+    preservedDraftRequiresSave = false;
     renderAuthState({ authenticated: false });
     setActiveView("account");
     await refresh();

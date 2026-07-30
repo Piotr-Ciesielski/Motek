@@ -1,5 +1,13 @@
 Motek - log zmian
 
+Wersja 2.0.0-alpha.23 (w przygotowaniu) - bezpieczny powrót po wygaśnięciu sesji
+- Wygaśnięcie sesji podczas pracy prowadzi do ponownego logowania bez usuwania formularza.
+- Po zalogowaniu Motek wraca do magazynu i wskazuje zapisanie zachowanych zmian.
+- Błędy API zachowują kod odpowiedzi, dzięki czemu brak sesji nie jest mylony z awarią sieci.
+- Pole e-mail otrzymuje fokus po komunikacie o wygaśnięciu sesji.
+- Ręczne wylogowanie wymaga potwierdzenia, gdy w magazynie są niezapisane zmiany.
+- Dane profilu i przycisk wylogowania mają czytelny układ na telefonie.
+
 Wersja 2.0.0-alpha.22 (w przygotowaniu) - ponawianie i ochrona edycji
 - Błędy katalogu i dopasowania udostępniają bezpieczną akcję „Spróbuj ponownie”.
 - Przeglądarka ostrzega przed zamknięciem karty z nowym lub zmienionym formularzem.

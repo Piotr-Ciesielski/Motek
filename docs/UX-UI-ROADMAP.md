@@ -76,6 +76,14 @@
 - usunięto nieaktywny mechanizm autosave;
 - uruchomienie dopasowania nie zapisuje ponownie całego magazynu.
 
+### Powrót po wygaśnięciu sesji
+
+- brak autoryzacji w magazynie jest odróżniany od błędu sieci;
+- nowy i zmieniony formularz pozostaje w pamięci podczas ponownego logowania;
+- po zalogowaniu aplikacja wraca do magazynu bez nadpisania zachowanych zmian;
+- komunikat wskazuje następny krok: sprawdzenie formularza i użycie `Zapisz`;
+- ręczne wylogowanie ostrzega o niezapisanych zmianach.
+
 ## Sprawdzenie
 
 - `npm run check` przechodzi: 29/29 testów;
@@ -105,7 +113,6 @@
 
 4. **Sieć i spójność zapisu**
    - kontrolowany retry z opóźnieniem po błędzie sieci;
-   - zachowanie formularza przy wygasłej sesji;
    - pełna obsługa konfliktu wersji.
 
 5. **Katalog wzorów**
