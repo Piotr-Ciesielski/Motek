@@ -6,7 +6,7 @@
   --text: #2f252a;
   --muted: #6c5f64;
   --accent: #6d3150;
-  --accent-2: #a85f49;
+  --accent-2: #9f513f;
   --accent-3: #54233e;
   --good: #356754;
   --warning: #925221;
@@ -32,6 +32,9 @@
   top: 10px;
   left: 10px;
   z-index: 10;
+  display: flex;
+  align-items: center;
+  min-height: 44px;
   padding: 10px 14px;
   border-radius: 10px;
   background: var(--text);
@@ -84,6 +87,8 @@ body {
   display: inline-flex;
   align-items: center;
   gap: 10px;
+  min-width: 44px;
+  min-height: 44px;
   border: 0;
   padding: 4px;
   color: var(--text);
@@ -423,6 +428,8 @@ h1 {
 }
 
 .auth-mode-button {
+  min-width: 44px;
+  min-height: 44px;
   border: 0;
   border-radius: 10px;
   padding: 10px 12px;
@@ -724,7 +731,11 @@ input, select {
 }
 
 .link-button {
+  display: inline-flex;
+  align-items: center;
   justify-self: start;
+  min-width: 44px;
+  min-height: 44px;
   border: 0;
   padding: 4px 0;
   background: transparent;
@@ -786,6 +797,7 @@ input, select {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
+  min-height: 44px;
   padding: 12px 14px;
   color: var(--ink);
   cursor: pointer;

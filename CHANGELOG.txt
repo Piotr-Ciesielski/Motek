@@ -1,5 +1,11 @@
 Motek - log zmian
 
+Wersja 2.0.0-alpha.20 (w przygotowaniu) - kontrast i wygodne pola dotykowe
+- Potwierdzono zgodność kluczowych par tekstu i tła z wymaganiami kontrastu WCAG AA.
+- Wzmocniono kolor obrysu fokusu, aby pozostał czytelny na jasnym tle.
+- Marka, przełączniki konta i link odzyskiwania hasła mają pole obsługi co najmniej 44×44 px.
+- Rozwijane warianty dopasowania zachowują minimalną wysokość wygodną dla dotyku.
+
 Wersja 2.0.0-alpha.19 (w przygotowaniu) - długie dane i czytelne liczby
 - Liczby w magazynie, katalogu i wynikach używają polskiego formatowania tysięcy.
 - Długie dane profilu, nazwy wzorów i wariantów bezpiecznie zawijają się w kartach.

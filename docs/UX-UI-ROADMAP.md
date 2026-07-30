@@ -53,6 +53,13 @@
 - długie dane profilu oraz nazwy wzorów bezpiecznie zawijają się lub są skracane z dostępem do pełnej treści;
 - teksty Unicode i RTL zachowują własny kierunek pisma w kluczowych etykietach.
 
+### Kontrast i pola dotykowe
+
+- kluczowe pary tekstu i tła spełniają progi kontrastu WCAG AA;
+- obrys fokusu ma wzmocniony kontrast na jasnym tle;
+- interaktywne kontrolki mają co najmniej 44 px wysokości;
+- małe kontrolki zachowują pole obsługi minimum 44×44 px.
+
 ## Sprawdzenie
 
 - `npm run check` przechodzi: 29/29 testów;
@@ -70,29 +77,24 @@
    - sprawdzenie stanów pustych, onboardingu i magazynu po zmianie layoutu;
    - test ręczny na desktopie i urządzeniach mobilnych.
 
-2. **Kontrast i touch targety**
-   - pomiary WCAG na rzeczywistych tłach;
-   - poprawa kontrastu tekstów pomocniczych, statusów i ghost buttons;
-   - minimum 44×44 px dla przycisków i odstępy między akcjami.
-
-3. **Responsywność i długie dane**
+2. **Responsywność i długie dane**
    - testy 375, 768 i 1440 px;
    - zoom 200% i 400%;
    - długie imiona, e-maile, Unicode, emoji i tekst RTL;
    - bezpieczne zawijanie oraz formatowanie liczb.
 
-4. **Model stanów interfejsu**
+3. **Model stanów interfejsu**
    - loading, sukces, błąd, częściowy sukces i offline;
    - `aria-live`, `aria-busy` i `role="alert"` tam, gdzie potrzebne;
    - komunikaty wskazujące następny możliwy krok.
 
-5. **Sieć i autosave**
+4. **Sieć i autosave**
    - timeout, retry i powrót po offline;
    - zachowanie formularza przy wygasłej sesji;
    - ostrzeżenie przed zamknięciem przy niezapisanych danych;
    - pełna obsługa konfliktu wersji.
 
-6. **Katalog wzorów**
+5. **Katalog wzorów**
    - serwerowe filtrowanie i paginacja przed zwiększeniem katalogu;
    - dalsza ręczna weryfikacja rzeczywistych wzorów jest wstrzymana.
 
