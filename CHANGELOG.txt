@@ -1,5 +1,13 @@
 Motek - log zmian
 
+Wersja 2.0.0-alpha.26 (w przygotowaniu) - bezpieczny zapis po przerwanym połączeniu
+- Odczyty danych są jednokrotnie ponawiane po krótkim, przejściowym błędzie sieci.
+- Zapisy nie są automatycznie powtarzane, dzięki czemu utrata odpowiedzi nie tworzy duplikatu.
+- Po niepewnym zapisie użytkownik może najpierw sprawdzić faktyczny stan magazynu.
+- Motek rozpoznaje zapisany nowy motek, zakończoną modyfikację i wykonane usunięcie.
+- Formularz pozostaje na ekranie, jeśli wyniku operacji nadal nie można potwierdzić.
+- Dodano testy polityki retry oraz weryfikacji przerwanych operacji.
+
 Wersja 2.0.0-alpha.25 (w przygotowaniu) - bezpieczna decyzja przy konflikcie zapisu
 - Konflikt zmian z innej karty lub urządzenia nie kończy się już technicznym błędem.
 - Niezapisana wersja pozostaje w formularzu i użytkownik wybiera dalsze działanie.

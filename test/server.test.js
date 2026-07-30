@@ -324,6 +324,14 @@ test("serwer Motek działa bezpiecznie", async (t) => {
       assert.equal(response.headers.get("x-content-type-options"), "nosniff");
       assert.equal(response.headers.get("x-frame-options"), "DENY");
       assert.equal(response.headers.get("access-control-allow-origin"), null);
+
+      const clientPolicyResponse = await fetch(`${baseUrl}/client-policy.js`);
+      assert.equal(clientPolicyResponse.status, 200);
+      assert.match(
+        clientPolicyResponse.headers.get("content-type"),
+        /^(?:application|text)\/javascript/
+      );
+      assert.match(await clientPolicyResponse.text(), /MotekClientPolicy/);
     });
 
     await t.test("wymaga zalogowania do zdalnego magazynu", async () => {

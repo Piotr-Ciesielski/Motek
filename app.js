@@ -49,11 +49,27 @@ const heroAuthBtn = document.getElementById("heroAuthBtn");
 const networkStatus = document.getElementById("networkStatus");
 
 const REQUEST_TIMEOUT_MS = 12_000;
+const READ_RETRY_DELAY_MS = 700;
+const {
+  findNewlySavedYarn,
+  getExistingYarnState,
+  isDeleteConfirmed,
+  shouldRetryRead,
+} = window.MotekClientPolicy;
+
 class ApiError extends Error {
   constructor(message, status) {
     super(message);
     this.name = "ApiError";
     this.status = status;
+  }
+}
+
+class RequestError extends Error {
+  constructor(message, kind) {
+    super(message);
+    this.name = "RequestError";
+    this.kind = kind;
   }
 }
 
@@ -138,28 +154,77 @@ async function api(path, options = {}) {
     signal: requestSignal,
     ...requestOptions
   } = options;
-  const controller = new AbortController();
-  const abortRequest = () => controller.abort();
-  const timeout = window.setTimeout(abortRequest, REQUEST_TIMEOUT_MS);
-  const isWriteRequest = !["GET", "HEAD"].includes(
-    String(requestOptions.method || "GET").toUpperCase()
-  );
+  const method = String(requestOptions.method || "GET").toUpperCase();
+  const isWriteRequest = !["GET", "HEAD"].includes(method);
+  const maxAttempts = isWriteRequest ? 1 : 2;
   if (isWriteRequest) pendingWriteCount += 1;
-  if (requestSignal) {
-    if (requestSignal.aborted) abortRequest();
-    else requestSignal.addEventListener("abort", abortRequest, { once: true });
-  }
 
   try {
-    const response = await fetch(`${baseUrl}${path}`, {
-      credentials: "same-origin",
-      ...requestOptions,
-      signal: controller.signal,
-      headers: {
-        "Content-Type": "application/json",
-        ...optionHeaders,
-      },
-    });
+    let response;
+
+    for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+      const controller = new AbortController();
+      const abortRequest = () => controller.abort();
+      const timeout = window.setTimeout(abortRequest, REQUEST_TIMEOUT_MS);
+      if (requestSignal) {
+        if (requestSignal.aborted) abortRequest();
+        else requestSignal.addEventListener("abort", abortRequest, { once: true });
+      }
+
+      try {
+        response = await fetch(`${baseUrl}${path}`, {
+          credentials: "same-origin",
+          ...requestOptions,
+          signal: controller.signal,
+          headers: {
+            "Content-Type": "application/json",
+            ...optionHeaders,
+          },
+        });
+      } catch (error) {
+        const externallyAborted = requestSignal?.aborted;
+        const canRetryNetworkError = shouldRetryRead({
+          method,
+          errorName: error.name,
+          externallyAborted,
+          attempt,
+          maxAttempts,
+        });
+
+        if (canRetryNetworkError) {
+          await new Promise((resolve) => window.setTimeout(resolve, READ_RETRY_DELAY_MS));
+          continue;
+        }
+
+        if (error.name === "AbortError") {
+          throw new RequestError(
+            externallyAborted
+              ? "Operacja została przerwana."
+              : "Motek nie odpowiedział na czas. Sprawdź połączenie i spróbuj ponownie.",
+            externallyAborted ? "aborted" : "timeout"
+          );
+        }
+        if (error instanceof TypeError) {
+          throw new RequestError(
+            navigator.onLine
+              ? "Nie udało się połączyć z Motkiem. Spróbuj ponownie."
+              : "Brak połączenia z internetem. Sprawdź sieć i spróbuj ponownie.",
+            "network"
+          );
+        }
+        throw error;
+      } finally {
+        window.clearTimeout(timeout);
+        requestSignal?.removeEventListener("abort", abortRequest);
+      }
+
+      if (shouldRetryRead({ method, status: response.status, attempt, maxAttempts })) {
+        await new Promise((resolve) => window.setTimeout(resolve, READ_RETRY_DELAY_MS));
+        continue;
+      }
+
+      break;
+    }
 
     if (!response.ok && response.status !== 204) {
       let message = "";
@@ -193,22 +258,18 @@ async function api(path, options = {}) {
     api.lastMatchScope = path === "/api/matches"
       ? response.headers.get("X-Motek-Match-Scope") || "full"
       : null;
-    return response.status === 204 ? null : await response.json();
-  } catch (error) {
-    if (error.name === "AbortError") {
-      throw new Error("Motek nie odpowiedział na czas. Sprawdź połączenie i spróbuj ponownie.");
-    }
-    if (error instanceof TypeError) {
-      throw new Error(
-        navigator.onLine
-          ? "Nie udało się połączyć z Motkiem. Spróbuj ponownie."
-          : "Brak połączenia z internetem. Sprawdź sieć i spróbuj ponownie."
+    if (response.status === 204) return null;
+    try {
+      return await response.json();
+    } catch {
+      throw new RequestError(
+        isWriteRequest
+          ? "Połączenie przerwało się przed potwierdzeniem zapisu."
+          : "Nie udało się odczytać odpowiedzi Motka. Spróbuj ponownie.",
+        "response"
       );
     }
-    throw error;
   } finally {
-    window.clearTimeout(timeout);
-    requestSignal?.removeEventListener("abort", abortRequest);
     if (isWriteRequest) pendingWriteCount -= 1;
   }
 }
@@ -458,6 +519,143 @@ function isYarnChanged(card) {
   return JSON.stringify(collectYarnFromCard(card)) !== JSON.stringify(card._originalYarn);
 }
 
+function applyYarnToCard(card, yarn) {
+  ["name", "color", "material", "weightClass", "length", "weight"].forEach((field) => {
+    card.querySelector(`[data-field="${field}"]`).value = yarn[field];
+  });
+}
+
+function markYarnCardAsSaved(card, yarn) {
+  card.dataset.id = yarn.id;
+  applyYarnToCard(card, yarn);
+  card.dataset.saved = "true";
+  card.dataset.editing = "false";
+  card._originalYarn = collectYarnFromCard(card);
+  setYarnFieldsDisabled(card, true);
+  updateYarnCardSummary(card);
+  updateYarnSaveButton(card);
+}
+
+function isUncertainWriteError(error) {
+  return error instanceof RequestError
+    || (error instanceof ApiError && error.status >= 500);
+}
+
+function showUncertainWrite(message, onVerify) {
+  setStorageMessage(message, "error", [
+    {
+      label: "Sprawdź stan magazynu",
+      primary: true,
+      onClick: onVerify,
+    },
+  ]);
+}
+
+async function verifyUncertainNewYarn(card, draft, knownYarnIds) {
+  if (!card.isConnected) {
+    setStorageMessage("Formularz został już zamknięty. Odśwież magazyn, aby sprawdzić jego stan.");
+    return;
+  }
+
+  setStorageMessage("Sprawdzam aktualny magazyn...");
+  try {
+    const yarns = await loadYarns();
+    const savedYarn = findNewlySavedYarn(yarns, draft, knownYarnIds);
+    if (savedYarn) {
+      markYarnCardAsSaved(card, savedYarn);
+      setStorageMessage("Motek był już zapisany. Formularz jest zsynchronizowany.", "success");
+      await renderSummary();
+      renderOnboarding(collectYarnsFromDom());
+      return;
+    }
+    setStorageMessage(
+      "Nie znaleziono tego motka w magazynie. Możesz bezpiecznie spróbować zapisać go ponownie.",
+      "error",
+      [
+        {
+          label: "Spróbuj zapisać ponownie",
+          primary: true,
+          onClick: () => saveNewYarn(card),
+        },
+      ]
+    );
+  } catch (error) {
+    showUncertainWrite(
+      `${error.message} Formularz nadal jest bezpiecznie zachowany.`,
+      () => verifyUncertainNewYarn(card, draft, knownYarnIds)
+    );
+  }
+}
+
+async function verifyUncertainExistingYarn(card, draft, yarnId) {
+  if (!card.isConnected) {
+    setStorageMessage("Formularz został już zamknięty. Odśwież magazyn, aby sprawdzić jego stan.");
+    return;
+  }
+
+  setStorageMessage("Sprawdzam aktualny magazyn...");
+  try {
+    const yarns = await loadYarns();
+    const result = getExistingYarnState(yarns, yarnId, draft);
+    if (result.state === "saved") {
+      markYarnCardAsSaved(card, result.yarn);
+      setStorageMessage("Zmiana była już zapisana. Formularz jest zsynchronizowany.", "success");
+      await renderSummary();
+      return;
+    }
+    if (result.state === "missing") {
+      setStorageMessage(
+        "Tego motka nie ma już w aktualnym magazynie. Możesz zachować formularz i dodać go jako nowy.",
+        "error",
+        [
+          {
+            label: "Dodaj jako nowy motek",
+            primary: true,
+            onClick: () => {
+              card.dataset.id = "";
+              card.dataset.saved = "false";
+              card._originalYarn = null;
+              updateYarnSaveButton(card);
+              saveNewYarn(card);
+            },
+          },
+          {
+            label: "Odrzuć formularz i pobierz dane",
+            onClick: async () => {
+              if (
+                !window.confirm(
+                  "Pobrać aktualny magazyn? Niezapisany formularz zostanie zastąpiony."
+                )
+              ) {
+                return;
+              }
+              try {
+                await refresh();
+                setStorageMessage("Magazyn jest już aktualny.", "success");
+              } catch (error) {
+                setStorageMessage(`${error.message} Formularz nadal jest na ekranie.`, "error");
+              }
+            },
+          },
+        ]
+      );
+      return;
+    }
+    showYarnVersionConflict({
+      retryOperation: () => saveExistingYarn(card),
+      preservedMessage: "Zmiany pozostały w formularzu.",
+      retryLabel: "Zapisz moją wersję",
+      conflictMessage:
+        "Sprawdzenie wykazało, że Twoja zmiana nie została zapisana, a w magazynie jest inna wersja tego motka. Możesz zapisać swoją wersję albo pobrać nowsze dane.",
+    });
+  } catch (error) {
+    showUncertainWrite(
+      `${error.message} Zmiany nadal są bezpiecznie zachowane w formularzu.`,
+      () => verifyUncertainExistingYarn(card, draft, yarnId)
+    );
+  }
+}
+
 function hasYarnFormDraft() {
   return [...yarnList.querySelectorAll(".yarn-card")].some((card) => {
     if (card.dataset.saved !== "true") return true;
@@ -518,21 +716,20 @@ async function saveNewYarn(card) {
     return;
   }
 
+  const draft = collectYarnFromCard(card);
+  const knownYarnIds = new Set(
+    [...yarnList.querySelectorAll('.yarn-card[data-saved="true"]')]
+      .map((savedCard) => savedCard.dataset.id)
+  );
   saveButton.disabled = true;
   setStorageMessage("Zapisuję motek...");
   try {
     const savedYarn = await api("/api/yarns", {
       method: "POST",
       headers: { "If-Match": yarnVersion },
-      body: JSON.stringify(collectYarnFromCard(card)),
+      body: JSON.stringify(draft),
     });
-    card.dataset.id = savedYarn.id;
-    card.dataset.saved = "true";
-    card.dataset.editing = "false";
-    card._originalYarn = collectYarnFromCard(card);
-    setYarnFieldsDisabled(card, true);
-    updateYarnCardSummary(card);
-    updateYarnSaveButton(card);
+    markYarnCardAsSaved(card, savedYarn);
     setStorageMessage("Motek zapisany w magazynie.", "success");
     await renderSummary();
     renderOnboarding(collectYarnsFromDom());
@@ -548,6 +745,13 @@ async function saveNewYarn(card) {
       });
       return;
     }
+    if (isUncertainWriteError(error)) {
+      showUncertainWrite(
+        `${error.message} Motek mógł zostać zapisany, dlatego nie ponawiam operacji automatycznie.`,
+        () => verifyUncertainNewYarn(card, draft, knownYarnIds)
+      );
+      return;
+    }
     setStorageMessage(`${error.message} Motek pozostał w formularzu.`, "error");
   }
 }
@@ -556,19 +760,16 @@ async function saveExistingYarn(card) {
   const saveButton = card.querySelector(".yarn-save");
   if (!isYarnComplete(card) || !isYarnChanged(card)) return;
 
+  const draft = collectYarnFromCard(card);
   saveButton.disabled = true;
   setStorageMessage("Zapisuję zmiany motka...");
   try {
-    await api(`/api/yarns/${card.dataset.id}`, {
+    const savedYarn = await api(`/api/yarns/${card.dataset.id}`, {
       method: "PATCH",
       headers: { "If-Match": yarnVersion },
-      body: JSON.stringify(collectYarnFromCard(card)),
+      body: JSON.stringify(draft),
     });
-    card._originalYarn = collectYarnFromCard(card);
-    card.dataset.editing = "false";
-    setYarnFieldsDisabled(card, true);
-    updateYarnCardSummary(card);
-    updateYarnSaveButton(card);
+    markYarnCardAsSaved(card, savedYarn);
     setStorageMessage("Zmiany motka zapisane.", "success");
     await renderSummary();
   } catch (error) {
@@ -583,7 +784,61 @@ async function saveExistingYarn(card) {
       });
       return;
     }
+    if (isUncertainWriteError(error)) {
+      const yarnId = Number(card.dataset.id);
+      showUncertainWrite(
+        `${error.message} Nie wiadomo jeszcze, czy zmiana dotarła do magazynu. Formularz pozostaje na ekranie.`,
+        () => verifyUncertainExistingYarn(card, draft, yarnId)
+      );
+      return;
+    }
     setStorageMessage(`${error.message} Zmiany pozostały w formularzu.`, "error");
+  }
+}
+
+async function refreshAfterConfirmedMutation(successMessage) {
+  try {
+    await refresh();
+    setStorageMessage(successMessage, "success");
+  } catch (error) {
+    setStorageMessage(
+      `${successMessage} Nie udało się odświeżyć widoku: ${error.message}`,
+      "error",
+      [
+        {
+          label: "Odśwież widok",
+          onClick: () => refreshAfterConfirmedMutation(successMessage),
+        },
+      ]
+    );
+  }
+}
+
+async function verifyUncertainDelete(node, yarnId, yarnName, retryOperation) {
+  setStorageMessage("Sprawdzam aktualny magazyn...");
+  try {
+    const yarns = await loadYarns();
+    if (isDeleteConfirmed(yarns, yarnId)) {
+      node.remove();
+      await refreshAfterConfirmedMutation(`Usunięto „${yarnName}”.`);
+      return;
+    }
+    setStorageMessage(
+      `„${yarnName}” nadal jest w magazynie. Możesz bezpiecznie spróbować usunąć go ponownie.`,
+      "error",
+      [
+        {
+          label: "Spróbuj usunąć ponownie",
+          primary: true,
+          onClick: retryOperation,
+        },
+      ]
+    );
+  } catch (error) {
+    showUncertainWrite(
+      `${error.message} Włóczka pozostaje na ekranie do czasu potwierdzenia stanu.`,
+      () => verifyUncertainDelete(node, yarnId, yarnName, retryOperation)
+    );
   }
 }
 
@@ -618,34 +873,43 @@ function addYarnCard(yarn = {}, { isNew = false } = {}) {
       return;
     }
 
+    const yarnId = Number(node.dataset.id);
     const removeSavedYarn = async () => {
       setStorageMessage("Usuwam włóczkę...");
-      if (node.dataset.id) {
-        await deleteYarn(node.dataset.id);
-      }
+      await deleteYarn(yarnId);
       node.remove();
-      await refresh();
-      setStorageMessage(`Usunięto „${yarnName}”.`, "success");
+      await refreshAfterConfirmedMutation(`Usunięto „${yarnName}”.`);
     };
 
-    try {
-      await removeSavedYarn();
-    } catch (error) {
-      if (isYarnVersionConflict(error)) {
-        showYarnVersionConflict({
-          retryOperation: removeSavedYarn,
-          preservedMessage: "Włóczka nie została usunięta.",
-          retryLabel: "Usuń mimo zmian",
-          conflictMessage:
-            "Ten motek lub magazyn zmienił się w innej karcie albo na innym urządzeniu. Włóczka nie została usunięta. Możesz usunąć ją mimo nowszych zmian albo pobrać aktualny magazyn.",
-        });
-        return;
+    const attemptRemoveSavedYarn = async () => {
+      try {
+        await removeSavedYarn();
+      } catch (error) {
+        if (isYarnVersionConflict(error)) {
+          showYarnVersionConflict({
+            retryOperation: attemptRemoveSavedYarn,
+            preservedMessage: "Włóczka nie została usunięta.",
+            retryLabel: "Usuń mimo zmian",
+            conflictMessage:
+              "Ten motek lub magazyn zmienił się w innej karcie albo na innym urządzeniu. Włóczka nie została usunięta. Możesz usunąć ją mimo nowszych zmian albo pobrać aktualny magazyn.",
+          });
+          return;
+        }
+        if (isUncertainWriteError(error)) {
+          showUncertainWrite(
+            `${error.message} Nie wiadomo jeszcze, czy włóczka została usunięta, dlatego nie powtarzam operacji automatycznie.`,
+            () => verifyUncertainDelete(node, yarnId, yarnName, attemptRemoveSavedYarn)
+          );
+          return;
+        }
+        setStorageMessage(
+          `${error.message} Włóczka pozostała w formularzu.`,
+          "error"
+        );
       }
-      setStorageMessage(
-        `${error.message} Włóczka pozostała w formularzu.`,
-        "error"
-      );
-    }
+    };
+
+    await attemptRemoveSavedYarn();
   });
 
   node.querySelector(".yarn-save").addEventListener("click", () => {
@@ -1061,13 +1325,13 @@ async function renderResults() {
   }
 }
 
-async function renderSummary() {
+async function renderSummary(loadedYarns = null) {
   if (!isAuthenticated) {
     summary.textContent = "Twój prywatny magazyn pojawi się tutaj po zalogowaniu.";
     return;
   }
 
-  const yarns = await loadYarns();
+  const yarns = loadedYarns || await loadYarns();
   const totalLength = yarns.reduce((sum, yarn) => sum + yarn.length, 0);
   const totalWeight = yarns.reduce((sum, yarn) => sum + yarn.weight, 0);
   const storageText = "Zapisane bezpiecznie na Twoim koncie.";
@@ -1427,7 +1691,7 @@ async function refresh() {
       renderYarnEmptyState();
     }
     renderOnboarding(yarns);
-    await renderSummary();
+    await renderSummary(yarns);
     await renderResults();
   } finally {
     yarnList.removeAttribute("aria-busy");

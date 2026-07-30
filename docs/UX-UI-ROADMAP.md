@@ -100,9 +100,18 @@
 - pobranie nowszych danych wymaga potwierdzenia, jeśli zastąpi rozpoczętą edycję;
 - obsługa obejmuje dodawanie, modyfikowanie i usuwanie włóczki.
 
+### Przerwany zapis i bezpieczne ponawianie
+
+- odczyt jest jednokrotnie ponawiany po przejściowym błędzie sieci;
+- zapis nie jest automatycznie powtarzany, jeśli odpowiedź mogła zaginąć;
+- użytkownik może sprawdzić faktyczny stan magazynu przed kolejną próbą;
+- aplikacja rozpoznaje operację wykonaną mimo utraconego potwierdzenia;
+- niezapisany lub niepotwierdzony formularz pozostaje na ekranie;
+- scenariusze nowego motka, modyfikacji i usunięcia są objęte testami.
+
 ## Sprawdzenie
 
-- `npm run check` przechodzi: 29/29 testów;
+- `npm run check` przechodzi: 32/32 testy;
 - start redesignu frontu zapisano w commicie `2a0c94c` na branchu
   `feat/frontend-design-refresh`, a branch został wypchnięty na GitHub;
 - import katalogu demo został sprawdzony w trybie kontrolnym;
@@ -121,11 +130,7 @@
    - dokończenie stanów częściowego sukcesu dla złożonych operacji;
    - ręczny test czytnikiem ekranu.
 
-3. **Sieć i spójność zapisu**
-   - kontrolowany retry z opóźnieniem po błędzie sieci;
-   - test przerwania operacji zapisu w połowie.
-
-4. **Katalog wzorów**
+3. **Katalog wzorów**
    - serwerowe filtrowanie i paginacja przed zwiększeniem katalogu;
    - dalsza ręczna weryfikacja rzeczywistych wzorów jest wstrzymana.
 
