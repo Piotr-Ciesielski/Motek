@@ -31,9 +31,9 @@ mikrotreści i szczegóły dostępności.
 
 ## Aktualizacja realizacji — 2026-07-30
 
-Stan porównano z wersją `2.0.0-alpha.31`. Spośród 19 uwag 16 jest zamkniętych,
-a 3 są częściowo zamknięte i zależą od rozszerzenia danych albo decyzji
-produktowej.
+Stan porównano z wersją `2.0.0-alpha.34`. Spośród 19 uwag 18 jest zamkniętych,
+a 1 pozostaje częściowo zamknięta i zależy od uzupełnienia zweryfikowanych
+adresów źródeł.
 
 | Punkt | Stan | Zrealizowane w |
 |---|---|---|
@@ -43,7 +43,7 @@ produktowej.
 | UI-04 — stan gościa | zamknięty | alpha.12 |
 | UI-05 — nagłówki konta | zamknięty | alpha.12 |
 | UI-06 — ślepy zaułek kart | częściowy | alpha.14, alpha.29 |
-| UI-07 — zaufanie do danych | częściowy | alpha.13, alpha.14 |
+| UI-07 — zaufanie do danych | zamknięty | alpha.13, alpha.14, alpha.33, alpha.34 |
 | UI-08 — wysokość kart włóczek | zamknięty | alpha.12 |
 | UI-09 — dostęp do wyników | zamknięty | alpha.12 |
 | UI-10 — zabezpieczenie usuwania | zamknięty | alpha.12 |
@@ -52,18 +52,19 @@ produktowej.
 | UI-13 — klawiatura przełącznika konta | zamknięty | alpha.17, alpha.28 |
 | UI-14 — ładowanie katalogu | zamknięty | alpha.15, alpha.30 |
 | UI-15 — pierwsza akcja mobilna | zamknięty | alpha.12 |
-| UI-16 — filtry katalogu | częściowy | alpha.14, alpha.15, alpha.31 |
+| UI-16 — filtry katalogu | zamknięty | alpha.14, alpha.15, alpha.31, alpha.32, alpha.34 |
 | UI-17 — techniczny język dostawcy | zamknięty | alpha.12 |
 | UI-18 — powtarzające się warianty | zamknięty | alpha.16 |
 | UI-19 — anulowanie nowego formularza | zamknięty | alpha.17 |
 
-Pozostałe części wymagają:
+Pozostała część wymaga zweryfikowanych adresów źródeł dla kart wzorów.
 
-- zweryfikowanych adresów źródeł dla kart wzorów;
-- uzupełnienia danych o typ projektu, jeśli ma być osobnym filtrem;
-- decyzji, czy publiczny katalog ma mieć filtr „pasuje do mojego magazynu”, czy
-  tę funkcję pozostawiamy w osobnym widoku `Dopasowanie`;
-- dalszej ręcznej weryfikacji 110 rekordów oznaczonych jako „Do sprawdzenia”.
+Typ projektu jest kompletną, kontrolowaną daną katalogową. Publiczny katalog
+nie dubluje filtra „pasuje do mojego magazynu”: ta prywatna funkcja świadomie
+pozostaje w osobnym widoku `Dopasowanie`.
+
+Katalog zawiera obecnie 106 sprawdzonych rekordów, w tym 103 wzory źródłowe
+i 3 wzory demonstracyjne. Żaden rekord nie ma już statusu „Do sprawdzenia”.
 
 Ręczny odsłuch pełnego przepływu w NVDA lub VoiceOver pozostaje możliwym
 późniejszym etapem rozwoju. Został świadomie odłożony i nie blokuje prac nad
@@ -302,6 +303,12 @@ importowe, a nie gotowy katalog.
   „Wzór obcojęzyczny”;
 - nie używać ostrzeżenia jako dominującego elementu każdej karty.
 
+**Stan po zmianach 2026-07-30:** ponownie przeanalizowano wszystkie 116 plików
+PDF. Do katalogu trafiły 103 samodzielne wzory oraz 3 rekordy demonstracyjne,
+a 13 duplikatów i materiałów pomocniczych wykluczono. Wszystkie 106 rekordów ma
+sprawdzone dane włóczek, język i kontrolowany typ projektu. Katalog nie zawiera
+już kart oznaczonych jako „Do sprawdzenia”.
+
 ### UI-08 — Zapisane włóczki zajmują zbyt dużo miejsca
 
 **Priorytet:** wysoki
@@ -434,10 +441,12 @@ Dostępne są tylko wyszukiwarka i status weryfikacji.
 - sortowanie po nazwie, kompletności lub trafności.
 
 **Stan po zmianach 2026-07-30:** katalog ma wyszukiwanie, status danych, język,
-materiał i sortowanie. Wszystkie kryteria można wyczyścić jedną akcją, która
-pozostaje nieaktywna przy ustawieniach domyślnych. Typ projektu i filtrowanie
-według możliwości dopasowania wymagają odpowiednio nowych danych katalogowych
-oraz powiązania filtrów z prywatnym magazynem użytkownika.
+typ projektu, materiał i sortowanie. Wszystkie aktywne kryteria muszą pasować.
+Typy i materiały pokazują dynamiczne liczniki oraz wzajemnie zawężają dostępne
+opcje. Wzór wielomateriałowy jest dostępny pod każdym swoim materiałem bez
+duplikowania kart. Wszystkie kryteria można wyczyścić jedną akcją, która
+pozostaje nieaktywna przy ustawieniach domyślnych. Dopasowanie do prywatnego
+magazynu pozostaje celowo osobnym widokiem.
 
 ### UI-17 — Nazwa dostawcy technologii dominuje w treści
 

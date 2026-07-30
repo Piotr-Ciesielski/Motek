@@ -135,27 +135,38 @@
 - akcja jest dostępna tylko po zmianie domyślnych kryteriów;
 - po wyczyszczeniu fokus wraca do wyszukiwarki, a podsumowanie podaje nowy wynik.
 
+### Dynamiczne filtry i zweryfikowane dane katalogu
+
+- katalog zawiera 106 sprawdzonych rekordów bez pozycji „Do sprawdzenia”;
+- wyszukiwanie, status, język, typ projektu i materiał działają łącznie;
+- typy i materiały pokazują dynamiczne liczby pasujących wzorów;
+- niemożliwe opcje są wyszarzone bez usuwania aktywnego wyboru;
+- wzór wielomateriałowy jest dostępny pod każdym materiałem bez duplikowania;
+- dopasowanie do prywatnego magazynu pozostaje osobnym widokiem, a nie
+  powielonym filtrem publicznego katalogu.
+
 ## Sprawdzenie
 
-- `npm run check` przechodzi: 38/38 testów;
+- `npm run check` przechodzi: 43/43 testy;
 - start redesignu frontu zapisano w commicie `2a0c94c` na branchu
   `feat/frontend-design-refresh`, a branch został wypchnięty na GitHub;
 - import katalogu demo został sprawdzony w trybie kontrolnym;
-- Supabase zawiera 119 rekordów, w tym 3 wzory demo;
+- Supabase zawiera 106 sprawdzonych rekordów, w tym 3 wzory demo;
 - kolejne pakiety są sprawdzane interaktywnie w przeglądarce na desktopie i mobile.
 - techniczny test klawiatury potwierdził działanie skip linku i przejścia fokusu
   między głównymi ekranami; pełny odsłuch pozostaje do wykonania w NVDA lub VoiceOver.
 - test przeglądarkowy potwierdził widoczne karty już podczas pobierania,
-  filtrowanie po typie projektu oraz
-  zdjęcie stanu `aria-busy` po załadowaniu wszystkich 119 rekordów.
+  łączenie typu projektu i materiału, dynamiczne liczniki oraz
+  zdjęcie stanu `aria-busy` po załadowaniu wszystkich 106 rekordów.
 
 ## Następne zadania UX/UI
 
 1. **Wzbogacenie danych katalogu**
    - dodać zweryfikowane adresy źródeł;
-   - wznowić ręczną weryfikację 110 rzeczywistych wzorów;
-   - zdecydować, czy filtr „pasuje do mojego magazynu” ma dublować osobny widok
-     `Dopasowanie`.
+   - wybrać pierwszą partię rzeczywistych wzorów z jednoznacznym zużyciem dla
+     rozmiarów;
+   - uzupełnić ich warianty `matching_requirements` i sprawdzić dopasowanie na
+     przykładowych magazynach.
 
 2. **Skalowanie katalogu dopiero przed zwiększeniem limitu**
    - przenieść wyszukiwanie i filtrowanie na serwer;

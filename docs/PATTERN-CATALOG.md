@@ -2,23 +2,28 @@
 
 ## Aktualny stan
 
-Katalog zawiera 119 rekordów w Supabase:
+Katalog zawiera 106 rekordów w Supabase:
 
-- 116 wzorów pochodzących z dotychczasowego importu;
+- 103 samodzielne wzory pochodzące z lokalnych dokumentów PDF;
 - 3 syntetyczne wzory testowe oznaczone w nazwie jako `Wzór demo`.
 
 Aktualna kompletność danych:
 
-- 9 rekordów ma status `Zweryfikowany`, w tym 3 wzory demo;
-- 110 rekordów nadal wymaga ręcznego sprawdzenia;
-- 49 rekordów ma jednoznaczny przelicznik metrów na 100 gramów;
-- 107 rekordów ma przynajmniej częściowy opis wymaganych włóczek;
+- wszystkie 106 rekordów ma status `Zweryfikowany`;
+- żaden rekord nie wymaga dalszego ręcznego sprawdzenia danych włóczki;
+- 68 rekordów ma jednoznaczny przelicznik metrów na 100 gramów;
+- wszystkie 106 rekordów ma opis wymaganych włóczek lub jawnie elastycznego
+  doboru materiału;
 - 3 wzory demo mają kompletne dane pozwalające na automatyczne dopasowanie;
-- język źródła rozpoznano jako polski dla 62, angielski dla 56 i nieustalony
-  dla 1 rekordu.
+- język źródła rozpoznano jako polski dla 49 i angielski dla 57 rekordów;
 - każdy rekord ma kontrolowany typ projektu używany w karcie i filtrze katalogu;
-- kategorie obejmują skarpety, swetry, kardigany, topy i bluzki, chusty i szale,
-  nakrycia głowy, rękawiczki, kamizelki, spódnice i sukienki, koce oraz „inne”.
+- katalog zawiera 35 par skarpet, 21 swetrów, 9 kardiganów, 19 topów i bluzek,
+  9 chust lub szali, 5 nakryć głowy, 1 parę rękawiczek, 2 kamizelki,
+  4 spódnice lub sukienki oraz 1 inny projekt.
+
+Filtry tekstu, statusu, języka, typu i materiału działają łącznie. Typ projektu
+i materiał pokazują dynamiczne liczniki, a wzór wielomateriałowy jest dostępny
+pod każdym swoim materiałem bez duplikowania wyników.
 
 Mechanizm dopasowania korzysta wyłącznie z kompletnych danych w polu
 `matching_requirements`. Wzory bez potwierdzonych wymagań pozostają dostępne w
@@ -58,7 +63,10 @@ Supabase oraz pokazywany na karcie i w filtrze katalogu.
 Zasady klasyfikacji:
 
 - kategorie są ograniczone do zamkniętej listy wartości;
-- nazwa pliku i nazwa wzoru mają pierwszeństwo przed opisem automatycznym;
+- typ jest wyliczany z ostatecznej nazwy i opisu po zastosowaniu ręcznych
+  poprawek;
+- jawny `project_type` z ręcznej poprawki ma pierwszeństwo przed klasyfikacją
+  automatyczną;
 - niejednoznaczne przypadki pozostają w kategorii `other`;
 - ręczne korekty nadal można dodawać w pliku nadpisań.
 
@@ -77,10 +85,11 @@ Rekomendowane rozwiązanie:
 
 ### 3. Dopasowanie rzeczywistych wzorów
 
-Po uporządkowaniu typu projektu i źródeł należy wrócić do sześciu
-zweryfikowanych rzeczywistych rekordów, przygotować dla nich kompletne warianty
+Należy wybrać pierwszą małą partię rzeczywistych wzorów z jednoznacznymi
+tabelami rozmiarów i zużycia, przygotować dla nich kompletne warianty
 `matching_requirements`, przetestować je na przykładowych magazynach i dopiero
-potem przejść do kolejnych partii.
+potem przejść do kolejnych partii. Adres źródła jest przydatny prezentacyjnie,
+ale nie blokuje opracowania potwierdzonych wymagań ilościowych z dostępnego PDF.
 
 ## Narzędzie importu
 
