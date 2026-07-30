@@ -68,6 +68,14 @@
 - błąd pobierania danych po sprawdzeniu sesji nie powoduje pozornego wylogowania;
 - komunikaty błędów wskazują możliwość ponowienia operacji.
 
+### Ponawianie i ochrona edycji
+
+- błędy katalogu i dopasowania mają ręczną akcję `Spróbuj ponownie`;
+- nowy lub zmieniony formularz uruchamia ostrzeżenie przed zamknięciem karty;
+- ostrzeżenie obejmuje również trwające operacje zapisu;
+- usunięto nieaktywny mechanizm autosave;
+- uruchomienie dopasowania nie zapisuje ponownie całego magazynu.
+
 ## Sprawdzenie
 
 - `npm run check` przechodzi: 29/29 testów;
@@ -75,7 +83,7 @@
   `feat/frontend-design-refresh`, a branch został wypchnięty na GitHub;
 - import katalogu demo został sprawdzony w trybie kontrolnym;
 - Supabase zawiera 119 rekordów, w tym 3 wzory demo;
-- interaktywny test wbudowaną przeglądarką nie był dostępny w środowisku Codex.
+- kolejne pakiety są sprawdzane interaktywnie w przeglądarce na desktopie i mobile.
 
 ## Następne zadania UX/UI
 
@@ -93,13 +101,11 @@
 
 3. **Model stanów interfejsu**
    - dokończenie stanów częściowego sukcesu dla złożonych operacji;
-   - przyciski ponowienia w najważniejszych komunikatach błędów;
    - ręczny test czytnikiem ekranu.
 
-4. **Sieć i autosave**
+4. **Sieć i spójność zapisu**
    - kontrolowany retry z opóźnieniem po błędzie sieci;
    - zachowanie formularza przy wygasłej sesji;
-   - ostrzeżenie przed zamknięciem przy niezapisanych danych;
    - pełna obsługa konfliktu wersji.
 
 5. **Katalog wzorów**

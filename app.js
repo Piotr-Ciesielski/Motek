@@ -51,9 +51,7 @@ const networkStatus = document.getElementById("networkStatus");
 const REQUEST_TIMEOUT_MS = 12_000;
 let baseUrl = window.location.origin;
 let isAuthenticated = false;
-let autosaveTimer = null;
-let autosaveInFlight = null;
-let autosavePending = false;
+let pendingWriteCount = 0;
 let catalogPatterns = [];
 let yarnVersion = null;
 let onboardingDismissed = false;
@@ -133,6 +131,10 @@ async function api(path, options = {}) {
   const controller = new AbortController();
   const abortRequest = () => controller.abort();
   const timeout = window.setTimeout(abortRequest, REQUEST_TIMEOUT_MS);
+  const isWriteRequest = !["GET", "HEAD"].includes(
+    String(requestOptions.method || "GET").toUpperCase()
+  );
+  if (isWriteRequest) pendingWriteCount += 1;
   if (requestSignal) {
     if (requestSignal.aborted) abortRequest();
     else requestSignal.addEventListener("abort", abortRequest, { once: true });
@@ -183,16 +185,28 @@ async function api(path, options = {}) {
   } finally {
     window.clearTimeout(timeout);
     requestSignal?.removeEventListener("abort", abortRequest);
+    if (isWriteRequest) pendingWriteCount -= 1;
   }
 }
 
-function showMessage(container, message, kind = "status") {
+function showMessage(container, message, kind = "status", action = null) {
   const element = document.createElement("div");
   element.className = "empty-state";
   element.dataset.kind = kind;
   element.setAttribute("role", kind === "error" ? "alert" : "status");
   element.setAttribute("aria-live", kind === "error" ? "assertive" : "polite");
-  element.textContent = message;
+  const text = document.createElement("p");
+  text.className = "empty-state__text";
+  text.textContent = message;
+  element.appendChild(text);
+  if (action) {
+    const button = document.createElement("button");
+    button.className = "button button--ghost empty-state__action";
+    button.type = "button";
+    button.textContent = action.label;
+    button.addEventListener("click", action.onClick);
+    element.appendChild(button);
+  }
   container.replaceChildren(element);
   container.toggleAttribute("aria-busy", kind === "loading");
 }
@@ -288,43 +302,6 @@ function createMatchVariant(item, open = false) {
   return details;
 }
 
-function scheduleAutosave() {
-  clearTimeout(autosaveTimer);
-  autosaveTimer = setTimeout(() => {
-    flushAutosave();
-  }, 350);
-}
-
-async function flushAutosave() {
-  if (autosaveInFlight) {
-    autosavePending = true;
-    return;
-  }
-
-  setStorageMessage("Zapisuję magazyn...");
-  try {
-    do {
-      autosavePending = false;
-      autosaveInFlight = saveYarns()
-        .then((savedYarns) => {
-          syncDomIds(savedYarns);
-          return renderSummary();
-        })
-        .finally(() => {
-          autosaveInFlight = null;
-        });
-      await autosaveInFlight;
-    } while (autosavePending);
-    setStorageMessage("Magazyn zapisany.", "success");
-  } catch (error) {
-    autosavePending = false;
-    setStorageMessage(
-      `${error.message} Zmiany pozostały w formularzu — popraw połączenie i spróbuj ponownie.`,
-      "error"
-    );
-  }
-}
-
 function collectYarnFromCard(card) {
   return {
     id: card.dataset.id ? Number(card.dataset.id) : null,
@@ -360,6 +337,20 @@ function isYarnComplete(card) {
 function isYarnChanged(card) {
   return JSON.stringify(collectYarnFromCard(card)) !== JSON.stringify(card._originalYarn);
 }
+
+function hasUnsavedYarnChanges() {
+  if (pendingWriteCount > 0) return true;
+  return [...yarnList.querySelectorAll(".yarn-card")].some((card) => {
+    if (card.dataset.saved !== "true") return true;
+    return card.dataset.editing === "true" && isYarnChanged(card);
+  });
+}
+
+window.addEventListener("beforeunload", (event) => {
+  if (!hasUnsavedYarnChanges()) return;
+  event.preventDefault();
+  event.returnValue = "";
+});
 
 function setYarnFieldsDisabled(card, disabled) {
   card.querySelectorAll("[data-field]").forEach((field) => {
@@ -590,44 +581,6 @@ function renderOnboarding(yarns) {
   onboarding.hidden = !isAuthenticated || yarns.length > 0 || onboardingDismissed;
 }
 
-async function saveYarns() {
-  const local = collectYarnsFromDom();
-
-  if (!isAuthenticated) {
-    throw new Error("Zaloguj się, aby zapisywać włóczki w swoim magazynie.");
-  }
-
-  const existing = await api("/api/yarns");
-  const localIds = new Set(local.filter((yarn) => yarn.id).map((yarn) => yarn.id));
-
-  for (const yarn of existing) {
-    if (!localIds.has(yarn.id)) {
-      await api(`/api/yarns/${yarn.id}`, {
-        method: "DELETE",
-        headers: { "If-Match": yarnVersion },
-      });
-    }
-  }
-
-  const savedYarns = [];
-  for (const yarn of local) {
-    const body = { ...yarn };
-    delete body.id;
-    savedYarns.push(yarn.id
-      ? await api(`/api/yarns/${yarn.id}`, {
-          method: "PATCH",
-          headers: { "If-Match": yarnVersion },
-          body: JSON.stringify(body),
-        })
-      : await api("/api/yarns", {
-          method: "POST",
-          headers: { "If-Match": yarnVersion },
-          body: JSON.stringify(body),
-        }));
-  }
-  return savedYarns;
-}
-
 async function deleteYarn(id) {
   if (!isAuthenticated) {
     throw new Error("Zaloguj się, aby zmieniać swój magazyn włóczek.");
@@ -635,13 +588,6 @@ async function deleteYarn(id) {
   await api(`/api/yarns/${id}`, {
     method: "DELETE",
     headers: { "If-Match": yarnVersion },
-  });
-}
-
-function syncDomIds(savedYarns) {
-  const cards = [...yarnList.querySelectorAll(".yarn-card")];
-  cards.forEach((card, index) => {
-    card.dataset.id = savedYarns[index]?.id || "";
   });
 }
 
@@ -861,6 +807,19 @@ function renderPatternCatalogLoading() {
   patternCatalogActions.hidden = true;
 }
 
+function showPatternCatalogError(error) {
+  patternCatalogSummary.textContent = "";
+  showMessage(
+    patternCatalog,
+    `${error.message} Katalog nie został odświeżony — spróbuj ponownie później.`,
+    "error",
+    {
+      label: "Spróbuj ponownie",
+      onClick: () => refreshPatternCatalog().catch(showPatternCatalogError),
+    }
+  );
+}
+
 async function refreshPatternCatalog() {
   renderPatternCatalogLoading();
   try {
@@ -870,6 +829,13 @@ async function refreshPatternCatalog() {
   } finally {
     patternCatalog.removeAttribute("aria-busy");
   }
+}
+
+function showResultsError(message) {
+  showMessage(results, message, "error", {
+    label: "Spróbuj ponownie",
+    onClick: () => findBtn.click(),
+  });
 }
 
 async function renderResults() {
@@ -1090,10 +1056,8 @@ async function refreshAuthSession() {
       `${error.message} Konto nadal jest zalogowane — spróbuj ponownie za chwilę.`,
       "error"
     );
-    showMessage(
-      results,
-      `${error.message} Nie udało się odświeżyć dopasowania. Spróbuj ponownie.`,
-      "error"
+    showResultsError(
+      `${error.message} Nie udało się odświeżyć dopasowania. Spróbuj ponownie.`
     );
   }
 }
@@ -1300,13 +1264,11 @@ findBtn.addEventListener("click", async () => {
     }
     findBtn.disabled = true;
     findBtn.textContent = "Dobieram...";
-    showMessage(results, "Zapisuję włóczki...", "loading");
-    await saveYarns();
     showMessage(results, "Pobieram dopasowane wzory...", "loading");
     await refresh();
     document.getElementById("matchesTitle").scrollIntoView({ behavior: "smooth", block: "start" });
   } catch (error) {
-    showMessage(results, error.message, "error");
+    showResultsError(error.message);
   } finally {
     findBtn.disabled = false;
     findBtn.textContent = "Dobierz wzór";
@@ -1341,14 +1303,7 @@ detectRuntimeMode()
     if (recoveryHandled) return;
     await Promise.all([
       refreshAuthSession(),
-      refreshPatternCatalog().catch((error) => {
-        patternCatalogSummary.textContent = "";
-        showMessage(
-          patternCatalog,
-          `${error.message} Katalog nie został odświeżony — spróbuj ponownie później.`,
-          "error"
-        );
-      }),
+      refreshPatternCatalog().catch(showPatternCatalogError),
     ]);
   })
   .catch((error) => {

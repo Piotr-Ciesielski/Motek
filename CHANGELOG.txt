@@ -1,5 +1,12 @@
 Motek - log zmian
 
+Wersja 2.0.0-alpha.22 (w przygotowaniu) - ponawianie i ochrona edycji
+- Błędy katalogu i dopasowania udostępniają bezpieczną akcję „Spróbuj ponownie”.
+- Przeglądarka ostrzega przed zamknięciem karty z nowym lub zmienionym formularzem.
+- Ostrzeżenie obejmuje również trwające operacje zapisu, usuwania i konta.
+- Usunięto nieużywany kod dawnego autosave po przejściu na jawne przyciski zapisu.
+- Dopasowanie nie wysyła ponownie wszystkich włóczek i korzysta z wcześniej zapisanych danych.
+
 Wersja 2.0.0-alpha.21 (w przygotowaniu) - czytelne stany sieci i ładowania
 - Żądania interfejsu kończą oczekiwanie po 12 sekundach i wskazują możliwość ponowienia.
 - Utrata oraz powrót połączenia są komunikowane w widocznym pasku aplikacji.

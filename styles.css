@@ -864,6 +864,14 @@ input, select {
   border: 1px dashed rgba(92, 89, 232, 0.28);
 }
 
+.empty-state__text {
+  margin: 0;
+}
+
+.empty-state__action {
+  margin-top: 14px;
+}
+
 .empty-state[data-kind="loading"] {
   border-color: #dbc8d1;
   background: #f5ecef;
