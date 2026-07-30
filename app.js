@@ -19,6 +19,7 @@ const patternCatalog = document.getElementById("patternCatalog");
 const patternCatalogActions = document.getElementById("patternCatalogActions");
 const loadMorePatternsBtn = document.getElementById("loadMorePatternsBtn");
 const backToCatalogFiltersBtn = document.getElementById("backToCatalogFiltersBtn");
+const resetCatalogFiltersBtn = document.getElementById("resetCatalogFiltersBtn");
 const loginForm = document.getElementById("loginForm");
 const registerForm = document.getElementById("registerForm");
 const authForms = document.getElementById("authForms");
@@ -1198,6 +1199,12 @@ function renderPatternCatalog() {
   const languageFilter = patternLanguageFilter.value;
   const materialFilter = patternMaterialFilter.value;
   const sortMode = patternSort.value;
+  resetCatalogFiltersBtn.disabled =
+    !phrase &&
+    reviewFilter === "verified" &&
+    languageFilter === "all" &&
+    materialFilter === "all" &&
+    sortMode === "recommended";
   const matchingPatterns = catalogPatterns
     .filter((pattern) => {
       const searchable = [
@@ -1863,6 +1870,15 @@ patternReviewFilter.addEventListener("change", resetPatternCatalogView);
 patternLanguageFilter.addEventListener("change", resetPatternCatalogView);
 patternMaterialFilter.addEventListener("change", resetPatternCatalogView);
 patternSort.addEventListener("change", resetPatternCatalogView);
+resetCatalogFiltersBtn.addEventListener("click", () => {
+  patternSearch.value = "";
+  patternReviewFilter.value = "verified";
+  patternLanguageFilter.value = "all";
+  patternMaterialFilter.value = "all";
+  patternSort.value = "recommended";
+  resetPatternCatalogView();
+  patternSearch.focus({ preventScroll: true });
+});
 loadMorePatternsBtn.addEventListener("click", () => {
   catalogVisibleLimit += 12;
   renderPatternCatalog();

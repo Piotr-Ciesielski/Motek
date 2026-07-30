@@ -393,6 +393,12 @@ Dostępne są tylko wyszukiwarka i status weryfikacji.
 - tylko wzory możliwe do dopasowania;
 - sortowanie po nazwie, kompletności lub trafności.
 
+**Stan po zmianach 2026-07-30:** katalog ma wyszukiwanie, status danych, język,
+materiał i sortowanie. Wszystkie kryteria można wyczyścić jedną akcją, która
+pozostaje nieaktywna przy ustawieniach domyślnych. Typ projektu i filtrowanie
+według możliwości dopasowania wymagają odpowiednio nowych danych katalogowych
+oraz powiązania filtrów z prywatnym magazynem użytkownika.
+
 ### UI-17 — Nazwa dostawcy technologii dominuje w treści
 
 „Supabase” jest widoczny jako etykieta sekcji i w podsumowaniu magazynu. Dla

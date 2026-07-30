@@ -1,5 +1,11 @@
 Motek - log zmian
 
+Wersja 2.0.0-alpha.31 (w przygotowaniu) - prosty powrót do całego katalogu
+- Dodano jedną akcję czyszczącą wyszukiwanie, filtry i niestandardowe sortowanie.
+- Przycisk jest nieaktywny, gdy katalog już korzysta z ustawień domyślnych.
+- Po wyczyszczeniu fokus wraca do wyszukiwarki, a podsumowanie ogłasza nowy wynik.
+- Układ akcji pozostaje czytelny również na telefonie.
+
 Wersja 2.0.0-alpha.30 (w przygotowaniu) - stopniowe wyświetlanie katalogu
 - Pierwsza partia wzorów pojawia się od razu po pobraniu, bez czekania na cały katalog.
 - Kolejne strony są dołączane w tle bez duplikowania kart.

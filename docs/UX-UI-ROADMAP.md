@@ -129,6 +129,12 @@
 - kolejne strony aktualizują listę i filtry w tle;
 - podsumowanie pokazuje docelowy rozmiar katalogu oraz stan dalszego pobierania.
 
+### Powrót do domyślnego katalogu
+
+- wyszukiwanie, filtry i sortowanie można wyczyścić jedną akcją;
+- akcja jest dostępna tylko po zmianie domyślnych kryteriów;
+- po wyczyszczeniu fokus wraca do wyszukiwarki, a podsumowanie podaje nowy wynik.
+
 ## Sprawdzenie
 
 - `npm run check` przechodzi: 35/35 testów;
