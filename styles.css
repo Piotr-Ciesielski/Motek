@@ -785,6 +785,17 @@ input, select {
   font-size: 0.86rem;
 }
 
+.storage-message p {
+  margin: 0;
+}
+
+.storage-message__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
 .storage-message[data-kind="success"] {
   color: var(--good);
 }

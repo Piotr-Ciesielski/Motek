@@ -92,6 +92,14 @@
 - długie nazwy, emoji, tekst arabski i chiński mieszczą się w formularzu;
 - na sprawdzonych ekranach nie występują kontrolki mniejsze niż 44×44 px.
 
+### Konflikty równoległych zmian
+
+- nieaktualny zapis z innej karty lub urządzenia nie nadpisuje danych po cichu;
+- lokalna wersja pozostaje w formularzu po odpowiedzi konfliktu;
+- użytkownik może świadomie zapisać swoją wersję albo pobrać nowsze dane;
+- pobranie nowszych danych wymaga potwierdzenia, jeśli zastąpi rozpoczętą edycję;
+- obsługa obejmuje dodawanie, modyfikowanie i usuwanie włóczki.
+
 ## Sprawdzenie
 
 - `npm run check` przechodzi: 29/29 testów;
@@ -115,7 +123,7 @@
 
 3. **Sieć i spójność zapisu**
    - kontrolowany retry z opóźnieniem po błędzie sieci;
-   - pełna obsługa konfliktu wersji.
+   - test przerwania operacji zapisu w połowie.
 
 4. **Katalog wzorów**
    - serwerowe filtrowanie i paginacja przed zwiększeniem katalogu;

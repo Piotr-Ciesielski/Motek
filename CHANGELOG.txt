@@ -1,5 +1,12 @@
 Motek - log zmian
 
+Wersja 2.0.0-alpha.25 (w przygotowaniu) - bezpieczna decyzja przy konflikcie zapisu
+- Konflikt zmian z innej karty lub urządzenia nie kończy się już technicznym błędem.
+- Niezapisana wersja pozostaje w formularzu i użytkownik wybiera dalsze działanie.
+- Akcja „Zapisz moją wersję” pobiera aktualną wersję magazynu i ponawia pojedynczą operację.
+- Akcja „Pobierz nowsze dane” ostrzega przed zastąpieniem niezapisanej edycji.
+- Ten sam mechanizm obejmuje dodawanie, modyfikowanie i usuwanie włóczki.
+
 Wersja 2.0.0-alpha.24 (w przygotowaniu) - końcowa kontrola responsywności
 - Sprawdzono widoki 375, 768 i 1440 px bez poziomego przewijania.
 - Potwierdzono prawidłowe przejście katalogu z trzech do dwóch i jednej kolumny.

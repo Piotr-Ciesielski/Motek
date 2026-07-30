@@ -235,11 +235,107 @@ function showMessage(container, message, kind = "status", action = null) {
   container.toggleAttribute("aria-busy", kind === "loading");
 }
 
-function setStorageMessage(message, kind = "") {
-  storageMessage.textContent = message;
+function setStorageMessage(message, kind = "", actions = []) {
+  storageMessage.replaceChildren();
   storageMessage.dataset.kind = kind;
   storageMessage.setAttribute("role", kind === "error" ? "alert" : "status");
   storageMessage.setAttribute("aria-live", kind === "error" ? "assertive" : "polite");
+
+  if (message) {
+    const text = document.createElement("p");
+    text.textContent = message;
+    storageMessage.appendChild(text);
+  }
+
+  if (actions.length) {
+    const actionList = document.createElement("div");
+    actionList.className = "storage-message__actions";
+    actions.forEach(({ label, onClick, primary = false }) => {
+      const button = document.createElement("button");
+      button.className = primary ? "button" : "button button--ghost";
+      button.type = "button";
+      button.textContent = label;
+      button.addEventListener("click", onClick);
+      actionList.appendChild(button);
+    });
+    storageMessage.appendChild(actionList);
+  }
+}
+
+function isYarnVersionConflict(error) {
+  return error instanceof ApiError
+    && error.status === 409
+    && error.message.startsWith("Magazyn został zmieniony");
+}
+
+function showYarnVersionConflict({
+  retryOperation,
+  preservedMessage,
+  retryLabel,
+  conflictMessage,
+}) {
+  const showConflictAgain = () => {
+    showYarnVersionConflict({
+      retryOperation,
+      preservedMessage,
+      retryLabel,
+      conflictMessage,
+    });
+  };
+
+  setStorageMessage(
+    conflictMessage,
+    "error",
+    [
+      {
+        label: retryLabel,
+        primary: true,
+        onClick: async () => {
+          setStorageMessage("Pobieram aktualną wersję magazynu i ponawiam zapis...");
+          try {
+            await loadYarns();
+            await retryOperation();
+          } catch (error) {
+            if (isYarnVersionConflict(error)) {
+              showConflictAgain();
+              return;
+            }
+            setStorageMessage(`${error.message} ${preservedMessage}`, "error");
+          }
+        },
+      },
+      {
+        label: "Pobierz nowsze dane",
+        onClick: async () => {
+          if (
+            hasYarnFormDraft()
+            && !window.confirm(
+              "Pobrać nowsze dane? Niezapisane zmiany widoczne w formularzu zostaną zastąpione."
+            )
+          ) {
+            return;
+          }
+
+          setStorageMessage("Pobieram nowsze dane...");
+          try {
+            await refresh();
+            setStorageMessage("Magazyn jest już aktualny.", "success");
+          } catch (error) {
+            setStorageMessage(
+              `${error.message} Niezapisane zmiany nadal są w formularzu.`,
+              "error",
+              [
+                {
+                  label: "Spróbuj ponownie",
+                  onClick: showConflictAgain,
+                },
+              ]
+            );
+          }
+        },
+      },
+    ]
+  );
 }
 
 function updateNetworkStatus(online = navigator.onLine) {
@@ -442,6 +538,16 @@ async function saveNewYarn(card) {
     renderOnboarding(collectYarnsFromDom());
   } catch (error) {
     saveButton.disabled = false;
+    if (isYarnVersionConflict(error)) {
+      showYarnVersionConflict({
+        retryOperation: () => saveNewYarn(card),
+        preservedMessage: "Motek pozostał w formularzu.",
+        retryLabel: "Dodaj mój motek",
+        conflictMessage:
+          "Magazyn zmienił się w innej karcie lub na innym urządzeniu. Nowy motek nadal jest w formularzu. Możesz dodać go do aktualnego magazynu albo pobrać nowsze dane.",
+      });
+      return;
+    }
     setStorageMessage(`${error.message} Motek pozostał w formularzu.`, "error");
   }
 }
@@ -467,6 +573,16 @@ async function saveExistingYarn(card) {
     await renderSummary();
   } catch (error) {
     saveButton.disabled = false;
+    if (isYarnVersionConflict(error)) {
+      showYarnVersionConflict({
+        retryOperation: () => saveExistingYarn(card),
+        preservedMessage: "Zmiany pozostały w formularzu.",
+        retryLabel: "Zapisz moją wersję",
+        conflictMessage:
+          "Ten motek lub magazyn zmienił się w innej karcie albo na innym urządzeniu. Twoja wersja nadal jest w formularzu. Jej zapisanie zastąpi zmiany tego samego motka wykonane gdzie indziej.",
+      });
+      return;
+    }
     setStorageMessage(`${error.message} Zmiany pozostały w formularzu.`, "error");
   }
 }
@@ -495,14 +611,14 @@ function addYarnCard(yarn = {}, { isNew = false } = {}) {
       return;
     }
 
-    try {
-      if (!isSaved) {
-        node.remove();
-        if (!yarnList.children.length) renderYarnEmptyState();
-        setStorageMessage("Anulowano dodawanie nowego motka.");
-        return;
-      }
+    if (!isSaved) {
+      node.remove();
+      if (!yarnList.children.length) renderYarnEmptyState();
+      setStorageMessage("Anulowano dodawanie nowego motka.");
+      return;
+    }
 
+    const removeSavedYarn = async () => {
       setStorageMessage("Usuwam włóczkę...");
       if (node.dataset.id) {
         await deleteYarn(node.dataset.id);
@@ -510,7 +626,21 @@ function addYarnCard(yarn = {}, { isNew = false } = {}) {
       node.remove();
       await refresh();
       setStorageMessage(`Usunięto „${yarnName}”.`, "success");
+    };
+
+    try {
+      await removeSavedYarn();
     } catch (error) {
+      if (isYarnVersionConflict(error)) {
+        showYarnVersionConflict({
+          retryOperation: removeSavedYarn,
+          preservedMessage: "Włóczka nie została usunięta.",
+          retryLabel: "Usuń mimo zmian",
+          conflictMessage:
+            "Ten motek lub magazyn zmienił się w innej karcie albo na innym urządzeniu. Włóczka nie została usunięta. Możesz usunąć ją mimo nowszych zmian albo pobrać aktualny magazyn.",
+        });
+        return;
+      }
       setStorageMessage(
         `${error.message} Włóczka pozostała w formularzu.`,
         "error"
