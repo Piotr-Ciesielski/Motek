@@ -783,6 +783,17 @@ input, select {
   gap: 16px;
 }
 
+.catalog-actions {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 24px;
+}
+
+.catalog-actions[hidden] {
+  display: none;
+}
+
 .pattern-card {
   display: flex;
   flex-direction: column;
@@ -804,6 +815,7 @@ input, select {
 .pattern-card__top h3 {
   font-size: 1.35rem;
   overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .pattern-card__kicker {
@@ -1023,6 +1035,11 @@ body::before {
 
   .catalog-controls, .pattern-catalog {
     grid-template-columns: 1fr;
+  }
+
+  .catalog-actions {
+    align-items: stretch;
+    flex-direction: column;
   }
 
   .onboarding__steps {

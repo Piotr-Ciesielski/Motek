@@ -11,6 +11,9 @@ const patternSearch = document.getElementById("patternSearch");
 const patternReviewFilter = document.getElementById("patternReviewFilter");
 const patternCatalogSummary = document.getElementById("patternCatalogSummary");
 const patternCatalog = document.getElementById("patternCatalog");
+const patternCatalogActions = document.getElementById("patternCatalogActions");
+const loadMorePatternsBtn = document.getElementById("loadMorePatternsBtn");
+const backToCatalogFiltersBtn = document.getElementById("backToCatalogFiltersBtn");
 const loginForm = document.getElementById("loginForm");
 const registerForm = document.getElementById("registerForm");
 const authForms = document.getElementById("authForms");
@@ -51,6 +54,7 @@ let onboardingDismissed = false;
 let yarnFormSequence = 0;
 let activeView = "account";
 let initialSessionResolved = false;
+let catalogVisibleLimit = 12;
 
 function setActiveView(requestedView, { focus = true } = {}) {
   const protectedViews = new Set(["inventory", "matches"]);
@@ -558,28 +562,49 @@ function createMaterialTag(material) {
   return tag;
 }
 
+function formatPatternName(value) {
+  const name = String(value || "")
+    .replace(/\.pdf$/i, "")
+    .replace(/[_-]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+  return name || "Wzór bez nazwy";
+}
+
 function renderPatternCatalog() {
   const phrase = patternSearch.value.trim().toLocaleLowerCase("pl");
   const reviewFilter = patternReviewFilter.value;
-  const visiblePatterns = catalogPatterns.filter((pattern) => {
-    const searchable = [
-      pattern.name,
-      pattern.description,
-      ...(Array.isArray(pattern.materials) ? pattern.materials : []),
-    ]
-      .join(" ")
-      .toLocaleLowerCase("pl");
-    const matchesPhrase = !phrase || searchable.includes(phrase);
-    const matchesStatus =
-      reviewFilter === "all" ||
-      (reviewFilter === "review" && pattern.needsReview) ||
-      (reviewFilter === "verified" && !pattern.needsReview);
-    return matchesPhrase && matchesStatus;
-  });
+  const matchingPatterns = catalogPatterns
+    .filter((pattern) => {
+      const searchable = [
+        pattern.name,
+        pattern.description,
+        ...(Array.isArray(pattern.materials) ? pattern.materials : []),
+      ]
+        .join(" ")
+        .toLocaleLowerCase("pl");
+      const matchesPhrase = !phrase || searchable.includes(phrase);
+      const matchesStatus =
+        reviewFilter === "all" ||
+        (reviewFilter === "review" && pattern.needsReview) ||
+        (reviewFilter === "verified" && !pattern.needsReview);
+      return matchesPhrase && matchesStatus;
+    })
+    .sort((left, right) => {
+      const statusOrder = Number(left.needsReview) - Number(right.needsReview);
+      return statusOrder || formatPatternName(left.name).localeCompare(
+        formatPatternName(right.name),
+        "pl"
+      );
+    });
+  const visiblePatterns = matchingPatterns.slice(0, catalogVisibleLimit);
 
   patternCatalogSummary.textContent =
-    `Widoczne wzory: ${visiblePatterns.length} z ${catalogPatterns.length}`;
+    `Pokazano ${visiblePatterns.length} z ${matchingPatterns.length} pasujących wzorów. ` +
+    `Cały katalog: ${catalogPatterns.length}.`;
   patternCatalog.replaceChildren();
+  patternCatalogActions.hidden = matchingPatterns.length === 0;
+  loadMorePatternsBtn.hidden = visiblePatterns.length >= matchingPatterns.length;
 
   if (!visiblePatterns.length) {
     showMessage(patternCatalog, "Nie znaleziono wzorów spełniających te kryteria.");
@@ -592,8 +617,10 @@ function renderPatternCatalog() {
       ? pattern.yarnRequirements
       : [];
     const materials = Array.isArray(pattern.materials) ? pattern.materials : [];
+    const title = card.querySelector("h3");
 
-    card.querySelector("h3").textContent = pattern.name;
+    title.textContent = formatPatternName(pattern.name);
+    title.title = pattern.name || "";
     card.querySelector(".pattern-card__kicker").textContent =
       pattern.sourceLanguage === "pl" ? "Wzór po polsku" : "Wzór obcojęzyczny";
     card.querySelector(".pattern-card__description").textContent =
@@ -629,8 +656,14 @@ function renderPatternCatalog() {
 
 async function refreshPatternCatalog() {
   showMessage(patternCatalog, "Pobieram wzory z bazy...");
-  catalogPatterns = await loadPatternCatalog();
-  renderPatternCatalog();
+  patternCatalog.setAttribute("aria-busy", "true");
+  patternCatalogActions.hidden = true;
+  try {
+    catalogPatterns = await loadPatternCatalog();
+    renderPatternCatalog();
+  } finally {
+    patternCatalog.removeAttribute("aria-busy");
+  }
 }
 
 async function renderResults() {
@@ -1018,8 +1051,24 @@ findBtn.addEventListener("click", async () => {
   }
 });
 
-patternSearch.addEventListener("input", renderPatternCatalog);
-patternReviewFilter.addEventListener("change", renderPatternCatalog);
+function resetPatternCatalogView() {
+  catalogVisibleLimit = 12;
+  renderPatternCatalog();
+}
+
+patternSearch.addEventListener("input", resetPatternCatalogView);
+patternReviewFilter.addEventListener("change", resetPatternCatalogView);
+loadMorePatternsBtn.addEventListener("click", () => {
+  catalogVisibleLimit += 12;
+  renderPatternCatalog();
+});
+backToCatalogFiltersBtn.addEventListener("click", () => {
+  document.getElementById("catalogFilters").scrollIntoView({
+    behavior: "smooth",
+    block: "center",
+  });
+  patternSearch.focus({ preventScroll: true });
+});
 
 detectRuntimeMode()
   .then(async () => {

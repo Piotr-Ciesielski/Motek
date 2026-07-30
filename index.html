@@ -220,7 +220,7 @@
               jednoznacznie w pliku źródłowym.
             </p>
           </div>
-          <div class="catalog-controls">
+          <div id="catalogFilters" class="catalog-controls">
             <label>
               Szukaj
               <input
@@ -233,8 +233,8 @@
             <label>
               Status danych
               <select id="patternReviewFilter">
+                <option value="verified" selected>Zweryfikowane</option>
                 <option value="all">Wszystkie</option>
-                <option value="verified">Zweryfikowane</option>
                 <option value="review">Do sprawdzenia</option>
               </select>
             </label>
@@ -242,6 +242,14 @@
         </div>
         <div id="patternCatalogSummary" class="catalog-summary" aria-live="polite"></div>
         <div id="patternCatalog" class="pattern-catalog"></div>
+        <div id="patternCatalogActions" class="catalog-actions" hidden>
+          <button id="loadMorePatternsBtn" class="button" type="button">
+            Wczytaj więcej
+          </button>
+          <button id="backToCatalogFiltersBtn" class="button button--ghost" type="button">
+            Wróć do filtrów
+          </button>
+        </div>
       </section>
       </section>
     </main>
