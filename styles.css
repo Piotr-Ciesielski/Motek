@@ -83,6 +83,26 @@ body {
   padding: 0 20px;
 }
 
+.network-status {
+  position: sticky;
+  top: 72px;
+  z-index: 7;
+  margin: 0;
+  padding: 10px 20px;
+  border-bottom: 1px solid #dfbdc4;
+  background: #fff4f4;
+  color: #7b2938;
+  font-size: 0.9rem;
+  font-weight: 700;
+  text-align: center;
+}
+
+.network-status[data-kind="success"] {
+  border-color: #b9d1c4;
+  background: #edf7f1;
+  color: var(--good);
+}
+
 .brand-button {
   display: inline-flex;
   align-items: center;
@@ -844,6 +864,18 @@ input, select {
   border: 1px dashed rgba(92, 89, 232, 0.28);
 }
 
+.empty-state[data-kind="loading"] {
+  border-color: #dbc8d1;
+  background: #f5ecef;
+}
+
+.empty-state[data-kind="error"] {
+  border-style: solid;
+  border-color: #dfbdc4;
+  background: #fff4f4;
+  color: #7b2938;
+}
+
 .catalog-panel {
   margin-top: 10px;
 }
@@ -1098,6 +1130,11 @@ body::before {
   .app-header {
     background: #faf7f2;
     backdrop-filter: none;
+  }
+
+  .network-status {
+    top: 62px;
+    padding-inline: 14px;
   }
 
   .shell {

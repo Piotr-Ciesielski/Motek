@@ -1,5 +1,13 @@
 Motek - log zmian
 
+Wersja 2.0.0-alpha.21 (w przygotowaniu) - czytelne stany sieci i ładowania
+- Żądania interfejsu kończą oczekiwanie po 12 sekundach i wskazują możliwość ponowienia.
+- Utrata oraz powrót połączenia są komunikowane w widocznym pasku aplikacji.
+- Błędy mają semantyczną rolę alertu, a ładowane regiony przekazują stan `aria-busy`.
+- Awaria pobierania danych nie wylogowuje użytkownika po poprawnym sprawdzeniu sesji.
+- Katalog, dopasowanie i zapis pokazują różne stany ładowania, błędu i sukcesu.
+- Komunikat zapisu magazynu jest widoczny bezpośrednio pod listą włóczek.
+
 Wersja 2.0.0-alpha.20 (w przygotowaniu) - kontrast i wygodne pola dotykowe
 - Potwierdzono zgodność kluczowych par tekstu i tła z wymaganiami kontrastu WCAG AA.
 - Wzmocniono kolor obrysu fokusu, aby pozostał czytelny na jasnym tle.

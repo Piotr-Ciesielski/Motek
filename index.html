@@ -11,7 +11,7 @@
       href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Inter:wght@400;500;600;700&display=swap"
       rel="stylesheet"
     />
-    <link rel="stylesheet" href="styles.css?v=2.0.0-alpha.20" />
+    <link rel="stylesheet" href="styles.css?v=2.0.0-alpha.21" />
   </head>
   <body>
     <a class="skip-link" href="#main-content">Przejdź do głównej treści</a>
@@ -42,6 +42,8 @@
         <div id="headerUser" class="header-user" hidden></div>
       </div>
     </header>
+
+    <p id="networkStatus" class="network-status" role="status" aria-live="polite" hidden></p>
 
     <main id="main-content" class="shell" tabindex="-1">
       <section id="accountView" class="app-view account-view" data-view="account">
@@ -189,6 +191,7 @@
             </button>
           </div>
           <div id="yarnList" class="yarn-list"></div>
+          <p id="storageMessage" class="storage-message" role="status" aria-live="polite"></p>
         </article>
       </section>
       </section>
@@ -213,7 +216,6 @@
             </button>
           </div>
           <div id="summary" class="summary"></div>
-          <p id="storageMessage" class="storage-message" role="status" aria-live="polite"></p>
           <div id="results" class="results"></div>
         </article>
       </section>
@@ -405,6 +407,6 @@
       </div>
     </template>
 
-    <script src="app.js?v=2.0.0-alpha.20"></script>
+    <script src="app.js?v=2.0.0-alpha.21"></script>
   </body>
 </html>

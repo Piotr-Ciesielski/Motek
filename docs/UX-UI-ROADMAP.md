@@ -60,6 +60,14 @@
 - interaktywne kontrolki mają co najmniej 44 px wysokości;
 - małe kontrolki zachowują pole obsługi minimum 44×44 px.
 
+### Stany interfejsu i sieci — etap 1
+
+- żądania interfejsu mają 12-sekundowy limit oczekiwania;
+- utrata i powrót połączenia są komunikowane na poziomie całej aplikacji;
+- błędy korzystają z `role="alert"`, a ładowane regiony z `aria-busy`;
+- błąd pobierania danych po sprawdzeniu sesji nie powoduje pozornego wylogowania;
+- komunikaty błędów wskazują możliwość ponowienia operacji.
+
 ## Sprawdzenie
 
 - `npm run check` przechodzi: 29/29 testów;
@@ -84,12 +92,12 @@
    - bezpieczne zawijanie oraz formatowanie liczb.
 
 3. **Model stanów interfejsu**
-   - loading, sukces, błąd, częściowy sukces i offline;
-   - `aria-live`, `aria-busy` i `role="alert"` tam, gdzie potrzebne;
-   - komunikaty wskazujące następny możliwy krok.
+   - dokończenie stanów częściowego sukcesu dla złożonych operacji;
+   - przyciski ponowienia w najważniejszych komunikatach błędów;
+   - ręczny test czytnikiem ekranu.
 
 4. **Sieć i autosave**
-   - timeout, retry i powrót po offline;
+   - kontrolowany retry z opóźnieniem po błędzie sieci;
    - zachowanie formularza przy wygasłej sesji;
    - ostrzeżenie przed zamknięciem przy niezapisanych danych;
    - pełna obsługa konfliktu wersji.

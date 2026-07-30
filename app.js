@@ -46,7 +46,9 @@ const viewButtons = [...document.querySelectorAll("[data-view-target]")];
 const inventoryMatchBtn = document.getElementById("inventoryMatchBtn");
 const backToInventoryBtn = document.getElementById("backToInventoryBtn");
 const heroAuthBtn = document.getElementById("heroAuthBtn");
+const networkStatus = document.getElementById("networkStatus");
 
+const REQUEST_TIMEOUT_MS = 12_000;
 let baseUrl = window.location.origin;
 let isAuthenticated = false;
 let autosaveTimer = null;
@@ -59,6 +61,7 @@ let yarnFormSequence = 0;
 let activeView = "account";
 let initialSessionResolved = false;
 let catalogVisibleLimit = 12;
+let networkStatusTimer = null;
 const numberFormatter = new Intl.NumberFormat("pl-PL", {
   maximumFractionDigits: 2,
   useGrouping: "always",
@@ -122,50 +125,105 @@ async function api(path, options = {}) {
     throw new Error("Brak adresu backendu Motka.");
   }
 
-  const { headers: optionHeaders = {}, ...requestOptions } = options;
-  const response = await fetch(`${baseUrl}${path}`, {
-    credentials: "same-origin",
-    ...requestOptions,
-    headers: {
-      "Content-Type": "application/json",
-      ...optionHeaders,
-    },
-  });
+  const {
+    headers: optionHeaders = {},
+    signal: requestSignal,
+    ...requestOptions
+  } = options;
+  const controller = new AbortController();
+  const abortRequest = () => controller.abort();
+  const timeout = window.setTimeout(abortRequest, REQUEST_TIMEOUT_MS);
+  if (requestSignal) {
+    if (requestSignal.aborted) abortRequest();
+    else requestSignal.addEventListener("abort", abortRequest, { once: true });
+  }
 
-  if (!response.ok && response.status !== 204) {
-    let message = "";
-    try {
-      const payload = await response.clone().json();
-      message = typeof payload?.error === "string" ? payload.error.trim() : "";
-    } catch {
-      // ignore non-JSON error body
+  try {
+    const response = await fetch(`${baseUrl}${path}`, {
+      credentials: "same-origin",
+      ...requestOptions,
+      signal: controller.signal,
+      headers: {
+        "Content-Type": "application/json",
+        ...optionHeaders,
+      },
+    });
+
+    if (!response.ok && response.status !== 204) {
+      let message = "";
+      try {
+        const payload = await response.clone().json();
+        message = typeof payload?.error === "string" ? payload.error.trim() : "";
+      } catch {
+        // ignore non-JSON error body
+      }
+      throw new Error(message || "Nie udało się połączyć z Motkiem. Spróbuj ponownie.");
     }
-    throw new Error(message || "Nie udało się połączyć z Motkiem. Spróbuj ponownie.");
-  }
 
-  if (path === "/api/yarns" || path.startsWith("/api/yarns/")) {
-    yarnVersion = response.headers.get("etag") || yarnVersion;
-  }
+    if (path === "/api/yarns" || path.startsWith("/api/yarns/")) {
+      yarnVersion = response.headers.get("etag") || yarnVersion;
+    }
 
-  api.lastMatchScope = path === "/api/matches"
-    ? response.headers.get("X-Motek-Match-Scope") || "full"
-    : null;
-  return response.status === 204 ? null : response.json();
+    api.lastMatchScope = path === "/api/matches"
+      ? response.headers.get("X-Motek-Match-Scope") || "full"
+      : null;
+    return response.status === 204 ? null : await response.json();
+  } catch (error) {
+    if (error.name === "AbortError") {
+      throw new Error("Motek nie odpowiedział na czas. Sprawdź połączenie i spróbuj ponownie.");
+    }
+    if (error instanceof TypeError) {
+      throw new Error(
+        navigator.onLine
+          ? "Nie udało się połączyć z Motkiem. Spróbuj ponownie."
+          : "Brak połączenia z internetem. Sprawdź sieć i spróbuj ponownie."
+      );
+    }
+    throw error;
+  } finally {
+    window.clearTimeout(timeout);
+    requestSignal?.removeEventListener("abort", abortRequest);
+  }
 }
 
-function showMessage(container, message) {
+function showMessage(container, message, kind = "status") {
   const element = document.createElement("div");
   element.className = "empty-state";
-  element.setAttribute("role", "status");
-  element.setAttribute("aria-live", "polite");
+  element.dataset.kind = kind;
+  element.setAttribute("role", kind === "error" ? "alert" : "status");
+  element.setAttribute("aria-live", kind === "error" ? "assertive" : "polite");
   element.textContent = message;
   container.replaceChildren(element);
+  container.toggleAttribute("aria-busy", kind === "loading");
 }
 
 function setStorageMessage(message, kind = "") {
   storageMessage.textContent = message;
   storageMessage.dataset.kind = kind;
+  storageMessage.setAttribute("role", kind === "error" ? "alert" : "status");
+  storageMessage.setAttribute("aria-live", kind === "error" ? "assertive" : "polite");
 }
+
+function updateNetworkStatus(online = navigator.onLine) {
+  window.clearTimeout(networkStatusTimer);
+  networkStatus.hidden = false;
+  networkStatus.dataset.kind = online ? "success" : "error";
+  networkStatus.setAttribute("role", online ? "status" : "alert");
+  networkStatus.setAttribute("aria-live", online ? "polite" : "assertive");
+  networkStatus.textContent = online
+    ? "Połączenie wróciło. Możesz ponowić ostatnią operację."
+    : "Brak połączenia z internetem. Niezapisane zmiany pozostaną w formularzu.";
+
+  if (online) {
+    networkStatusTimer = window.setTimeout(() => {
+      networkStatus.hidden = true;
+    }, 5000);
+  }
+}
+
+window.addEventListener("offline", () => updateNetworkStatus(false));
+window.addEventListener("online", () => updateNetworkStatus(true));
+if (!navigator.onLine) updateNetworkStatus(false);
 
 function createRequirement(text) {
   const item = document.createElement("li");
@@ -820,43 +878,48 @@ async function renderResults() {
     return;
   }
 
-  const matches = await loadMatches();
-  const matchScopeLimited = api.lastMatchScope === "subset";
-  results.replaceChildren();
+  showMessage(results, "Pobieram dopasowane wzory...", "loading");
+  try {
+    const matches = await loadMatches();
+    const matchScopeLimited = api.lastMatchScope === "subset";
+    results.replaceChildren();
 
-  if (!matches.length) {
-    showMessage(
-      results,
-      matchScopeLimited
-        ? "Nie znaleziono dopasowania w analizowanym podzbiorze magazynu. Dodaj mniej motków do bieżącego zestawu albo spróbuj ponownie po dalszej optymalizacji rankingu."
-        : "Brak pełnego dopasowania. Spróbuj dodać więcej metrów, większą wagę lub inny materiał."
-    );
-    return;
-  }
-
-  if (matchScopeLimited) {
-    const notice = document.createElement("div");
-    notice.className = "empty-state";
-    notice.textContent = "Ranking użył najlepiej pasującego podzbioru motków. Pozostałe włóczki nadal są zapisane w Twoim magazynie.";
-    results.appendChild(notice);
-  }
-
-  groupMatchesByPattern(matches).forEach((group) => {
-    const card = resultTemplate.content.firstElementChild.cloneNode(true);
-    const variantCount = group.variants.length;
-    const bestScore = Math.max(...group.variants.map((item) => item.total));
-    card.querySelector("h3").textContent = group.name;
-    card.querySelector("h3").title = group.name;
-    card.querySelector(".result-card__meta").textContent = formatVariantCount(variantCount);
-    card.querySelector(".result-card__desc").textContent = group.description;
-    card.querySelector(".score-pill").textContent = `Najlepiej ${bestScore}%`;
-    card
-      .querySelector(".match-variants")
-      .replaceChildren(
-        ...group.variants.map((item, index) => createMatchVariant(item, index === 0))
+    if (!matches.length) {
+      showMessage(
+        results,
+        matchScopeLimited
+          ? "Nie znaleziono dopasowania w analizowanym podzbiorze magazynu. Dodaj mniej motków do bieżącego zestawu albo spróbuj ponownie po dalszej optymalizacji rankingu."
+          : "Brak pełnego dopasowania. Spróbuj dodać więcej metrów, większą wagę lub inny materiał."
       );
-    results.appendChild(card);
-  });
+      return;
+    }
+
+    if (matchScopeLimited) {
+      const notice = document.createElement("div");
+      notice.className = "empty-state";
+      notice.textContent = "Ranking użył najlepiej pasującego podzbioru motków. Pozostałe włóczki nadal są zapisane w Twoim magazynie.";
+      results.appendChild(notice);
+    }
+
+    groupMatchesByPattern(matches).forEach((group) => {
+      const card = resultTemplate.content.firstElementChild.cloneNode(true);
+      const variantCount = group.variants.length;
+      const bestScore = Math.max(...group.variants.map((item) => item.total));
+      card.querySelector("h3").textContent = group.name;
+      card.querySelector("h3").title = group.name;
+      card.querySelector(".result-card__meta").textContent = formatVariantCount(variantCount);
+      card.querySelector(".result-card__desc").textContent = group.description;
+      card.querySelector(".score-pill").textContent = `Najlepiej ${bestScore}%`;
+      card
+        .querySelector(".match-variants")
+        .replaceChildren(
+          ...group.variants.map((item, index) => createMatchVariant(item, index === 0))
+        );
+      results.appendChild(card);
+    });
+  } finally {
+    results.removeAttribute("aria-busy");
+  }
 }
 
 async function renderSummary() {
@@ -898,6 +961,7 @@ function setAuthMessage(message, kind = "") {
 
 function setAuthBusy(form, busy) {
   form.querySelector('button[type="submit"]').disabled = busy;
+  form.toggleAttribute("aria-busy", busy);
 }
 
 function showAuthForm(form) {
@@ -1000,21 +1064,37 @@ function renderAuthState(payload) {
 }
 
 async function refreshAuthSession() {
+  let payload;
   try {
-    const payload = await api("/api/auth/session");
-    renderAuthState(payload);
-    if (!initialSessionResolved) {
-      setActiveView(payload.authenticated ? "inventory" : "account", { focus: false });
-      initialSessionResolved = true;
-    }
-    if (!payload.authenticated) {
-      setAuthMessage("Możesz założyć konto lub zalogować się.");
-    } else {
-      await refresh();
-    }
+    payload = await api("/api/auth/session");
   } catch (error) {
     renderAuthState({ authenticated: false });
     setAuthMessage(error.message, "error");
+    return;
+  }
+
+  renderAuthState(payload);
+  if (!initialSessionResolved) {
+    setActiveView(payload.authenticated ? "inventory" : "account", { focus: false });
+    initialSessionResolved = true;
+  }
+  if (!payload.authenticated) {
+    setAuthMessage("Możesz założyć konto lub zalogować się.");
+    return;
+  }
+
+  try {
+    await refresh();
+  } catch (error) {
+    setStorageMessage(
+      `${error.message} Konto nadal jest zalogowane — spróbuj ponownie za chwilę.`,
+      "error"
+    );
+    showMessage(
+      results,
+      `${error.message} Nie udało się odświeżyć dopasowania. Spróbuj ponownie.`,
+      "error"
+    );
   }
 }
 
@@ -1161,16 +1241,23 @@ logoutBtn.addEventListener("click", async () => {
 });
 
 async function refresh() {
-  const yarns = await loadYarns();
-  yarnList.replaceChildren();
-  if (yarns.length) {
-    yarns.forEach(addYarnCard);
-  } else {
-    renderYarnEmptyState();
+  yarnList.setAttribute("aria-busy", "true");
+  summary.setAttribute("aria-busy", "true");
+  try {
+    const yarns = await loadYarns();
+    yarnList.replaceChildren();
+    if (yarns.length) {
+      yarns.forEach(addYarnCard);
+    } else {
+      renderYarnEmptyState();
+    }
+    renderOnboarding(yarns);
+    await renderSummary();
+    await renderResults();
+  } finally {
+    yarnList.removeAttribute("aria-busy");
+    summary.removeAttribute("aria-busy");
   }
-  renderOnboarding(yarns);
-  await renderSummary();
-  await renderResults();
 }
 
 addYarnBtn.addEventListener("click", async () => {
@@ -1213,13 +1300,13 @@ findBtn.addEventListener("click", async () => {
     }
     findBtn.disabled = true;
     findBtn.textContent = "Dobieram...";
-    showMessage(results, "Zapisuję włóczki...");
+    showMessage(results, "Zapisuję włóczki...", "loading");
     await saveYarns();
-    showMessage(results, "Pobieram dopasowane wzory...");
+    showMessage(results, "Pobieram dopasowane wzory...", "loading");
     await refresh();
     document.getElementById("matchesTitle").scrollIntoView({ behavior: "smooth", block: "start" });
   } catch (error) {
-    showMessage(results, error.message);
+    showMessage(results, error.message, "error");
   } finally {
     findBtn.disabled = false;
     findBtn.textContent = "Dobierz wzór";
@@ -1254,13 +1341,16 @@ detectRuntimeMode()
     if (recoveryHandled) return;
     await Promise.all([
       refreshAuthSession(),
-      refresh(),
       refreshPatternCatalog().catch((error) => {
         patternCatalogSummary.textContent = "";
-        showMessage(patternCatalog, error.message);
+        showMessage(
+          patternCatalog,
+          `${error.message} Katalog nie został odświeżony — spróbuj ponownie później.`,
+          "error"
+        );
       }),
     ]);
   })
   .catch((error) => {
-    showMessage(results, error.message);
+    showMessage(results, error.message, "error");
   });
