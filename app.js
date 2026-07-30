@@ -9,6 +9,8 @@ const findBtn = document.getElementById("findBtn");
 const patternTemplate = document.getElementById("patternTemplate");
 const patternSearch = document.getElementById("patternSearch");
 const patternReviewFilter = document.getElementById("patternReviewFilter");
+const patternLanguageFilter = document.getElementById("patternLanguageFilter");
+const patternMaterialFilter = document.getElementById("patternMaterialFilter");
 const patternCatalogSummary = document.getElementById("patternCatalogSummary");
 const patternCatalog = document.getElementById("patternCatalog");
 const patternCatalogActions = document.getElementById("patternCatalogActions");
@@ -571,9 +573,40 @@ function formatPatternName(value) {
   return name || "Wzór bez nazwy";
 }
 
+function formatPatternLanguage(value) {
+  if (value === "pl") return "Wzór po polsku";
+  if (value === "en") return "Wzór po angielsku";
+  return "Język nieustalony";
+}
+
+function populatePatternMaterialFilter() {
+  const materials = [...new Set(
+    catalogPatterns.flatMap((pattern) =>
+      Array.isArray(pattern.materials) ? pattern.materials : []
+    )
+  )]
+    .filter(Boolean)
+    .sort((left, right) => left.localeCompare(right, "pl"));
+  const options = materials.map((material) => {
+    const option = document.createElement("option");
+    option.value = material;
+    option.textContent = material;
+    return option;
+  });
+  patternMaterialFilter.replaceChildren(
+    Object.assign(document.createElement("option"), {
+      value: "all",
+      textContent: "Wszystkie materiały",
+    }),
+    ...options
+  );
+}
+
 function renderPatternCatalog() {
   const phrase = patternSearch.value.trim().toLocaleLowerCase("pl");
   const reviewFilter = patternReviewFilter.value;
+  const languageFilter = patternLanguageFilter.value;
+  const materialFilter = patternMaterialFilter.value;
   const matchingPatterns = catalogPatterns
     .filter((pattern) => {
       const searchable = [
@@ -588,7 +621,13 @@ function renderPatternCatalog() {
         reviewFilter === "all" ||
         (reviewFilter === "review" && pattern.needsReview) ||
         (reviewFilter === "verified" && !pattern.needsReview);
-      return matchesPhrase && matchesStatus;
+      const matchesLanguage =
+        languageFilter === "all" || pattern.sourceLanguage === languageFilter;
+      const matchesMaterial =
+        materialFilter === "all" ||
+        (Array.isArray(pattern.materials) &&
+          pattern.materials.includes(materialFilter));
+      return matchesPhrase && matchesStatus && matchesLanguage && matchesMaterial;
     })
     .sort((left, right) => {
       const statusOrder = Number(left.needsReview) - Number(right.needsReview);
@@ -622,7 +661,7 @@ function renderPatternCatalog() {
     title.textContent = formatPatternName(pattern.name);
     title.title = pattern.name || "";
     card.querySelector(".pattern-card__kicker").textContent =
-      pattern.sourceLanguage === "pl" ? "Wzór po polsku" : "Wzór obcojęzyczny";
+      formatPatternLanguage(pattern.sourceLanguage);
     card.querySelector(".pattern-card__description").textContent =
       pattern.description;
     card.querySelector(".pattern-card__facts").textContent =
@@ -660,6 +699,7 @@ async function refreshPatternCatalog() {
   patternCatalogActions.hidden = true;
   try {
     catalogPatterns = await loadPatternCatalog();
+    populatePatternMaterialFilter();
     renderPatternCatalog();
   } finally {
     patternCatalog.removeAttribute("aria-busy");
@@ -1058,6 +1098,8 @@ function resetPatternCatalogView() {
 
 patternSearch.addEventListener("input", resetPatternCatalogView);
 patternReviewFilter.addEventListener("change", resetPatternCatalogView);
+patternLanguageFilter.addEventListener("change", resetPatternCatalogView);
+patternMaterialFilter.addEventListener("change", resetPatternCatalogView);
 loadMorePatternsBtn.addEventListener("click", () => {
   catalogVisibleLimit += 12;
   renderPatternCatalog();

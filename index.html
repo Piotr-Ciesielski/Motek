@@ -238,6 +238,21 @@
                 <option value="review">Do sprawdzenia</option>
               </select>
             </label>
+            <label>
+              Język
+              <select id="patternLanguageFilter">
+                <option value="all">Wszystkie języki</option>
+                <option value="pl">Polski</option>
+                <option value="en">Angielski</option>
+                <option value="unknown">Nieustalony</option>
+              </select>
+            </label>
+            <label>
+              Materiał
+              <select id="patternMaterialFilter">
+                <option value="all">Wszystkie materiały</option>
+              </select>
+            </label>
           </div>
         </div>
         <div id="patternCatalogSummary" class="catalog-summary" aria-live="polite"></div>
@@ -351,9 +366,14 @@
           <span class="status-pill"></span>
         </div>
         <p class="pattern-card__description"></p>
-        <div class="pattern-card__facts"></div>
-        <div class="material-tags" aria-label="Materiały"></div>
-        <ul class="pattern-card__yarns"></ul>
+        <details class="pattern-card__details">
+          <summary>Parametry włóczki</summary>
+          <div class="pattern-card__details-body">
+            <div class="pattern-card__facts"></div>
+            <div class="material-tags" aria-label="Materiały"></div>
+            <ul class="pattern-card__yarns"></ul>
+          </div>
+        </details>
       </article>
     </template>
 

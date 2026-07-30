@@ -1,5 +1,12 @@
 Motek - log zmian
 
+Wersja 2.0.0-alpha.14 (w przygotowaniu) - filtry i szczegóły wzorów
+- Dodano łączone filtrowanie katalogu według języka i materiału.
+- Lista materiałów jest tworzona dynamicznie z aktualnych danych katalogu.
+- Karty pokazują parametry włóczki w rozwijanej sekcji dostępnej klawiaturą.
+- Skrócono podstawowy widok kart bez ukrywania ważnych informacji.
+- Doprecyzowano etykiety języka polskiego, angielskiego i nieustalonego.
+
 Wersja 2.0.0-alpha.13 (w przygotowaniu) - używalny katalog wzorów
 - Katalog domyślnie eksponuje zweryfikowane wzory.
 - Widok renderuje pierwsze 12 pasujących kart i pozwala wczytywać kolejne partie.
