@@ -34,10 +34,16 @@
 
 - dodano skip link do głównej treści;
 - dodano wyraźny styl `:focus-visible`;
+- przełącznik logowania i rejestracji obsługuje strzałki, Home i End;
 - pola formularzy mają stabilne identyfikatory i powiązane etykiety;
 - pola Auth są powiązane z regionem komunikatów przez `aria-describedby`;
 - błędy Auth są oznaczane jako `alert` i otrzymują fokus;
 - dynamiczne pola włóczek również dostają identyfikatory i etykiety.
+
+### Drobne akcje i komunikaty
+
+- nowy, niezapisany formularz można zamknąć akcją `Anuluj dodawanie`;
+- anulowanie nowego formularza nie jest przedstawiane jako usunięcie danych ani zapis magazynu.
 
 ## Sprawdzenie
 

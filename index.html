@@ -66,12 +66,12 @@
         </div>
 
         <div class="auth-mode-switch" role="tablist" aria-label="Wybierz tryb konta">
-          <button id="loginModeBtn" class="auth-mode-button" type="button" role="tab" aria-selected="true" aria-controls="loginForm">Logowanie</button>
-          <button id="registerModeBtn" class="auth-mode-button" type="button" role="tab" aria-selected="false" aria-controls="registerForm">Załóż konto</button>
+          <button id="loginModeBtn" class="auth-mode-button" type="button" role="tab" aria-selected="true" aria-controls="loginForm" tabindex="0">Logowanie</button>
+          <button id="registerModeBtn" class="auth-mode-button" type="button" role="tab" aria-selected="false" aria-controls="registerForm" tabindex="-1">Załóż konto</button>
         </div>
 
         <div id="authForms" class="auth-forms">
-          <form id="loginForm" class="auth-form">
+          <form id="loginForm" class="auth-form" role="tabpanel" aria-labelledby="loginModeBtn">
             <h3>Logowanie</h3>
             <label>
               E-mail
@@ -85,7 +85,7 @@
             <button id="forgotPasswordBtn" class="link-button" type="button">Nie pamiętasz hasła?</button>
           </form>
 
-          <form id="registerForm" class="auth-form" hidden>
+          <form id="registerForm" class="auth-form" role="tabpanel" aria-labelledby="registerModeBtn" hidden>
             <h3>Nowe konto</h3>
             <label>
               Login

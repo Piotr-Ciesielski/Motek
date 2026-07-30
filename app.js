@@ -301,12 +301,14 @@ function setYarnFieldsDisabled(card, disabled) {
 
 function updateYarnSaveButton(card) {
   const saveButton = card.querySelector(".yarn-save");
+  const cancelButton = card.querySelector(".yarn-cancel");
   const complete = isYarnComplete(card);
   const isNew = card.dataset.saved !== "true";
   const isEditing = isNew || card.dataset.editing === "true";
   const changed = isNew || isYarnChanged(card);
   card.querySelector(".yarn-edit").hidden = isNew || isEditing;
-  card.querySelector(".yarn-cancel").hidden = !isEditing || isNew;
+  cancelButton.hidden = !isEditing;
+  cancelButton.textContent = isNew ? "Anuluj dodawanie" : "Anuluj";
   saveButton.hidden = !isEditing || !complete || !changed;
   saveButton.disabled = !complete || !changed;
 }
@@ -425,6 +427,13 @@ function addYarnCard(yarn = {}, { isNew = false } = {}) {
     node.querySelector('[data-field="name"]').focus();
   });
   node.querySelector(".yarn-cancel").addEventListener("click", () => {
+    if (node.dataset.saved !== "true") {
+      node.remove();
+      if (!yarnList.children.length) renderYarnEmptyState();
+      setStorageMessage("Anulowano dodawanie nowego motka.");
+      return;
+    }
+
     Object.entries(node._originalYarn).forEach(([field, value]) => {
       if (field === "id") return;
       node.querySelector(`[data-field="${field}"]`).value = value;
@@ -875,6 +884,8 @@ function showAuthForm(form) {
   authModeSwitch.hidden = isRecoveryForm || isAuthenticated;
   loginModeBtn.setAttribute("aria-selected", String(form === loginForm));
   registerModeBtn.setAttribute("aria-selected", String(form === registerForm));
+  loginModeBtn.tabIndex = form === loginForm ? 0 : -1;
+  registerModeBtn.tabIndex = form === registerForm ? 0 : -1;
   authPanel.classList.toggle("auth-panel--recovery", form === passwordUpdateForm);
 
   const content = new Map([
@@ -1026,6 +1037,29 @@ registerModeBtn.addEventListener("click", () => {
   showAuthForm(registerForm);
   setAuthMessage("");
   registerForm.querySelector('input[name="login"]').focus();
+});
+
+authModeSwitch.addEventListener("keydown", (event) => {
+  const tabs = [loginModeBtn, registerModeBtn];
+  const currentIndex = tabs.indexOf(document.activeElement);
+  if (currentIndex === -1) return;
+
+  let nextIndex = currentIndex;
+  if (event.key === "ArrowRight" || event.key === "ArrowDown") {
+    nextIndex = (currentIndex + 1) % tabs.length;
+  } else if (event.key === "ArrowLeft" || event.key === "ArrowUp") {
+    nextIndex = (currentIndex - 1 + tabs.length) % tabs.length;
+  } else if (event.key === "Home") {
+    nextIndex = 0;
+  } else if (event.key === "End") {
+    nextIndex = tabs.length - 1;
+  } else {
+    return;
+  }
+
+  event.preventDefault();
+  tabs[nextIndex].click();
+  tabs[nextIndex].focus();
 });
 forgotPasswordBtn.addEventListener("click", () => {
   showAuthForm(passwordResetForm);
