@@ -1136,6 +1136,17 @@ function createMaterialTag(material) {
   return tag;
 }
 
+function showPatternInCatalog(patternName) {
+  patternSearch.value = patternName;
+  patternReviewFilter.value = "verified";
+  patternLanguageFilter.value = "all";
+  patternMaterialFilter.value = "all";
+  patternSort.value = "recommended";
+  catalogVisibleLimit = 12;
+  renderPatternCatalog();
+  setActiveView("catalog");
+}
+
 function formatPatternName(value) {
   const name = String(value || "")
     .replace(/\.pdf$/i, "")
@@ -1240,6 +1251,9 @@ function renderPatternCatalog() {
 
     title.textContent = formatPatternName(pattern.name);
     title.title = pattern.name || "";
+    card
+      .querySelector(".pattern-card__details summary")
+      .setAttribute("aria-label", `Parametry włóczki: ${formatPatternName(pattern.name)}`);
     card.querySelector(".pattern-card__kicker").textContent =
       formatPatternLanguage(pattern.sourceLanguage);
     card.querySelector(".pattern-card__description").textContent =
@@ -1383,6 +1397,9 @@ async function renderResults() {
       card.querySelector(".result-card__meta").textContent = formatVariantCount(variantCount);
       card.querySelector(".result-card__desc").textContent = group.description;
       card.querySelector(".score-pill").textContent = `Najlepiej ${bestScore}%`;
+      const catalogLink = card.querySelector(".result-card__catalog-link");
+      catalogLink.setAttribute("aria-label", `Zobacz ${group.name} w katalogu`);
+      catalogLink.addEventListener("click", () => showPatternInCatalog(group.name));
       card
         .querySelector(".match-variants")
         .replaceChildren(

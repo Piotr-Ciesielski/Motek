@@ -30,7 +30,9 @@
 - rzeczywiste wzory bez kompletnych wymagań pozostają opisowe i nie są używane
   przez ranking;
 - zasady bezpiecznego publikowania opisów wzorów opisano w
-  `docs/PATTERN-CATALOG.md`.
+  `docs/PATTERN-CATALOG.md`;
+- wynik dopasowania prowadzi do pełnej karty wybranego wzoru w katalogu;
+- przejście automatycznie ustawia filtry tak, aby właściwy wzór był widoczny.
 
 ### Dostępność i klawiatura
 

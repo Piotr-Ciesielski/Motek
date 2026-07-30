@@ -1,5 +1,11 @@
 Motek - log zmian
 
+Wersja 2.0.0-alpha.29 (w przygotowaniu) - przejście od dopasowania do wzoru
+- Każda grupa wyników ma akcję „Zobacz w katalogu”.
+- Przejście otwiera katalog i zawęża go do wybranego wzoru.
+- Filtry są ustawiane tak, aby dopasowany, zweryfikowany wzór nie został ukryty.
+- Powtarzające się kontrolki szczegółów mają nazwy uwzględniające konkretny wzór.
+
 Wersja 2.0.0-alpha.28 (w przygotowaniu) - pewna nawigacja klawiaturą
 - Każdy główny ekran ma jednoznaczną nazwę w strukturze dostępności.
 - Po zmianie ekranu fokus przechodzi na jego widoczny nagłówek.

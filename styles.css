@@ -831,6 +831,12 @@ input, select {
   margin-top: 14px;
 }
 
+.result-card__actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 14px;
+}
+
 .match-variant {
   border: 1px solid var(--border);
   border-radius: 14px;

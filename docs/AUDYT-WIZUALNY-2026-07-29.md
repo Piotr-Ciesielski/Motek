@@ -236,6 +236,12 @@ kroku.
 - w szczegółach rozwinąć wymagania dotyczące włóczek;
 - dla dopasowanych wzorów dodać jasną akcję „Sprawdź ten wzór”.
 
+**Stan po zmianie 2026-07-30:** katalog ma rozwijane parametry włóczki, a każda
+grupa wyników udostępnia akcję „Zobacz w katalogu”. Przejście otwiera właściwy
+wzór z ustawionymi filtrami i zachowuje poprawny fokus klawiatury. Link do
+zewnętrznego źródła pozostaje do dodania dopiero po zapisaniu w bazie
+zweryfikowanych, bezpiecznych adresów.
+
 ### UI-07 — Dane katalogu obniżają zaufanie do produktu
 
 **Priorytet:** wysoki
