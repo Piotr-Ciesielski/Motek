@@ -158,3 +158,63 @@ test("wybiera najmniejszą liczbę zgodnych motków i respektuje materiały", ()
     [3],
   );
 });
+
+test("wymaga minimalnej liczby motków nawet gdy suma metrów lub gramów wystarcza", () => {
+  const requirement = {
+    role: "główna",
+    measurementBasis: "meters",
+    metersMin: 400,
+    skeinsMin: 2,
+    materials: ["wełna"],
+    materialMatch: "all",
+    colorMode: "same",
+    weightClasses: ["fingering"],
+  };
+  const oneLargeSkein = [{
+    id: 1,
+    color: "granat",
+    materials: ["wełna"],
+    weightClass: "fingering",
+    length: 500,
+    weight: 100,
+  }];
+
+  assert.equal(matchVariant({ requirements: [requirement] }, oneLargeSkein).doable, false);
+  assert.equal(
+    matchVariant({ requirements: [requirement] }, [
+      oneLargeSkein[0],
+      { ...oneLargeSkein[0], id: 2, length: 100, weight: 25 },
+    ]).doable,
+    true,
+  );
+});
+
+test("wymaga osobnych motków dla dziergania z dwóch nitek", () => {
+  const requirement = {
+    role: "główna",
+    measurementBasis: "meters",
+    metersMin: 400,
+    strandCount: 2,
+    materials: ["wełna"],
+    materialMatch: "all",
+    colorMode: "same",
+    weightClasses: ["fingering"],
+  };
+  const yarn = {
+    id: 1,
+    color: "ecru",
+    materials: ["wełna"],
+    weightClass: "fingering",
+    length: 500,
+    weight: 100,
+  };
+
+  assert.equal(matchVariant({ requirements: [requirement] }, [yarn]).doable, false);
+  assert.equal(
+    matchVariant({ requirements: [requirement] }, [
+      yarn,
+      { ...yarn, id: 2 },
+    ]).doable,
+    true,
+  );
+});

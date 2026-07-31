@@ -258,6 +258,13 @@ function allocateVariantRequirements(
 
   function buildCandidateGroups(requirement, used) {
     const minimum = requirementMinimum(requirement);
+    // Każdy wpis magazynu reprezentuje jeden fizyczny motek. Dzierganie
+    // z kilku nitek wymaga więc co najmniej tylu motków, ile nitek.
+    const minimumSkeins = Math.max(
+      Number(requirement.skeinsMin) || 0,
+      Number(requirement.strandCount) || 0,
+    );
+    const maximumSkeins = Number(requirement.skeinsMax) || Infinity;
     const eligible = sourceYarns
       .map((yarn, index) => ({
         yarn,
@@ -294,7 +301,11 @@ function allocateVariantRequirements(
 
       function choose(start, selected, total) {
         tick();
-        if (total >= minimum) {
+        if (
+          total >= minimum
+          && selected.length >= minimumSkeins
+          && selected.length <= maximumSkeins
+        ) {
           groups.push({
             candidates: [...selected],
             total,
@@ -302,9 +313,14 @@ function allocateVariantRequirements(
           });
           return;
         }
+        if (selected.length >= maximumSkeins) return;
         if (start >= pool.length || total + remaining[start] < minimum) return;
 
-        for (let index = start; index < pool.length; index += 1) {
+        for (
+          let index = start;
+          index < pool.length && selected.length < maximumSkeins;
+          index += 1
+        ) {
           choose(
             index + 1,
             [...selected, pool[index]],
