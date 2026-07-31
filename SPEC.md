@@ -2,11 +2,12 @@
 
 ## 1. Status projektu
 
-- bieżąca wersja rozwojowa: `2.0.0-alpha.11`
+- bieżąca wersja rozwojowa: `2.0.0-alpha.37`
 - ostatnia wersja wydana: `1.0.2`
 - aktualne źródło danych: Supabase
 - lokalny SQLite: usunięty z aplikacji
-- następny zakres: staging z ochroną brzegową oraz uzupełnienie i selektywny import kompletnych wymagań dopasowania dla wzorów
+- następny zakres: rozszerzanie dokładnych wymagań wzorów, a później staging
+  z ochroną brzegową
 - limit magazynu: 500 włóczek na użytkownika
 - limit katalogu: 300 wzorów
 
@@ -21,7 +22,7 @@ Użytkownik może:
 - założyć konto i zalogować się,
 - prowadzić prywatny magazyn motków,
 - przeglądać katalog wzorów,
-- wyszukiwać wzory i filtrować je według statusu weryfikacji,
+- wyszukiwać wzory i łączyć filtry statusu, języka, typu projektu oraz materiału,
 - sprawdzać dopasowania wyłącznie dla wzorów z kompletnymi wymaganiami.
 
 Motek nie jest sklepem ani pełnym programem do projektowania dzianin. Jego
@@ -30,7 +31,8 @@ główną funkcją jest świadome wykorzystanie posiadanego zapasu włóczek.
 ## 3. Aktualny przepływ użytkownika
 
 1. Użytkownik zakłada konto albo się loguje.
-2. Dodaje motki, podając nazwę, kolor, materiał, klasę grubości, długość i wagę.
+2. Dodaje motki, podając nazwę, kolor, jeden lub kilka materiałów, klasę
+   grubości, długość i wagę.
 3. Aplikacja zapisuje magazyn prywatnie w Supabase.
 4. Użytkownik przegląda katalog wzorów.
 5. Uruchamia dopasowanie.
@@ -51,6 +53,12 @@ Frontend jest statyczną aplikacją HTML/CSS/JavaScript:
 
 Frontend obsługuje formularze Auth, magazyn włóczek, katalog, wyszukiwanie,
 filtrowanie i prezentację wyników. Nie otrzymuje sekretnego klucza Supabase.
+W Magazynie pokazuje pionową grafikę włóczek i kota po prawej, a w Dopasowaniu
+szeroki hero z tym samym kierunkiem wizualnym. Oba miejsca korzystają z
+wersjonowanego obrazu WebP zgodnego z aktywnym motywem:
+`assets/color-yarn-cat.v1.webp` dla Koloroterapii oraz
+`assets/night-yarn-cat.v1.webp` dla Nocnego Motka. Źródłowe PNG pozostają
+w repozytorium jako materiał bazowy, a pliki WebP są cache'owane przez rok.
 
 ### Backend
 
@@ -106,13 +114,15 @@ imienia i nazwiska.
 Pola aplikacyjne:
 
 - `id`, `user_id`,
-- `name`, `color`, `material`, `weight_class`,
+- `name`, `color`, `materials`, `weight_class`,
 - `length_meters`, `weight_grams`,
 - `created_at`, `updated_at`.
 
-Dozwolone materiały to między innymi wełna, bawełna, akryl, alpaka i
-mieszanka. Klasa grubości korzysta z wartości `lace`, `fingering`, `sport`,
-`dk`, `worsted` i `bulky`.
+Pole `materials` przechowuje jeden lub kilka materiałów ze wspólnej,
+kontrolowanej listy używanej również przez katalog wzorów. Wartość „mieszanka”
+oznacza nieokreślony skład i nie łączy się z konkretnymi materiałami. Stare
+pole `material` pozostaje zgodnościowo synchronizowane w bazie. Klasa grubości
+korzysta z wartości `lace`, `fingering`, `sport`, `dk`, `worsted` i `bulky`.
 
 ### 6.3 Wzór — `public.patterns`
 
@@ -125,8 +135,9 @@ Rekord zawiera między innymi:
 - `source_filename`, `source_language`, `needs_review`.
 
 `yarn_requirements` opisuje włóczki występujące we wzorze, w tym role główne,
-dodatkowe, kontrastowe lub alternatywne. `matching_requirements` zawiera
-potwierdzone zużycie dla wariantów lub rozmiarów używane przez ranking.
+dodatkowe, kontrastowe lub alternatywne. `matching_requirements` w wersji 2
+zawiera potwierdzone zużycie, rozmiary, warianty włóczek, role, reguły kolorów
+i liczbę nitek używane przez ranking.
 
 ## 7. Zasada dopasowania
 
@@ -137,14 +148,14 @@ Wzór może pojawić się w wynikach tylko wtedy, gdy:
 - liczba i parametry dostępnych włóczek spełniają wymagania wariantu,
 - jeden motek nie jest używany jednocześnie do dwóch różnych ról.
 
-Ranking uwzględnia wymagane metry, gramy, materiały i klasy grubości. Wyniki
-są sortowane według wyniku procentowego. Jedno wymaganie może użyć kilku
-kompatybilnych motków, jeśli `yarns_needed` oznacza minimalną liczbę motków.
-Brak danych oznacza brak możliwości potwierdzenia wykonalności, a nie zgodę
-na użycie przybliżenia.
+Ranking uwzględnia wymagane metry lub gramy, materiały, klasy grubości, role,
+kolory i liczbę nitek. Jedna rola może użyć kilku kompatybilnych motków, ale
+jeden motek nie może zostać przydzielony do dwóch ról. Brak danych oznacza brak
+możliwości potwierdzenia wykonalności, a nie zgodę na użycie przybliżenia.
 
-Obecne rekordy katalogu mają jeszcze pustą listę wariantów dopasowania, więc
-nie są prezentowane jako potwierdzone wyniki, dopóki wymagania nie zostaną
+Dokładne wymagania wdrożono dla 21 wariantów trzech rzeczywistych wzorów:
+Holly, Na Pole i Oslo Hat. Pozostałe rekordy pozostają dostępne opisowo i nie
+są prezentowane jako potwierdzone wyniki, dopóki ich wymagania nie zostaną
 uzupełnione i zweryfikowane.
 
 Jeśli magazyn użytkownika jest większy niż bieżący limit obliczeń, ranking
@@ -166,6 +177,7 @@ użytkownika. Katalog aplikacji może zawierać do 300 wzorów.
 | `POST /api/auth/recovery` | Ustanowienie sesji z tokenów linku recovery |
 | `POST /api/auth/password` | Ustawienie nowego hasła |
 | `POST /api/auth/logout` | Wylogowanie |
+| `DELETE /api/account` | Bezpowrotne usunięcie konta, profilu i własnych włóczek |
 | `GET /api/yarns` | Pobranie własnego magazynu |
 | `POST /api/yarns` | Dodanie włóczki |
 | `DELETE /api/yarns/:id` | Usunięcie własnej włóczki |
@@ -178,8 +190,11 @@ frontendu.
 
 ## 9. Katalog wzorów i import
 
-Katalog powstał na podstawie 116 lokalnych dokumentów PDF w folderze `Wzory`.
-Folder jest roboczy, ignorowany przez Git i nie jest serwowany przez aplikację.
+Katalog powstał na podstawie audytu 116 lokalnych dokumentów PDF w folderze
+`Wzory`. Zawiera 103 samodzielne wzory z tych plików oraz 3 rekordy
+demonstracyjne. Trzynaście plików wykluczono jako duplikaty, kupony dostępu,
+instrukcję techniczną albo materiały pomocnicze do innego wzoru. Folder jest
+roboczy, ignorowany przez Git i nie jest serwowany przez aplikację.
 
 Proces przygotowania danych obejmuje:
 
@@ -192,6 +207,16 @@ Proces przygotowania danych obejmuje:
 
 Narzędzia importowe znajdują się w `scripts/`. Import powinien być wykonywany
 dopiero po sprawdzeniu podsumowania zmian.
+
+Audyt odróżnia:
+
+- włóczkę o jednym jednoznacznym przeliczeniu,
+- kilka poprawnych włóczek alternatywnych,
+- elastyczny dobór włóczki określony przez autora wzoru.
+
+Brak jednej wartości `meters_per_100g` nie oznacza braku danych, jeżeli wzór
+zawiera kilka alternatyw lub świadomie dopuszcza dowolną włóczkę. Szczegółowy
+wynik i lista wykluczeń znajdują się w `WZORY_AUDYT_DANYCH.md`.
 
 ## 10. Uruchomienie i sprawdzanie
 
@@ -244,16 +269,26 @@ npm run patterns:check
 Zrealizowano:
 
 - katalog wzorów w Supabase,
+- zweryfikowane materiały oraz parametry motków dla 103 wzorów źródłowych,
+- dynamiczne filtry katalogu: wszystkie aktywne kryteria muszą pasować, typy
+  i materiały pokazują aktualne liczniki, a wzór wielomateriałowy jest dostępny
+  pod każdym swoim materiałem,
 - Supabase Auth i profile użytkowników,
 - prywatny magazyn włóczek z RLS,
 - zapis i usuwanie włóczek przez aplikację,
-- bezpieczną ścieżkę rankingu z wymaganiami wariantów,
+- wspólną listę materiałów i obsługę kilku materiałów jednego motka,
+- bezpieczną ścieżkę rankingu z dokładnymi wymaganiami 21 wariantów,
+- natychmiastowe usuwanie konta po ponownym podaniu hasła i potwierdzeniu,
+- dwa motywy wizualne: jasna „Koloroterapia” i ciemny „Nocny Motek”,
+  przełączane globalnie w nagłówku i zapamiętywane lokalnie,
+- pionowa grafika włóczek i kota po prawej w Magazynie oraz hero graficzny w Dopasowaniu,
+  przełączane razem z motywem,
 - autosave zapisujący różnice per motek przez `POST`, `PATCH` i `DELETE`,
 - usunięcie SQLite z aplikacji.
 
 Do wykonania pozostają przede wszystkim:
 
-- uzupełnienie kompletnych wymagań dopasowania dla wybranych wzorów,
+- rozszerzenie kompletnych wymagań zużycia na kolejne wzory,
 - uzupełnienie rate limitingu na reverse proxy oraz monitoring prób Auth,
 - wymuszenie HTTPS i HSTS na reverse proxy w produkcji,
 - dalsze ograniczenie kosztu rankingu, testy obciążenia i ewentualny worker,
@@ -281,3 +316,15 @@ usunęły SQLite z aplikacji.
 
 Szczegółową historię zmian zawiera `CHANGELOG.txt`, a uzasadnienie ryzyk
 bezpieczeństwa i jakości — `AUDYT.md`.
+## Kompozycja wariantów wizualnych
+
+Wariant jasny („Koloroterapia”) i ciemny („Nocny Motek”) używają tej samej
+architektury widoków. Magazyn ma asymetryczne dwie kolumny: treść i statystyki
+po lewej oraz pionową grafikę po prawej, rozciągniętą przez wysokość widoku.
+Dopasowanie pokazuje szeroką kartę z grafiką wybranego motywu. Obrazy zmieniają
+się razem z globalnym przełącznikiem jasny/ciemny, bez ponownego transferu pliku
+już zapisanego w cache przeglądarki.
+Grafika w Magazynie zachowuje pionową kompozycję prototypów przez
+`object-fit: cover` i `object-position: right center`; Dopasowanie pozostaje
+szerokim hero. Magazyn i Dopasowanie pokazują same grafiki, bez tekstowych
+nakładek i ramek.

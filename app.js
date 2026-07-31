@@ -1,5 +1,6 @@
 const yarnTemplate = document.getElementById("yarnTemplate");
 const resultTemplate = document.getElementById("resultTemplate");
+const patternSkeletonTemplate = document.getElementById("patternSkeletonTemplate");
 const yarnList = document.getElementById("yarnList");
 const results = document.getElementById("results");
 const summary = document.getElementById("summary");
@@ -9,17 +10,32 @@ const findBtn = document.getElementById("findBtn");
 const patternTemplate = document.getElementById("patternTemplate");
 const patternSearch = document.getElementById("patternSearch");
 const patternReviewFilter = document.getElementById("patternReviewFilter");
+const patternLanguageFilter = document.getElementById("patternLanguageFilter");
+const patternTypeFilter = document.getElementById("patternTypeFilter");
+const patternMaterialFilter = document.getElementById("patternMaterialFilter");
+const patternSort = document.getElementById("patternSort");
 const patternCatalogSummary = document.getElementById("patternCatalogSummary");
+const patternCatalogNotice = document.getElementById("patternCatalogNotice");
 const patternCatalog = document.getElementById("patternCatalog");
+const patternCatalogActions = document.getElementById("patternCatalogActions");
+const loadMorePatternsBtn = document.getElementById("loadMorePatternsBtn");
+const backToCatalogFiltersBtn = document.getElementById("backToCatalogFiltersBtn");
+const resetCatalogFiltersBtn = document.getElementById("resetCatalogFiltersBtn");
 const loginForm = document.getElementById("loginForm");
 const registerForm = document.getElementById("registerForm");
 const authForms = document.getElementById("authForms");
 const authLoggedIn = document.getElementById("authLoggedIn");
 const authUser = document.getElementById("authUser");
 const authPanel = document.querySelector(".auth-panel");
+const authModeSwitch = document.querySelector(".auth-mode-switch");
+const loginModeBtn = document.getElementById("loginModeBtn");
+const registerModeBtn = document.getElementById("registerModeBtn");
 const authProfileSummary = document.getElementById("authProfileSummary");
 const authMessage = document.getElementById("authMessage");
+const deleteAccountForm = document.getElementById("deleteAccountForm");
+const deleteAccountMessage = document.getElementById("deleteAccountMessage");
 const authLead = document.getElementById("authLead");
+const authTitle = document.getElementById("authTitle");
 const onboarding = document.getElementById("onboarding");
 const onboardingAddYarnBtn = document.getElementById("onboardingAddYarnBtn");
 const onboardingSkipBtn = document.getElementById("onboardingSkipBtn");
@@ -28,16 +44,208 @@ const forgotPasswordBtn = document.getElementById("forgotPasswordBtn");
 const passwordResetForm = document.getElementById("passwordResetForm");
 const passwordUpdateForm = document.getElementById("passwordUpdateForm");
 const cancelPasswordResetBtn = document.getElementById("cancelPasswordResetBtn");
+const accountView = document.getElementById("accountView");
+const headerUser = document.getElementById("headerUser");
+const themeToggle = document.getElementById("themeToggle");
+const themeToggleLabel = document.getElementById("themeToggleLabel");
+const themeToggleIcon = themeToggle?.querySelector(".theme-toggle__icon");
+const inventoryThemeImage = document.getElementById("inventoryThemeImage");
+const inventoryStats = document.getElementById("inventoryStats");
+const inventoryStatYarns = document.getElementById("inventoryStatYarns");
+const inventoryStatLength = document.getElementById("inventoryStatLength");
+const inventoryStatWeight = document.getElementById("inventoryStatWeight");
+const inventoryStatColors = document.getElementById("inventoryStatColors");
+const matchesThemeImage = document.getElementById("matchesThemeImage");
+const appViews = [...document.querySelectorAll(".app-view")];
+const viewButtons = [...document.querySelectorAll("[data-view-target]")];
+const inventoryMatchBtn = document.getElementById("inventoryMatchBtn");
+const inventoryAddYarnBtn = document.getElementById("inventoryAddYarnBtn");
+const backToInventoryBtn = document.getElementById("backToInventoryBtn");
+const heroAuthBtn = document.getElementById("heroAuthBtn");
+const networkStatus = document.getElementById("networkStatus");
+
+const REQUEST_TIMEOUT_MS = 12_000;
+const READ_RETRY_DELAY_MS = 700;
+const {
+  bindHoldToReveal,
+  buildPatternFacetCounts,
+  buildPatternFacetOptions,
+  ensureSingleNewYarnCard,
+  filterPatterns,
+  findNewlySavedYarn,
+  formatMatchingRequirement,
+  formatPatternYarnFact,
+  getProjectTypeFilterLabel,
+  getProjectTypeLabel,
+  getExistingYarnState,
+  isDeleteConfirmed,
+  loadPaginatedItems,
+  shouldRetryRead,
+} = window.MotekClientPolicy;
+const {
+  MATERIALS,
+  formatYarnMaterials,
+  normalizeYarnMaterials,
+} = window.MotekMaterialPolicy;
+const {
+  applyTheme,
+  getThemeToggleState,
+  normalizeTheme,
+  saveTheme,
+} = window.MotekThemePolicy;
+const MATERIAL_LABEL_BY_VALUE = new Map(
+  MATERIALS.map(({ value, label }) => [value, label]),
+);
+const PROJECT_TYPE_ORDER = [
+  "socks",
+  "sweater",
+  "cardigan",
+  "top",
+  "shawl_scarf",
+  "head_accessory",
+  "gloves",
+  "vest",
+  "skirt_dress",
+  "blanket",
+  "other",
+];
+
+class ApiError extends Error {
+  constructor(message, status) {
+    super(message);
+    this.name = "ApiError";
+    this.status = status;
+  }
+}
+
+class RequestError extends Error {
+  constructor(message, kind) {
+    super(message);
+    this.name = "RequestError";
+    this.kind = kind;
+  }
+}
 
 let baseUrl = window.location.origin;
 let isAuthenticated = false;
-let autosaveTimer = null;
-let autosaveInFlight = null;
-let autosavePending = false;
+let pendingWriteCount = 0;
 let catalogPatterns = [];
+let catalogNextOffset = 0;
+let catalogComplete = false;
+let catalogTotal = 0;
 let yarnVersion = null;
 let onboardingDismissed = false;
 let yarnFormSequence = 0;
+let activeView = "account";
+let initialSessionResolved = false;
+let catalogVisibleLimit = 12;
+let networkStatusTimer = null;
+let preserveDraftAfterLogin = false;
+let preservedDraftRequiresSave = false;
+const numberFormatter = new Intl.NumberFormat("pl-PL", {
+  maximumFractionDigits: 2,
+  useGrouping: "always",
+});
+
+function focusViewHeading(target) {
+  const labelledBy = target.getAttribute("aria-labelledby");
+  const labelledHeading = labelledBy ? document.getElementById(labelledBy) : null;
+  const heading =
+    labelledHeading && target.contains(labelledHeading) && labelledHeading.getClientRects().length
+      ? labelledHeading
+      : [...target.querySelectorAll("h1, h2")].find(
+          (candidate) => candidate.getClientRects().length,
+        );
+
+  if (!heading) return;
+  heading.setAttribute("tabindex", "-1");
+  heading.focus({ preventScroll: true });
+}
+
+function setActiveView(requestedView, { focus = true } = {}) {
+  const protectedViews = new Set(["inventory", "matches"]);
+  const view = !isAuthenticated && protectedViews.has(requestedView)
+    ? "account"
+    : requestedView;
+  const target = appViews.find((candidate) => candidate.dataset.view === view);
+  if (!target) return;
+
+  activeView = view;
+  appViews.forEach((candidate) => {
+    candidate.hidden = candidate !== target;
+  });
+  viewButtons.forEach((button) => {
+    const current = button.dataset.viewTarget === view;
+    button.classList.toggle("is-active", current);
+    if (current) button.setAttribute("aria-current", "page");
+    else button.removeAttribute("aria-current");
+  });
+
+  if (focus) {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    focusViewHeading(target);
+  }
+}
+
+function renderThemeToggle() {
+  if (!themeToggle || !themeToggleLabel) {
+    return;
+  }
+
+  const currentTheme = normalizeTheme(document.documentElement.dataset.theme);
+  const state = getThemeToggleState(currentTheme);
+  themeToggle.setAttribute("aria-pressed", String(state.pressed));
+  themeToggle.setAttribute("aria-label", state.label);
+  themeToggleLabel.textContent = state.shortLabel;
+
+  if (themeToggleIcon) {
+    themeToggleIcon.textContent = state.nextTheme === "dark" ? "☾" : "☀";
+  }
+
+  const isDark = currentTheme === "dark";
+  const artwork = {
+    src: (image) => isDark ? image.dataset.darkSrc : image.dataset.lightSrc,
+    alt: isDark
+      ? "Czarna kotka i ciemne włóczki w nocnej pracowni"
+      : "Kolorowe włóczki i kot w pracowni",
+  };
+
+  for (const image of [inventoryThemeImage, matchesThemeImage]) {
+    if (!image) continue;
+    image.src = artwork.src(image);
+    image.alt = artwork.alt;
+  }
+}
+
+function updateNavigationState() {
+  viewButtons.forEach((button) => {
+    const protectedView =
+      button.classList.contains("app-nav__button") &&
+      ["inventory", "matches"].includes(button.dataset.viewTarget);
+    button.disabled = protectedView && !isAuthenticated;
+  });
+}
+
+viewButtons.forEach((button) => {
+  button.addEventListener("click", () => setActiveView(button.dataset.viewTarget));
+});
+
+themeToggle?.addEventListener("click", () => {
+  const currentTheme = normalizeTheme(document.documentElement.dataset.theme);
+  const nextTheme = getThemeToggleState(currentTheme).nextTheme;
+  const appliedTheme = applyTheme(nextTheme);
+  saveTheme(appliedTheme);
+  renderThemeToggle();
+});
+
+renderThemeToggle();
+
+heroAuthBtn.addEventListener("click", () => {
+  authPanel.scrollIntoView({ behavior: "smooth", block: "start" });
+  window.setTimeout(() => {
+    loginForm.querySelector('input[name="email"]').focus({ preventScroll: true });
+  }, 250);
+});
 
 async function detectRuntimeMode() {
   if (window.location.protocol === "file:") {
@@ -52,50 +260,277 @@ async function api(path, options = {}) {
     throw new Error("Brak adresu backendu Motka.");
   }
 
-  const { headers: optionHeaders = {}, ...requestOptions } = options;
-  const response = await fetch(`${baseUrl}${path}`, {
-    credentials: "same-origin",
-    ...requestOptions,
-    headers: {
-      "Content-Type": "application/json",
-      ...optionHeaders,
-    },
-  });
+  const {
+    headers: optionHeaders = {},
+    signal: requestSignal,
+    ...requestOptions
+  } = options;
+  const method = String(requestOptions.method || "GET").toUpperCase();
+  const isWriteRequest = !["GET", "HEAD"].includes(method);
+  const maxAttempts = isWriteRequest ? 1 : 2;
+  if (isWriteRequest) pendingWriteCount += 1;
 
-  if (!response.ok && response.status !== 204) {
-    let details = "";
-    try {
-      const payload = await response.clone().json();
-      details = payload?.error ? `: ${payload.error}` : "";
-    } catch {
-      // ignore non-JSON error body
+  try {
+    let response;
+
+    for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+      const controller = new AbortController();
+      const abortRequest = () => controller.abort();
+      const timeout = window.setTimeout(abortRequest, REQUEST_TIMEOUT_MS);
+      if (requestSignal) {
+        if (requestSignal.aborted) abortRequest();
+        else requestSignal.addEventListener("abort", abortRequest, { once: true });
+      }
+
+      try {
+        response = await fetch(`${baseUrl}${path}`, {
+          credentials: "same-origin",
+          ...requestOptions,
+          signal: controller.signal,
+          headers: {
+            "Content-Type": "application/json",
+            ...optionHeaders,
+          },
+        });
+      } catch (error) {
+        const externallyAborted = requestSignal?.aborted;
+        const canRetryNetworkError = shouldRetryRead({
+          method,
+          errorName: error.name,
+          externallyAborted,
+          attempt,
+          maxAttempts,
+        });
+
+        if (canRetryNetworkError) {
+          await new Promise((resolve) => window.setTimeout(resolve, READ_RETRY_DELAY_MS));
+          continue;
+        }
+
+        if (error.name === "AbortError") {
+          throw new RequestError(
+            externallyAborted
+              ? "Operacja została przerwana."
+              : "Motek nie odpowiedział na czas. Sprawdź połączenie i spróbuj ponownie.",
+            externallyAborted ? "aborted" : "timeout"
+          );
+        }
+        if (error instanceof TypeError) {
+          throw new RequestError(
+            navigator.onLine
+              ? "Nie udało się połączyć z Motkiem. Spróbuj ponownie."
+              : "Brak połączenia z internetem. Sprawdź sieć i spróbuj ponownie.",
+            "network"
+          );
+        }
+        throw error;
+      } finally {
+        window.clearTimeout(timeout);
+        requestSignal?.removeEventListener("abort", abortRequest);
+      }
+
+      if (shouldRetryRead({ method, status: response.status, attempt, maxAttempts })) {
+        await new Promise((resolve) => window.setTimeout(resolve, READ_RETRY_DELAY_MS));
+        continue;
+      }
+
+      break;
     }
-    throw new Error(`Błąd komunikacji z backendem (${response.status})${details}`);
-  }
 
-  if (path === "/api/yarns" || path.startsWith("/api/yarns/")) {
-    yarnVersion = response.headers.get("etag") || yarnVersion;
-  }
+    if (!response.ok && response.status !== 204) {
+      let message = "";
+      try {
+        const payload = await response.clone().json();
+        message = typeof payload?.error === "string" ? payload.error.trim() : "";
+      } catch {
+        // ignore non-JSON error body
+      }
+      const protectedPath =
+        path === "/api/matches" ||
+        path === "/api/yarns" ||
+        path.startsWith("/api/yarns/") ||
+        path === "/api/account";
+      if (response.status === 401 && protectedPath) {
+        handleSessionExpired();
+        throw new ApiError(
+          "Sesja wygasła. Zaloguj się ponownie, aby dokończyć operację.",
+          response.status
+        );
+      }
+      throw new ApiError(
+        message || "Nie udało się połączyć z Motkiem. Spróbuj ponownie.",
+        response.status
+      );
+    }
 
-  api.lastMatchScope = path === "/api/matches"
-    ? response.headers.get("X-Motek-Match-Scope") || "full"
-    : null;
-  return response.status === 204 ? null : response.json();
+    if (path === "/api/yarns" || path.startsWith("/api/yarns/")) {
+      yarnVersion = response.headers.get("etag") || yarnVersion;
+    }
+
+    api.lastMatchScope = path === "/api/matches"
+      ? response.headers.get("X-Motek-Match-Scope") || "full"
+      : null;
+    if (response.status === 204) return null;
+    try {
+      return await response.json();
+    } catch {
+      throw new RequestError(
+        isWriteRequest
+          ? "Połączenie przerwało się przed potwierdzeniem zapisu."
+          : "Nie udało się odczytać odpowiedzi Motka. Spróbuj ponownie.",
+        "response"
+      );
+    }
+  } finally {
+    if (isWriteRequest) pendingWriteCount -= 1;
+  }
 }
 
-function showMessage(container, message) {
+function showMessage(container, message, kind = "status", action = null) {
   const element = document.createElement("div");
   element.className = "empty-state";
-  element.setAttribute("role", "status");
-  element.setAttribute("aria-live", "polite");
-  element.textContent = message;
+  element.dataset.kind = kind;
+  element.setAttribute("role", kind === "error" ? "alert" : "status");
+  element.setAttribute("aria-live", kind === "error" ? "assertive" : "polite");
+  const text = document.createElement("p");
+  text.className = "empty-state__text";
+  text.textContent = message;
+  element.appendChild(text);
+  if (action) {
+    const button = document.createElement("button");
+    button.className = "button button--ghost empty-state__action";
+    button.type = "button";
+    button.textContent = action.label;
+    button.addEventListener("click", action.onClick);
+    element.appendChild(button);
+  }
   container.replaceChildren(element);
+  container.toggleAttribute("aria-busy", kind === "loading");
 }
 
-function setStorageMessage(message, kind = "") {
-  storageMessage.textContent = message;
+function setStorageMessage(message, kind = "", actions = []) {
+  storageMessage.replaceChildren();
   storageMessage.dataset.kind = kind;
+  storageMessage.setAttribute("role", kind === "error" ? "alert" : "status");
+  storageMessage.setAttribute("aria-live", kind === "error" ? "assertive" : "polite");
+
+  if (message) {
+    const text = document.createElement("p");
+    text.textContent = message;
+    storageMessage.appendChild(text);
+  }
+
+  if (actions.length) {
+    const actionList = document.createElement("div");
+    actionList.className = "storage-message__actions";
+    actions.forEach(({ label, onClick, primary = false }) => {
+      const button = document.createElement("button");
+      button.className = primary ? "button" : "button button--ghost";
+      button.type = "button";
+      button.textContent = label;
+      button.addEventListener("click", onClick);
+      actionList.appendChild(button);
+    });
+    storageMessage.appendChild(actionList);
+  }
 }
+
+function isYarnVersionConflict(error) {
+  return error instanceof ApiError
+    && error.status === 409
+    && error.message.startsWith("Magazyn został zmieniony");
+}
+
+function showYarnVersionConflict({
+  retryOperation,
+  preservedMessage,
+  retryLabel,
+  conflictMessage,
+}) {
+  const showConflictAgain = () => {
+    showYarnVersionConflict({
+      retryOperation,
+      preservedMessage,
+      retryLabel,
+      conflictMessage,
+    });
+  };
+
+  setStorageMessage(
+    conflictMessage,
+    "error",
+    [
+      {
+        label: retryLabel,
+        primary: true,
+        onClick: async () => {
+          setStorageMessage("Pobieram aktualną wersję magazynu i ponawiam zapis...");
+          try {
+            await loadYarns();
+            await retryOperation();
+          } catch (error) {
+            if (isYarnVersionConflict(error)) {
+              showConflictAgain();
+              return;
+            }
+            setStorageMessage(`${error.message} ${preservedMessage}`, "error");
+          }
+        },
+      },
+      {
+        label: "Pobierz nowsze dane",
+        onClick: async () => {
+          if (
+            hasYarnFormDraft()
+            && !window.confirm(
+              "Pobrać nowsze dane? Niezapisane zmiany widoczne w formularzu zostaną zastąpione."
+            )
+          ) {
+            return;
+          }
+
+          setStorageMessage("Pobieram nowsze dane...");
+          try {
+            await refresh();
+            setStorageMessage("Magazyn jest już aktualny.", "success");
+          } catch (error) {
+            setStorageMessage(
+              `${error.message} Niezapisane zmiany nadal są w formularzu.`,
+              "error",
+              [
+                {
+                  label: "Spróbuj ponownie",
+                  onClick: showConflictAgain,
+                },
+              ]
+            );
+          }
+        },
+      },
+    ]
+  );
+}
+
+function updateNetworkStatus(online = navigator.onLine) {
+  window.clearTimeout(networkStatusTimer);
+  networkStatus.hidden = false;
+  networkStatus.dataset.kind = online ? "success" : "error";
+  networkStatus.setAttribute("role", online ? "status" : "alert");
+  networkStatus.setAttribute("aria-live", online ? "polite" : "assertive");
+  networkStatus.textContent = online
+    ? "Połączenie wróciło. Możesz ponowić ostatnią operację."
+    : "Brak połączenia z internetem. Niezapisane zmiany pozostaną w formularzu.";
+
+  if (online) {
+    networkStatusTimer = window.setTimeout(() => {
+      networkStatus.hidden = true;
+    }, 5000);
+  }
+}
+
+window.addEventListener("offline", () => updateNetworkStatus(false));
+window.addEventListener("online", () => updateNetworkStatus(true));
+if (!navigator.onLine) updateNetworkStatus(false);
 
 function createRequirement(text) {
   const item = document.createElement("li");
@@ -103,41 +538,70 @@ function createRequirement(text) {
   return item;
 }
 
-function scheduleAutosave() {
-  clearTimeout(autosaveTimer);
-  autosaveTimer = setTimeout(() => {
-    flushAutosave();
-  }, 350);
+function formatNumber(value) {
+  const number = Number(value);
+  return Number.isFinite(number) ? numberFormatter.format(number) : "0";
 }
 
-async function flushAutosave() {
-  if (autosaveInFlight) {
-    autosavePending = true;
-    return;
-  }
+function groupMatchesByPattern(matches) {
+  const groups = new Map();
 
-  setStorageMessage("Zapisuję magazyn...");
-  try {
-    do {
-      autosavePending = false;
-      autosaveInFlight = saveYarns()
-        .then((savedYarns) => {
-          syncDomIds(savedYarns);
-          return renderSummary();
-        })
-        .finally(() => {
-          autosaveInFlight = null;
-        });
-      await autosaveInFlight;
-    } while (autosavePending);
-    setStorageMessage("Magazyn zapisany.", "success");
-  } catch (error) {
-    autosavePending = false;
-    setStorageMessage(
-      `${error.message} Zmiany pozostały w formularzu — popraw połączenie i spróbuj ponownie.`,
-      "error"
-    );
-  }
+  matches.forEach((item) => {
+    const variantLabel = item.pattern.variantLabel || item.pattern.label || "";
+    const key = item.pattern.patternId || String(item.pattern.id).split(":")[0];
+    const fallbackName = variantLabel
+      ? item.pattern.name.replace(` — ${variantLabel}`, "")
+      : item.pattern.name;
+    if (!groups.has(key)) {
+      groups.set(key, {
+        name: item.pattern.baseName || fallbackName,
+        description: item.pattern.description,
+        variants: [],
+      });
+    }
+    groups.get(key).variants.push(item);
+  });
+
+  return [...groups.values()];
+}
+
+function createMatchVariant(item, open = false) {
+  const details = document.createElement("details");
+  details.className = "match-variant";
+  details.open = open;
+
+  const header = document.createElement("summary");
+  const label = document.createElement("strong");
+  const score = document.createElement("span");
+  label.textContent = item.pattern.variantLabel || item.pattern.label || item.pattern.name;
+  score.className = "match-variant__score";
+  score.textContent = `${item.total}%`;
+  header.append(label, score);
+
+  const meta = document.createElement("p");
+  meta.className = "match-variant__meta";
+  meta.textContent = [
+    item.pattern.size ? `Rozmiar: ${item.pattern.size}` : null,
+    item.pattern.yarnOption ? `Wariant włóczki: ${item.pattern.yarnOption}` : null,
+  ].filter(Boolean).join(" · ");
+
+  const requirements = document.createElement("ul");
+  requirements.className = "requirements";
+  requirements.replaceChildren(
+    ...item.pattern.requirements.map((requirement, index) =>
+      createRequirement(
+        formatMatchingRequirement(
+          requirement,
+          item.allocation?.[index]?.yarns || [],
+          formatNumber,
+          formatSkeinCount,
+        ),
+      )
+    ),
+  );
+
+  details.append(header, meta, requirements);
+  return details;
 }
 
 function collectYarnFromCard(card) {
@@ -145,39 +609,278 @@ function collectYarnFromCard(card) {
     id: card.dataset.id ? Number(card.dataset.id) : null,
     name: card.querySelector('[data-field="name"]').value.trim(),
     color: card.querySelector('[data-field="color"]').value.trim(),
-    material: card.querySelector('[data-field="material"]').value,
+    materials: getSelectedYarnMaterials(card),
     weightClass: card.querySelector('[data-field="weightClass"]').value,
     length: Number(card.querySelector('[data-field="length"]').value || 0),
     weight: Number(card.querySelector('[data-field="weight"]').value || 0),
   };
 }
 
+function getSelectedYarnMaterials(card) {
+  return [...card.querySelectorAll("[data-material-option]:checked")]
+    .map((field) => field.value);
+}
+
+function updateYarnMaterialPicker(card) {
+  const materials = getSelectedYarnMaterials(card);
+  const picker = card.querySelector("[data-material-picker]");
+  const summary = card.querySelector("[data-material-summary]");
+  const error = card.querySelector("[data-material-error]");
+  const isEmpty = materials.length === 0;
+
+  summary.textContent = formatYarnMaterials(materials);
+  picker.classList.toggle("material-picker--invalid", isEmpty);
+  picker.setAttribute("aria-invalid", String(isEmpty));
+  error.hidden = !isEmpty;
+}
+
+function setYarnMaterials(card, materials) {
+  let selected;
+  try {
+    selected = normalizeYarnMaterials(materials);
+  } catch {
+    selected = ["mieszanka"];
+  }
+  const selectedSet = new Set(selected);
+  card.querySelectorAll("[data-material-option]").forEach((field) => {
+    field.checked = selectedSet.has(field.value);
+  });
+  updateYarnMaterialPicker(card);
+}
+
+function updateYarnCardSummary(card) {
+  const yarn = collectYarnFromCard(card);
+  const name = card.querySelector('[data-summary="name"]');
+  const details = card.querySelector('[data-summary="details"]');
+  const swatch = card.querySelector(".yarn-card__swatch");
+
+  name.textContent = yarn.name || "Nowy motek";
+  name.title = yarn.name || "Nowy motek";
+  details.textContent = yarn.color
+    ? `${yarn.color} · ${formatYarnMaterials(yarn.materials)} · ${yarn.weightClass} · ${formatNumber(yarn.length)} m · ${formatNumber(yarn.weight)} g`
+    : "Uzupełnij dane włóczki";
+  swatch.title = yarn.color ? `Kolor: ${yarn.color}` : "Nowa włóczka";
+}
+
 function isYarnComplete(card) {
   return [...card.querySelectorAll("[data-field]")].every((field) => field.checkValidity()) &&
     card.querySelector('[data-field="name"]').value.trim() !== "" &&
-    card.querySelector('[data-field="color"]').value.trim() !== "";
+    card.querySelector('[data-field="color"]').value.trim() !== "" &&
+    getSelectedYarnMaterials(card).length > 0;
 }
 
 function isYarnChanged(card) {
   return JSON.stringify(collectYarnFromCard(card)) !== JSON.stringify(card._originalYarn);
 }
 
+function applyYarnToCard(card, yarn) {
+  ["name", "color", "weightClass", "length", "weight"].forEach((field) => {
+    card.querySelector(`[data-field="${field}"]`).value = yarn[field];
+  });
+  setYarnMaterials(card, yarn.materials);
+}
+
+function markYarnCardAsSaved(card, yarn) {
+  card.dataset.id = yarn.id;
+  applyYarnToCard(card, yarn);
+  card.dataset.saved = "true";
+  card.dataset.editing = "false";
+  card._originalYarn = collectYarnFromCard(card);
+  setYarnFieldsDisabled(card, true);
+  updateYarnCardSummary(card);
+  updateYarnSaveButton(card);
+}
+
+function isUncertainWriteError(error) {
+  return error instanceof RequestError
+    || (error instanceof ApiError && error.status >= 500);
+}
+
+function showUncertainWrite(message, onVerify) {
+  setStorageMessage(message, "error", [
+    {
+      label: "Sprawdź stan magazynu",
+      primary: true,
+      onClick: onVerify,
+    },
+  ]);
+}
+
+async function verifyUncertainNewYarn(card, draft, knownYarnIds) {
+  if (!card.isConnected) {
+    setStorageMessage("Formularz został już zamknięty. Odśwież magazyn, aby sprawdzić jego stan.");
+    return;
+  }
+
+  setStorageMessage("Sprawdzam aktualny magazyn...");
+  try {
+    const yarns = await loadYarns();
+    const savedYarn = findNewlySavedYarn(yarns, draft, knownYarnIds);
+    if (savedYarn) {
+      markYarnCardAsSaved(card, savedYarn);
+      setStorageMessage("Motek był już zapisany. Formularz jest zsynchronizowany.", "success");
+      await renderSummary();
+      renderOnboarding(collectYarnsFromDom());
+      return;
+    }
+    setStorageMessage(
+      "Nie znaleziono tego motka w magazynie. Możesz bezpiecznie spróbować zapisać go ponownie.",
+      "error",
+      [
+        {
+          label: "Spróbuj zapisać ponownie",
+          primary: true,
+          onClick: () => saveNewYarn(card),
+        },
+      ]
+    );
+  } catch (error) {
+    showUncertainWrite(
+      `${error.message} Formularz nadal jest bezpiecznie zachowany.`,
+      () => verifyUncertainNewYarn(card, draft, knownYarnIds)
+    );
+  }
+}
+
+async function verifyUncertainExistingYarn(card, draft, yarnId) {
+  if (!card.isConnected) {
+    setStorageMessage("Formularz został już zamknięty. Odśwież magazyn, aby sprawdzić jego stan.");
+    return;
+  }
+
+  setStorageMessage("Sprawdzam aktualny magazyn...");
+  try {
+    const yarns = await loadYarns();
+    const result = getExistingYarnState(yarns, yarnId, draft);
+    if (result.state === "saved") {
+      markYarnCardAsSaved(card, result.yarn);
+      setStorageMessage("Zmiana była już zapisana. Formularz jest zsynchronizowany.", "success");
+      await renderSummary();
+      return;
+    }
+    if (result.state === "missing") {
+      setStorageMessage(
+        "Tego motka nie ma już w aktualnym magazynie. Możesz zachować formularz i dodać go jako nowy.",
+        "error",
+        [
+          {
+            label: "Dodaj jako nowy motek",
+            primary: true,
+            onClick: () => {
+              card.dataset.id = "";
+              card.dataset.saved = "false";
+              card._originalYarn = null;
+              updateYarnSaveButton(card);
+              saveNewYarn(card);
+            },
+          },
+          {
+            label: "Odrzuć formularz i pobierz dane",
+            onClick: async () => {
+              if (
+                !window.confirm(
+                  "Pobrać aktualny magazyn? Niezapisany formularz zostanie zastąpiony."
+                )
+              ) {
+                return;
+              }
+              try {
+                await refresh();
+                setStorageMessage("Magazyn jest już aktualny.", "success");
+              } catch (error) {
+                setStorageMessage(`${error.message} Formularz nadal jest na ekranie.`, "error");
+              }
+            },
+          },
+        ]
+      );
+      return;
+    }
+    showYarnVersionConflict({
+      retryOperation: () => saveExistingYarn(card),
+      preservedMessage: "Zmiany pozostały w formularzu.",
+      retryLabel: "Zapisz moją wersję",
+      conflictMessage:
+        "Sprawdzenie wykazało, że Twoja zmiana nie została zapisana, a w magazynie jest inna wersja tego motka. Możesz zapisać swoją wersję albo pobrać nowsze dane.",
+    });
+  } catch (error) {
+    showUncertainWrite(
+      `${error.message} Zmiany nadal są bezpiecznie zachowane w formularzu.`,
+      () => verifyUncertainExistingYarn(card, draft, yarnId)
+    );
+  }
+}
+
+function hasYarnFormDraft() {
+  return [...yarnList.querySelectorAll(".yarn-card")].some((card) => {
+    if (card.dataset.saved !== "true") return true;
+    return card.dataset.editing === "true" && isYarnChanged(card);
+  });
+}
+
+function hasUnsavedYarnChanges() {
+  return pendingWriteCount > 0 || hasYarnFormDraft();
+}
+
+function handleSessionExpired() {
+  if (!isAuthenticated) return;
+  preservedDraftRequiresSave = hasYarnFormDraft();
+  preserveDraftAfterLogin = hasUnsavedYarnChanges();
+  renderAuthState({ authenticated: false });
+  setAuthMessage(
+    preserveDraftAfterLogin
+      ? "Sesja wygasła. Zaloguj się ponownie — rozpoczęte zmiany pozostaną w formularzu."
+      : "Sesja wygasła. Zaloguj się ponownie, aby kontynuować.",
+    "error"
+  );
+  window.setTimeout(() => {
+    loginForm.querySelector('input[name="email"]').focus({ preventScroll: true });
+  }, 0);
+}
+
+window.addEventListener("beforeunload", (event) => {
+  if (!hasUnsavedYarnChanges()) return;
+  event.preventDefault();
+  event.returnValue = "";
+});
+
 function setYarnFieldsDisabled(card, disabled) {
   card.querySelectorAll("[data-field]").forEach((field) => {
     field.disabled = disabled;
   });
+  card.querySelector("[data-material-field]").disabled = disabled;
 }
 
 function updateYarnSaveButton(card) {
   const saveButton = card.querySelector(".yarn-save");
+  const cancelButton = card.querySelector(".yarn-cancel");
   const complete = isYarnComplete(card);
   const isNew = card.dataset.saved !== "true";
   const isEditing = isNew || card.dataset.editing === "true";
   const changed = isNew || isYarnChanged(card);
   card.querySelector(".yarn-edit").hidden = isNew || isEditing;
-  card.querySelector(".yarn-cancel").hidden = !isEditing || isNew;
+  cancelButton.hidden = !isEditing;
+  cancelButton.textContent = isNew ? "Anuluj dodawanie" : "Anuluj";
   saveButton.hidden = !isEditing || !complete || !changed;
   saveButton.disabled = !complete || !changed;
+}
+
+async function refreshSummaryAfterConfirmedSave(successMessage) {
+  try {
+    await renderSummary();
+    setStorageMessage(successMessage, "success");
+  } catch (error) {
+    setStorageMessage(
+      `${successMessage} Nie udało się odświeżyć podsumowania: ${error.message}`,
+      "warning",
+      [
+        {
+          label: "Odśwież podsumowanie",
+          onClick: () => refreshSummaryAfterConfirmedSave(successMessage),
+        },
+      ]
+    );
+  }
 }
 
 async function saveNewYarn(card) {
@@ -187,50 +890,133 @@ async function saveNewYarn(card) {
     return;
   }
 
+  const draft = collectYarnFromCard(card);
+  const knownYarnIds = new Set(
+    [...yarnList.querySelectorAll('.yarn-card[data-saved="true"]')]
+      .map((savedCard) => savedCard.dataset.id)
+  );
   saveButton.disabled = true;
   setStorageMessage("Zapisuję motek...");
+  let savedYarn;
   try {
-    const savedYarn = await api("/api/yarns", {
+    savedYarn = await api("/api/yarns", {
       method: "POST",
       headers: { "If-Match": yarnVersion },
-      body: JSON.stringify(collectYarnFromCard(card)),
+      body: JSON.stringify(draft),
     });
-    card.dataset.id = savedYarn.id;
-    card.dataset.saved = "true";
-    card.dataset.editing = "false";
-    card._originalYarn = collectYarnFromCard(card);
-    setYarnFieldsDisabled(card, true);
-    updateYarnSaveButton(card);
-    setStorageMessage("Motek zapisany w magazynie.", "success");
-    await renderSummary();
-    renderOnboarding(collectYarnsFromDom());
   } catch (error) {
     saveButton.disabled = false;
+    if (isYarnVersionConflict(error)) {
+      showYarnVersionConflict({
+        retryOperation: () => saveNewYarn(card),
+        preservedMessage: "Motek pozostał w formularzu.",
+        retryLabel: "Dodaj mój motek",
+        conflictMessage:
+          "Magazyn zmienił się w innej karcie lub na innym urządzeniu. Nowy motek nadal jest w formularzu. Możesz dodać go do aktualnego magazynu albo pobrać nowsze dane.",
+      });
+      return;
+    }
+    if (isUncertainWriteError(error)) {
+      showUncertainWrite(
+        `${error.message} Motek mógł zostać zapisany, dlatego nie ponawiam operacji automatycznie.`,
+        () => verifyUncertainNewYarn(card, draft, knownYarnIds)
+      );
+      return;
+    }
     setStorageMessage(`${error.message} Motek pozostał w formularzu.`, "error");
+    return;
   }
+
+  markYarnCardAsSaved(card, savedYarn);
+  renderOnboarding(collectYarnsFromDom());
+  await refreshSummaryAfterConfirmedSave("Motek zapisany w magazynie.");
 }
 
 async function saveExistingYarn(card) {
   const saveButton = card.querySelector(".yarn-save");
   if (!isYarnComplete(card) || !isYarnChanged(card)) return;
 
+  const draft = collectYarnFromCard(card);
   saveButton.disabled = true;
   setStorageMessage("Zapisuję zmiany motka...");
+  let savedYarn;
   try {
-    await api(`/api/yarns/${card.dataset.id}`, {
+    savedYarn = await api(`/api/yarns/${card.dataset.id}`, {
       method: "PATCH",
       headers: { "If-Match": yarnVersion },
-      body: JSON.stringify(collectYarnFromCard(card)),
+      body: JSON.stringify(draft),
     });
-    card._originalYarn = collectYarnFromCard(card);
-    card.dataset.editing = "false";
-    setYarnFieldsDisabled(card, true);
-    updateYarnSaveButton(card);
-    setStorageMessage("Zmiany motka zapisane.", "success");
-    await renderSummary();
   } catch (error) {
     saveButton.disabled = false;
+    if (isYarnVersionConflict(error)) {
+      showYarnVersionConflict({
+        retryOperation: () => saveExistingYarn(card),
+        preservedMessage: "Zmiany pozostały w formularzu.",
+        retryLabel: "Zapisz moją wersję",
+        conflictMessage:
+          "Ten motek lub magazyn zmienił się w innej karcie albo na innym urządzeniu. Twoja wersja nadal jest w formularzu. Jej zapisanie zastąpi zmiany tego samego motka wykonane gdzie indziej.",
+      });
+      return;
+    }
+    if (isUncertainWriteError(error)) {
+      const yarnId = Number(card.dataset.id);
+      showUncertainWrite(
+        `${error.message} Nie wiadomo jeszcze, czy zmiana dotarła do magazynu. Formularz pozostaje na ekranie.`,
+        () => verifyUncertainExistingYarn(card, draft, yarnId)
+      );
+      return;
+    }
     setStorageMessage(`${error.message} Zmiany pozostały w formularzu.`, "error");
+    return;
+  }
+
+  markYarnCardAsSaved(card, savedYarn);
+  await refreshSummaryAfterConfirmedSave("Zmiany motka zapisane.");
+}
+
+async function refreshAfterConfirmedMutation(successMessage) {
+  try {
+    await refresh();
+    setStorageMessage(successMessage, "success");
+  } catch (error) {
+    setStorageMessage(
+      `${successMessage} Nie udało się odświeżyć widoku: ${error.message}`,
+      "error",
+      [
+        {
+          label: "Odśwież widok",
+          onClick: () => refreshAfterConfirmedMutation(successMessage),
+        },
+      ]
+    );
+  }
+}
+
+async function verifyUncertainDelete(node, yarnId, yarnName, retryOperation) {
+  setStorageMessage("Sprawdzam aktualny magazyn...");
+  try {
+    const yarns = await loadYarns();
+    if (isDeleteConfirmed(yarns, yarnId)) {
+      node.remove();
+      await refreshAfterConfirmedMutation(`Usunięto „${yarnName}”.`);
+      return;
+    }
+    setStorageMessage(
+      `„${yarnName}” nadal jest w magazynie. Możesz bezpiecznie spróbować usunąć go ponownie.`,
+      "error",
+      [
+        {
+          label: "Spróbuj usunąć ponownie",
+          primary: true,
+          onClick: retryOperation,
+        },
+      ]
+    );
+  } catch (error) {
+    showUncertainWrite(
+      `${error.message} Włóczka pozostaje na ekranie do czasu potwierdzenia stanu.`,
+      () => verifyUncertainDelete(node, yarnId, yarnName, retryOperation)
+    );
   }
 }
 
@@ -241,31 +1027,87 @@ function addYarnCard(yarn = {}, { isNew = false } = {}) {
   node.dataset.editing = isNew ? "true" : "false";
   node.querySelector('[data-field="name"]').value = yarn.name || "";
   node.querySelector('[data-field="color"]').value = yarn.color || "";
-  node.querySelector('[data-field="material"]').value = yarn.material || "wełna";
   node.querySelector('[data-field="weightClass"]').value = yarn.weightClass || "dk";
   node.querySelector('[data-field="length"]').value = isNew ? "" : yarn.length ?? 0;
   node.querySelector('[data-field="weight"]').value = isNew ? "" : yarn.weight ?? 0;
-  node._originalYarn = isNew ? null : collectYarnFromCard(node);
   node.querySelectorAll("[data-field]").forEach((field) => {
     field.id = `yarn-${++yarnFormSequence}-${field.dataset.field}`;
     field.closest("label").htmlFor = field.id;
   });
+  const materialOptions = node.querySelector("[data-material-options]");
+  MATERIALS.forEach(({ value, label }) => {
+    const option = document.createElement("label");
+    const checkbox = document.createElement("input");
+    const optionLabel = document.createElement("span");
+    checkbox.type = "checkbox";
+    checkbox.value = value;
+    checkbox.dataset.materialOption = "";
+    checkbox.id = `yarn-${++yarnFormSequence}-material`;
+    option.htmlFor = checkbox.id;
+    option.className = "material-picker__option";
+    optionLabel.textContent = label;
+    option.append(checkbox, optionLabel);
+    materialOptions.appendChild(option);
+  });
+  const initialMaterials = Array.isArray(yarn.materials)
+    ? yarn.materials
+    : yarn.material
+      ? [yarn.material]
+      : ["wełna"];
+  setYarnMaterials(node, initialMaterials);
+  node._originalYarn = isNew ? null : collectYarnFromCard(node);
 
   node.querySelector(".yarn-remove").addEventListener("click", async () => {
-    try {
-      setStorageMessage("Zapisuję zmianę...");
-      if (node.dataset.id) {
-        await deleteYarn(node.dataset.id);
-      }
-      node.remove();
-      await refresh();
-      setStorageMessage("Magazyn zapisany.", "success");
-    } catch (error) {
-      setStorageMessage(
-        `${error.message} Włóczka pozostała w formularzu.`,
-        "error"
-      );
+    const isSaved = node.dataset.saved === "true";
+    const yarnName = collectYarnFromCard(node).name || "tę włóczkę";
+    if (isSaved && !window.confirm(`Usunąć „${yarnName}” z magazynu? Tej operacji nie można cofnąć.`)) {
+      return;
     }
+
+    if (!isSaved) {
+      node.remove();
+      if (!yarnList.children.length) renderYarnEmptyState();
+      setStorageMessage("Anulowano dodawanie nowego motka.");
+      return;
+    }
+
+    const yarnId = Number(node.dataset.id);
+    const removeSavedYarn = async () => {
+      setStorageMessage("Usuwam włóczkę...");
+      await deleteYarn(yarnId);
+      node.remove();
+      await refreshAfterConfirmedMutation(`Usunięto „${yarnName}”.`);
+    };
+
+    const attemptRemoveSavedYarn = async () => {
+      try {
+        await removeSavedYarn();
+      } catch (error) {
+        if (isYarnVersionConflict(error)) {
+          showYarnVersionConflict({
+            retryOperation: attemptRemoveSavedYarn,
+            preservedMessage: "Włóczka nie została usunięta.",
+            retryLabel: "Usuń mimo zmian",
+            conflictMessage:
+              "Ten motek lub magazyn zmienił się w innej karcie albo na innym urządzeniu. Włóczka nie została usunięta. Możesz usunąć ją mimo nowszych zmian albo pobrać aktualny magazyn.",
+          });
+          return;
+        }
+        if (isUncertainWriteError(error)) {
+          showUncertainWrite(
+            `${error.message} Nie wiadomo jeszcze, czy włóczka została usunięta, dlatego nie powtarzam operacji automatycznie.`,
+            () => verifyUncertainDelete(node, yarnId, yarnName, attemptRemoveSavedYarn)
+          );
+          return;
+        }
+        setStorageMessage(
+          `${error.message} Włóczka pozostała w formularzu.`,
+          "error"
+        );
+      }
+    };
+
+    await attemptRemoveSavedYarn();
   });
 
   node.querySelector(".yarn-save").addEventListener("click", () => {
@@ -279,12 +1121,17 @@ function addYarnCard(yarn = {}, { isNew = false } = {}) {
     node.querySelector('[data-field="name"]').focus();
   });
   node.querySelector(".yarn-cancel").addEventListener("click", () => {
-    Object.entries(node._originalYarn).forEach(([field, value]) => {
-      if (field === "id") return;
-      node.querySelector(`[data-field="${field}"]`).value = value;
-    });
+    if (node.dataset.saved !== "true") {
+      node.remove();
+      if (!yarnList.children.length) renderYarnEmptyState();
+      setStorageMessage("Anulowano dodawanie nowego motka.");
+      return;
+    }
+
+    applyYarnToCard(node, node._originalYarn);
     node.dataset.editing = "false";
     setYarnFieldsDisabled(node, true);
+    updateYarnCardSummary(node);
     updateYarnSaveButton(node);
   });
 
@@ -293,11 +1140,27 @@ function addYarnCard(yarn = {}, { isNew = false } = {}) {
       field.removeAttribute("aria-invalid");
       updateYarnSaveButton(node);
     });
-    field.addEventListener("change", () => updateYarnSaveButton(node));
+    field.addEventListener("change", () => {
+      if (field.matches("[data-material-option]")) {
+        if (field.value === "mieszanka" && field.checked) {
+          node.querySelectorAll("[data-material-option]").forEach((option) => {
+            if (option !== field) option.checked = false;
+          });
+        } else if (field.checked) {
+          const unspecified = node.querySelector(
+            '[data-material-option][value="mieszanka"]',
+          );
+          if (unspecified) unspecified.checked = false;
+        }
+        updateYarnMaterialPicker(node);
+      }
+      updateYarnSaveButton(node);
+    });
     field.addEventListener("invalid", () => field.setAttribute("aria-invalid", "true"));
   });
 
   updateYarnSaveButton(node);
+  updateYarnCardSummary(node);
   setYarnFieldsDisabled(node, !isNew);
   yarnList.appendChild(node);
   return node;
@@ -310,6 +1173,11 @@ function collectYarnsFromDom() {
 document.querySelectorAll("label").forEach((label) => {
   const field = label.querySelector("input, select");
   if (field?.id) label.htmlFor = field.id;
+});
+
+document.querySelectorAll("[data-password-reveal]").forEach((button) => {
+  const field = document.getElementById(button.dataset.passwordReveal);
+  bindHoldToReveal(button, field);
 });
 
 async function loadYarns() {
@@ -342,6 +1210,7 @@ function renderYarnEmptyState() {
       addYarnBtn.click();
       return;
     }
+    setActiveView("account");
     loginForm.scrollIntoView({ behavior: "smooth", block: "center" });
     loginForm.querySelector('input[name="email"]').focus({ preventScroll: true });
   });
@@ -351,44 +1220,6 @@ function renderYarnEmptyState() {
 
 function renderOnboarding(yarns) {
   onboarding.hidden = !isAuthenticated || yarns.length > 0 || onboardingDismissed;
-}
-
-async function saveYarns() {
-  const local = collectYarnsFromDom();
-
-  if (!isAuthenticated) {
-    throw new Error("Zaloguj się, aby zapisywać włóczki w swoim magazynie.");
-  }
-
-  const existing = await api("/api/yarns");
-  const localIds = new Set(local.filter((yarn) => yarn.id).map((yarn) => yarn.id));
-
-  for (const yarn of existing) {
-    if (!localIds.has(yarn.id)) {
-      await api(`/api/yarns/${yarn.id}`, {
-        method: "DELETE",
-        headers: { "If-Match": yarnVersion },
-      });
-    }
-  }
-
-  const savedYarns = [];
-  for (const yarn of local) {
-    const body = { ...yarn };
-    delete body.id;
-    savedYarns.push(yarn.id
-      ? await api(`/api/yarns/${yarn.id}`, {
-          method: "PATCH",
-          headers: { "If-Match": yarnVersion },
-          body: JSON.stringify(body),
-        })
-      : await api("/api/yarns", {
-          method: "POST",
-          headers: { "If-Match": yarnVersion },
-          body: JSON.stringify(body),
-        }));
-  }
-  return savedYarns;
 }
 
 async function deleteYarn(id) {
@@ -401,39 +1232,51 @@ async function deleteYarn(id) {
   });
 }
 
-function syncDomIds(savedYarns) {
-  const cards = [...yarnList.querySelectorAll(".yarn-card")];
-  cards.forEach((card, index) => {
-    card.dataset.id = savedYarns[index]?.id || "";
-  });
-}
-
 async function loadMatches() {
   if (!isAuthenticated) return [];
   return api("/api/matches");
 }
 
-async function loadPatternCatalog() {
-  const patterns = [];
-  let offset = 0;
-  let hasMore = true;
-
-  while (hasMore) {
-    const page = await api(`/api/patterns?limit=50&offset=${offset}`);
-    patterns.push(...page.items);
-    hasMore = page.hasMore;
-    offset += page.items.length;
-    if (!page.items.length) break;
-  }
-
-  return patterns;
+async function loadPatternCatalog({ resume = false, onPage = null } = {}) {
+  return loadPaginatedItems(
+    (offset) => api(`/api/patterns?limit=50&offset=${offset}`),
+    {
+      items: resume ? catalogPatterns : [],
+      offset: resume ? catalogNextOffset : 0,
+      total: resume ? catalogTotal : 0,
+      onPage,
+    }
+  );
 }
 
 function formatRatio(value) {
   const ratio = Number(value);
   return Number.isFinite(ratio) && ratio > 0
-    ? `${ratio.toLocaleString("pl-PL")} m/100 g`
+    ? `${formatNumber(ratio)} m/100 g`
     : "brak danych";
+}
+
+function formatSkeinCount(value) {
+  const count = Number(value) || 0;
+  const formattedCount = formatNumber(count);
+  const lastTwo = count % 100;
+  const last = count % 10;
+  if (count === 1) return "1 motek";
+  if (last >= 2 && last <= 4 && !(lastTwo >= 12 && lastTwo <= 14)) {
+    return `${formattedCount} motki`;
+  }
+  return `${formattedCount} motków`;
+}
+
+function formatVariantCount(value) {
+  const formattedValue = formatNumber(value);
+  const lastTwo = value % 100;
+  const last = value % 10;
+  if (value === 1) return "1 pasujący rozmiar";
+  if (last >= 2 && last <= 4 && !(lastTwo >= 12 && lastTwo <= 14)) {
+    return `${formattedValue} pasujące rozmiary`;
+  }
+  return `${formattedValue} pasujących rozmiarów`;
 }
 
 function formatRequirement(requirement, index) {
@@ -444,7 +1287,16 @@ function formatRequirement(requirement, index) {
   const materials = Array.isArray(requirement.materials)
     ? requirement.materials.join(", ")
     : "";
-  const details = [materials, formatRatio(requirement.meters_per_100g)]
+  const ratio = Number(requirement.meters_per_100g);
+  const weightClass = requirement.yarn_weight
+    ? `grubość ${requirement.yarn_weight}`
+    : "";
+  const details = [
+    materials,
+    weightClass,
+    Number.isFinite(ratio) && ratio > 0 ? formatRatio(ratio) : "",
+    requirement.quantity_note || "",
+  ]
     .filter(Boolean)
     .join(" · ");
 
@@ -458,28 +1310,154 @@ function createMaterialTag(material) {
   return tag;
 }
 
-function renderPatternCatalog() {
-  const phrase = patternSearch.value.trim().toLocaleLowerCase("pl");
-  const reviewFilter = patternReviewFilter.value;
-  const visiblePatterns = catalogPatterns.filter((pattern) => {
-    const searchable = [
-      pattern.name,
-      pattern.description,
-      ...(Array.isArray(pattern.materials) ? pattern.materials : []),
-    ]
-      .join(" ")
-      .toLocaleLowerCase("pl");
-    const matchesPhrase = !phrase || searchable.includes(phrase);
-    const matchesStatus =
-      reviewFilter === "all" ||
-      (reviewFilter === "review" && pattern.needsReview) ||
-      (reviewFilter === "verified" && !pattern.needsReview);
-    return matchesPhrase && matchesStatus;
-  });
+function showPatternInCatalog(patternName) {
+  patternSearch.value = patternName;
+  patternReviewFilter.value = "verified";
+  patternLanguageFilter.value = "all";
+  patternTypeFilter.value = "all";
+  patternMaterialFilter.value = "all";
+  patternSort.value = "recommended";
+  catalogVisibleLimit = 12;
+  renderPatternCatalog();
+  setActiveView("catalog");
+}
 
+function formatPatternName(value) {
+  const name = String(value || "")
+    .replace(/\.pdf$/i, "")
+    .replace(/[_-]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+  return name || "Wzór bez nazwy";
+}
+
+function formatPatternLanguage(value) {
+  if (value === "pl") return "Wzór po polsku";
+  if (value === "en") return "Wzór po angielsku";
+  return "Język nieustalony";
+}
+
+function formatProjectType(value) {
+  return getProjectTypeLabel(value);
+}
+
+function readPatternFilters() {
+  return {
+    phrase: patternSearch.value,
+    review: patternReviewFilter.value,
+    language: patternLanguageFilter.value,
+    type: patternTypeFilter.value,
+    material: patternMaterialFilter.value,
+  };
+}
+
+function createPatternFacetOption({ value, count, disabled }, getLabel) {
+  const option = document.createElement("option");
+  option.value = value;
+  option.textContent = `${getLabel(value)} (${formatNumber(count)})`;
+  option.disabled = disabled;
+  return option;
+}
+
+function updatePatternFacetOptions(filters, facetCounts) {
+  const availableTypes = new Set(
+    catalogPatterns.map((pattern) => pattern.projectType || "other")
+  );
+  const typeValues = [
+    ...PROJECT_TYPE_ORDER,
+    ...[...availableTypes].filter((type) => !PROJECT_TYPE_ORDER.includes(type)),
+  ];
+  if (filters.type !== "all" && !typeValues.includes(filters.type)) {
+    typeValues.push(filters.type);
+  }
+
+  const materials = MATERIALS.map(({ value }) => value);
+  if (filters.material !== "all" && !materials.includes(filters.material)) {
+    materials.push(filters.material);
+  }
+
+  const typeOptions = buildPatternFacetOptions(
+    typeValues,
+    facetCounts.types,
+    filters.type,
+  ).map((option) =>
+    createPatternFacetOption(option, getProjectTypeFilterLabel)
+  );
+  const materialOptions = buildPatternFacetOptions(
+    materials,
+    facetCounts.materials,
+    filters.material,
+  ).map((option) =>
+    createPatternFacetOption(
+      option,
+      (value) => MATERIAL_LABEL_BY_VALUE.get(value) || value,
+    )
+  );
+  const typeTotal = filterPatterns(catalogPatterns, filters, "type").length;
+  const materialTotal = filterPatterns(
+    catalogPatterns,
+    filters,
+    "material",
+  ).length;
+
+  patternTypeFilter.replaceChildren(
+    Object.assign(document.createElement("option"), {
+      value: "all",
+      textContent: `Wszystkie typy (${formatNumber(typeTotal)})`,
+    }),
+    ...typeOptions
+  );
+  patternMaterialFilter.replaceChildren(
+    Object.assign(document.createElement("option"), {
+      value: "all",
+      textContent: `Wszystkie materiały (${formatNumber(materialTotal)})`,
+    }),
+    ...materialOptions
+  );
+  patternTypeFilter.value = filters.type;
+  patternMaterialFilter.value = filters.material;
+}
+
+function renderPatternCatalog() {
+  const filters = readPatternFilters();
+  const phrase = filters.phrase.trim();
+  const reviewFilter = filters.review;
+  const languageFilter = filters.language;
+  const typeFilter = filters.type;
+  const materialFilter = filters.material;
+  const sortMode = patternSort.value;
+  updatePatternFacetOptions(
+    filters,
+    buildPatternFacetCounts(catalogPatterns, filters),
+  );
+  resetCatalogFiltersBtn.disabled =
+    !phrase &&
+    reviewFilter === "verified" &&
+    languageFilter === "all" &&
+    typeFilter === "all" &&
+    materialFilter === "all" &&
+    sortMode === "recommended";
+  const matchingPatterns = filterPatterns(catalogPatterns, filters)
+    .sort((left, right) => {
+      const nameOrder = formatPatternName(left.name).localeCompare(
+        formatPatternName(right.name),
+        "pl"
+      );
+      if (sortMode === "name-asc") return nameOrder;
+      if (sortMode === "name-desc") return -nameOrder;
+      const statusOrder = Number(left.needsReview) - Number(right.needsReview);
+      return statusOrder || nameOrder;
+    });
+  const visiblePatterns = matchingPatterns.slice(0, catalogVisibleLimit);
+
+  const totalCatalog = Math.max(catalogTotal, catalogPatterns.length);
   patternCatalogSummary.textContent =
-    `Widoczne wzory: ${visiblePatterns.length} z ${catalogPatterns.length}`;
+    `Pokazano ${formatNumber(visiblePatterns.length)} z ${formatNumber(matchingPatterns.length)} pasujących wzorów. ` +
+    `Cały katalog: ${formatNumber(totalCatalog)}.` +
+    (catalogComplete ? "" : " Pobieram kolejne wzory...");
   patternCatalog.replaceChildren();
+  patternCatalogActions.hidden = matchingPatterns.length === 0;
+  loadMorePatternsBtn.hidden = visiblePatterns.length >= matchingPatterns.length;
 
   if (!visiblePatterns.length) {
     showMessage(patternCatalog, "Nie znaleziono wzorów spełniających te kryteria.");
@@ -492,14 +1470,19 @@ function renderPatternCatalog() {
       ? pattern.yarnRequirements
       : [];
     const materials = Array.isArray(pattern.materials) ? pattern.materials : [];
+    const title = card.querySelector("h3");
 
-    card.querySelector("h3").textContent = pattern.name;
+    title.textContent = formatPatternName(pattern.name);
+    title.title = pattern.name || "";
+    card
+      .querySelector(".pattern-card__details summary")
+      .setAttribute("aria-label", `Parametry włóczki: ${formatPatternName(pattern.name)}`);
     card.querySelector(".pattern-card__kicker").textContent =
-      pattern.sourceLanguage === "pl" ? "Wzór po polsku" : "Wzór obcojęzyczny";
+      `${formatProjectType(pattern.projectType)} · ${formatPatternLanguage(pattern.sourceLanguage)}`;
     card.querySelector(".pattern-card__description").textContent =
       pattern.description;
     card.querySelector(".pattern-card__facts").textContent =
-      `Główna włóczka: ${formatRatio(pattern.metersPer100g)}`;
+      formatPatternYarnFact(pattern, formatRatio);
 
     const status = card.querySelector(".status-pill");
     status.textContent = pattern.needsReview ? "Do sprawdzenia" : "Zweryfikowany";
@@ -527,64 +1510,171 @@ function renderPatternCatalog() {
   });
 }
 
-async function refreshPatternCatalog() {
-  showMessage(patternCatalog, "Pobieram wzory z bazy...");
-  catalogPatterns = await loadPatternCatalog();
-  renderPatternCatalog();
+function renderPatternCatalogLoading() {
+  const skeletons = Array.from({ length: 6 }, () =>
+    patternSkeletonTemplate.content.firstElementChild.cloneNode(true)
+  );
+  patternCatalogSummary.textContent = "Pobieram i porządkuję wzory...";
+  patternCatalog.replaceChildren(...skeletons);
+  patternCatalog.setAttribute("aria-busy", "true");
+  patternCatalogActions.hidden = true;
 }
 
-async function renderResults() {
-  const matches = await loadMatches();
-  const matchScopeLimited = api.lastMatchScope === "subset";
-  results.replaceChildren();
+function hidePatternCatalogNotice() {
+  patternCatalogNotice.hidden = true;
+  patternCatalogNotice.replaceChildren();
+  patternCatalogNotice.removeAttribute("aria-busy");
+}
 
-  if (!matches.length) {
-    showMessage(
-      results,
-      matchScopeLimited
-        ? "Nie znaleziono dopasowania w analizowanym podzbiorze magazynu. Dodaj mniej motków do bieżącego zestawu albo spróbuj ponownie po dalszej optymalizacji rankingu."
-        : "Brak pełnego dopasowania. Spróbuj dodać więcej metrów, większą wagę lub inny materiał."
-    );
-    return;
+function showPartialPatternCatalog(error) {
+  patternCatalogNotice.hidden = false;
+  showMessage(
+    patternCatalogNotice,
+    `Pokazujemy ${formatNumber(catalogPatterns.length)} pobranych wzorów. ${error.message} Nie udało się pobrać reszty katalogu.`,
+    "warning",
+    {
+      label: "Dokończ pobieranie",
+      onClick: () =>
+        refreshPatternCatalog({ resume: true }).catch(showPatternCatalogError),
+    }
+  );
+}
+
+function showPatternCatalogError(error) {
+  hidePatternCatalogNotice();
+  patternCatalogSummary.textContent = "";
+  showMessage(
+    patternCatalog,
+    `${error.message} Katalog nie został odświeżony — spróbuj ponownie później.`,
+    "error",
+    {
+      label: "Spróbuj ponownie",
+      onClick: () => refreshPatternCatalog().catch(showPatternCatalogError),
+    }
+  );
+}
+
+async function refreshPatternCatalog({ resume = false } = {}) {
+  if (resume) {
+    patternCatalogNotice.hidden = false;
+    showMessage(patternCatalogNotice, "Dokańczam pobieranie katalogu...", "loading");
+  } else {
+    renderPatternCatalogLoading();
   }
-
-  if (matchScopeLimited) {
-    const notice = document.createElement("div");
-    notice.className = "empty-state";
-    notice.textContent = "Ranking użył najlepiej pasującego podzbioru motków. Pozostałe włóczki nadal są zapisane w Twoim magazynie.";
-    results.appendChild(notice);
+  try {
+    const result = await loadPatternCatalog({
+      resume,
+      onPage: (progress) => {
+        catalogPatterns = progress.items;
+        catalogNextOffset = progress.nextOffset;
+        catalogTotal = progress.total;
+        catalogComplete = progress.complete;
+        renderPatternCatalog();
+      },
+    });
+    catalogPatterns = result.items;
+    catalogNextOffset = result.nextOffset;
+    catalogTotal = result.total;
+    catalogComplete = result.complete;
+    renderPatternCatalog();
+    if (catalogComplete) hidePatternCatalogNotice();
+    else showPartialPatternCatalog(result.error);
+  } finally {
+    patternCatalog.removeAttribute("aria-busy");
   }
+}
 
-  matches.forEach((item) => {
-    const card = resultTemplate.content.firstElementChild.cloneNode(true);
-    card.querySelector("h3").textContent = item.pattern.name;
-    card.querySelector(".result-card__meta").textContent =
-      `${item.pattern.yarnsNeeded} motek/motki, min. ${item.pattern.metersNeeded} m, ${item.pattern.gramsNeeded} g`;
-    card.querySelector(".result-card__desc").textContent = item.pattern.description;
-    card.querySelector(".score-pill").textContent = `Dopasowanie ${item.total}%`;
-    card
-      .querySelector(".requirements")
-      .replaceChildren(
-        createRequirement(`Materiały: ${item.pattern.materials.join(", ")}`),
-        createRequirement(`Grubości: ${item.pattern.weightClasses.join(", ")}`),
-        createRequirement(`Pasujące włóczki w Twoim zestawie: ${item.matchedYarns}`)
-      );
-    results.appendChild(card);
+function showResultsError(message) {
+  showMessage(results, message, "error", {
+    label: "Spróbuj ponownie",
+    onClick: () => findBtn.click(),
   });
 }
 
-async function renderSummary() {
-  const yarns = await loadYarns();
+async function renderResults() {
+  if (!isAuthenticated) {
+    showMessage(results, "Zaloguj się i dodaj włóczki, aby zobaczyć pasujące wzory.");
+    return;
+  }
+
+  showMessage(results, "Pobieram dopasowane wzory...", "loading");
+  try {
+    const matches = await loadMatches();
+    const matchScopeLimited = api.lastMatchScope === "subset";
+    results.replaceChildren();
+
+    if (!matches.length) {
+      showMessage(
+        results,
+        matchScopeLimited
+          ? "Nie znaleziono dopasowania w analizowanym podzbiorze magazynu. Dodaj mniej motków do bieżącego zestawu albo spróbuj ponownie po dalszej optymalizacji rankingu."
+          : "Brak pełnego dopasowania. Spróbuj dodać więcej metrów, większą wagę lub inny materiał."
+      );
+      return;
+    }
+
+    if (matchScopeLimited) {
+      const notice = document.createElement("div");
+      notice.className = "empty-state";
+      notice.textContent = "Ranking użył najlepiej pasującego podzbioru motków. Pozostałe włóczki nadal są zapisane w Twoim magazynie.";
+      results.appendChild(notice);
+    }
+
+    groupMatchesByPattern(matches).forEach((group) => {
+      const card = resultTemplate.content.firstElementChild.cloneNode(true);
+      const variantCount = group.variants.length;
+      const bestScore = Math.max(...group.variants.map((item) => item.total));
+      card.querySelector("h3").textContent = group.name;
+      card.querySelector("h3").title = group.name;
+      card.querySelector(".result-card__meta").textContent = formatVariantCount(variantCount);
+      card.querySelector(".result-card__desc").textContent = group.description;
+      card.querySelector(".score-pill").textContent = `Najlepiej ${bestScore}%`;
+      const catalogLink = card.querySelector(".result-card__catalog-link");
+      catalogLink.setAttribute("aria-label", `Zobacz ${group.name} w katalogu`);
+      catalogLink.addEventListener("click", () => showPatternInCatalog(group.name));
+      card
+        .querySelector(".match-variants")
+        .replaceChildren(
+          ...group.variants.map((item, index) => createMatchVariant(item, index === 0))
+        );
+      results.appendChild(card);
+    });
+  } finally {
+    results.removeAttribute("aria-busy");
+  }
+}
+
+async function renderSummary(loadedYarns = null) {
+  if (!isAuthenticated) {
+    summary.textContent = "Twój prywatny magazyn pojawi się tutaj po zalogowaniu.";
+    inventoryStats?.setAttribute("aria-busy", "false");
+    return;
+  }
+
+  const yarns = loadedYarns || await loadYarns();
   const totalLength = yarns.reduce((sum, yarn) => sum + yarn.length, 0);
   const totalWeight = yarns.reduce((sum, yarn) => sum + yarn.weight, 0);
-  const storageText = "Zestaw jest przechowywany prywatnie w Supabase.";
+  const colorCount = new Set(yarns.map((yarn) => yarn.color).filter(Boolean)).size;
+  const storageText = "Zapisane bezpiecznie na Twoim koncie.";
+
+  inventoryStats?.setAttribute("aria-busy", "false");
+  inventoryStatYarns.textContent = formatNumber(yarns.length);
+  inventoryStatLength.textContent = formatNumber(totalLength);
+  inventoryStatWeight.textContent = formatNumber(totalWeight);
+  inventoryStatColors.textContent = formatNumber(colorCount);
+  inventoryStats?.replaceChildren(
+    inventoryStats.querySelector(".inventory-stat--coral"),
+    inventoryStats.querySelector(".inventory-stat--lavender"),
+    inventoryStats.querySelector(".inventory-stat--blue"),
+    inventoryStats.querySelector(".inventory-stat--apricot"),
+  );
 
   const yarnCount = document.createElement("strong");
-  yarnCount.textContent = String(yarns.length);
+  yarnCount.textContent = formatNumber(yarns.length);
   const length = document.createElement("strong");
-  length.textContent = `${totalLength} m`;
+  length.textContent = `${formatNumber(totalLength)} m`;
   const weight = document.createElement("strong");
-  weight.textContent = `${totalWeight} g`;
+  weight.textContent = `${formatNumber(totalWeight)} g`;
 
   summary.replaceChildren(
     yarnCount,
@@ -605,15 +1695,41 @@ function setAuthMessage(message, kind = "") {
   }
 }
 
+function setDeleteAccountMessage(message, kind = "") {
+  deleteAccountMessage.textContent = message;
+  deleteAccountMessage.dataset.kind = kind;
+  deleteAccountMessage.setAttribute("role", kind === "error" ? "alert" : "status");
+  if (kind === "error" && message) {
+    deleteAccountMessage.focus({ preventScroll: true });
+  }
+}
+
 function setAuthBusy(form, busy) {
   form.querySelector('button[type="submit"]').disabled = busy;
+  form.toggleAttribute("aria-busy", busy);
 }
 
 function showAuthForm(form) {
   [loginForm, registerForm, passwordResetForm, passwordUpdateForm].forEach((candidate) => {
     candidate.hidden = candidate !== form;
   });
+  const isRecoveryForm = form === passwordResetForm || form === passwordUpdateForm;
+  authModeSwitch.hidden = isRecoveryForm || isAuthenticated;
+  loginModeBtn.setAttribute("aria-selected", String(form === loginForm));
+  registerModeBtn.setAttribute("aria-selected", String(form === registerForm));
+  loginModeBtn.tabIndex = form === loginForm ? 0 : -1;
+  registerModeBtn.tabIndex = form === registerForm ? 0 : -1;
   authPanel.classList.toggle("auth-panel--recovery", form === passwordUpdateForm);
+
+  const content = new Map([
+    [loginForm, ["Zaloguj się do Motka", "Wróć do swojego magazynu i rozpoczętych projektów."]],
+    [registerForm, ["Załóż konto w Motku", "Zapisuj włóczki prywatnie i wracaj do nich na dowolnym urządzeniu."]],
+    [passwordResetForm, ["Odzyskaj dostęp do konta", "Wyślemy bezpieczny link pozwalający ustawić nowe hasło."]],
+    [passwordUpdateForm, ["Ustaw nowe hasło", "Wybierz nowe hasło, a następnie zaloguj się ponownie."]],
+  ]);
+  const [title, lead] = content.get(form);
+  authTitle.textContent = title;
+  authLead.textContent = lead;
 }
 
 async function startPasswordRecovery() {
@@ -632,6 +1748,7 @@ async function startPasswordRecovery() {
     });
     window.history.replaceState({}, document.title, window.location.pathname);
     authForms.hidden = false;
+    setActiveView("account", { focus: false });
     showAuthForm(passwordUpdateForm);
     passwordUpdateForm.scrollIntoView({ behavior: "smooth", block: "center" });
     setAuthMessage("Ustaw nowe hasło.");
@@ -651,42 +1768,98 @@ function renderAuthState(payload) {
   const authenticated = Boolean(payload?.authenticated && payload.user);
   isAuthenticated = authenticated;
   authForms.hidden = authenticated;
+  authModeSwitch.hidden = authenticated;
   authLoggedIn.hidden = !authenticated;
   authUser.hidden = !authenticated;
+  accountView.classList.toggle("is-authenticated", authenticated);
   addYarnBtn.disabled = !authenticated;
+  inventoryAddYarnBtn.disabled = !authenticated;
   findBtn.disabled = !authenticated;
+  inventoryMatchBtn.disabled = !authenticated;
+  updateNavigationState();
   if (!authenticated) {
     onboardingDismissed = false;
     onboarding.hidden = true;
+    headerUser.hidden = true;
+    headerUser.textContent = "";
+    if (["inventory", "matches"].includes(activeView)) {
+      setActiveView("account", { focus: false });
+    }
   }
 
   if (!authenticated) {
     authUser.textContent = "";
     authProfileSummary.textContent = "";
+    deleteAccountForm.reset();
+    setDeleteAccountMessage("");
     authLead.textContent = "Załóż konto, aby przygotować aplikację do prywatnego magazynu włóczek.";
+    showAuthForm(loginForm);
     return;
   }
 
   const profile = payload.profile || {};
   const login = profile.login || payload.user.metadata?.login || payload.user.email;
   authUser.textContent = `Zalogowano jako ${login}`;
-  authProfileSummary.textContent =
-    profile.email || payload.user.email || "Zalogowany użytkownik";
-  authLead.textContent = "Sesja jest aktywna. Twój magazyn włóczek jest przechowywany prywatnie w Supabase.";
+  authUser.title = login;
+  headerUser.textContent = login;
+  headerUser.title = login;
+  headerUser.hidden = false;
+  const profileEmail = profile.email || payload.user.email || "";
+  authProfileSummary.textContent = profileEmail || "Zalogowany użytkownik";
+  authTitle.textContent = "Twoje konto";
+  authLead.textContent = "Profil i bezpieczeństwo Twojego prywatnego magazynu.";
 }
 
 async function refreshAuthSession() {
+  let payload;
   try {
-    const payload = await api("/api/auth/session");
-    renderAuthState(payload);
-    if (!payload.authenticated) {
-      setAuthMessage("Możesz założyć konto lub zalogować się.");
-    } else {
-      await refresh();
-    }
+    payload = await api("/api/auth/session");
   } catch (error) {
     renderAuthState({ authenticated: false });
     setAuthMessage(error.message, "error");
+    return;
+  }
+
+  renderAuthState(payload);
+  if (!initialSessionResolved) {
+    setActiveView(payload.authenticated ? "inventory" : "account", { focus: false });
+    initialSessionResolved = true;
+  }
+  if (!payload.authenticated) {
+    setAuthMessage("Możesz założyć konto lub zalogować się.");
+    return;
+  }
+
+  if (preserveDraftAfterLogin) {
+    const requiresSave = preservedDraftRequiresSave;
+    preserveDraftAfterLogin = false;
+    preservedDraftRequiresSave = false;
+    setActiveView("inventory", { focus: false });
+    setAuthMessage(
+      requiresSave
+        ? "Zalogowano ponownie. Twoje zmiany są nadal w formularzu — sprawdź je i kliknij „Zapisz”."
+        : "Zalogowano ponownie. Poprzednia operacja nie została wykonana — spróbuj ponownie.",
+      "success"
+    );
+    setStorageMessage(
+      requiresSave
+        ? "Sesja została przywrócona. Sprawdź rozpoczęte zmiany i kliknij „Zapisz”."
+        : "Sesja została przywrócona. Spróbuj ponownie wykonać ostatnią operację.",
+      "success"
+    );
+    return;
+  }
+
+  try {
+    await refresh();
+  } catch (error) {
+    setStorageMessage(
+      `${error.message} Konto nadal jest zalogowane — spróbuj ponownie za chwilę.`,
+      "error"
+    );
+    showResultsError(
+      `${error.message} Nie udało się odświeżyć dopasowania. Spróbuj ponownie.`
+    );
   }
 }
 
@@ -710,6 +1883,7 @@ async function submitAuthForm(form, endpoint, successMessage) {
     } else {
       setAuthMessage(successMessage, "success");
       await refreshAuthSession();
+      setActiveView("inventory");
     }
     form.reset();
   } catch (error) {
@@ -724,6 +1898,40 @@ loginForm.addEventListener("submit", async (event) => {
   await submitAuthForm(loginForm, "/api/auth/login", "Zalogowano.");
 });
 
+loginModeBtn.addEventListener("click", () => {
+  showAuthForm(loginForm);
+  setAuthMessage("");
+  loginForm.querySelector('input[name="email"]').focus();
+});
+
+registerModeBtn.addEventListener("click", () => {
+  showAuthForm(registerForm);
+  setAuthMessage("");
+  registerForm.querySelector('input[name="login"]').focus();
+});
+
+authModeSwitch.addEventListener("keydown", (event) => {
+  const tabs = [loginModeBtn, registerModeBtn];
+  const currentIndex = tabs.indexOf(document.activeElement);
+  if (currentIndex === -1) return;
+
+  let nextIndex = currentIndex;
+  if (event.key === "ArrowRight" || event.key === "ArrowDown") {
+    nextIndex = (currentIndex + 1) % tabs.length;
+  } else if (event.key === "ArrowLeft" || event.key === "ArrowUp") {
+    nextIndex = (currentIndex - 1 + tabs.length) % tabs.length;
+  } else if (event.key === "Home") {
+    nextIndex = 0;
+  } else if (event.key === "End") {
+    nextIndex = tabs.length - 1;
+  } else {
+    return;
+  }
+
+  event.preventDefault();
+  tabs[nextIndex].click();
+  tabs[nextIndex].focus();
+});
 forgotPasswordBtn.addEventListener("click", () => {
   showAuthForm(passwordResetForm);
   setAuthMessage("Podaj adres e-mail, na który wyślemy instrukcję.");
@@ -782,11 +1990,21 @@ registerForm.addEventListener("submit", async (event) => {
 });
 
 logoutBtn.addEventListener("click", async () => {
+  if (
+    hasUnsavedYarnChanges() &&
+    !window.confirm("Wylogować się? Niezapisane zmiany w magazynie zostaną utracone.")
+  ) {
+    return;
+  }
+
   logoutBtn.disabled = true;
   setAuthMessage("Wylogowuję...");
   try {
     await api("/api/auth/logout", { method: "POST", body: "{}" });
+    preserveDraftAfterLogin = false;
+    preservedDraftRequiresSave = false;
     renderAuthState({ authenticated: false });
+    setActiveView("account");
     await refresh();
     setAuthMessage("Wylogowano.", "success");
   } catch (error) {
@@ -796,25 +2014,77 @@ logoutBtn.addEventListener("click", async () => {
   }
 });
 
-async function refresh() {
-  const yarns = await loadYarns();
-  yarnList.replaceChildren();
-  if (yarns.length) {
-    yarns.forEach(addYarnCard);
-  } else {
+deleteAccountForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  if (!deleteAccountForm.reportValidity()) return;
+
+  const submitButton = deleteAccountForm.querySelector('button[type="submit"]');
+  const body = Object.fromEntries(new FormData(deleteAccountForm).entries());
+  submitButton.disabled = true;
+  deleteAccountForm.setAttribute("aria-busy", "true");
+  setDeleteAccountMessage("Usuwam konto...");
+
+  try {
+    await api("/api/account", {
+      method: "DELETE",
+      body: JSON.stringify(body),
+    });
+    yarnList.replaceChildren();
     renderYarnEmptyState();
+    summary.textContent = "Twój prywatny magazyn pojawi się tutaj po zalogowaniu.";
+    yarnVersion = null;
+    preserveDraftAfterLogin = false;
+    preservedDraftRequiresSave = false;
+    renderAuthState({ authenticated: false });
+    setActiveView("account");
+    setAuthMessage("Konto i zapisane dane zostały usunięte.", "success");
+  } catch (error) {
+    setDeleteAccountMessage(error.message, "error");
+  } finally {
+    deleteAccountForm.removeAttribute("aria-busy");
+    submitButton.disabled = false;
   }
-  renderOnboarding(yarns);
-  await renderSummary();
-  await renderResults();
+});
+
+async function refresh() {
+  yarnList.setAttribute("aria-busy", "true");
+  summary.setAttribute("aria-busy", "true");
+  try {
+    const yarns = await loadYarns();
+    yarnList.replaceChildren();
+    if (yarns.length) {
+      yarns.forEach(addYarnCard);
+    } else {
+      renderYarnEmptyState();
+    }
+    renderOnboarding(yarns);
+    await renderSummary(yarns);
+    await renderResults();
+  } finally {
+    yarnList.removeAttribute("aria-busy");
+    summary.removeAttribute("aria-busy");
+  }
 }
 
-addYarnBtn.addEventListener("click", async () => {
-  yarnList.querySelector(".yarn-empty-state")?.remove();
-  onboarding.hidden = true;
-  const card = addYarnCard({}, { isNew: true });
+addYarnBtn.addEventListener("click", () => {
+  const { card, created } = ensureSingleNewYarnCard(
+    yarnList.querySelectorAll(".yarn-card"),
+    () => {
+      yarnList.querySelector(".yarn-empty-state")?.remove();
+      onboarding.hidden = true;
+      return addYarnCard({}, { isNew: true });
+    },
+  );
+
+  if (!created) {
+    setStorageMessage("Formularz nowego motka jest już otwarty.");
+  }
   card.scrollIntoView({ behavior: "smooth", block: "center" });
   card.querySelector('[data-field="name"]').focus();
+});
+
+inventoryAddYarnBtn.addEventListener("click", () => {
+  addYarnBtn.click();
 });
 
 onboardingAddYarnBtn.addEventListener("click", () => {
@@ -827,7 +2097,17 @@ onboardingSkipBtn.addEventListener("click", () => {
   onboarding.hidden = true;
 });
 
+inventoryMatchBtn.addEventListener("click", () => {
+  setActiveView("matches");
+  findBtn.click();
+});
+
+backToInventoryBtn.addEventListener("click", () => {
+  setActiveView("inventory");
+});
+
 findBtn.addEventListener("click", async () => {
+  setActiveView("matches", { focus: false });
   try {
     if (yarnList.querySelector('.yarn-card[data-saved="false"]')) {
       showMessage(results, "Uzupełnij dane nowego motka i kliknij „Zapisz”, zanim uruchomisz dopasowanie.");
@@ -839,20 +2119,49 @@ findBtn.addEventListener("click", async () => {
     }
     findBtn.disabled = true;
     findBtn.textContent = "Dobieram...";
-    showMessage(results, "Zapisuję włóczki...");
-    await saveYarns();
-    showMessage(results, "Pobieram dopasowane wzory...");
+    showMessage(results, "Pobieram dopasowane wzory...", "loading");
     await refresh();
+    document.getElementById("matchesTitle").scrollIntoView({ behavior: "smooth", block: "start" });
   } catch (error) {
-    showMessage(results, error.message);
+    showResultsError(error.message);
   } finally {
     findBtn.disabled = false;
     findBtn.textContent = "Dobierz wzór";
   }
 });
 
-patternSearch.addEventListener("input", renderPatternCatalog);
-patternReviewFilter.addEventListener("change", renderPatternCatalog);
+function resetPatternCatalogView() {
+  catalogVisibleLimit = 12;
+  renderPatternCatalog();
+}
+
+patternSearch.addEventListener("input", resetPatternCatalogView);
+patternReviewFilter.addEventListener("change", resetPatternCatalogView);
+patternLanguageFilter.addEventListener("change", resetPatternCatalogView);
+patternTypeFilter.addEventListener("change", resetPatternCatalogView);
+patternMaterialFilter.addEventListener("change", resetPatternCatalogView);
+patternSort.addEventListener("change", resetPatternCatalogView);
+resetCatalogFiltersBtn.addEventListener("click", () => {
+  patternSearch.value = "";
+  patternReviewFilter.value = "verified";
+  patternLanguageFilter.value = "all";
+  patternTypeFilter.value = "all";
+  patternMaterialFilter.value = "all";
+  patternSort.value = "recommended";
+  resetPatternCatalogView();
+  patternSearch.focus({ preventScroll: true });
+});
+loadMorePatternsBtn.addEventListener("click", () => {
+  catalogVisibleLimit += 12;
+  renderPatternCatalog();
+});
+backToCatalogFiltersBtn.addEventListener("click", () => {
+  document.getElementById("catalogFilters").scrollIntoView({
+    behavior: "smooth",
+    block: "center",
+  });
+  patternSearch.focus({ preventScroll: true });
+});
 
 detectRuntimeMode()
   .then(async () => {
@@ -860,13 +2169,9 @@ detectRuntimeMode()
     if (recoveryHandled) return;
     await Promise.all([
       refreshAuthSession(),
-      refresh(),
-      refreshPatternCatalog().catch((error) => {
-        patternCatalogSummary.textContent = "";
-        showMessage(patternCatalog, error.message);
-      }),
+      refreshPatternCatalog().catch(showPatternCatalogError),
     ]);
   })
   .catch((error) => {
-    showMessage(results, error.message);
+    showMessage(results, error.message, "error");
   });

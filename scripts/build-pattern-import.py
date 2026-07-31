@@ -1,16 +1,20 @@
 import json
 from pathlib import Path
 
+from pattern_taxonomy import infer_project_type
+
 
 PROJECT_DIR = Path(__file__).resolve().parent.parent
 CANDIDATES_PATH = PROJECT_DIR / "tmp" / "pdfs" / "pattern-candidates.json"
 OVERRIDES_PATH = PROJECT_DIR / "data" / "pattern-manual-overrides.json"
+EXCLUSIONS_PATH = PROJECT_DIR / "data" / "pattern-catalog-exclusions.json"
 DEMO_PATH = PROJECT_DIR / "data" / "pattern-demo.json"
 OUTPUT_PATH = PROJECT_DIR / "data" / "patterns-import.json"
 
 DATABASE_FIELDS = (
     "name",
     "description",
+    "project_type",
     "materials",
     "meters_per_100g",
     "yarn_requirements",
@@ -21,10 +25,146 @@ DATABASE_FIELDS = (
 )
 
 ALLOWED_LANGUAGES = {"pl", "en", "mixed", "unknown"}
+ALLOWED_PROJECT_TYPES = {
+    "socks",
+    "sweater",
+    "cardigan",
+    "top",
+    "shawl_scarf",
+    "head_accessory",
+    "gloves",
+    "vest",
+    "skirt_dress",
+    "blanket",
+    "other",
+}
+ALLOWED_MATERIALS = {
+    "wełna",
+    "alpaka",
+    "moher",
+    "kaszmir",
+    "angora",
+    "jak",
+    "bawełna",
+    "len",
+    "bambus",
+    "wiskoza",
+    "jedwab",
+    "poliamid",
+    "poliester",
+    "akryl",
+    "mieszanka",
+}
+ALLOWED_WEIGHT_CLASSES = {"lace", "fingering", "sport", "dk", "worsted", "bulky"}
+
+
+def validate_matching_requirements(value: object, source: str) -> list[str]:
+    errors = []
+    if not isinstance(value, dict) or value.get("version") != 2:
+        return [f"{source}: matching_requirements musi mieć wersję 2"]
+
+    variants = value.get("variants")
+    if not isinstance(variants, list) or len(variants) > 250:
+        return [f"{source}: matching_requirements.variants musi być listą do 250 elementów"]
+
+    seen_ids = set()
+    for index, variant in enumerate(variants, start=1):
+        context = f"{source}: wariant {index}"
+        if not isinstance(variant, dict):
+            errors.append(f"{context} nie jest obiektem")
+            continue
+
+        variant_id = variant.get("id")
+        label = variant.get("label")
+        if not isinstance(variant_id, str) or not variant_id.strip() or len(variant_id.strip()) > 100:
+            errors.append(f"{context} ma nieprawidłowe id")
+        elif variant_id.strip() in seen_ids:
+            errors.append(f"{context} ma powtórzone id")
+        else:
+            seen_ids.add(variant_id.strip())
+        if not isinstance(label, str) or not label.strip() or len(label.strip()) > 100:
+            errors.append(f"{context} ma nieprawidłową etykietę")
+
+        requirements = variant.get("requirements")
+        if not isinstance(requirements, list) or not 1 <= len(requirements) <= 8:
+            errors.append(f"{context} musi zawierać od 1 do 8 ról")
+            continue
+
+        for role_index, requirement in enumerate(requirements, start=1):
+            role_context = f"{context}, rola {role_index}"
+            if not isinstance(requirement, dict):
+                errors.append(f"{role_context} nie jest obiektem")
+                continue
+
+            if not isinstance(requirement.get("role"), str) or not requirement["role"].strip():
+                errors.append(f"{role_context} nie ma nazwy")
+            basis = requirement.get("measurement_basis")
+            if basis not in {"meters", "grams"}:
+                errors.append(f"{role_context} ma nieprawidłową podstawę pomiaru")
+
+            for prefix in ("meters", "grams", "skeins"):
+                minimum = requirement.get(f"{prefix}_min")
+                maximum = requirement.get(f"{prefix}_max")
+                if minimum is not None and (
+                    not isinstance(minimum, int)
+                    or isinstance(minimum, bool)
+                    or minimum < 1
+                ):
+                    errors.append(f"{role_context}.{prefix}_min musi być dodatnią liczbą")
+                if maximum is not None and (
+                    not isinstance(maximum, int)
+                    or isinstance(maximum, bool)
+                    or maximum < 1
+                    or minimum is None
+                    or maximum < minimum
+                ):
+                    errors.append(f"{role_context}.{prefix}_max ma nieprawidłowy zakres")
+            if basis in {"meters", "grams"} and requirement.get(f"{basis}_min") is None:
+                errors.append(f"{role_context} nie ma {basis}_min")
+
+            material_match = requirement.get("material_match")
+            materials = requirement.get("materials")
+            if material_match not in {"all", "any", "any_material"}:
+                errors.append(f"{role_context} ma nieprawidłowy tryb materiału")
+            elif not isinstance(materials, list):
+                errors.append(f"{role_context}.materials musi być listą")
+            elif material_match == "any_material" and materials:
+                errors.append(f"{role_context}: any_material wymaga pustej listy")
+            elif material_match != "any_material" and (
+                not materials
+                or any(material not in ALLOWED_MATERIALS for material in materials)
+                or ("mieszanka" in materials and len(set(materials)) > 1)
+            ):
+                errors.append(f"{role_context} zawiera nieprawidłowy materiał")
+
+            if requirement.get("color_mode") not in {"same", "any"}:
+                errors.append(f"{role_context} ma nieprawidłowy tryb koloru")
+            weight_classes = requirement.get("weight_classes")
+            if (
+                not isinstance(weight_classes, list)
+                or not weight_classes
+                or any(value not in ALLOWED_WEIGHT_CLASSES for value in weight_classes)
+            ):
+                errors.append(f"{role_context} ma nieprawidłową grubość")
+
+    return errors
 
 
 def load_json(path: Path):
     return json.loads(path.read_text(encoding="utf-8"))
+
+
+def resolve_project_type(candidate: dict, override: dict) -> str:
+    explicit_type = override.get("project_type")
+    if explicit_type:
+        return explicit_type
+
+    final_name = override.get("name", candidate.get("name", ""))
+    final_description = override.get(
+        "description",
+        candidate.get("description", ""),
+    )
+    return infer_project_type(final_name, final_description)[0]
 
 
 def validate_record(record: dict) -> list[str]:
@@ -41,6 +181,9 @@ def validate_record(record: dict) -> list[str]:
     elif len(record["description"].strip()) > 1000:
         errors.append(f"{source}: opis przekracza 1000 znaków")
 
+    if record.get("project_type") not in ALLOWED_PROJECT_TYPES:
+        errors.append(f"{source}: nieobsługiwany typ projektu")
+
     materials = record.get("materials")
     if not isinstance(materials, list) or not all(
         isinstance(material, str) and material.strip() for material in materials
@@ -55,32 +198,7 @@ def validate_record(record: dict) -> list[str]:
     if not isinstance(requirements, list):
         errors.append(f"{source}: yarn_requirements musi być listą")
 
-    matching_requirements = record.get("matching_requirements")
-    if not isinstance(matching_requirements, dict) or not isinstance(
-        matching_requirements.get("variants"), list
-    ):
-        errors.append(
-            f"{source}: matching_requirements musi zawierać listę variants"
-        )
-    else:
-        for index, variant in enumerate(matching_requirements["variants"], start=1):
-            if not isinstance(variant, dict):
-                errors.append(f"{source}: wariant {index} nie jest obiektem")
-                continue
-            for field in ("yarns_needed", "meters_needed", "grams_needed"):
-                value = variant.get(field)
-                if not isinstance(value, int) or isinstance(value, bool) or value < 1:
-                    errors.append(
-                        f"{source}: wariant {index} ma nieprawidłowe pole {field}"
-                    )
-            for field in ("materials", "weight_classes"):
-                value = variant.get(field)
-                if not isinstance(value, list) or not all(
-                    isinstance(item, str) and item.strip() for item in value
-                ):
-                    errors.append(
-                        f"{source}: wariant {index} ma nieprawidłowe pole {field}"
-                    )
+    errors.extend(validate_matching_requirements(record.get("matching_requirements"), source))
 
     if record.get("source_language") not in ALLOWED_LANGUAGES:
         errors.append(f"{source}: nieobsługiwany język źródła")
@@ -88,15 +206,24 @@ def validate_record(record: dict) -> list[str]:
     if not isinstance(record.get("needs_review"), bool):
         errors.append(f"{source}: needs_review musi mieć wartość true albo false")
 
-    requirements_have_ratios = bool(requirements) and all(
+    requirements_are_complete = bool(requirements) and all(
         isinstance(requirement, dict)
-        and isinstance(requirement.get("meters_per_100g"), (int, float))
-        and requirement["meters_per_100g"] > 0
+        and (
+            (
+                isinstance(requirement.get("meters_per_100g"), (int, float))
+                and requirement["meters_per_100g"] > 0
+            )
+            or (
+                requirement.get("flexible") is True
+                and isinstance(requirement.get("quantity_note"), str)
+                and requirement["quantity_note"].strip()
+            )
+        )
         for requirement in requirements
     )
 
     is_incomplete = not materials or (
-        ratio is None and not requirements_have_ratios
+        ratio is None and not requirements_are_complete
     )
     if is_incomplete and record.get("needs_review") is not True:
         errors.append(
@@ -109,6 +236,7 @@ def validate_record(record: dict) -> list[str]:
 def main() -> None:
     candidate_document = load_json(CANDIDATES_PATH)
     overrides = load_json(OVERRIDES_PATH)
+    exclusions = load_json(EXCLUSIONS_PATH)["exclusions"]
     demo_document = load_json(DEMO_PATH)
     candidates = candidate_document["candidates"]
     demo_records = demo_document["records"]
@@ -121,22 +249,58 @@ def main() -> None:
             + ", ".join(unknown_overrides)
         )
 
+    unknown_exclusions = sorted(set(exclusions) - candidate_filenames)
+    if unknown_exclusions:
+        raise ValueError(
+            "Wykluczenia wskazują nieistniejące pliki PDF: "
+            + ", ".join(unknown_exclusions)
+        )
+
+    overlapping_rules = sorted(set(overrides) & set(exclusions))
+    if overlapping_rules:
+        raise ValueError(
+            "Plik nie może mieć jednocześnie poprawki i wykluczenia: "
+            + ", ".join(overlapping_rules)
+        )
+
     records = []
     audit = []
     validation_errors = []
 
     for candidate in candidates:
         source_filename = candidate["source_filename"]
-        merged = {**candidate, **overrides.get(source_filename, {})}
+        if source_filename in exclusions:
+            audit.append(
+                {
+                    "source_filename": source_filename,
+                    "excluded": True,
+                    "exclusion_reason": exclusions[source_filename]["reason"],
+                    "manual_override": False,
+                    "review_reasons": candidate.get("review_reasons", []),
+                    "review_notes": [],
+                    "reference_sources": candidate.get("reference_sources", []),
+                }
+            )
+            continue
+
+        override = overrides.get(source_filename, {})
+        merged = {**candidate, **override}
         merged["source_filename"] = source_filename
+        merged["project_type"] = resolve_project_type(candidate, override)
 
         record = {
             field: merged.get(
                 field,
-                {"variants": []} if field == "matching_requirements" else None,
+                {"version": 2, "variants": []}
+                if field == "matching_requirements"
+                else None,
             )
             for field in DATABASE_FIELDS
         }
+        record["matching_requirements"] = override.get(
+            "matching_requirements",
+            {"version": 2, "variants": []},
+        )
         validation_errors.extend(validate_record(record))
         records.append(record)
 
@@ -146,10 +310,15 @@ def main() -> None:
                 "manual_override": source_filename in overrides,
                 "review_reasons": candidate.get("review_reasons", []),
                 "review_notes": merged.get("review_notes", []),
+                "reference_sources": candidate.get("reference_sources", []),
             }
         )
 
     for demo_record in demo_records:
+        demo_record = {
+            **demo_record,
+            "matching_requirements": {"version": 2, "variants": []},
+        }
         validation_errors.extend(validate_record(demo_record))
         records.append(demo_record)
         audit.append(
@@ -174,6 +343,7 @@ def main() -> None:
         "metadata": {
             "record_count": len(records),
             "manual_override_count": len(overrides),
+            "excluded_pdf_count": len(exclusions),
             "synthetic_demo_count": len(demo_records),
             "needs_review_count": sum(record["needs_review"] for record in records),
             "complete_material_count": sum(bool(record["materials"]) for record in records),

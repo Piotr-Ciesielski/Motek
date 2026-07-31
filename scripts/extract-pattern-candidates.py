@@ -1,8 +1,11 @@
+import argparse
 import hashlib
 import json
 import re
 import unicodedata
 from pathlib import Path
+
+from pattern_taxonomy import infer_project_type
 
 import fitz
 
@@ -11,13 +14,17 @@ PROJECT_DIR = Path(__file__).resolve().parent.parent
 PDF_DIR = PROJECT_DIR / "Wzory"
 OUTPUT_DIR = PROJECT_DIR / "tmp" / "pdfs"
 OUTPUT_PATH = OUTPUT_DIR / "pattern-candidates.json"
+TEXT_OUTPUT_DIR = OUTPUT_DIR / "text"
+RENDER_OUTPUT_DIR = OUTPUT_DIR / "rendered"
+REFERENCE_CATALOG_PATH = PROJECT_DIR / "data" / "yarn-reference-catalog.json"
 MAX_PAGES_TO_SCAN = 24
 MAX_TEXT_CHARACTERS = 120_000
 
 MATERIALS = {
-    "wełna": ("wełna", "welna", "wool", "merino"),
+    "wełna": ("wełna", "welna", "wool", "merino", "merinos"),
     "bawełna": ("bawełna", "bawelna", "cotton"),
     "alpaka": ("alpaka", "alpaca"),
+    "angora": ("angora",),
     "moher": ("moher", "mohair"),
     "akryl": ("akryl", "acrylic"),
     "len": ("len", "linen"),
@@ -25,26 +32,10 @@ MATERIALS = {
     "kaszmir": ("kaszmir", "cashmere"),
     "wiskoza": ("wiskoza", "viscose"),
     "bambus": ("bambus", "bamboo"),
+    "jak": ("jak", "yak"),
     "poliamid": ("poliamid", "polyamide", "nylon"),
     "poliester": ("poliester", "polyester"),
 }
-
-PROJECT_TYPES = (
-    (("socks", "sock", "skarpet", "chaussettes"), "skarpetki"),
-    (("cardigan", "kardigan", "cardi"), "kardigan"),
-    (("sweater", "sweter", "jumper", "pullover"), "sweter"),
-    (("tee", "t-shirt", "tshirt", "top", "bluzka"), "top lub bluzkę"),
-    (("shawl", "chusta"), "chustę"),
-    (("scarf", "szal", "capucharpe"), "szal"),
-    (("hat", "czapka", "huen", "bonnet"), "czapkę"),
-    (("mittens", "rękawicz", "rekawicz"), "rękawiczki"),
-    (("vest", "kamizel"), "kamizelkę"),
-    (("skirt", "spódnic", "spodnic"), "spódnicę"),
-    (("dress", "sukien"), "sukienkę"),
-    (("cowl", "komin"), "komin"),
-    (("hoodie", "hood"), "projekt z kapturem"),
-    (("headband", "opaska"), "opaskę"),
-)
 
 TECHNIQUES = (
     (("colorwork", "fair isle", "żakard", "zakard"), "wzorem wielokolorowym"),
@@ -142,7 +133,7 @@ def extract_text(pdf_path: Path) -> tuple[str, int, bool, str | None]:
                 if not page_text:
                     continue
 
-                parts.append(page_text)
+                parts.append(f"[PAGE {page_number + 1}]\n{page_text}")
                 current_length += len(page_text)
                 if current_length >= MAX_TEXT_CHARACTERS:
                     break
@@ -176,6 +167,32 @@ def detect_materials(text: str) -> list[str]:
             detected.append(normalized_name)
 
     return detected
+
+
+def load_reference_yarns() -> list[dict]:
+    if not REFERENCE_CATALOG_PATH.exists():
+        return []
+
+    document = json.loads(REFERENCE_CATALOG_PATH.read_text(encoding="utf-8"))
+    references = document.get("references", [])
+    if not isinstance(references, list):
+        raise ValueError("Katalog referencyjny włóczek musi zawierać listę references.")
+    return references
+
+
+def find_reference_yarns(text: str, references: list[dict]) -> list[dict]:
+    folded = re.sub(r"\s+", " ", fold_text(text))
+    matched = []
+
+    for reference in references:
+        aliases = reference.get("aliases", [])
+        if any(
+            re.sub(r"\s+", " ", fold_text(alias)) in folded
+            for alias in aliases
+        ):
+            matched.append(reference)
+
+    return matched
 
 
 def parse_number(value: str) -> float:
@@ -294,14 +311,66 @@ def build_yarn_requirements(
     return requirements
 
 
+def build_reference_requirements(references: list[dict]) -> list[dict]:
+    requirements = []
+
+    for index, reference in enumerate(references):
+        requirements.append(
+            {
+                "role": "główna" if index == 0 else "dodatkowa lub alternatywna",
+                "yarn_name": reference["yarn_name"],
+                "materials": reference["materials"],
+                "meters_per_100g": reference["meters_per_100g"],
+                "skein_weight_grams": reference["skein_weight_grams"],
+                "skein_length_meters": reference["skein_length_meters"],
+                "data_source": "katalog producenta",
+                "source_url": reference["source_url"],
+            }
+        )
+
+    return requirements
+
+
+def merge_yarn_requirements(
+    extracted_requirements: list[dict],
+    reference_requirements: list[dict],
+) -> list[dict]:
+    merged = []
+    seen = set()
+
+    def append(requirement: dict) -> None:
+        ratio = requirement.get("meters_per_100g")
+        materials = tuple(requirement.get("materials") or [])
+        identity = (
+            round(float(ratio), 2) if isinstance(ratio, (int, float)) else None,
+            materials,
+        )
+        if identity in seen:
+            return
+        seen.add(identity)
+        merged.append(requirement)
+
+    for requirement in reference_requirements:
+        append(requirement)
+
+    for requirement in extracted_requirements:
+        if reference_requirements and (
+            not requirement.get("materials")
+            or not isinstance(requirement.get("meters_per_100g"), (int, float))
+        ):
+            continue
+        append(requirement)
+
+    if not merged:
+        for requirement in extracted_requirements:
+            append(requirement)
+
+    return merged
+
+
 def infer_description(title: str, text: str) -> str:
     folded = fold_text(f"{title}\n{text[:40_000]}")
-    project_type = "projekt dziewiarski"
-
-    for markers, label in PROJECT_TYPES:
-        if any(fold_text(marker) in folded for marker in markers):
-            project_type = label
-            break
+    _, project_type = infer_project_type(title, text)
 
     techniques = [
         label
@@ -332,19 +401,36 @@ def extract_evidence(text: str) -> list[str]:
         "metre",
         "yard",
         "gram",
+        "motk",
+        "skein",
+        "ball",
+        "composition",
+        "skład",
+        "sklad",
+        "zapotrzebowanie",
+        "held together",
+        "held double",
+        "held triple",
+    )
+    measurement_pattern = re.compile(
+        r"(?:\d+(?:[.,]\d+)?)\s*(?:m|g|yds?|yards?|grams?)\b|%",
+        re.IGNORECASE,
     )
 
     for index, line in enumerate(lines):
         folded_line = fold_text(line)
-        if not line or not any(keyword in folded_line for keyword in keywords):
+        if not line or not (
+            any(keyword in folded_line for keyword in keywords)
+            or measurement_pattern.search(line)
+        ):
             continue
 
-        start = max(0, index - 1)
-        end = min(len(lines), index + 3)
+        start = max(0, index - 2)
+        end = min(len(lines), index + 6)
         snippet = " | ".join(part for part in lines[start:end] if part)
         if snippet and snippet not in evidence:
-            evidence.append(snippet[:600])
-        if len(evidence) >= 4:
+            evidence.append(snippet[:1_200])
+        if len(evidence) >= 20:
             break
 
     return evidence
@@ -358,13 +444,70 @@ def hash_file(pdf_path: Path) -> str:
     return digest.hexdigest()
 
 
-def create_candidate(pdf_path: Path) -> dict:
+def render_pdf_pages(pdf_path: Path, page_count: int) -> str:
+    directory_name = f"{pdf_path.stem[:80]}-{hash_file(pdf_path)[:10]}"
+    render_directory = RENDER_OUTPUT_DIR / directory_name
+    render_directory.mkdir(parents=True, exist_ok=True)
+
+    with fitz.open(pdf_path) as document:
+        for page_number in range(min(page_count, MAX_PAGES_TO_SCAN)):
+            output_path = render_directory / f"page-{page_number + 1:02d}.png"
+            pixmap = document.load_page(page_number).get_pixmap(
+                matrix=fitz.Matrix(2, 2),
+                alpha=False,
+            )
+            pixmap.save(output_path)
+
+    return str(render_directory.relative_to(PROJECT_DIR))
+
+
+def create_candidate(
+    pdf_path: Path,
+    references: list[dict],
+    render_ocr: bool = False,
+    render_source: str | None = None,
+) -> dict:
     text, page_count, needs_ocr, error = extract_text(pdf_path)
+    text_path = TEXT_OUTPUT_DIR / f"{pdf_path.name}.txt"
+    text_path.write_text(text, encoding="utf-8")
     title = clean_title_from_filename(pdf_path)
-    materials = detect_materials(text)
+    detected_materials = detect_materials(text)
+    matched_references = find_reference_yarns(text, references)
+    reference_materials = [
+        material
+        for reference in matched_references
+        for material in reference["materials"]
+    ]
+    materials = list(dict.fromkeys([*detected_materials, *reference_materials]))
     ratio_matches = find_meter_ratio_matches(text)
-    ratios = extract_meter_ratios(ratio_matches)
-    yarn_requirements = build_yarn_requirements(text, materials, ratio_matches)
+    extracted_ratios = extract_meter_ratios(ratio_matches)
+    extracted_requirements = build_yarn_requirements(
+        text,
+        detected_materials,
+        ratio_matches,
+    )
+    reference_requirements = build_reference_requirements(matched_references)
+    yarn_requirements = merge_yarn_requirements(
+        extracted_requirements,
+        reference_requirements,
+    )
+    ratios = sorted(
+        {
+            *extracted_ratios,
+            *(
+                reference["meters_per_100g"]
+                for reference in matched_references
+            ),
+        }
+    )
+    complete_requirement_ratios = sorted(
+        {
+            float(requirement["meters_per_100g"])
+            for requirement in yarn_requirements
+            if requirement.get("materials")
+            and isinstance(requirement.get("meters_per_100g"), (int, float))
+        }
+    )
     source_language = detect_language(text, pdf_path.name)
     evidence = extract_evidence(text)
 
@@ -373,37 +516,88 @@ def create_candidate(pdf_path: Path) -> dict:
         review_reasons.append("requires_ocr")
     if not materials:
         review_reasons.append("material_not_found")
-    if not ratios:
+    if not complete_requirement_ratios:
         review_reasons.append("meters_per_100g_not_found")
-    elif len(ratios) > 1:
+    elif len(complete_requirement_ratios) > 1:
         review_reasons.append("multiple_meter_ratios")
     if source_language == "unknown":
         review_reasons.append("language_unknown")
     if error:
         review_reasons.append("read_error")
 
-    return {
+    candidate = {
         "name": title,
         "description": infer_description(title, text),
+        "project_type": infer_project_type(title, text)[0],
         "materials": materials,
-        "meters_per_100g": ratios[0] if len(ratios) == 1 else None,
+        "meters_per_100g": (
+            complete_requirement_ratios[0]
+            if len(complete_requirement_ratios) == 1
+            else None
+        ),
         "yarn_requirements": yarn_requirements,
         "source_filename": pdf_path.name,
         "source_language": source_language,
-        "needs_review": True,
+        "needs_review": any(
+            reason
+            in {
+                "requires_ocr",
+                "material_not_found",
+                "meters_per_100g_not_found",
+                "language_unknown",
+                "read_error",
+            }
+            for reason in review_reasons
+        ),
         "review_reasons": review_reasons,
         "meter_ratio_candidates": ratios,
+        "reference_sources": [
+            {
+                "yarn_name": reference["yarn_name"],
+                "source_url": reference["source_url"],
+            }
+            for reference in matched_references
+        ],
         "evidence": evidence,
         "page_count": page_count,
+        "text_char_count": len(text),
+        "text_path": str(text_path.relative_to(PROJECT_DIR)),
         "source_sha256": hash_file(pdf_path),
         "error": error,
     }
+    if (render_ocr and needs_ocr) or pdf_path.name == render_source:
+        candidate["render_directory"] = render_pdf_pages(pdf_path, page_count)
+    return candidate
 
 
 def main() -> None:
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--render-ocr",
+        action="store_true",
+        help="Renderuje strony dokumentów wymagających kontroli wzrokowej.",
+    )
+    parser.add_argument(
+        "--render-source",
+        help="Renderuje strony jednego wskazanego pliku PDF niezależnie od wyniku OCR.",
+    )
+    args = parser.parse_args()
+
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+    TEXT_OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+    if args.render_ocr:
+        RENDER_OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+    references = load_reference_yarns()
     pdf_files = sorted(PDF_DIR.glob("*.pdf"), key=lambda path: path.name.casefold())
-    candidates = [create_candidate(pdf_path) for pdf_path in pdf_files]
+    candidates = [
+        create_candidate(
+            pdf_path,
+            references,
+            args.render_ocr,
+            args.render_source,
+        )
+        for pdf_path in pdf_files
+    ]
 
     hash_counts = {}
     for candidate in candidates:

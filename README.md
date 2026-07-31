@@ -27,8 +27,10 @@ główną funkcją jest świadome dopasowanie zapasu włóczek do wymagań wzoru
 ## Jak działa aplikacja
 
 1. Użytkownik zakłada konto lub loguje się.
-2. Dodaje motki, podając nazwę, kolor, materiał, klasę grubości, długość i wagę.
-3. Przegląda katalog wzorów, wyszukuje je i filtruje według statusu danych.
+2. Dodaje motki, podając nazwę, kolor, jeden lub kilka materiałów, klasę
+   grubości, długość i wagę.
+3. Przegląda katalog wzorów, wyszukuje je i łączy filtry statusu, języka,
+   typu projektu oraz materiału.
 4. Uruchamia dopasowanie.
 5. Backend pobiera prywatny magazyn użytkownika oraz katalog wzorów i zwraca
    tylko potwierdzone warianty, które spełniają wymagania.
@@ -46,13 +48,19 @@ zużycia na podstawie samej nazwy wzoru, materiału ani przybliżenia.
 ### Frontend
 
 Statyczny interfejs HTML, CSS i JavaScript znajduje się w `index.html`,
-`styles.css` i `app.js`. Odpowiada za:
+`styles.css`, `theme-policy.js` i `app.js`. Odpowiada za:
 
 - konto użytkownika i sesję,
 - formularz magazynu włóczek,
 - katalog wzorów,
 - wyszukiwanie i filtrowanie,
 - prezentację wyników dopasowania.
+- dwa motywy wizualne: jasną „Koloroterapię” i ciemny „Nocny Motek”,
+  przełączane globalnie w nagłówku i zapamiętywane lokalnie.
+- pionową grafikę włóczek i kota po prawej w Magazynie oraz szeroki hero graficzny
+  w Dopasowaniu, zmieniane razem z motywem.
+- grafiki motywów są dostarczane jako wersjonowane WebP i cache'owane przez rok;
+  źródłowe PNG pozostają wyłącznie jako materiał bazowy.
 
 Frontend nie otrzymuje sekretnego klucza Supabase. Komunikuje się z backendem
 przez API Motka.
@@ -122,6 +130,7 @@ Najważniejsze endpointy backendu:
 | `POST /api/auth/recovery` | Ustanowienie krótkiej sesji z linku recovery |
 | `POST /api/auth/password` | Ustawienie nowego hasła i wyczyszczenie sesji |
 | `POST /api/auth/logout` | Wylogowanie |
+| `DELETE /api/account` | Bezpowrotne usunięcie konta, profilu i własnych włóczek po ponownym haśle i potwierdzeniu |
 | `GET /api/yarns` | Pobranie własnego magazynu |
 | `POST /api/yarns` | Dodanie motka |
 | `DELETE /api/yarns/:id` | Usunięcie własnego motka |
@@ -145,16 +154,18 @@ bezpiecznego rankingu:
 - `matching_requirements` — kompletne zużycie dla wariantów i rozmiarów,
 - `needs_review` — informacja o konieczności dalszej weryfikacji.
 
-`matching_requirements` zawiera między innymi liczbę motków, wymagane metry i
-gramy, materiały, klasy grubości oraz opcjonalne role włóczek. Dzięki temu
-opisowa informacja o wzorze jest oddzielona od danych, na których można oprzeć
-decyzję „da się wykonać”.
+`matching_requirements` w wersji 2 zawiera między innymi wymagane metry lub
+gramy, materiały, klasy grubości, role włóczek, relacje między kolorami,
+rozmiary i alternatywne włóczki. Dzięki temu opisowa informacja o wzorze jest
+oddzielona od danych, na których można oprzeć decyzję „da się wykonać”.
 
 ## Źródła katalogu wzorów
 
-Katalog został przygotowany z 116 lokalnych dokumentów PDF znajdujących się w
-roboczym folderze `Wzory`. Pliki źródłowe są ignorowane przez Git i nie są
-serwowane publicznie przez aplikację.
+Katalog został przygotowany po audycie 116 lokalnych dokumentów PDF znajdujących
+się w roboczym folderze `Wzory`. Do katalogu trafiły 103 samodzielne wzory oraz
+3 rekordy demonstracyjne. Trzynaście plików wykluczono jako duplikaty, kupony
+dostępu, instrukcję techniczną albo materiały pomocnicze. Pliki źródłowe są
+ignorowane przez Git i nie są serwowane publicznie przez aplikację.
 
 Proces przygotowania danych obejmuje:
 
@@ -166,7 +177,13 @@ Proces przygotowania danych obejmuje:
 6. selektywny import do Supabase.
 
 W projekcie służą do tego między innymi `scripts/build-pattern-import.py` oraz
-`scripts/import-patterns.js`.
+`scripts/import-patterns.js`. Rozkład kategorii i pozycje z kategorii „Inne”
+można sprawdzić przez `scripts/report-pattern-categories.py`. Szczegółowy wynik
+ponownej analizy znajduje się w `WZORY_AUDYT_DANYCH.md`.
+
+Wzór może mieć jedno przeliczenie włóczki, kilka równorzędnych alternatyw albo
+celowo elastyczny dobór materiału i grubości. Te przypadki są przechowywane
+oddzielnie, aby jedna uśredniona wartość nie wprowadzała użytkownika w błąd.
 
 ## Dlaczego architektura jest przejściowa
 
@@ -269,7 +286,7 @@ npm run patterns:import
 
 ## Stan projektu i wersjonowanie
 
-Aktualna wersja rozwojowa: **2.0.0-alpha.11**.
+Aktualna wersja rozwojowa: **2.0.0-alpha.37**.
 
 Najważniejsze etapy zapisane w `CHANGELOG.txt`:
 
@@ -282,14 +299,23 @@ Najważniejsze etapy zapisane w `CHANGELOG.txt`:
 - `2.0.0-alpha.8` — Supabase jako jedyne źródło danych i usunięcie SQLite.
 - `2.0.0-alpha.9` — bezpieczny autosave, zabezpieczenia Auth, limity produktu i ograniczenie kosztu rankingu.
 - `2.0.0-alpha.10` — naprawa nagłówków żądań magazynu i synchronizacja wymaganych migracji zdalnego Supabase.
+- `2.0.0-alpha.35` — wiele materiałów na motku i dokładne dopasowanie 21 wariantów rzeczywistych wzorów.
+- `2.0.0-alpha.37` — globalny przełącznik motywów „Koloroterapia” / „Nocny Motek” z lokalnym zapisem preferencji oraz grafikami magazynu.
+- `2.0.0-alpha.34` — poprawione kategorie oraz dynamiczne, łączone filtry typu projektu i materiału.
+- `2.0.0-alpha.33` — ponowny audyt wszystkich PDF-ów i kompletny, oczyszczony katalog danych włóczek.
+- `2.0.0-alpha.15` — sortowanie katalogu i dostępny stan ładowania ze szkieletami.
+- `2.0.0-alpha.14` — filtry języka i materiału oraz rozwijane szczegóły wzorów.
+- `2.0.0-alpha.13` — porcjowanie katalogu i domyślne eksponowanie zweryfikowanych wzorów.
+- `2.0.0-alpha.12` — przebudowa nawigacji, zwartego magazynu i dostępu do dopasowań.
 - `2.0.0-alpha.11` — stabilizacja audytu, obsługi autosave, limitów wymagań, importu i kosztu rankingu.
 
 ## Najbliższy etap rozwoju
 
-Następnym krokiem jest ręczne uzupełnienie kompletnych, potwierdzonych danych
-zużycia dla rozmiarów i wariantów wybranych wzorów oraz ich selektywny import do
-Supabase. Ranking automatycznie pomija rekordy bez pełnych, zweryfikowanych
-wymagań.
+Parametry użytych włóczek zostały potwierdzone dla wszystkich wzorów w katalogu.
+Dokładne wymagania zużycia wdrożono pilotażowo dla 21 wariantów wzorów Holly,
+Na Pole i Oslo Hat. Następnym krokiem jest rozszerzanie tej metody na kolejne
+wzory. Ranking automatycznie pomija rekordy bez pełnych, zweryfikowanych
+wymagań ilościowych.
 
 Skalowanie ponad obecne limity 500 włóczek na użytkownika i 300 wzorów jest
 opcjonalne. Wrócimy do paginacji, dalszej optymalizacji lub workera dopiero po
@@ -316,8 +342,12 @@ reakcji na incydenty. Limity aplikacyjne w Node.js są tylko dodatkową warstwą
 ```text
 Motek/
 ├── app.js                         # logika interfejsu
+├── material-policy.js             # wspólna lista i zasady materiałów
+├── matching-policy.js             # walidacja i dokładny przydział włóczek
+├── theme-policy.js                # polityka i bootstrap motywu
 ├── index.html                     # widok aplikacji
 ├── styles.css                     # style
+├── assets/                        # grafiki Koloroterapii i Nocnego Motka
 ├── server.js                      # backend HTTP i API
 ├── supabase.js                    # konfiguracja połączenia Supabase
 ├── supabase/migrations/           # migracje schematu bazy
@@ -328,3 +358,18 @@ Motek/
 ├── CHANGELOG.txt                 # historia wersji
 └── VERSION                       # bieżąca wersja projektu
 ```
+### Aktualny układ designów 04 i 05
+
+Jasny motyw korzysta z kompozycji „Koloroterapia”, a ciemny z „Nocnego
+Motka”. W zakładce „Magazyn” nagłówek, statystyki i lista włóczek są po lewej,
+a pionowa fotografia włóczek i kota zajmuje prawą kolumnę. Zakładka
+„Dopasowanie” zachowuje osobną kartę z grafiką motywu. Układ pochodzi z
+zaakceptowanych prototypów w PR #8.
+
+Grafiki są ładowane z wersjonowanych plików WebP (`*.v1.webp`) i otrzymują
+roczny cache `immutable`, więc przełączanie motywu nie pobiera ponownie
+wcześniej użytego obrazu.
+Grafika po prawej w Magazynie zachowuje pionową kompozycję prototypów: jest
+kadrowana przez `cover` z ogniskiem po prawej stronie. Dzięki temu Magazyn i
+Dopasowanie korzystają z tego samego zoptymalizowanego obrazu, ale zachowują
+różne role wizualne. Żaden z widoków nie nakłada na obrazy tekstu ani ramek.

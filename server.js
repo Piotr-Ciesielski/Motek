@@ -15,6 +15,17 @@ const {
   maxMatchingRoleRequirements: MAX_MATCH_ROLE_REQUIREMENTS,
   maxMatchingTextLength: MAX_MATCHING_TEXT_LENGTH,
 } = require("./limits");
+const {
+  ANY_MATERIAL,
+  matchesMaterialRule,
+  normalizeYarnMaterials,
+} = require("./material-policy");
+const {
+  matchVariant,
+  normalizeMatchingDocument,
+} = require("./matching-policy");
+const { ACCOUNT_DELETION_PHRASE, validateAccountDeletionInput } = require("./account-deletion-policy");
+const { deleteSupabaseAccount } = require("./account-deletion-service");
 
 const rootDir = __dirname;
 let server;
@@ -60,7 +71,6 @@ const MAX_TEXT_LENGTH = {
   color: 50,
 };
 const MAX_MEASUREMENT = 1_000_000;
-const ALLOWED_MATERIALS = new Set(["wełna", "bawełna", "akryl", "alpaka", "mieszanka"]);
 const ALLOWED_WEIGHT_CLASSES = new Set(["lace", "fingering", "sport", "dk", "worsted", "bulky"]);
 const SECURITY_HEADERS = Object.freeze({
   "Content-Security-Policy": [
@@ -461,7 +471,7 @@ function normalizeSupabaseYarn(yarn) {
     id: Number(yarn.id),
     name: yarn.name,
     color: yarn.color,
-    material: yarn.material,
+    materials: Array.isArray(yarn.materials) ? yarn.materials : [],
     weightClass: yarn.weight_class,
     length: Number(yarn.length_meters),
     weight: Number(yarn.weight_grams),
@@ -477,7 +487,7 @@ function getYarnCollectionVersion(yarns) {
       yarn.updatedAt,
       yarn.name,
       yarn.color,
-      yarn.material,
+      yarn.materials,
       yarn.weightClass,
       yarn.length,
       yarn.weight,
@@ -509,7 +519,7 @@ function toSupabaseYarnFields(yarn) {
   return {
     name: yarn.name,
     color: yarn.color,
-    material: yarn.material,
+    materials: yarn.materials,
     weight_class: yarn.weightClass,
     length_meters: yarn.length,
     weight_grams: yarn.weight,
@@ -522,7 +532,7 @@ async function getSupabaseYarns(session) {
     session.accessToken
   )
     .from("yarns")
-    .select("id,name,color,material,weight_class,length_meters,weight_grams,updated_at")
+    .select("id,name,color,materials,weight_class,length_meters,weight_grams,updated_at")
     .eq("user_id", session.user.id)
     .order("id", { ascending: true });
 
@@ -541,7 +551,7 @@ async function insertSupabaseYarn(session, yarn) {
     .rpc("insert_yarn_with_limit", {
       p_name: yarn.name,
       p_color: yarn.color,
-      p_material: yarn.material,
+      p_materials: yarn.materials,
       p_weight_class: yarn.weightClass,
       p_length_meters: yarn.length,
       p_weight_grams: yarn.weight,
@@ -577,7 +587,7 @@ async function updateSupabaseYarn(session, id, yarn) {
     .update(toSupabaseYarnFields(yarn))
     .eq("id", id)
     .eq("user_id", session.user.id)
-    .select("id,name,color,material,weight_class,length_meters,weight_grams")
+    .select("id,name,color,materials,weight_class,length_meters,weight_grams")
     .single();
 
   if (error) {
@@ -614,6 +624,16 @@ async function sendYarnMutationResponse(res, status, payload, session) {
   const currentYarns = await getSupabaseYarns(session);
   res.setHeader("ETag", getYarnCollectionVersion(currentYarns));
   return sendJson(res, status, payload);
+}
+
+function yarnMatchesLegacyMaterials(yarn, materials) {
+  if (materials.includes(ANY_MATERIAL)) {
+    return Array.isArray(yarn.materials) && yarn.materials.length > 0;
+  }
+  return matchesMaterialRule(yarn.materials, {
+    material_match: "any",
+    materials,
+  });
 }
 
 function scorePattern(pattern, yarns) {
@@ -656,7 +676,11 @@ function scorePattern(pattern, yarns) {
   const weightClasses = Array.isArray(pattern.weightClasses) ? pattern.weightClasses : [];
   const totalLength = yarns.reduce((sum, yarn) => sum + yarn.length, 0);
   const totalWeight = yarns.reduce((sum, yarn) => sum + yarn.weight, 0);
-  const matchedYarns = yarns.filter((yarn) => materials.includes(yarn.material) && weightClasses.includes(yarn.weightClass)).length;
+  const matchedYarns = yarns.filter(
+    (yarn) =>
+      yarnMatchesLegacyMaterials(yarn, materials)
+      && weightClasses.includes(yarn.weightClass),
+  ).length;
   const lengthScore = Math.min(totalLength / pattern.metersNeeded, 1);
   const weightScore = Math.min(totalWeight / pattern.gramsNeeded, 1);
   const materialScore = Math.min(matchedYarns / pattern.yarnsNeeded, 1);
@@ -670,7 +694,7 @@ function allocateRequirementYarns(requirements, yarns) {
   for (const requirement of requirements) {
     const eligible = yarns.filter(
       (yarn) =>
-        requirement.materials.includes(yarn.material) &&
+        yarnMatchesLegacyMaterials(yarn, requirement.materials) &&
         requirement.weightClasses.includes(yarn.weightClass)
     );
     const availableLength = eligible.reduce((sum, yarn) => sum + yarn.length, 0);
@@ -698,7 +722,7 @@ function allocateRequirementYarns(requirements, yarns) {
     const eligible = yarns.filter(
       (yarn, yarnIndex) =>
         !used.has(yarnIndex) &&
-        requirement.materials.includes(yarn.material) &&
+        yarnMatchesLegacyMaterials(yarn, requirement.materials) &&
         requirement.weightClasses.includes(yarn.weightClass)
     );
 
@@ -762,16 +786,54 @@ async function getSupabaseMatches(session) {
     .filter((pattern) => !pattern.needsReview)
     .flatMap((pattern) =>
       pattern.matchingRequirements.flatMap((variant) => {
-        const candidateSet = selectMatchingYarns({ ...pattern, ...variant }, yarns);
-        limited ||= candidateSet.limited;
+        let outcome;
+        try {
+          outcome = matchVariant(variant, yarns);
+        } catch (error) {
+          if (error instanceof RangeError) {
+            throw new ApiError(
+              503,
+              "Dopasowanie jest zbyt złożone. Zmniejsz magazyn lub wybierz prostszy wzór.",
+            );
+          }
+          throw error;
+        }
+        if (!outcome.doable) return [];
+        const allocatedYarns = outcome.allocation.flat();
+        const allocation = variant.requirements.map((requirement, index) => ({
+          role: requirement.role,
+          yarns: outcome.allocation[index].map((yarn) => ({
+            id: yarn.id,
+            name: yarn.name,
+            color: yarn.color,
+            materials: yarn.materials,
+            weightClass: yarn.weightClass,
+            length: yarn.length,
+            weight: yarn.weight,
+          })),
+        }));
         return [{
           pattern: {
             ...pattern,
             ...variant,
             id: `${pattern.id}:${variant.id}`,
+            patternId: pattern.id,
+            baseName: pattern.name,
+            variantLabel: variant.label,
             name: `${pattern.name} — ${variant.label}`,
           },
-          ...scorePattern({ ...pattern, ...variant }, candidateSet.yarns),
+          total: outcome.coverage,
+          doable: true,
+          totalLength: allocatedYarns.reduce(
+            (sum, yarn) => sum + yarn.length,
+            0,
+          ),
+          totalWeight: allocatedYarns.reduce(
+            (sum, yarn) => sum + yarn.weight,
+            0,
+          ),
+          matchedYarns: allocatedYarns.length,
+          allocation,
         }];
       })
     )
@@ -807,7 +869,7 @@ function selectMatchingYarns(pattern, yarns) {
   const eligible = yarns.filter((yarn) =>
     requirements.some(
       (requirement) =>
-        requirement.materials.includes(yarn.material) &&
+        yarnMatchesLegacyMaterials(yarn, requirement.materials) &&
         requirement.weightClasses.includes(yarn.weightClass)
     )
   );
@@ -882,13 +944,18 @@ function sendFile(res, filePath) {
     ".html": "text/html; charset=utf-8",
     ".css": "text/css; charset=utf-8",
     ".js": "application/javascript; charset=utf-8",
+    ".png": "image/png",
+    ".webp": "image/webp",
     ".svg": "image/svg+xml",
   };
+  const cacheControl = ext === ".webp"
+    ? "public, max-age=31536000, immutable"
+    : "no-cache";
   return fsPromises.readFile(filePath).then((buf) => {
     res.writeHead(200, {
       ...SECURITY_HEADERS,
       "Content-Type": types[ext] || "application/octet-stream",
-      "Cache-Control": "no-cache",
+      "Cache-Control": cacheControl,
     });
     res.end(buf);
   });
@@ -904,6 +971,7 @@ function normalizeCatalogPattern(pattern) {
     id: Number(pattern.id),
     name: pattern.name,
     description: pattern.description,
+    projectType: pattern.project_type || "other",
     materials: Array.isArray(pattern.materials) ? pattern.materials : [],
     metersPer100g: Number.isFinite(ratio) ? ratio : null,
     yarnRequirements: Array.isArray(pattern.yarn_requirements)
@@ -916,101 +984,11 @@ function normalizeCatalogPattern(pattern) {
 }
 
 function normalizeMatchingRequirements(value) {
-  if (!value || typeof value !== "object" || !Array.isArray(value.variants)) {
+  try {
+    return normalizeMatchingDocument(value);
+  } catch {
     return [];
   }
-
-  return value.variants.flatMap((variant, index) => {
-    if (!variant || typeof variant !== "object") return [];
-
-    const yarnsNeeded = Number(variant.yarns_needed);
-    const metersNeeded = Number(variant.meters_needed);
-    const gramsNeeded = Number(variant.grams_needed);
-    const materials = normalizeMatchingTextArray(variant.materials);
-    const weightClasses = normalizeMatchingTextArray(variant.weight_classes);
-
-    if (
-      !Number.isInteger(yarnsNeeded) || yarnsNeeded < 1 ||
-      !Number.isInteger(metersNeeded) || metersNeeded < 1 ||
-      !Number.isInteger(gramsNeeded) || gramsNeeded < 1 ||
-      materials.length === 0 || weightClasses.length === 0
-    ) {
-      return [];
-    }
-
-    const yarnRequirements = Array.isArray(variant.yarn_requirements)
-      ? variant.yarn_requirements.flatMap((requirement) => {
-          const normalized = normalizeMatchingRequirement(requirement);
-          return normalized ? [normalized] : [];
-        })
-      : [];
-
-    if (yarnRequirements.length > MAX_MATCH_ROLE_REQUIREMENTS) {
-      return [];
-    }
-
-    return [{
-       id: normalizeMatchingLabel(variant.id, `wariant-${index + 1}`),
-       label: normalizeMatchingLabel(variant.label || variant.size, `Wariant ${index + 1}`),
-      yarnsNeeded,
-      metersNeeded,
-      gramsNeeded,
-      materials,
-      weightClasses,
-      colors: typeof variant.colors === "string" ? variant.colors : "dowolny",
-      ...(yarnRequirements.length > 0 ? { requirements: yarnRequirements } : {}),
-    }];
-  });
-}
-
-function normalizeMatchingRequirement(value) {
-  if (!value || typeof value !== "object") return null;
-  const yarnsNeeded = Number(value.yarns_needed);
-  const metersNeeded = Number(value.meters_needed);
-  const gramsNeeded = Number(value.grams_needed);
-  const materials = normalizeMatchingTextArray(value.materials);
-  const weightClasses = normalizeMatchingTextArray(value.weight_classes);
-
-  if (
-    !Number.isInteger(yarnsNeeded) || yarnsNeeded < 1 ||
-    !Number.isInteger(metersNeeded) || metersNeeded < 1 ||
-    !Number.isInteger(gramsNeeded) || gramsNeeded < 1 ||
-    materials.length === 0 || weightClasses.length === 0
-  ) {
-    return null;
-  }
-
-  return {
-    role: normalizeMatchingLabel(value.role, "wymagana włóczka"),
-    yarnsNeeded,
-    metersNeeded,
-    gramsNeeded,
-    materials,
-    weightClasses,
-  };
-}
-
-function normalizeMatchingTextArray(value) {
-  if (!Array.isArray(value) || value.length === 0) return [];
-  if (
-    value.some(
-      (item) =>
-        typeof item !== "string" ||
-        !item.trim() ||
-        item.trim().length > MAX_MATCHING_TEXT_LENGTH
-    )
-  ) {
-    return [];
-  }
-  return value.map((item) => item.trim());
-}
-
-function normalizeMatchingLabel(value, fallback) {
-  if (value === undefined || value === null || value === "") return fallback;
-  if (typeof value !== "string" || value.trim().length > MAX_MATCHING_TEXT_LENGTH) {
-    return fallback;
-  }
-  return value.trim() || fallback;
 }
 
 async function getCatalogPatterns({ limit = null, offset = 0 } = {}) {
@@ -1028,7 +1006,7 @@ async function getCatalogPatterns({ limit = null, offset = 0 } = {}) {
   const { data, error } = await supabaseConnection.client
     .from("patterns")
     .select(
-      "id,name,description,materials,meters_per_100g,yarn_requirements,matching_requirements,source_language,needs_review"
+      "id,name,description,project_type,materials,meters_per_100g,yarn_requirements,matching_requirements,source_language,needs_review"
     )
     .range(offset, Math.max(offset, offset + effectiveLimit - 1))
     .order("name", { ascending: true });
@@ -1120,11 +1098,19 @@ function normalizeMeasurement(value, field) {
   return normalized;
 }
 
+function normalizeMaterials(value) {
+  try {
+    return normalizeYarnMaterials(value);
+  } catch (error) {
+    throw new ApiError(400, error.message);
+  }
+}
+
 function validateYarn(body) {
   return {
     name: normalizeText(body.name, "name", "Bez nazwy"),
     color: normalizeText(body.color, "color", "nieokreślony"),
-    material: normalizeEnum(body.material, "material", "mieszanka", ALLOWED_MATERIALS),
+    materials: normalizeMaterials(body.materials),
     weightClass: normalizeEnum(body.weightClass, "weightClass", "dk", ALLOWED_WEIGHT_CLASSES),
     length: normalizeMeasurement(body.length, "length"),
     weight: normalizeMeasurement(body.weight, "weight"),
@@ -1298,6 +1284,44 @@ async function handleApi(req, res, url) {
     enforceRequestRateLimit([`ip:${getClientAddress(req)}`], yarnWriteRateLimiter, res);
   }
 
+  if (req.method === "DELETE" && url.pathname === "/api/account") {
+    const session = await requireAuthenticatedSession(req, res);
+    enforceRequestRateLimit(
+      [`ip:${getClientAddress(req)}`, `user:${session.user.id}`],
+      yarnWriteRateLimiter,
+      res,
+    );
+
+    const body = await readBody(req);
+    let deletionInput;
+    try {
+      deletionInput = validateAccountDeletionInput(body);
+    } catch (error) {
+      throw new ApiError(400, error.message || `Wpisz dokładnie: ${ACCOUNT_DELETION_PHRASE}.`);
+    }
+
+    try {
+      await deleteSupabaseAccount({
+        session,
+        password: deletionInput.password,
+        authClient: authClient(),
+        adminClient: supabaseConnection.client,
+      });
+    } catch (error) {
+      if (error.message === "Nie udało się potwierdzić hasła.") {
+        throw new ApiError(400, error.message);
+      }
+      throw error;
+    }
+
+    clearAuthCookies(res);
+    res.writeHead(204, {
+      ...SECURITY_HEADERS,
+      "Cache-Control": "no-store",
+    });
+    return res.end();
+  }
+
   if (req.method === "GET" && url.pathname === "/api/yarns") {
     const session = await requireAuthenticatedSession(req, res);
     const yarns = await getSupabaseYarns(session);
@@ -1430,6 +1454,27 @@ async function main(options = {}) {
       if (url.pathname === "/app.js") {
         return await sendFile(res, path.join(rootDir, "app.js"));
       }
+      if (url.pathname === "/client-policy.js") {
+        return await sendFile(res, path.join(rootDir, "client-policy.js"));
+      }
+      if (url.pathname === "/theme-policy.js") {
+        return await sendFile(res, path.join(rootDir, "theme-policy.js"));
+      }
+      if (url.pathname === "/assets/color-yarn-cat.png") {
+        return await sendFile(res, path.join(rootDir, "assets", "color-yarn-cat.png"));
+      }
+      if (url.pathname === "/assets/night-yarn-cat.png") {
+        return await sendFile(res, path.join(rootDir, "assets", "night-yarn-cat.png"));
+      }
+      if (url.pathname === "/assets/color-yarn-cat.v1.webp") {
+        return await sendFile(res, path.join(rootDir, "assets", "color-yarn-cat.v1.webp"));
+      }
+      if (url.pathname === "/assets/night-yarn-cat.v1.webp") {
+        return await sendFile(res, path.join(rootDir, "assets", "night-yarn-cat.v1.webp"));
+      }
+      if (url.pathname === "/material-policy.js") {
+        return await sendFile(res, path.join(rootDir, "material-policy.js"));
+      }
       if (url.pathname === "/favicon.svg") {
         return await sendFile(res, path.join(rootDir, "favicon.svg"));
       }
@@ -1511,6 +1556,7 @@ module.exports = {
   scorePattern,
   selectMatchingYarns,
   validatePatternCatalogSize,
+  validateYarn,
   validateYarnStorageCapacity,
   toSupabaseYarn,
   buildAuthCookie,

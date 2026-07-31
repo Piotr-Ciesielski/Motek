@@ -5,13 +5,80 @@ process.env.PORT = "0";
 
 const {
   main,
+  normalizeCatalogPattern,
   scorePattern,
   selectMatchingYarns,
   shutdown,
   validatePatternCatalogSize,
   validateMatchLimits,
+  validateYarn,
   validateYarnStorageCapacity,
 } = require("../server");
+
+test("katalog zachowuje wariant mierzony wyłącznie w gramach", () => {
+  const pattern = normalizeCatalogPattern({
+    id: 1,
+    name: "Kolorowe skarpety",
+    description: "Test",
+    project_type: "socks",
+    materials: ["dowolny materiał"],
+    matching_requirements: {
+      version: 2,
+      variants: [{
+        id: "kolory",
+        label: "S/M/L",
+        requirements: [{
+          role: "MC",
+          measurement_basis: "grams",
+          grams_min: 35,
+          materials: [],
+          material_match: "any_material",
+          color_mode: "same",
+          weight_classes: ["fingering"],
+        }],
+      }],
+    },
+  });
+
+  assert.equal(pattern.matchingRequirements.length, 1);
+  assert.equal(pattern.matchingRequirements[0].requirements[0].gramsMin, 35);
+  assert.equal(pattern.matchingRequirements[0].requirements[0].metersMin, null);
+});
+
+test("walidacja włóczki zachowuje kilka materiałów", () => {
+  const yarn = validateYarn({
+    name: "Sock",
+    color: "zielony",
+    materials: ["poliamid", "wełna", "poliamid"],
+    weightClass: "fingering",
+    length: 400,
+    weight: 100,
+  });
+
+  assert.deepEqual(yarn.materials, ["wełna", "poliamid"]);
+  assert.throws(
+    () => validateYarn({
+      name: "Pusty",
+      color: "biały",
+      materials: [],
+      weightClass: "dk",
+      length: 100,
+      weight: 50,
+    }),
+    /co najmniej jeden materiał/i,
+  );
+  assert.throws(
+    () => validateYarn({
+      name: "Nieznany",
+      color: "biały",
+      materials: ["dowolny materiał"],
+      weightClass: "dk",
+      length: 100,
+      weight: 50,
+    }),
+    /niedozwolony materiał/i,
+  );
+});
 
 test("ranking respektuje limity rozmiaru i może użyć kilku motków dla jednej roli", () => {
   assert.doesNotThrow(() => validateYarnStorageCapacity(499));
@@ -36,7 +103,7 @@ test("ranking respektuje limity rozmiaru i może użyć kilku motków dla jednej
     },
     Array.from({ length: 75 }, (_, id) => ({
       id,
-      material: "wełna",
+      materials: ["wełna"],
       weightClass: "dk",
       length: 100,
       weight: 20,
@@ -58,8 +125,8 @@ test("ranking respektuje limity rozmiaru i może użyć kilku motków dla jednej
       ],
     },
     [
-      { id: 1, material: "wełna", weightClass: "dk", length: 300, weight: 60 },
-      { id: 2, material: "wełna", weightClass: "dk", length: 250, weight: 50 },
+      { id: 1, materials: ["wełna"], weightClass: "dk", length: 300, weight: 60 },
+      { id: 2, materials: ["wełna"], weightClass: "dk", length: 250, weight: 50 },
     ]
   );
 
@@ -80,7 +147,7 @@ test("ranking respektuje limity rozmiaru i może użyć kilku motków dla jednej
     },
     Array.from({ length: 20 }, (_, id) => ({
       id,
-      material: "wełna",
+      materials: ["wełna"],
       weightClass: "dk",
       length: 50,
       weight: 10,
@@ -95,6 +162,7 @@ test("serwer Motek działa bezpiecznie", async (t) => {
       id: 21,
       name: "Testowy wzór Supabase",
       description: "Opis wzoru pobranego ze zdalnej bazy.",
+      project_type: "cardigan",
       materials: ["wełna", "jedwab"],
       meters_per_100g: 400,
       yarn_requirements: [
@@ -105,16 +173,23 @@ test("serwer Motek działa bezpiecznie", async (t) => {
         },
       ],
       matching_requirements: {
+        version: 2,
         variants: [
           {
             id: "m",
             label: "M",
-            yarns_needed: 1,
-            meters_needed: 200,
-            grams_needed: 80,
-            materials: ["wełna"],
-            weight_classes: ["dk"],
-            colors: "dowolny",
+            size: "M",
+            yarn_option: "Testowa włóczka",
+            requirements: [{
+              role: "główna",
+              measurement_basis: "meters",
+              meters_min: 200,
+              grams_min: 80,
+              materials: ["wełna"],
+              material_match: "all",
+              color_mode: "same",
+              weight_classes: ["dk"],
+            }],
           },
         ],
       },
@@ -138,6 +213,7 @@ test("serwer Motek działa bezpiecznie", async (t) => {
   let nextSyntheticYarnId = 1;
   const recoveryRequests = [];
   const signUpRequests = [];
+  const deletedUserIds = [];
 
     function createSyntheticQuery(table, token) {
       const filters = [];
@@ -225,7 +301,13 @@ test("serwer Motek działa bezpiecznie", async (t) => {
             error: null,
           };
         },
-        async signInWithPassword() {
+        async signInWithPassword({ email, password }) {
+          if (
+            email === syntheticUsers["token-user-a"].email &&
+            password === "DeleteHaslo1!"
+          ) {
+            return { data: { user: syntheticUsers["token-user-a"] }, error: null };
+          }
           return { data: null, error: new Error("invalid credentials") };
         },
         async resetPasswordForEmail(email, options) {
@@ -260,7 +342,7 @@ test("serwer Motek działa bezpiecznie", async (t) => {
           user_id: userId,
           name: args.p_name,
           color: args.p_color,
-          material: args.p_material,
+          materials: args.p_materials,
           weight_class: args.p_weight_class,
           length_meters: args.p_length_meters,
           weight_grams: args.p_weight_grams,
@@ -273,6 +355,14 @@ test("serwer Motek działa bezpiecznie", async (t) => {
   const fakeSupabaseConnection = {
     verify: async () => {},
     client: {
+      auth: {
+        admin: {
+          async deleteUser(userId) {
+            deletedUserIds.push(userId);
+            return { data: { user: { id: userId } }, error: null };
+          },
+        },
+      },
       from(table) {
         assert.equal(table, "patterns");
         return {
@@ -325,6 +415,46 @@ test("serwer Motek działa bezpiecznie", async (t) => {
       assert.equal(response.headers.get("x-content-type-options"), "nosniff");
       assert.equal(response.headers.get("x-frame-options"), "DENY");
       assert.equal(response.headers.get("access-control-allow-origin"), null);
+      const pageHtml = await response.text();
+      assert.match(pageHtml, /class="inventory-layout"/);
+      assert.match(pageHtml, /id="inventoryThemeImage"/);
+      assert.match(pageHtml, /class="matches-hero"/);
+      assert.match(pageHtml, /id="matchesThemeImage"/);
+
+      const clientPolicyResponse = await fetch(`${baseUrl}/client-policy.js`);
+      assert.equal(clientPolicyResponse.status, 200);
+      assert.match(
+        clientPolicyResponse.headers.get("content-type"),
+        /^(?:application|text)\/javascript/
+      );
+      assert.match(await clientPolicyResponse.text(), /MotekClientPolicy/);
+
+      const materialPolicyResponse = await fetch(`${baseUrl}/material-policy.js`);
+      assert.equal(materialPolicyResponse.status, 200);
+      assert.match(
+        materialPolicyResponse.headers.get("content-type"),
+        /^(?:application|text)\/javascript/,
+      );
+      assert.match(await materialPolicyResponse.text(), /MotekMaterialPolicy/);
+
+      const themePolicyResponse = await fetch(`${baseUrl}/theme-policy.js`);
+      assert.equal(themePolicyResponse.status, 200);
+      assert.match(
+        themePolicyResponse.headers.get("content-type"),
+        /^(?:application|text)\/javascript/,
+      );
+      assert.match(await themePolicyResponse.text(), /MotekThemePolicy/);
+
+      for (const assetName of ["color-yarn-cat.v1.webp", "night-yarn-cat.v1.webp"]) {
+        const assetResponse = await fetch(`${baseUrl}/assets/${assetName}`);
+        assert.equal(assetResponse.status, 200);
+        assert.match(assetResponse.headers.get("content-type"), /^image\/webp/);
+        assert.equal(
+          assetResponse.headers.get("cache-control"),
+          "public, max-age=31536000, immutable",
+        );
+        assert.ok((await assetResponse.arrayBuffer()).byteLength < 300_000);
+      }
     });
 
     await t.test("wymaga zalogowania do zdalnego magazynu", async () => {
@@ -413,6 +543,49 @@ test("serwer Motek działa bezpiecznie", async (t) => {
       });
     });
 
+    await t.test("usuwa bieżące konto po ponownym haśle i frazie", async () => {
+      const response = await fetch(`${baseUrl}/api/account`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          Origin: baseUrl,
+          Cookie: "motek_access_token=token-user-a",
+        },
+        body: JSON.stringify({
+          password: "DeleteHaslo1!",
+          confirmation: "USUŃ KONTO",
+        }),
+      });
+
+      assert.equal(response.status, 204);
+      assert.equal(await response.text(), "");
+      assert.deepEqual(deletedUserIds, [syntheticUsers["token-user-a"].id]);
+      assert.match(response.headers.get("set-cookie"), /motek_access_token=/);
+      assert.match(response.headers.get("set-cookie"), /motek_refresh_token=/);
+    });
+
+    await t.test("odrzuca usunięcie konta bez sesji i przy błędnym potwierdzeniu", async () => {
+      const noSession = await fetch(`${baseUrl}/api/account`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json", Origin: baseUrl },
+        body: JSON.stringify({ password: "DeleteHaslo1!", confirmation: "USUŃ KONTO" }),
+      });
+      assert.equal(noSession.status, 401);
+
+      const wrongPhrase = await fetch(`${baseUrl}/api/account`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          Origin: baseUrl,
+          Cookie: "motek_access_token=token-user-a",
+        },
+        body: JSON.stringify({ password: "DeleteHaslo1!", confirmation: "USUN KONTO" }),
+      });
+      assert.equal(wrongPhrase.status, 400);
+      assert.match((await wrongPhrase.json()).error, /USUŃ KONTO/);
+      assert.deepEqual(deletedUserIds, [syntheticUsers["token-user-a"].id]);
+    });
+
     await t.test("izoluje syntetyczne dane włóczek między użytkownikami", async () => {
       const userACookies = "motek_access_token=token-user-a";
       const userBCookies = "motek_access_token=token-user-b";
@@ -426,7 +599,7 @@ test("serwer Motek działa bezpiecznie", async (t) => {
         body: JSON.stringify({
           name: "Test automatyczny",
           color: "zielony",
-          material: "wełna",
+          materials: ["wełna", "poliamid"],
           weightClass: "dk",
           length: 250,
           weight: 100,
@@ -436,6 +609,7 @@ test("serwer Motek działa bezpiecznie", async (t) => {
       userAVersion = createResponse.headers.get("etag");
       const created = await createResponse.json();
       assert.equal(created.name, "Test automatyczny");
+      assert.deepEqual(created.materials, ["wełna", "poliamid"]);
 
       const updateResponse = await fetch(`${baseUrl}/api/yarns/${created.id}`, {
         method: "PATCH",
@@ -443,7 +617,7 @@ test("serwer Motek działa bezpiecznie", async (t) => {
         body: JSON.stringify({
           name: "Test automatyczny — zmieniony",
           color: "niebieski",
-          material: "wełna",
+          materials: ["wełna"],
           weightClass: "dk",
           length: 300,
           weight: 120,
@@ -460,7 +634,7 @@ test("serwer Motek działa bezpiecznie", async (t) => {
         body: JSON.stringify({
           name: "Konflikt z drugiej karty",
           color: "niebieski",
-          material: "wełna",
+          materials: ["wełna"],
           weightClass: "dk",
           length: 300,
           weight: 120,
@@ -476,6 +650,9 @@ test("serwer Motek działa bezpiecznie", async (t) => {
       assert.equal(userAMatches.status, 200);
       assert.equal(matches.length, 1);
       assert.equal(matches[0].pattern.name, "Testowy wzór Supabase — M");
+      assert.equal(matches[0].pattern.baseName, "Testowy wzór Supabase");
+      assert.equal(matches[0].pattern.variantLabel, "M");
+      assert.equal(matches[0].pattern.patternId, 21);
       assert.equal(matches[0].total, 100);
 
       const userBList = await fetch(`${baseUrl}/api/yarns`, { headers: { Cookie: userBCookies } });
@@ -496,7 +673,7 @@ test("serwer Motek działa bezpiecznie", async (t) => {
         body: JSON.stringify({
           name: "Nieautoryzowana zmiana",
           color: "czerwony",
-          material: "wełna",
+          materials: ["wełna"],
           weightClass: "dk",
           length: 300,
           weight: 120,
@@ -517,7 +694,7 @@ test("serwer Motek działa bezpiecznie", async (t) => {
           user_id: syntheticUsers["token-user-a"].id,
           name: `Limit ${id}`,
           color: "zielony",
-          material: "wełna",
+          materials: ["wełna"],
           weight_class: "dk",
           length_meters: 100,
           weight_grams: 20,
@@ -529,7 +706,14 @@ test("serwer Motek działa bezpiecznie", async (t) => {
       const limitResponse = await fetch(`${baseUrl}/api/yarns`, {
         method: "POST",
         headers: { ...originHeaders, "Content-Type": "application/json", Cookie: userACookies, "If-Match": userAVersion },
-        body: JSON.stringify({ name: "Po limicie" }),
+        body: JSON.stringify({
+          name: "Po limicie",
+          color: "zielony",
+          materials: ["wełna"],
+          weightClass: "dk",
+          length: 100,
+          weight: 20,
+        }),
       });
       assert.equal(limitResponse.status, 409);
       assert.match((await limitResponse.json()).error, /500 włóczek/);
@@ -569,6 +753,7 @@ test("serwer Motek działa bezpiecznie", async (t) => {
         id: 21,
         name: "Testowy wzór Supabase",
         description: "Opis wzoru pobranego ze zdalnej bazy.",
+        projectType: "cardigan",
         materials: ["wełna", "jedwab"],
         metersPer100g: 400,
         yarnRequirements: [
@@ -582,12 +767,25 @@ test("serwer Motek działa bezpiecznie", async (t) => {
           {
             id: "m",
             label: "M",
-            yarnsNeeded: 1,
-            metersNeeded: 200,
-            gramsNeeded: 80,
-            materials: ["wełna"],
-            weightClasses: ["dk"],
-            colors: "dowolny",
+            size: "M",
+            yarnOption: "Testowa włóczka",
+            requirements: [{
+              role: "główna",
+              measurementBasis: "meters",
+              metersMin: 200,
+              metersMax: null,
+              gramsMin: 80,
+              gramsMax: null,
+              skeinsMin: null,
+              skeinsMax: null,
+              materials: ["wełna"],
+              materialMatch: "all",
+              colorMode: "same",
+              weightClasses: ["dk"],
+              strandCount: null,
+              heldTogetherGroup: null,
+              distinctColorGroup: null,
+            }],
           },
         ],
         sourceLanguage: "pl",
@@ -618,7 +816,7 @@ test("serwer Motek działa bezpiecznie", async (t) => {
         body: JSON.stringify({
           name: "Błędny test",
           color: "zielony",
-          material: "nieznany",
+          materials: ["nieznany"],
           weightClass: "dk",
           length: -1,
           weight: 100,

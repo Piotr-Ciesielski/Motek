@@ -24,7 +24,12 @@ build/
 coverage/
 .venv/
 tmp/
+.worktrees/
+.superpowers/
+__pycache__/
+*.py[cod]
 
 Wzory/
 PROMPTS.md
 AUDYT.md
+AGENTS.md

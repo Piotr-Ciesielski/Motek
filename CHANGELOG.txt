@@ -6,6 +6,209 @@ Wersja 2.0.0-alpha.38 (w przygotowaniu) - e-mail jako login konta
 - Usunięto zbieranie oraz istniejące dane imienia i nazwiska z profili.
 - Zaktualizowano migrację Supabase i testy przepływu rejestracji.
 
+Wersja 2.0.0-alpha.37 (w przygotowaniu) - dwa motywy wizualne
+- Dodano globalny przełącznik motywów w nagłówku.
+- Jasny wariant używa designu „Koloroterapia”, a ciemny „Nocny Motek”.
+- Przywrócono grafiki włóczek i kotów dla obu motywów.
+- Pionowy wariant trafił po prawej do Magazynu, a szeroki hero do Dopasowania.
+- Grafika Magazynu wróciła do pionowej kompozycji z prototypów: `cover` z ogniskiem
+  po prawej; zoptymalizowane WebP i cache pozostają bez zmian.
+- Z Magazynu usunięto tekstową nakładkę w owalnej ramce; grafika pozostała bez zmian.
+- Taką samą nakładkę usunięto również z Dopasowania w obu motywach.
+- Panel grafiki Magazynu ma ograniczoną wysokość widoku, więc kompozycja pozostaje
+  stabilna także przy dłuższej liście włóczek.
+- Preferencja motywu jest zapisywana lokalnie pod kluczem `motek-theme-v1` i
+  nie trafia do Supabase.
+
+Wersja 2.0.0-alpha.36 (w przygotowaniu) - natychmiastowe usuwanie konta
+
+- Dodano chroniony endpoint `DELETE /api/account`.
+- Usunięcie wymaga aktywnej sesji, ponownego podania hasła i wpisania `USUŃ KONTO`.
+- Usuwane są konto, profil i prywatny magazyn włóczek; wspólny katalog wzorów pozostaje bez zmian.
+- Operacja nie jest automatycznie ponawiana po utracie odpowiedzi sieciowej.
+- Dodano testy walidacji, ponownego uwierzytelnienia, izolacji użytkownika i obsługi endpointu.
+
+Wersja 2.0.0-alpha.35 (w przygotowaniu) - dokładne dopasowanie rzeczywistych wzorów
+
+- Włóczka może mieć kilka materiałów wybranych ze wspólnej, kontrolowanej listy.
+- Formularz magazynu i filtr katalogu korzystają z tych samych nazw materiałów.
+- „Mieszanka — skład nieokreślony” jest rozłączna z konkretnymi materiałami.
+- Wielokrotne kliknięcie „Dodaj motek” otwiera tylko jeden formularz i przenosi do niego fokus.
+- Usunięto tekstowy przycisk „Pokaż”; ikona oka ujawnia hasło wyłącznie podczas przytrzymania.
+- Dodano walidowany format wymagań dopasowania v2 z rolami włóczek, kolorami,
+  rozmiarami, alternatywnymi włóczkami oraz niezależnymi wymaganiami metrów i gramów.
+- Ranking przydziela konkretne motki do ról bez ponownego użycia tego samego motka.
+- Dodano 21 potwierdzonych wariantów dla wzorów Holly, Na Pole i Oslo Hat.
+- Wynik pokazuje rozmiar, wariant włóczki, wymagania każdej roli i przydzielone motki.
+- Migracje i import zachowały 10 istniejących włóczek oraz zaktualizowały 106 wzorów
+  w Supabase; wszystkie rekordy korzystają z wymagań v2.
+
+Wersja 2.0.0-alpha.34 (w przygotowaniu) - dynamiczne filtry katalogu
+
+- Typ projektu, materiał, język, status i wyszukiwanie działają razem jako wspólne kryteria.
+- Typ projektu i materiał wzajemnie zawężają dostępne opcje.
+- Opcje typów i materiałów pokazują aktualną liczbę pasujących wzorów.
+- Niemożliwe opcje są wyszarzone, a aktywny wybór pozostaje widoczny.
+- Wzór z kilkoma materiałami można odnaleźć pod każdym z nich bez duplikowania wyników.
+- Kategorie są ponownie wyliczane z ostatecznej nazwy i opisu, z pierwszeństwem ręcznych poprawek.
+- Poprawiono kategorie czterech wzorów: Bubble, Na Pole Tee, Lento i Mineral.
+
+Wersja 2.0.0-alpha.33 (w przygotowaniu) - zweryfikowane dane włóczek we wzorach
+
+- Ponownie przeanalizowano wszystkie 116 plików PDF, w tym skany i dane podane nie wprost.
+- Katalog zawiera 103 samodzielne wzory z PDF oraz 3 rekordy demonstracyjne.
+- Uzupełniono materiał, długość i wagę motka lub jawny opis elastycznego doboru włóczki.
+- Zachowano osobne alternatywy włóczek zamiast sprowadzać je do jednego mylącego przeliczenia.
+- Wykluczono 13 duplikatów, kuponów dostępu, instrukcji technicznych i plików pomocniczych.
+- Zaktualizowano Supabase do 106 sprawdzonych rekordów bez pozycji wymagających dalszej weryfikacji.
+- Karty katalogu poprawnie opisują wzory, w których włóczkę dobiera się elastycznie.
+
+Wersja 2.0.0-alpha.32 (w przygotowaniu) - kategorie katalogu wzorów
+
+- Dodano kontrolowane typy projektów dla 119 wzorów.
+- Katalog pokazuje kategorię na karcie i pozwala filtrować po typie projektu.
+- Klasyfikacja preferuje nazwę wzoru i pełne słowa, aby ograniczyć błędne przypisania.
+- Dodano migrację Supabase oraz kontrolowany import kategorii.
+- Dodano testy kompletności danych i charakterystycznych kategorii.
+
+Wersja 2.0.0-alpha.31 (w przygotowaniu) - prosty powrót do całego katalogu
+- Dodano jedną akcję czyszczącą wyszukiwanie, filtry i niestandardowe sortowanie.
+- Przycisk jest nieaktywny, gdy katalog już korzysta z ustawień domyślnych.
+- Po wyczyszczeniu fokus wraca do wyszukiwarki, a podsumowanie ogłasza nowy wynik.
+- Układ akcji pozostaje czytelny również na telefonie.
+
+Wersja 2.0.0-alpha.30 (w przygotowaniu) - stopniowe wyświetlanie katalogu
+- Pierwsza partia wzorów pojawia się od razu po pobraniu, bez czekania na cały katalog.
+- Kolejne strony są dołączane w tle bez duplikowania kart.
+- Podsumowanie pokazuje docelową liczbę rekordów i informuje o trwającym pobieraniu.
+- Dodano test kolejnych aktualizacji katalogu podczas pobierania stron.
+
+Wersja 2.0.0-alpha.29 (w przygotowaniu) - przejście od dopasowania do wzoru
+- Każda grupa wyników ma akcję „Zobacz w katalogu”.
+- Przejście otwiera katalog i zawęża go do wybranego wzoru.
+- Filtry są ustawiane tak, aby dopasowany, zweryfikowany wzór nie został ukryty.
+- Powtarzające się kontrolki szczegółów mają nazwy uwzględniające konkretny wzór.
+
+Wersja 2.0.0-alpha.28 (w przygotowaniu) - pewna nawigacja klawiaturą
+- Każdy główny ekran ma jednoznaczną nazwę w strukturze dostępności.
+- Po zmianie ekranu fokus przechodzi na jego widoczny nagłówek.
+- Obsłużono również ekran konta, którego nagłówek zmienia się po zalogowaniu.
+- Skip link nadal prowadzi bezpośrednio do głównej treści.
+
+Wersja 2.0.0-alpha.27 (w przygotowaniu) - częściowy sukces i wznawianie katalogu
+- Katalog zachowuje poprawnie pobrane strony, jeśli dalsza część chwilowo nie odpowiada.
+- Widoczny komunikat wskazuje liczbę dostępnych wzorów i pozwala dokończyć pobieranie.
+- Ponowienie zaczyna się od miejsca błędu i nie dubluje wcześniej pobranych rekordów.
+- Wybrany filtr materiału pozostaje aktywny po dokończeniu pobierania.
+- Potwierdzony zapis motka nie jest mylony z błędem, gdy nie odświeży się samo podsumowanie.
+- Dodano testy częściowego pobrania, wznowienia i błędu pierwszej strony katalogu.
+
+Wersja 2.0.0-alpha.26 (w przygotowaniu) - bezpieczny zapis po przerwanym połączeniu
+- Odczyty danych są jednokrotnie ponawiane po krótkim, przejściowym błędzie sieci.
+- Zapisy nie są automatycznie powtarzane, dzięki czemu utrata odpowiedzi nie tworzy duplikatu.
+- Po niepewnym zapisie użytkownik może najpierw sprawdzić faktyczny stan magazynu.
+- Motek rozpoznaje zapisany nowy motek, zakończoną modyfikację i wykonane usunięcie.
+- Formularz pozostaje na ekranie, jeśli wyniku operacji nadal nie można potwierdzić.
+- Dodano testy polityki retry oraz weryfikacji przerwanych operacji.
+
+Wersja 2.0.0-alpha.25 (w przygotowaniu) - bezpieczna decyzja przy konflikcie zapisu
+- Konflikt zmian z innej karty lub urządzenia nie kończy się już technicznym błędem.
+- Niezapisana wersja pozostaje w formularzu i użytkownik wybiera dalsze działanie.
+- Akcja „Zapisz moją wersję” pobiera aktualną wersję magazynu i ponawia pojedynczą operację.
+- Akcja „Pobierz nowsze dane” ostrzega przed zastąpieniem niezapisanej edycji.
+- Ten sam mechanizm obejmuje dodawanie, modyfikowanie i usuwanie włóczki.
+
+Wersja 2.0.0-alpha.24 (w przygotowaniu) - końcowa kontrola responsywności
+- Sprawdzono widoki 375, 768 i 1440 px bez poziomego przewijania.
+- Potwierdzono prawidłowe przejście katalogu z trzech do dwóch i jednej kolumny.
+- Reflow odpowiadający powiększeniu 200% i 400% zachowuje dostęp do całej treści.
+- Długi tekst, emoji oraz treści arabskie i chińskie nie rozszerzają układu.
+- Widoczne kontrolki zachowują minimalny obszar obsługi 44×44 px.
+
+Wersja 2.0.0-alpha.23 (w przygotowaniu) - bezpieczny powrót po wygaśnięciu sesji
+- Wygaśnięcie sesji podczas pracy prowadzi do ponownego logowania bez usuwania formularza.
+- Po zalogowaniu Motek wraca do magazynu i wskazuje zapisanie zachowanych zmian.
+- Błędy API zachowują kod odpowiedzi, dzięki czemu brak sesji nie jest mylony z awarią sieci.
+- Pole e-mail otrzymuje fokus po komunikacie o wygaśnięciu sesji.
+- Ręczne wylogowanie wymaga potwierdzenia, gdy w magazynie są niezapisane zmiany.
+- Dane profilu i przycisk wylogowania mają czytelny układ na telefonie.
+
+Wersja 2.0.0-alpha.22 (w przygotowaniu) - ponawianie i ochrona edycji
+- Błędy katalogu i dopasowania udostępniają bezpieczną akcję „Spróbuj ponownie”.
+- Przeglądarka ostrzega przed zamknięciem karty z nowym lub zmienionym formularzem.
+- Ostrzeżenie obejmuje również trwające operacje zapisu, usuwania i konta.
+- Usunięto nieużywany kod dawnego autosave po przejściu na jawne przyciski zapisu.
+- Dopasowanie nie wysyła ponownie wszystkich włóczek i korzysta z wcześniej zapisanych danych.
+
+Wersja 2.0.0-alpha.21 (w przygotowaniu) - czytelne stany sieci i ładowania
+- Żądania interfejsu kończą oczekiwanie po 12 sekundach i wskazują możliwość ponowienia.
+- Utrata oraz powrót połączenia są komunikowane w widocznym pasku aplikacji.
+- Błędy mają semantyczną rolę alertu, a ładowane regiony przekazują stan `aria-busy`.
+- Awaria pobierania danych nie wylogowuje użytkownika po poprawnym sprawdzeniu sesji.
+- Katalog, dopasowanie i zapis pokazują różne stany ładowania, błędu i sukcesu.
+- Komunikat zapisu magazynu jest widoczny bezpośrednio pod listą włóczek.
+
+Wersja 2.0.0-alpha.20 (w przygotowaniu) - kontrast i wygodne pola dotykowe
+- Potwierdzono zgodność kluczowych par tekstu i tła z wymaganiami kontrastu WCAG AA.
+- Wzmocniono kolor obrysu fokusu, aby pozostał czytelny na jasnym tle.
+- Marka, przełączniki konta i link odzyskiwania hasła mają pole obsługi co najmniej 44×44 px.
+- Rozwijane warianty dopasowania zachowują minimalną wysokość wygodną dla dotyku.
+
+Wersja 2.0.0-alpha.19 (w przygotowaniu) - długie dane i czytelne liczby
+- Liczby w magazynie, katalogu i wynikach używają polskiego formatowania tysięcy.
+- Długie dane profilu, nazwy wzorów i wariantów bezpiecznie zawijają się w kartach.
+- Ciasny nagłówek zachowuje skrót z wielokropkiem i udostępnia pełny login w podpowiedzi.
+- Teksty użytkownika lepiej zachowują kierunek pisma dla treści Unicode i RTL.
+- Wersjonowane adresy plików interfejsu zapobiegają wyświetlaniu starego wyglądu po aktualizacji.
+
+Wersja 2.0.0-alpha.18 (w przygotowaniu) - czytelniejsze formularze hasła
+- Dodano dostępne klawiaturą przyciski „Pokaż” i „Ukryj” przy polach hasła.
+- Kontrolki informują czytniki ekranu o aktualnym stanie widoczności.
+- Proces ustawiania nowego hasła pokazuje te same wymagania co rejestracja.
+- Pola zachowują właściwe ustawienia autouzupełniania dla logowania i nowego hasła.
+
+Wersja 2.0.0-alpha.17 (w przygotowaniu) - klarowne anulowanie i obsługa klawiatury
+- Nowy formularz włóczki ma akcję „Anuluj dodawanie” zamiast destrukcyjnego „Usuń”.
+- Anulowanie niezapisanego formularza nie wysyła zmian do serwera.
+- Przełącznik logowania i rejestracji obsługuje strzałki oraz klawisze Home i End.
+- Aktywna zakładka jest jedyną pozycją przełącznika dostępną przez klawisz Tab.
+
+Wersja 2.0.0-alpha.16 (w przygotowaniu) - grupowanie wyników dopasowania
+- Połączono pasujące rozmiary tego samego wzoru w jedną kartę.
+- Najlepszy wariant jest rozwinięty od razu, a pozostałe można otworzyć osobno.
+- Każdy wariant zachowuje własną ocenę dopasowania i wymagania włóczki.
+- Grupowanie korzysta ze stabilnego identyfikatora wzoru zamiast podobieństwa nazw.
+
+Wersja 2.0.0-alpha.15 (w przygotowaniu) - sortowanie i ładowanie katalogu
+- Dodano sortowanie polecane oraz alfabetyczne A–Z i Z–A.
+- Podczas pobierania katalog pokazuje sześć kart-szkieletów.
+- Animacja szkieletów respektuje systemowe ograniczenie ruchu.
+- Filtry wykorzystują pełną szerokość katalogu i nie są ściskane na desktopie.
+- Na telefonie wszystkie kontrolki katalogu układają się w jedną kolumnę.
+
+Wersja 2.0.0-alpha.14 (w przygotowaniu) - filtry i szczegóły wzorów
+- Dodano łączone filtrowanie katalogu według języka i materiału.
+- Lista materiałów jest tworzona dynamicznie z aktualnych danych katalogu.
+- Karty pokazują parametry włóczki w rozwijanej sekcji dostępnej klawiaturą.
+- Skrócono podstawowy widok kart bez ukrywania ważnych informacji.
+- Doprecyzowano etykiety języka polskiego, angielskiego i nieustalonego.
+
+Wersja 2.0.0-alpha.13 (w przygotowaniu) - używalny katalog wzorów
+- Katalog domyślnie eksponuje zweryfikowane wzory.
+- Widok renderuje pierwsze 12 pasujących kart i pozwala wczytywać kolejne partie.
+- Dodano szybki powrót do filtrów oraz czytelne podsumowanie liczby wyników.
+- Nazwy importowanych plików są formatowane w bardziej czytelny sposób.
+- Zweryfikowane wzory są prezentowane przed rekordami wymagającymi sprawdzenia.
+- Skrócono domyślny mobilny katalog bez utraty dostępu do pełnych 119 rekordów.
+
+Wersja 2.0.0-alpha.12 (w przygotowaniu) - przebudowa głównego interfejsu
+- Podzielono konto, magazyn, dopasowania i katalog na osobne widoki.
+- Dodano nawigację aplikacji oraz szybki dostęp do wyników dopasowania.
+- Zapisane włóczki są prezentowane jako zwarte karty rozwijane do edycji.
+- Poprawiono stany gościa, nagłówki konta i zabezpieczenie usuwania włóczki.
+- Uporządkowano komunikaty błędów, w tym błędne dane logowania bez kodu HTTP.
+- Poprawiono mobilny układ, kontrast, stany nieaktywnych przycisków i odmianę liczby motków.
+
 2026-07-28 — UX/UI: dodano odzyskiwanie hasła przez Supabase Auth oraz timeout
 komunikacji Auth. Niedostępne API lub SMTP nie pozostawia formularza w stanie
 „Wysyłam instrukcję...” bez odpowiedzi.
@@ -128,3 +331,8 @@ Wersja 1.0.0
 - Pierwotna wersja aplikacji.
 - Ręczne dodawanie, usuwanie i wyszukiwanie dopasowanych wzorów.
 - Lokalny backend HTTP z bazą SQLite.
+2026-07-31
+- dopasowano jasny i ciemny układ Magazynu do zaakceptowanych wariantów z PR #8
+- przywrócono cztery moduły podsumowania magazynu oraz pionową fotografię po prawej
+- dodano przycisk „Dodaj motek” w nagłówku i zachowano aktualizację statystyk po zmianach
+- zmniejszono grafiki motywów do wersjonowanych WebP i dodano roczny cache immutable

@@ -3,6 +3,7 @@
     {
       "name": "Wzór demo — Leśny kardigan",
       "description": "Syntetyczny wzór demonstracyjny na prosty kardigan z dzianiny o średniej grubości. Rekord służy wyłącznie do testowania dopasowania włóczek.",
+      "project_type": "cardigan",
       "materials": ["wełna"],
       "meters_per_100g": 400,
       "yarn_requirements": [
@@ -22,6 +23,7 @@
     {
       "name": "Wzór demo — Bawełniany top",
       "description": "Syntetyczny wzór demonstracyjny na lekki top z bawełnianej włóczki. Rekord służy wyłącznie do testowania materiału, grubości i ilości włóczki.",
+      "project_type": "top",
       "materials": ["bawełna"],
       "meters_per_100g": 300,
       "yarn_requirements": [
@@ -40,6 +42,7 @@
     {
       "name": "Wzór demo — Moherowa chusta",
       "description": "Syntetyczny wzór demonstracyjny na lekką chustę z delikatnej włóczki. Rekord służy wyłącznie do testowania dopasowania włóczek o małej gramaturze.",
+      "project_type": "shawl_scarf",
       "materials": ["moher"],
       "meters_per_100g": 800,
       "yarn_requirements": [
