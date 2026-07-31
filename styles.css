@@ -1821,7 +1821,9 @@ body::before {
 #inventoryView .inventory-layout__visual img {
   height: 100%;
   min-height: 620px;
-  object-position: right center;
+  object-fit: contain;
+  object-position: center;
+  background: var(--panel-soft);
 }
 
 [data-theme="light"] .app-header {

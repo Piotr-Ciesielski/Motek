@@ -28,6 +28,9 @@ osobną kartę z grafiką z magazynu.
   PNG pozostają w repozytorium jako materiał bazowy. Serwer cache'uje WebP
   przez rok z `immutable`, dzięki czemu zmiana motywu nie pobiera ponownie
   obrazu już zapisanego w pamięci przeglądarki.
+- Grafika w panelu Magazynu pokazuje pełny kadr bez powiększania i przycinania:
+  używa `object-fit: contain`, jest wyśrodkowana, a wolne miejsce wypełnia tło
+  panelu właściwe dla motywu. Nie zmienia to rozmiaru ani zasad cache'owania WebP.
 - Na ekranach do 960 px układ przechodzi do jednej kolumny; obraz pozostaje
   widoczny i pojawia się pod treścią.
 
@@ -46,7 +49,8 @@ osobną kartę z grafiką z magazynu.
 
 ## Kryteria akceptacji
 
-1. W Magazynie obraz znajduje się po prawej stronie i jest pionowo kadrowany.
+1. W Magazynie obraz znajduje się po prawej stronie, jest wyśrodkowany i widoczny
+   w całości bez przycinania.
 2. W Dopasowaniu widoczna jest osobna karta hero z grafiką po prawej.
 3. Przełączenie motywu aktualizuje oba obrazy, podpisy i tekst alternatywny,
    ale po pierwszym pobraniu nie transferuje ponownie tego samego pliku.

@@ -369,3 +369,6 @@ zaakceptowanych prototypów w PR #8.
 Grafiki są ładowane z wersjonowanych plików WebP (`*.v1.webp`) i otrzymują
 roczny cache `immutable`, więc przełączanie motywu nie pobiera ponownie
 wcześniej użytego obrazu.
+Grafika po prawej w Magazynie zachowuje pełny kadr, jest wyśrodkowana i nie
+powiększa się ani nie przycina; wolne miejsce w wysokiej karcie wypełnia tło
+motywu.

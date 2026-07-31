@@ -324,3 +324,5 @@ po lewej oraz pionową grafikę po prawej, rozciągniętą przez wysokość wido
 Dopasowanie pokazuje szeroką kartę z grafiką wybranego motywu. Obrazy zmieniają
 się razem z globalnym przełącznikiem jasny/ciemny, bez ponownego transferu pliku
 już zapisanego w cache przeglądarki.
+Grafika w Magazynie jest dopasowana tak, aby pokazać pełny kadr bez przycinania
+i powiększania (`object-fit: contain`), z wyśrodkowaniem w panelu.

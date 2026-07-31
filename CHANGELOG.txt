@@ -11,6 +11,8 @@ Wersja 2.0.0-alpha.37 (w przygotowaniu) - dwa motywy wizualne
 - Jasny wariant używa designu „Koloroterapia”, a ciemny „Nocny Motek”.
 - Przywrócono grafiki włóczek i kotów dla obu motywów.
 - Pionowy wariant trafił po prawej do Magazynu, a szeroki hero do Dopasowania.
+- Grafika Magazynu jest teraz widoczna w całości, bez powiększania i przycinania;
+  kompresja WebP oraz cache pozostają bez zmian.
 - Preferencja motywu jest zapisywana lokalnie pod kluczem `motek-theme-v1` i
   nie trafia do Supabase.
 

@@ -23,7 +23,7 @@ test("light and dark variants define the prototype layout rules", () => {
   assert.match(stylesCss, /#inventoryView \.inventory-layout/);
   assert.match(stylesCss, /grid-template-rows: auto auto minmax\(600px, auto\)/);
   assert.match(stylesCss, /grid-row: 1 \/ span 3/);
-  assert.match(stylesCss, /object-position: right center/);
+  assert.match(stylesCss, /object-position: center/);
 });
 
 test("inventory stats update together with the existing summary", () => {
@@ -45,4 +45,15 @@ test("theme artwork uses optimized immutable assets", () => {
   assert.match(serverJs, /public, max-age=31536000, immutable/);
   assert.match(serverJs, /url\.pathname === "\/assets\/color-yarn-cat\.v1\.webp"/);
   assert.match(serverJs, /url\.pathname === "\/assets\/night-yarn-cat\.v1\.webp"/);
+});
+
+test("inventory artwork shows the full image without crop", () => {
+  assert.match(
+    stylesCss,
+    /#inventoryView \.inventory-layout__visual img[\s\S]*?object-fit: contain;/,
+  );
+  assert.match(
+    stylesCss,
+    /#inventoryView \.inventory-layout__visual img[\s\S]*?object-position: center;/,
+  );
 });
