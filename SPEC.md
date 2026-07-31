@@ -2,12 +2,12 @@
 
 ## 1. Status projektu
 
-- bieżąca wersja rozwojowa: `2.0.0-alpha.36`
+- bieżąca wersja rozwojowa: `2.0.0-alpha.37`
 - ostatnia wersja wydana: `1.0.2`
 - aktualne źródło danych: Supabase
 - lokalny SQLite: usunięty z aplikacji
-- następny zakres: dokładne dopasowanie wzorów, bezpieczne usuwanie konta,
-  dwa motywy wizualne oraz później staging z ochroną brzegową
+- następny zakres: rozszerzanie dokładnych wymagań wzorów, a później staging
+  z ochroną brzegową
 - limit magazynu: 500 włóczek na użytkownika
 - limit katalogu: 300 wzorów
 
@@ -266,6 +266,8 @@ Zrealizowano:
 - wspólną listę materiałów i obsługę kilku materiałów jednego motka,
 - bezpieczną ścieżkę rankingu z dokładnymi wymaganiami 21 wariantów,
 - natychmiastowe usuwanie konta po ponownym podaniu hasła i potwierdzeniu,
+- dwa motywy wizualne: jasna „Koloroterapia” i ciemny „Nocny Motek”,
+  przełączane globalnie w nagłówku i zapamiętywane lokalnie,
 - autosave zapisujący różnice per motek przez `POST`, `PATCH` i `DELETE`,
 - usunięcie SQLite z aplikacji.
 
@@ -278,9 +280,6 @@ Do wykonania pozostają przede wszystkim:
 - pełna ochrona DDoS przed warstwą aplikacji: CDN/WAF lub reverse proxy,
   limity ruchu na brzegu, ukrycie originu, monitoring i procedura reakcji,
 - uporządkowanie konfiguracji wdrożenia produkcyjnego.
-- natychmiastowe usuwanie konta po ponownym podaniu hasła i potwierdzeniu;
-- tryb jasny „Koloroterapia” oraz tryb ciemny „Nocny Motek”, przełączane
-  lokalną preferencją użytkownika.
 
 ### Opcjonalny plan skalowania
 

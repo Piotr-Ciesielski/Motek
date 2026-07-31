@@ -1,7 +1,7 @@
 # Motywy kolorystyczne Motka — projekt
 
 **Data:** 2026-07-31  
-**Status:** zatwierdzone przez właścicielkę produktu  
+**Status:** zaimplementowane i zweryfikowane
 **Zakres:** frontend, preferencja użytkownika i warstwa tokenów CSS
 
 ## Cel

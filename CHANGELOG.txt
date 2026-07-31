@@ -1,5 +1,11 @@
 Motek - log zmian
 
+Wersja 2.0.0-alpha.37 (w przygotowaniu) - dwa motywy wizualne
+- Dodano globalny przełącznik motywów w nagłówku.
+- Jasny wariant używa designu „Koloroterapia”, a ciemny „Nocny Motek”.
+- Preferencja motywu jest zapisywana lokalnie pod kluczem `motek-theme-v1` i
+  nie trafia do Supabase.
+
 Wersja 2.0.0-alpha.36 (w przygotowaniu) - natychmiastowe usuwanie konta
 
 - Dodano chroniony endpoint `DELETE /api/account`.

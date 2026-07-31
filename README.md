@@ -48,13 +48,15 @@ zużycia na podstawie samej nazwy wzoru, materiału ani przybliżenia.
 ### Frontend
 
 Statyczny interfejs HTML, CSS i JavaScript znajduje się w `index.html`,
-`styles.css` i `app.js`. Odpowiada za:
+`styles.css`, `theme-policy.js` i `app.js`. Odpowiada za:
 
 - konto użytkownika i sesję,
 - formularz magazynu włóczek,
 - katalog wzorów,
 - wyszukiwanie i filtrowanie,
 - prezentację wyników dopasowania.
+- dwa motywy wizualne: jasną „Koloroterapię” i ciemny „Nocny Motek”,
+  przełączane globalnie w nagłówku i zapamiętywane lokalnie.
 
 Frontend nie otrzymuje sekretnego klucza Supabase. Komunikuje się z backendem
 przez API Motka.
@@ -263,7 +265,7 @@ npm run patterns:import
 
 ## Stan projektu i wersjonowanie
 
-Aktualna wersja rozwojowa: **2.0.0-alpha.36**.
+Aktualna wersja rozwojowa: **2.0.0-alpha.37**.
 
 Najważniejsze etapy zapisane w `CHANGELOG.txt`:
 
@@ -277,6 +279,7 @@ Najważniejsze etapy zapisane w `CHANGELOG.txt`:
 - `2.0.0-alpha.9` — bezpieczny autosave, zabezpieczenia Auth, limity produktu i ograniczenie kosztu rankingu.
 - `2.0.0-alpha.10` — naprawa nagłówków żądań magazynu i synchronizacja wymaganych migracji zdalnego Supabase.
 - `2.0.0-alpha.35` — wiele materiałów na motku i dokładne dopasowanie 21 wariantów rzeczywistych wzorów.
+- `2.0.0-alpha.37` — globalny przełącznik motywów „Koloroterapia” / „Nocny Motek” z lokalnym zapisem preferencji.
 - `2.0.0-alpha.34` — poprawione kategorie oraz dynamiczne, łączone filtry typu projektu i materiału.
 - `2.0.0-alpha.33` — ponowny audyt wszystkich PDF-ów i kompletny, oczyszczony katalog danych włóczek.
 - `2.0.0-alpha.15` — sortowanie katalogu i dostępny stan ładowania ze szkieletami.
@@ -320,6 +323,7 @@ Motek/
 ├── app.js                         # logika interfejsu
 ├── material-policy.js             # wspólna lista i zasady materiałów
 ├── matching-policy.js             # walidacja i dokładny przydział włóczek
+├── theme-policy.js                # polityka i bootstrap motywu
 ├── index.html                     # widok aplikacji
 ├── styles.css                     # style
 ├── server.js                      # backend HTTP i API
