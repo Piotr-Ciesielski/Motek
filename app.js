@@ -46,6 +46,9 @@ const passwordUpdateForm = document.getElementById("passwordUpdateForm");
 const cancelPasswordResetBtn = document.getElementById("cancelPasswordResetBtn");
 const accountView = document.getElementById("accountView");
 const headerUser = document.getElementById("headerUser");
+const themeToggle = document.getElementById("themeToggle");
+const themeToggleLabel = document.getElementById("themeToggleLabel");
+const themeToggleIcon = themeToggle?.querySelector(".theme-toggle__icon");
 const appViews = [...document.querySelectorAll(".app-view")];
 const viewButtons = [...document.querySelectorAll("[data-view-target]")];
 const inventoryMatchBtn = document.getElementById("inventoryMatchBtn");
@@ -76,6 +79,12 @@ const {
   formatYarnMaterials,
   normalizeYarnMaterials,
 } = window.MotekMaterialPolicy;
+const {
+  applyTheme,
+  getThemeToggleState,
+  normalizeTheme,
+  saveTheme,
+} = window.MotekThemePolicy;
 const MATERIAL_LABEL_BY_VALUE = new Map(
   MATERIALS.map(({ value, label }) => [value, label]),
 );
@@ -170,6 +179,22 @@ function setActiveView(requestedView, { focus = true } = {}) {
   }
 }
 
+function renderThemeToggle() {
+  if (!themeToggle || !themeToggleLabel) {
+    return;
+  }
+
+  const currentTheme = normalizeTheme(document.documentElement.dataset.theme);
+  const state = getThemeToggleState(currentTheme);
+  themeToggle.setAttribute("aria-pressed", String(state.pressed));
+  themeToggle.setAttribute("aria-label", state.label);
+  themeToggleLabel.textContent = state.shortLabel;
+
+  if (themeToggleIcon) {
+    themeToggleIcon.textContent = state.nextTheme === "dark" ? "☾" : "☀";
+  }
+}
+
 function updateNavigationState() {
   viewButtons.forEach((button) => {
     const protectedView =
@@ -182,6 +207,16 @@ function updateNavigationState() {
 viewButtons.forEach((button) => {
   button.addEventListener("click", () => setActiveView(button.dataset.viewTarget));
 });
+
+themeToggle?.addEventListener("click", () => {
+  const currentTheme = normalizeTheme(document.documentElement.dataset.theme);
+  const nextTheme = getThemeToggleState(currentTheme).nextTheme;
+  const appliedTheme = applyTheme(nextTheme);
+  saveTheme(appliedTheme);
+  renderThemeToggle();
+});
+
+renderThemeToggle();
 
 heroAuthBtn.addEventListener("click", () => {
   authPanel.scrollIntoView({ behavior: "smooth", block: "start" });
