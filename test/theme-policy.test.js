@@ -1,5 +1,7 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
+const fs = require("node:fs");
+const path = require("node:path");
 const {
   DEFAULT_THEME,
   THEME_STORAGE_KEY,
@@ -70,4 +72,13 @@ test("applyTheme ustawia data-theme i color-scheme na dokumencie", () => {
   assert.equal(applyTheme("dark", documentLike), "dark");
   assert.equal(documentLike.documentElement.dataset.theme, "dark");
   assert.equal(documentLike.documentElement.style.colorScheme, "dark");
+});
+
+test("arkusz zawiera tokeny obu zatwierdzonych palet", () => {
+  const css = fs.readFileSync(path.join(__dirname, "..", "styles.css"), "utf8");
+
+  assert.match(css, /\[data-theme="dark"\]/);
+  assert.match(css, /--accent:\s*#e94f4b/);
+  assert.match(css, /--accent:\s*#c39a4b/);
+  assert.match(css, /--panel-soft/);
 });
