@@ -326,4 +326,5 @@ się razem z globalnym przełącznikiem jasny/ciemny, bez ponownego transferu pl
 już zapisanego w cache przeglądarki.
 Grafika w Magazynie zachowuje pionową kompozycję prototypów przez
 `object-fit: cover` i `object-position: right center`; Dopasowanie pozostaje
-szerokim hero.
+szerokim hero. Magazyn pokazuje samą grafikę, bez tekstowej nakładki i ramki;
+podpis motywu pozostaje w Dopasowaniu.

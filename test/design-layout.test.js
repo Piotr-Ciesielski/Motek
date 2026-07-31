@@ -17,6 +17,11 @@ test("inventory keeps the selected design composition", () => {
   assert.match(indexHtml, /data-dark-src="assets\/night-yarn-cat\.v1\.webp"/);
 });
 
+test("inventory artwork has no caption overlay while matches keeps its caption", () => {
+  assert.doesNotMatch(indexHtml, /id="inventoryHeroCaption"/);
+  assert.match(indexHtml, /id="matchesHeroCaption"/);
+});
+
 test("light and dark variants define the prototype layout rules", () => {
   assert.match(stylesCss, /\[data-theme="light"\] \.app-header/);
   assert.match(stylesCss, /\[data-theme="dark"\] \.app-header/);

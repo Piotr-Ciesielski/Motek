@@ -50,7 +50,6 @@ const themeToggle = document.getElementById("themeToggle");
 const themeToggleLabel = document.getElementById("themeToggleLabel");
 const themeToggleIcon = themeToggle?.querySelector(".theme-toggle__icon");
 const inventoryThemeImage = document.getElementById("inventoryThemeImage");
-const inventoryHeroCaption = document.getElementById("inventoryHeroCaption");
 const inventoryStats = document.getElementById("inventoryStats");
 const inventoryStatYarns = document.getElementById("inventoryStatYarns");
 const inventoryStatLength = document.getElementById("inventoryStatLength");
@@ -216,7 +215,7 @@ function renderThemeToggle() {
   };
 
   for (const [image, caption] of [
-    [inventoryThemeImage, inventoryHeroCaption],
+    [inventoryThemeImage, null],
     [matchesThemeImage, matchesHeroCaption],
   ]) {
     if (!image) continue;

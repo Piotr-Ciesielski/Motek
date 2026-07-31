@@ -13,6 +13,7 @@ Wersja 2.0.0-alpha.37 (w przygotowaniu) - dwa motywy wizualne
 - Pionowy wariant trafił po prawej do Magazynu, a szeroki hero do Dopasowania.
 - Grafika Magazynu wróciła do pionowej kompozycji z prototypów: `cover` z ogniskiem
   po prawej; zoptymalizowane WebP i cache pozostają bez zmian.
+- Z Magazynu usunięto tekstową nakładkę w owalnej ramce; grafika pozostała bez zmian.
 - Panel grafiki Magazynu ma ograniczoną wysokość widoku, więc kompozycja pozostaje
   stabilna także przy dłuższej liście włóczek.
 - Preferencja motywu jest zapisywana lokalnie pod kluczem `motek-theme-v1` i

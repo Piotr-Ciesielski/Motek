@@ -372,4 +372,5 @@ wcześniej użytego obrazu.
 Grafika po prawej w Magazynie zachowuje pionową kompozycję prototypów: jest
 kadrowana przez `cover` z ogniskiem po prawej stronie. Dzięki temu Magazyn i
 Dopasowanie korzystają z tego samego zoptymalizowanego obrazu, ale zachowują
-różne role wizualne.
+różne role wizualne. Magazyn nie nakłada na obraz tekstu ani ramki; podpis motywu
+pozostaje wyłącznie w karcie Dopasowania.

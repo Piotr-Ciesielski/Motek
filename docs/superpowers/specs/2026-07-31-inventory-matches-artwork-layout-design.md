@@ -30,7 +30,8 @@ osobną kartę z grafiką z magazynu.
   obrazu już zapisanego w pamięci przeglądarki.
 - Grafika w panelu Magazynu zachowuje pionową kompozycję prototypów: używa
   `object-fit: cover` i `object-position: right center`. Nie zmienia to rozmiaru
-  ani zasad cache'owania WebP.
+  ani zasad cache'owania WebP. Magazyn nie pokazuje tekstowej nakładki ani ramki;
+  podpis motywu pozostaje w Dopasowaniu.
 - Na ekranach do 960 px układ przechodzi do jednej kolumny; obraz pozostaje
   widoczny i pojawia się pod treścią.
 
@@ -50,7 +51,8 @@ osobną kartę z grafiką z magazynu.
 ## Kryteria akceptacji
 
 1. W Magazynie obraz znajduje się po prawej stronie i zachowuje pionowe kadrowanie
-   oraz ognisko po prawej, jak w zatwierdzonych prototypach.
+   oraz ognisko po prawej, jak w zatwierdzonych prototypach, bez nakładki tekstowej
+   i ramki.
 2. W Dopasowaniu widoczna jest osobna karta hero z grafiką po prawej.
 3. Przełączenie motywu aktualizuje oba obrazy, podpisy i tekst alternatywny,
    ale po pierwszym pobraniu nie transferuje ponownie tego samego pliku.

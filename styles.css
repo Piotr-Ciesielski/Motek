@@ -335,7 +335,6 @@ body {
   min-height: 620px;
 }
 
-.inventory-layout__visual figcaption,
 .matches-hero__visual figcaption {
   position: absolute;
   right: 16px;
