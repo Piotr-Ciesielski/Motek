@@ -186,70 +186,85 @@
       </section>
 
       <section id="inventoryView" class="app-view" data-view="inventory" aria-labelledby="inventoryTitle" hidden>
-      <div class="inventory-hero">
-        <div class="inventory-hero__copy">
-          <div class="page-heading">
-            <div>
-              <p class="eyebrow">Twoja pracownia</p>
-              <h1 id="inventoryTitle">Magazyn włóczek</h1>
-              <p>Zobacz swój zapas, uzupełnij go i wybierz włóczki do kolejnego projektu.</p>
+        <div class="inventory-layout">
+          <div class="inventory-layout__content">
+            <div class="page-heading inventory-heading">
+              <div>
+                <p class="eyebrow">Twoja pracownia</p>
+                <h1 id="inventoryTitle">Magazyn włóczek</h1>
+                <p>Zobacz swój zapas, uzupełnij go i wybierz włóczki do kolejnego projektu.</p>
+              </div>
+              <button id="inventoryMatchBtn" class="button" type="button">Dobierz wzór</button>
             </div>
-            <button id="inventoryMatchBtn" class="button" type="button">Dobierz wzór</button>
-          </div>
-        </div>
-        <figure class="inventory-hero__visual">
-          <img
-            id="inventoryThemeImage"
-            src="assets/color-yarn-cat.png"
-            data-light-src="assets/color-yarn-cat.png"
-            data-dark-src="assets/night-yarn-cat.png"
-            alt="Kolorowe włóczki i kot w pracowni"
-          />
-          <figcaption id="inventoryHeroCaption">Koloroterapia · pracownia pełna pomysłów</figcaption>
-        </figure>
-      </div>
-      <section id="onboarding" class="panel onboarding" aria-labelledby="onboardingTitle" hidden>
-        <div class="onboarding__content">
-          <p class="eyebrow">Pierwszy krok</p>
-          <h2 id="onboardingTitle">Zacznij od dodania pierwszego motka</h2>
-          <p>Wystarczą trzy krótkie kroki, żeby Motek mógł znaleźć wzór dla Twoich włóczek.</p>
-          <ol class="onboarding__steps">
-            <li><strong>Dodaj motek</strong><span>Podaj długość, wagę i podstawowe parametry.</span></li>
-            <li><strong>Zapisz parametry</strong><span>Twój prywatny magazyn zachowa je na później.</span></li>
-            <li><strong>Uruchom dopasowanie</strong><span>Zobacz wzory pasujące do Twojego zapasu.</span></li>
-          </ol>
-          <div class="onboarding__actions">
-            <button id="onboardingAddYarnBtn" class="button" type="button">Dodaj pierwszy motek</button>
-            <button id="onboardingSkipBtn" class="button button--ghost" type="button">Pomiń instrukcję</button>
-          </div>
-        </div>
-      </section>
+            <section id="onboarding" class="panel onboarding" aria-labelledby="onboardingTitle" hidden>
+              <div class="onboarding__content">
+                <p class="eyebrow">Pierwszy krok</p>
+                <h2 id="onboardingTitle">Zacznij od dodania pierwszego motka</h2>
+                <p>Wystarczą trzy krótkie kroki, żeby Motek mógł znaleźć wzór dla Twoich włóczek.</p>
+                <ol class="onboarding__steps">
+                  <li><strong>Dodaj motek</strong><span>Podaj długość, wagę i podstawowe parametry.</span></li>
+                  <li><strong>Zapisz parametry</strong><span>Twój prywatny magazyn zachowa je na później.</span></li>
+                  <li><strong>Uruchom dopasowanie</strong><span>Zobacz wzory pasujące do Twojego zapasu.</span></li>
+                </ol>
+                <div class="onboarding__actions">
+                  <button id="onboardingAddYarnBtn" class="button" type="button">Dodaj pierwszy motek</button>
+                  <button id="onboardingSkipBtn" class="button button--ghost" type="button">Pomiń instrukcję</button>
+                </div>
+              </div>
+            </section>
 
-      <section>
-        <article class="panel inventory-panel">
-          <div class="panel__header">
-            <div>
-              <h2>Twój zapas</h2>
-              <p>Zapisane motki są pokazane w zwartej formie. Rozwiń tylko ten, który chcesz zmienić.</p>
-            </div>
-            <button id="addYarnBtn" class="button button--ghost" type="button">
-              + Dodaj motek
-            </button>
+            <section>
+              <article class="panel inventory-panel">
+                <div class="panel__header">
+                  <div>
+                    <h2>Twój zapas</h2>
+                    <p>Zapisane motki są pokazane w zwartej formie. Rozwiń tylko ten, który chcesz zmienić.</p>
+                  </div>
+                  <button id="addYarnBtn" class="button button--ghost" type="button">
+                    + Dodaj motek
+                  </button>
+                </div>
+                <div id="yarnList" class="yarn-list"></div>
+                <div id="storageMessage" class="storage-message" role="status" aria-live="polite"></div>
+              </article>
+            </section>
           </div>
-          <div id="yarnList" class="yarn-list"></div>
-          <div id="storageMessage" class="storage-message" role="status" aria-live="polite"></div>
-        </article>
-      </section>
+
+          <figure class="inventory-layout__visual">
+            <img
+              id="inventoryThemeImage"
+              src="assets/color-yarn-cat.png"
+              data-light-src="assets/color-yarn-cat.png"
+              data-dark-src="assets/night-yarn-cat.png"
+              alt="Kolorowe włóczki i kot w pracowni"
+            />
+            <figcaption id="inventoryHeroCaption">Koloroterapia · pracownia pełna pomysłów</figcaption>
+          </figure>
+        </div>
       </section>
 
       <section id="matchesView" class="app-view" data-view="matches" aria-labelledby="matchesPageTitle" hidden>
-        <div class="page-heading">
-          <div>
-            <p class="eyebrow">Pomysły z Twojego zapasu</p>
-            <h1 id="matchesPageTitle">Dopasowanie</h1>
-            <p>Najpierw pokazujemy projekty, które możesz wykonać z zapisanych włóczek.</p>
+        <div class="matches-hero">
+          <div class="matches-hero__copy">
+            <div class="page-heading">
+              <div>
+                <p class="eyebrow">Pomysły z Twojego zapasu</p>
+                <h1 id="matchesPageTitle">Dopasowanie</h1>
+                <p>Najpierw pokazujemy projekty, które możesz wykonać z zapisanych włóczek.</p>
+              </div>
+              <button id="backToInventoryBtn" class="button button--ghost" type="button">Wróć do magazynu</button>
+            </div>
           </div>
-          <button id="backToInventoryBtn" class="button button--ghost" type="button">Wróć do magazynu</button>
+          <figure class="matches-hero__visual">
+            <img
+              id="matchesThemeImage"
+              src="assets/color-yarn-cat.png"
+              data-light-src="assets/color-yarn-cat.png"
+              data-dark-src="assets/night-yarn-cat.png"
+              alt="Kolorowe włóczki i kot w pracowni"
+            />
+            <figcaption id="matchesHeroCaption">Koloroterapia · pracownia pełna pomysłów</figcaption>
+          </figure>
         </div>
         <article class="panel matches-panel">
           <div class="panel__header">

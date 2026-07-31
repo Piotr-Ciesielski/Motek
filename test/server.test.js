@@ -415,6 +415,11 @@ test("serwer Motek działa bezpiecznie", async (t) => {
       assert.equal(response.headers.get("x-content-type-options"), "nosniff");
       assert.equal(response.headers.get("x-frame-options"), "DENY");
       assert.equal(response.headers.get("access-control-allow-origin"), null);
+      const pageHtml = await response.text();
+      assert.match(pageHtml, /class="inventory-layout"/);
+      assert.match(pageHtml, /id="inventoryThemeImage"/);
+      assert.match(pageHtml, /class="matches-hero"/);
+      assert.match(pageHtml, /id="matchesThemeImage"/);
 
       const clientPolicyResponse = await fetch(`${baseUrl}/client-policy.js`);
       assert.equal(clientPolicyResponse.status, 200);

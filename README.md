@@ -57,7 +57,8 @@ Statyczny interfejs HTML, CSS i JavaScript znajduje się w `index.html`,
 - prezentację wyników dopasowania.
 - dwa motywy wizualne: jasną „Koloroterapię” i ciemny „Nocny Motek”,
   przełączane globalnie w nagłówku i zapamiętywane lokalnie.
-- grafikę włóczek i kota na stronie głównej magazynu, zmienianą razem z motywem.
+- pionową grafikę włóczek i kota po prawej w Magazynie oraz szeroki hero graficzny
+  w Dopasowaniu, zmieniane razem z motywem.
 
 Frontend nie otrzymuje sekretnego klucza Supabase. Komunikuje się z backendem
 przez API Motka.

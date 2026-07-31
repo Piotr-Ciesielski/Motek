@@ -9,7 +9,8 @@ Wersja 2.0.0-alpha.38 (w przygotowaniu) - e-mail jako login konta
 Wersja 2.0.0-alpha.37 (w przygotowaniu) - dwa motywy wizualne
 - Dodano globalny przełącznik motywów w nagłówku.
 - Jasny wariant używa designu „Koloroterapia”, a ciemny „Nocny Motek”.
-- Przywrócono grafiki włóczek i kotów na stronie głównej magazynu dla obu motywów.
+- Przywrócono grafiki włóczek i kotów dla obu motywów.
+- Pionowy wariant trafił po prawej do Magazynu, a szeroki hero do Dopasowania.
 - Preferencja motywu jest zapisywana lokalnie pod kluczem `motek-theme-v1` i
   nie trafia do Supabase.
 

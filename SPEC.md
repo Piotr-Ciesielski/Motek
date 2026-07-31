@@ -53,9 +53,10 @@ Frontend jest statyczną aplikacją HTML/CSS/JavaScript:
 
 Frontend obsługuje formularze Auth, magazyn włóczek, katalog, wyszukiwanie,
 filtrowanie i prezentację wyników. Nie otrzymuje sekretnego klucza Supabase.
-Na stronie głównej magazynu pokazuje grafikę włóczek i kota zgodną z aktywnym
-motywem: `assets/color-yarn-cat.png` dla Koloroterapii oraz
-`assets/night-yarn-cat.png` dla Nocnego Motka.
+W Magazynie pokazuje pionową grafikę włóczek i kota po prawej, a w Dopasowaniu
+szeroki hero z tym samym kierunkiem wizualnym. Oba miejsca korzystają z obrazu
+zgodnego z aktywnym motywem: `assets/color-yarn-cat.png` dla Koloroterapii
+oraz `assets/night-yarn-cat.png` dla Nocnego Motka.
 
 ### Backend
 
@@ -278,7 +279,8 @@ Zrealizowano:
 - natychmiastowe usuwanie konta po ponownym podaniu hasła i potwierdzeniu,
 - dwa motywy wizualne: jasna „Koloroterapia” i ciemny „Nocny Motek”,
   przełączane globalnie w nagłówku i zapamiętywane lokalnie,
-- grafiki włóczek i kota na stronie głównej magazynu, przełączane razem z motywem,
+- pionowa grafika włóczek i kota po prawej w Magazynie oraz hero graficzny w Dopasowaniu,
+  przełączane razem z motywem,
 - autosave zapisujący różnice per motek przez `POST`, `PATCH` i `DELETE`,
 - usunięcie SQLite z aplikacji.
 
