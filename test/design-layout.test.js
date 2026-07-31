@@ -57,3 +57,12 @@ test("inventory artwork shows the full image without crop", () => {
     /#inventoryView \.inventory-layout__visual img[\s\S]*?object-position: center;/,
   );
 });
+
+test("inventory artwork panel stays within the viewport-sized layout", () => {
+  const visualRule = stylesCss.match(
+    /#inventoryView \.inventory-layout__visual \{([\s\S]*?)\n\}/,
+  )?.[1] ?? "";
+
+  assert.match(visualRule, /height: min\(820px, calc\(100vh - 120px\)\);/);
+  assert.doesNotMatch(visualRule, /height: 100%;/);
+});

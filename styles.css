@@ -1813,7 +1813,7 @@ body::before {
   grid-row: 1 / span 3;
   position: sticky;
   top: 92px;
-  height: 100%;
+  height: min(820px, calc(100vh - 120px));
   min-height: 620px;
   border-radius: 8px 28px 28px 8px;
 }
