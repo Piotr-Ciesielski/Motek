@@ -325,3 +325,7 @@ Wersja 1.0.0
 - Pierwotna wersja aplikacji.
 - Ręczne dodawanie, usuwanie i wyszukiwanie dopasowanych wzorów.
 - Lokalny backend HTTP z bazą SQLite.
+2026-07-31
+- dopasowano jasny i ciemny układ Magazynu do zaakceptowanych wariantów z PR #8
+- przywrócono cztery moduły podsumowania magazynu oraz pionową fotografię po prawej
+- dodano przycisk „Dodaj motek” w nagłówku i zachowano aktualizację statystyk po zmianach

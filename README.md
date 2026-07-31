@@ -356,3 +356,10 @@ Motek/
 ├── CHANGELOG.txt                 # historia wersji
 └── VERSION                       # bieżąca wersja projektu
 ```
+### Aktualny układ designów 04 i 05
+
+Jasny motyw korzysta z kompozycji „Koloroterapia”, a ciemny z „Nocnego
+Motka”. W zakładce „Magazyn” nagłówek, statystyki i lista włóczek są po lewej,
+a pionowa fotografia włóczek i kota zajmuje prawą kolumnę. Zakładka
+„Dopasowanie” zachowuje osobną kartę z grafiką motywu. Układ pochodzi z
+zaakceptowanych prototypów w PR #8.

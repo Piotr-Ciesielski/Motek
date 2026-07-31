@@ -194,7 +194,10 @@
                 <h1 id="inventoryTitle">Magazyn włóczek</h1>
                 <p>Zobacz swój zapas, uzupełnij go i wybierz włóczki do kolejnego projektu.</p>
               </div>
-              <button id="inventoryMatchBtn" class="button" type="button">Dobierz wzór</button>
+              <div class="inventory-heading__actions">
+                <button id="inventoryMatchBtn" class="button" type="button">Dobierz wzór <span aria-hidden="true">→</span></button>
+                <button id="inventoryAddYarnBtn" class="button button--ghost" type="button">＋ Dodaj motek</button>
+              </div>
             </div>
             <section id="onboarding" class="panel onboarding" aria-labelledby="onboardingTitle" hidden>
               <div class="onboarding__content">
@@ -210,6 +213,29 @@
                   <button id="onboardingAddYarnBtn" class="button" type="button">Dodaj pierwszy motek</button>
                   <button id="onboardingSkipBtn" class="button button--ghost" type="button">Pomiń instrukcję</button>
                 </div>
+              </div>
+            </section>
+
+            <section id="inventoryStats" class="inventory-stats" aria-label="Podsumowanie magazynu">
+              <div class="inventory-stat inventory-stat--coral">
+                <span>Motki</span>
+                <strong id="inventoryStatYarns">—</strong>
+                <small>w magazynie</small>
+              </div>
+              <div class="inventory-stat inventory-stat--lavender">
+                <span>Łączna długość</span>
+                <strong id="inventoryStatLength">—</strong>
+                <small>metrów</small>
+              </div>
+              <div class="inventory-stat inventory-stat--blue">
+                <span>Łączna waga</span>
+                <strong id="inventoryStatWeight">—</strong>
+                <small>gramów</small>
+              </div>
+              <div class="inventory-stat inventory-stat--apricot">
+                <span>Kolory</span>
+                <strong id="inventoryStatColors">—</strong>
+                <small>w palecie</small>
               </div>
             </section>
 

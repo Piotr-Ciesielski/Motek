@@ -8,6 +8,14 @@ Przywrócić rozdzielenie dwóch prezentacji grafik zatwierdzonych dla designów
 
 ## Projekt
 
+### Korekta względem pierwszej implementacji
+
+Źródłem prawdy dla kompozycji są zaakceptowane warianty `?variant=color` i
+`?variant=night` z PR #8. Oznacza to układ asymetryczny: nagłówek, cztery
+moduły statystyk i lista zapasu pozostają w lewej kolumnie, a pionowa fotografia
+rozciąga się po prawej przez wysokość całego widoku. Dopasowanie zachowuje
+osobną kartę z grafiką z magazynu.
+
 - „Magazyn” otrzymuje dwukolumnowy układ: główna treść po lewej oraz pionowy
   panel graficzny po prawej, obejmujący wizualnie nagłówek i listę zapasu.
 - „Dopasowanie” otrzymuje kartę hero z tekstem i szeroką grafiką po prawej,

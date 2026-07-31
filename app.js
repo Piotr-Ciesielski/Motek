@@ -51,11 +51,17 @@ const themeToggleLabel = document.getElementById("themeToggleLabel");
 const themeToggleIcon = themeToggle?.querySelector(".theme-toggle__icon");
 const inventoryThemeImage = document.getElementById("inventoryThemeImage");
 const inventoryHeroCaption = document.getElementById("inventoryHeroCaption");
+const inventoryStats = document.getElementById("inventoryStats");
+const inventoryStatYarns = document.getElementById("inventoryStatYarns");
+const inventoryStatLength = document.getElementById("inventoryStatLength");
+const inventoryStatWeight = document.getElementById("inventoryStatWeight");
+const inventoryStatColors = document.getElementById("inventoryStatColors");
 const matchesThemeImage = document.getElementById("matchesThemeImage");
 const matchesHeroCaption = document.getElementById("matchesHeroCaption");
 const appViews = [...document.querySelectorAll(".app-view")];
 const viewButtons = [...document.querySelectorAll("[data-view-target]")];
 const inventoryMatchBtn = document.getElementById("inventoryMatchBtn");
+const inventoryAddYarnBtn = document.getElementById("inventoryAddYarnBtn");
 const backToInventoryBtn = document.getElementById("backToInventoryBtn");
 const heroAuthBtn = document.getElementById("heroAuthBtn");
 const networkStatus = document.getElementById("networkStatus");
@@ -1650,13 +1656,27 @@ async function renderResults() {
 async function renderSummary(loadedYarns = null) {
   if (!isAuthenticated) {
     summary.textContent = "Twój prywatny magazyn pojawi się tutaj po zalogowaniu.";
+    inventoryStats?.setAttribute("aria-busy", "false");
     return;
   }
 
   const yarns = loadedYarns || await loadYarns();
   const totalLength = yarns.reduce((sum, yarn) => sum + yarn.length, 0);
   const totalWeight = yarns.reduce((sum, yarn) => sum + yarn.weight, 0);
+  const colorCount = new Set(yarns.map((yarn) => yarn.color).filter(Boolean)).size;
   const storageText = "Zapisane bezpiecznie na Twoim koncie.";
+
+  inventoryStats?.setAttribute("aria-busy", "false");
+  inventoryStatYarns.textContent = formatNumber(yarns.length);
+  inventoryStatLength.textContent = formatNumber(totalLength);
+  inventoryStatWeight.textContent = formatNumber(totalWeight);
+  inventoryStatColors.textContent = formatNumber(colorCount);
+  inventoryStats?.replaceChildren(
+    inventoryStats.querySelector(".inventory-stat--coral"),
+    inventoryStats.querySelector(".inventory-stat--lavender"),
+    inventoryStats.querySelector(".inventory-stat--blue"),
+    inventoryStats.querySelector(".inventory-stat--apricot"),
+  );
 
   const yarnCount = document.createElement("strong");
   yarnCount.textContent = formatNumber(yarns.length);
@@ -1762,6 +1782,7 @@ function renderAuthState(payload) {
   authUser.hidden = !authenticated;
   accountView.classList.toggle("is-authenticated", authenticated);
   addYarnBtn.disabled = !authenticated;
+  inventoryAddYarnBtn.disabled = !authenticated;
   findBtn.disabled = !authenticated;
   inventoryMatchBtn.disabled = !authenticated;
   updateNavigationState();
@@ -2069,6 +2090,10 @@ addYarnBtn.addEventListener("click", () => {
   }
   card.scrollIntoView({ behavior: "smooth", block: "center" });
   card.querySelector('[data-field="name"]').focus();
+});
+
+inventoryAddYarnBtn.addEventListener("click", () => {
+  addYarnBtn.click();
 });
 
 onboardingAddYarnBtn.addEventListener("click", () => {

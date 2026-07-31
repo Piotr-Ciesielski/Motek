@@ -314,3 +314,10 @@ usunęły SQLite z aplikacji.
 
 Szczegółową historię zmian zawiera `CHANGELOG.txt`, a uzasadnienie ryzyk
 bezpieczeństwa i jakości — `AUDYT.md`.
+## Kompozycja wariantów wizualnych
+
+Wariant jasny („Koloroterapia”) i ciemny („Nocny Motek”) używają tej samej
+architektury widoków. Magazyn ma asymetryczne dwie kolumny: treść i statystyki
+po lewej oraz pionową grafikę po prawej, rozciągniętą przez wysokość widoku.
+Dopasowanie pokazuje szeroką kartę z grafiką wybranego motywu. Obrazy zmieniają
+się razem z globalnym przełącznikiem jasny/ciemny.
