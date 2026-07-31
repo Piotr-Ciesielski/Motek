@@ -335,23 +335,6 @@ body {
   min-height: 620px;
 }
 
-.matches-hero__visual figcaption {
-  position: absolute;
-  right: 16px;
-  bottom: 16px;
-  max-width: calc(100% - 32px);
-  padding: 8px 11px;
-  border: 1px solid color-mix(in srgb, var(--on-accent) 28%, transparent);
-  border-radius: 999px;
-  color: var(--on-accent);
-  background: color-mix(in srgb, var(--text) 72%, transparent);
-  font-size: 0.75rem;
-  font-weight: 750;
-  text-align: right;
-  text-shadow: 0 1px 12px color-mix(in srgb, var(--text) 70%, transparent);
-  z-index: 1;
-}
-
 [data-theme="dark"] .inventory-layout__visual,
 [data-theme="dark"] .matches-hero {
   border-radius: 20px;
