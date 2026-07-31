@@ -430,6 +430,14 @@ test("serwer Motek działa bezpiecznie", async (t) => {
         /^(?:application|text)\/javascript/,
       );
       assert.match(await materialPolicyResponse.text(), /MotekMaterialPolicy/);
+
+      const themePolicyResponse = await fetch(`${baseUrl}/theme-policy.js`);
+      assert.equal(themePolicyResponse.status, 200);
+      assert.match(
+        themePolicyResponse.headers.get("content-type"),
+        /^(?:application|text)\/javascript/,
+      );
+      assert.match(await themePolicyResponse.text(), /MotekThemePolicy/);
     });
 
     await t.test("wymaga zalogowania do zdalnego magazynu", async () => {

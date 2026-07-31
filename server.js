@@ -1471,6 +1471,9 @@ async function main(options = {}) {
       if (url.pathname === "/client-policy.js") {
         return await sendFile(res, path.join(rootDir, "client-policy.js"));
       }
+      if (url.pathname === "/theme-policy.js") {
+        return await sendFile(res, path.join(rootDir, "theme-policy.js"));
+      }
       if (url.pathname === "/material-policy.js") {
         return await sendFile(res, path.join(rootDir, "material-policy.js"));
       }

@@ -11,6 +11,7 @@
       href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Inter:wght@400;500;600;700&display=swap"
       rel="stylesheet"
     />
+    <script src="theme-policy.js?v=2.0.0-alpha.36"></script>
     <link rel="stylesheet" href="styles.css?v=2.0.0-alpha.36" />
   </head>
   <body>
@@ -39,7 +40,13 @@
             <span>Konto</span>
           </button>
         </nav>
-        <div id="headerUser" class="header-user" hidden></div>
+        <div class="app-header__actions">
+          <button id="themeToggle" class="theme-toggle" type="button" aria-pressed="false" aria-label="Włącz tryb ciemny">
+            <span class="theme-toggle__icon" aria-hidden="true">☾</span>
+            <span id="themeToggleLabel">Ciemny</span>
+          </button>
+          <div id="headerUser" class="header-user" hidden></div>
+        </div>
       </div>
     </header>
 
