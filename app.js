@@ -49,6 +49,8 @@ const headerUser = document.getElementById("headerUser");
 const themeToggle = document.getElementById("themeToggle");
 const themeToggleLabel = document.getElementById("themeToggleLabel");
 const themeToggleIcon = themeToggle?.querySelector(".theme-toggle__icon");
+const inventoryThemeImage = document.getElementById("inventoryThemeImage");
+const inventoryHeroCaption = document.getElementById("inventoryHeroCaption");
 const appViews = [...document.querySelectorAll(".app-view")];
 const viewButtons = [...document.querySelectorAll("[data-view-target]")];
 const inventoryMatchBtn = document.getElementById("inventoryMatchBtn");
@@ -192,6 +194,22 @@ function renderThemeToggle() {
 
   if (themeToggleIcon) {
     themeToggleIcon.textContent = state.nextTheme === "dark" ? "☾" : "☀";
+  }
+
+  if (inventoryThemeImage) {
+    const isDark = currentTheme === "dark";
+    inventoryThemeImage.src = isDark
+      ? inventoryThemeImage.dataset.darkSrc
+      : inventoryThemeImage.dataset.lightSrc;
+    inventoryThemeImage.alt = isDark
+      ? "Czarna kotka i ciemne włóczki w nocnej pracowni"
+      : "Kolorowe włóczki i kot w pracowni";
+  }
+
+  if (inventoryHeroCaption) {
+    inventoryHeroCaption.textContent = currentTheme === "dark"
+      ? "Nocny Motek · pracownia po zmroku"
+      : "Koloroterapia · pracownia pełna pomysłów";
   }
 }
 

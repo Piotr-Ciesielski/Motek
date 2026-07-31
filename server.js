@@ -944,6 +944,7 @@ function sendFile(res, filePath) {
     ".html": "text/html; charset=utf-8",
     ".css": "text/css; charset=utf-8",
     ".js": "application/javascript; charset=utf-8",
+    ".png": "image/png",
     ".svg": "image/svg+xml",
   };
   return fsPromises.readFile(filePath).then((buf) => {
@@ -1454,6 +1455,12 @@ async function main(options = {}) {
       }
       if (url.pathname === "/theme-policy.js") {
         return await sendFile(res, path.join(rootDir, "theme-policy.js"));
+      }
+      if (url.pathname === "/assets/color-yarn-cat.png") {
+        return await sendFile(res, path.join(rootDir, "assets", "color-yarn-cat.png"));
+      }
+      if (url.pathname === "/assets/night-yarn-cat.png") {
+        return await sendFile(res, path.join(rootDir, "assets", "night-yarn-cat.png"));
       }
       if (url.pathname === "/material-policy.js") {
         return await sendFile(res, path.join(rootDir, "material-policy.js"));

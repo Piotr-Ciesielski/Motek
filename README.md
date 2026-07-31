@@ -57,6 +57,7 @@ Statyczny interfejs HTML, CSS i JavaScript znajduje się w `index.html`,
 - prezentację wyników dopasowania.
 - dwa motywy wizualne: jasną „Koloroterapię” i ciemny „Nocny Motek”,
   przełączane globalnie w nagłówku i zapamiętywane lokalnie.
+- grafikę włóczek i kota na stronie głównej magazynu, zmienianą razem z motywem.
 
 Frontend nie otrzymuje sekretnego klucza Supabase. Komunikuje się z backendem
 przez API Motka.
@@ -296,7 +297,7 @@ Najważniejsze etapy zapisane w `CHANGELOG.txt`:
 - `2.0.0-alpha.9` — bezpieczny autosave, zabezpieczenia Auth, limity produktu i ograniczenie kosztu rankingu.
 - `2.0.0-alpha.10` — naprawa nagłówków żądań magazynu i synchronizacja wymaganych migracji zdalnego Supabase.
 - `2.0.0-alpha.35` — wiele materiałów na motku i dokładne dopasowanie 21 wariantów rzeczywistych wzorów.
-- `2.0.0-alpha.37` — globalny przełącznik motywów „Koloroterapia” / „Nocny Motek” z lokalnym zapisem preferencji.
+- `2.0.0-alpha.37` — globalny przełącznik motywów „Koloroterapia” / „Nocny Motek” z lokalnym zapisem preferencji oraz grafikami magazynu.
 - `2.0.0-alpha.34` — poprawione kategorie oraz dynamiczne, łączone filtry typu projektu i materiału.
 - `2.0.0-alpha.33` — ponowny audyt wszystkich PDF-ów i kompletny, oczyszczony katalog danych włóczek.
 - `2.0.0-alpha.15` — sortowanie katalogu i dostępny stan ładowania ze szkieletami.
@@ -343,6 +344,7 @@ Motek/
 ├── theme-policy.js                # polityka i bootstrap motywu
 ├── index.html                     # widok aplikacji
 ├── styles.css                     # style
+├── assets/                        # grafiki Koloroterapii i Nocnego Motka
 ├── server.js                      # backend HTTP i API
 ├── supabase.js                    # konfiguracja połączenia Supabase
 ├── supabase/migrations/           # migracje schematu bazy

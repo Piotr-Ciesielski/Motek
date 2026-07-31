@@ -439,6 +439,13 @@ test("serwer Motek działa bezpiecznie", async (t) => {
         /^(?:application|text)\/javascript/,
       );
       assert.match(await themePolicyResponse.text(), /MotekThemePolicy/);
+
+      for (const assetName of ["color-yarn-cat.png", "night-yarn-cat.png"]) {
+        const assetResponse = await fetch(`${baseUrl}/assets/${assetName}`);
+        assert.equal(assetResponse.status, 200);
+        assert.match(assetResponse.headers.get("content-type"), /^image\/png/);
+        assert.ok((await assetResponse.arrayBuffer()).byteLength > 100_000);
+      }
     });
 
     await t.test("wymaga zalogowania do zdalnego magazynu", async () => {

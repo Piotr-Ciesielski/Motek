@@ -186,13 +186,27 @@
       </section>
 
       <section id="inventoryView" class="app-view" data-view="inventory" aria-labelledby="inventoryTitle" hidden>
-      <div class="page-heading">
-        <div>
-          <p class="eyebrow">Twoja pracownia</p>
-          <h1 id="inventoryTitle">Magazyn włóczek</h1>
-          <p>Zobacz swój zapas, uzupełnij go i wybierz włóczki do kolejnego projektu.</p>
+      <div class="inventory-hero">
+        <div class="inventory-hero__copy">
+          <div class="page-heading">
+            <div>
+              <p class="eyebrow">Twoja pracownia</p>
+              <h1 id="inventoryTitle">Magazyn włóczek</h1>
+              <p>Zobacz swój zapas, uzupełnij go i wybierz włóczki do kolejnego projektu.</p>
+            </div>
+            <button id="inventoryMatchBtn" class="button" type="button">Dobierz wzór</button>
+          </div>
         </div>
-        <button id="inventoryMatchBtn" class="button" type="button">Dobierz wzór</button>
+        <figure class="inventory-hero__visual">
+          <img
+            id="inventoryThemeImage"
+            src="assets/color-yarn-cat.png"
+            data-light-src="assets/color-yarn-cat.png"
+            data-dark-src="assets/night-yarn-cat.png"
+            alt="Kolorowe włóczki i kot w pracowni"
+          />
+          <figcaption id="inventoryHeroCaption">Koloroterapia · pracownia pełna pomysłów</figcaption>
+        </figure>
       </div>
       <section id="onboarding" class="panel onboarding" aria-labelledby="onboardingTitle" hidden>
         <div class="onboarding__content">
