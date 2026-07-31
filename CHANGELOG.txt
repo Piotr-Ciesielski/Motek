@@ -1,5 +1,13 @@
 Motek - log zmian
 
+Wersja 2.0.0-alpha.36 (w przygotowaniu) - natychmiastowe usuwanie konta
+
+- Dodano chroniony endpoint `DELETE /api/account`.
+- Usunięcie wymaga aktywnej sesji, ponownego podania hasła i wpisania `USUŃ KONTO`.
+- Usuwane są konto, profil i prywatny magazyn włóczek; wspólny katalog wzorów pozostaje bez zmian.
+- Operacja nie jest automatycznie ponawiana po utracie odpowiedzi sieciowej.
+- Dodano testy walidacji, ponownego uwierzytelnienia, izolacji użytkownika i obsługi endpointu.
+
 Wersja 2.0.0-alpha.35 (w przygotowaniu) - dokładne dopasowanie rzeczywistych wzorów
 
 - Włóczka może mieć kilka materiałów wybranych ze wspólnej, kontrolowanej listy.

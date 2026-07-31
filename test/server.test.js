@@ -212,6 +212,7 @@ test("serwer Motek działa bezpiecznie", async (t) => {
   const syntheticYarns = [];
   let nextSyntheticYarnId = 1;
   const recoveryRequests = [];
+  const deletedUserIds = [];
 
     function createSyntheticQuery(table, token) {
       const filters = [];
@@ -299,7 +300,13 @@ test("serwer Motek działa bezpiecznie", async (t) => {
             error: null,
           };
         },
-        async signInWithPassword() {
+        async signInWithPassword({ email, password }) {
+          if (
+            email === syntheticUsers["token-user-a"].email &&
+            password === "DeleteHaslo1!"
+          ) {
+            return { data: { user: syntheticUsers["token-user-a"] }, error: null };
+          }
           return { data: null, error: new Error("invalid credentials") };
         },
         async resetPasswordForEmail(email, options) {
@@ -347,6 +354,14 @@ test("serwer Motek działa bezpiecznie", async (t) => {
   const fakeSupabaseConnection = {
     verify: async () => {},
     client: {
+      auth: {
+        admin: {
+          async deleteUser(userId) {
+            deletedUserIds.push(userId);
+            return { data: { user: { id: userId } }, error: null };
+          },
+        },
+      },
       from(table) {
         assert.equal(table, "patterns");
         return {
@@ -499,6 +514,49 @@ test("serwer Motek działa bezpiecznie", async (t) => {
         passwordUpdated: true,
         authenticated: false,
       });
+    });
+
+    await t.test("usuwa bieżące konto po ponownym haśle i frazie", async () => {
+      const response = await fetch(`${baseUrl}/api/account`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          Origin: baseUrl,
+          Cookie: "motek_access_token=token-user-a",
+        },
+        body: JSON.stringify({
+          password: "DeleteHaslo1!",
+          confirmation: "USUŃ KONTO",
+        }),
+      });
+
+      assert.equal(response.status, 204);
+      assert.equal(await response.text(), "");
+      assert.deepEqual(deletedUserIds, [syntheticUsers["token-user-a"].id]);
+      assert.match(response.headers.get("set-cookie"), /motek_access_token=/);
+      assert.match(response.headers.get("set-cookie"), /motek_refresh_token=/);
+    });
+
+    await t.test("odrzuca usunięcie konta bez sesji i przy błędnym potwierdzeniu", async () => {
+      const noSession = await fetch(`${baseUrl}/api/account`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json", Origin: baseUrl },
+        body: JSON.stringify({ password: "DeleteHaslo1!", confirmation: "USUŃ KONTO" }),
+      });
+      assert.equal(noSession.status, 401);
+
+      const wrongPhrase = await fetch(`${baseUrl}/api/account`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          Origin: baseUrl,
+          Cookie: "motek_access_token=token-user-a",
+        },
+        body: JSON.stringify({ password: "DeleteHaslo1!", confirmation: "USUN KONTO" }),
+      });
+      assert.equal(wrongPhrase.status, 400);
+      assert.match((await wrongPhrase.json()).error, /USUŃ KONTO/);
+      assert.deepEqual(deletedUserIds, [syntheticUsers["token-user-a"].id]);
     });
 
     await t.test("izoluje syntetyczne dane włóczek między użytkownikami", async () => {

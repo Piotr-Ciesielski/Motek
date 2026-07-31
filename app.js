@@ -32,6 +32,8 @@ const loginModeBtn = document.getElementById("loginModeBtn");
 const registerModeBtn = document.getElementById("registerModeBtn");
 const authProfileSummary = document.getElementById("authProfileSummary");
 const authMessage = document.getElementById("authMessage");
+const deleteAccountForm = document.getElementById("deleteAccountForm");
+const deleteAccountMessage = document.getElementById("deleteAccountMessage");
 const authLead = document.getElementById("authLead");
 const authTitle = document.getElementById("authTitle");
 const onboarding = document.getElementById("onboarding");
@@ -289,7 +291,8 @@ async function api(path, options = {}) {
       const protectedPath =
         path === "/api/matches" ||
         path === "/api/yarns" ||
-        path.startsWith("/api/yarns/");
+        path.startsWith("/api/yarns/") ||
+        path === "/api/account";
       if (response.status === 401 && protectedPath) {
         handleSessionExpired();
         throw new ApiError(
@@ -1621,6 +1624,15 @@ function setAuthMessage(message, kind = "") {
   }
 }
 
+function setDeleteAccountMessage(message, kind = "") {
+  deleteAccountMessage.textContent = message;
+  deleteAccountMessage.dataset.kind = kind;
+  deleteAccountMessage.setAttribute("role", kind === "error" ? "alert" : "status");
+  if (kind === "error" && message) {
+    deleteAccountMessage.focus({ preventScroll: true });
+  }
+}
+
 function setAuthBusy(form, busy) {
   form.querySelector('button[type="submit"]').disabled = busy;
   form.toggleAttribute("aria-busy", busy);
@@ -1706,6 +1718,8 @@ function renderAuthState(payload) {
   if (!authenticated) {
     authUser.textContent = "";
     authProfileSummary.textContent = "";
+    deleteAccountForm.reset();
+    setDeleteAccountMessage("");
     authLead.textContent = "Załóż konto, aby przygotować aplikację do prywatnego magazynu włóczek.";
     showAuthForm(loginForm);
     return;
@@ -1935,6 +1949,38 @@ logoutBtn.addEventListener("click", async () => {
     setAuthMessage(error.message, "error");
   } finally {
     logoutBtn.disabled = false;
+  }
+});
+
+deleteAccountForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  if (!deleteAccountForm.reportValidity()) return;
+
+  const submitButton = deleteAccountForm.querySelector('button[type="submit"]');
+  const body = Object.fromEntries(new FormData(deleteAccountForm).entries());
+  submitButton.disabled = true;
+  deleteAccountForm.setAttribute("aria-busy", "true");
+  setDeleteAccountMessage("Usuwam konto...");
+
+  try {
+    await api("/api/account", {
+      method: "DELETE",
+      body: JSON.stringify(body),
+    });
+    yarnList.replaceChildren();
+    renderYarnEmptyState();
+    summary.textContent = "Twój prywatny magazyn pojawi się tutaj po zalogowaniu.";
+    yarnVersion = null;
+    preserveDraftAfterLogin = false;
+    preservedDraftRequiresSave = false;
+    renderAuthState({ authenticated: false });
+    setActiveView("account");
+    setAuthMessage("Konto i zapisane dane zostały usunięte.", "success");
+  } catch (error) {
+    setDeleteAccountMessage(error.message, "error");
+  } finally {
+    deleteAccountForm.removeAttribute("aria-busy");
+    submitButton.disabled = false;
   }
 });
 

@@ -108,6 +108,7 @@ Najważniejsze endpointy backendu:
 | `POST /api/auth/recovery` | Ustanowienie krótkiej sesji z linku recovery |
 | `POST /api/auth/password` | Ustawienie nowego hasła i wyczyszczenie sesji |
 | `POST /api/auth/logout` | Wylogowanie |
+| `DELETE /api/account` | Bezpowrotne usunięcie konta, profilu i własnych włóczek po ponownym haśle i potwierdzeniu |
 | `GET /api/yarns` | Pobranie własnego magazynu |
 | `POST /api/yarns` | Dodanie motka |
 | `DELETE /api/yarns/:id` | Usunięcie własnego motka |

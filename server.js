@@ -24,6 +24,8 @@ const {
   matchVariant,
   normalizeMatchingDocument,
 } = require("./matching-policy");
+const { ACCOUNT_DELETION_PHRASE, validateAccountDeletionInput } = require("./account-deletion-policy");
+const { deleteSupabaseAccount } = require("./account-deletion-service");
 
 const rootDir = __dirname;
 let server;
@@ -1294,6 +1296,44 @@ async function handleApi(req, res, url) {
     ((req.method === "PATCH" || req.method === "DELETE") && url.pathname.startsWith("/api/yarns/"));
   if (isYarnWrite) {
     enforceRequestRateLimit([`ip:${getClientAddress(req)}`], yarnWriteRateLimiter, res);
+  }
+
+  if (req.method === "DELETE" && url.pathname === "/api/account") {
+    const session = await requireAuthenticatedSession(req, res);
+    enforceRequestRateLimit(
+      [`ip:${getClientAddress(req)}`, `user:${session.user.id}`],
+      yarnWriteRateLimiter,
+      res,
+    );
+
+    const body = await readBody(req);
+    let deletionInput;
+    try {
+      deletionInput = validateAccountDeletionInput(body);
+    } catch (error) {
+      throw new ApiError(400, error.message || `Wpisz dokładnie: ${ACCOUNT_DELETION_PHRASE}.`);
+    }
+
+    try {
+      await deleteSupabaseAccount({
+        session,
+        password: deletionInput.password,
+        authClient: authClient(),
+        adminClient: supabaseConnection.client,
+      });
+    } catch (error) {
+      if (error.message === "Nie udało się potwierdzić hasła.") {
+        throw new ApiError(400, error.message);
+      }
+      throw error;
+    }
+
+    clearAuthCookies(res);
+    res.writeHead(204, {
+      ...SECURITY_HEADERS,
+      "Cache-Control": "no-store",
+    });
+    return res.end();
   }
 
   if (req.method === "GET" && url.pathname === "/api/yarns") {

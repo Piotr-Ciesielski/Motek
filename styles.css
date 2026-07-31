@@ -555,6 +555,7 @@ h1 {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  flex-wrap: wrap;
   gap: 14px;
 }
 
@@ -578,6 +579,26 @@ h1 {
 #authProfileSummary {
   overflow-wrap: anywhere;
   unicode-bidi: plaintext;
+}
+
+.account-danger-zone {
+  display: grid;
+  gap: 0.75rem;
+  flex-basis: 100%;
+  margin-top: 1.5rem;
+  padding: 1rem;
+  border: 1px solid var(--color-danger-border, #c85c5c);
+  border-radius: 1rem;
+  background: var(--color-danger-surface, #fff5f3);
+}
+
+.account-danger-zone h3,
+.account-danger-zone p {
+  margin: 0;
+}
+
+.account-danger-zone .button--danger {
+  justify-self: start;
 }
 
 .auth-profile__name,

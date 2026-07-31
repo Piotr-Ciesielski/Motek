@@ -164,6 +164,7 @@ użytkownika. Katalog aplikacji może zawierać do 300 wzorów.
 | `POST /api/auth/recovery` | Ustanowienie sesji z tokenów linku recovery |
 | `POST /api/auth/password` | Ustawienie nowego hasła |
 | `POST /api/auth/logout` | Wylogowanie |
+| `DELETE /api/account` | Bezpowrotne usunięcie konta, profilu i własnych włóczek |
 | `GET /api/yarns` | Pobranie własnego magazynu |
 | `POST /api/yarns` | Dodanie włóczki |
 | `DELETE /api/yarns/:id` | Usunięcie własnej włóczki |
@@ -264,6 +265,7 @@ Zrealizowano:
 - zapis i usuwanie włóczek przez aplikację,
 - wspólną listę materiałów i obsługę kilku materiałów jednego motka,
 - bezpieczną ścieżkę rankingu z dokładnymi wymaganiami 21 wariantów,
+- natychmiastowe usuwanie konta po ponownym podaniu hasła i potwierdzeniu,
 - autosave zapisujący różnice per motek przez `POST`, `PATCH` i `DELETE`,
 - usunięcie SQLite z aplikacji.
 

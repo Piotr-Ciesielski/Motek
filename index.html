@@ -162,6 +162,24 @@
         <div id="authLoggedIn" class="auth-logged-in" hidden>
           <p id="authProfileSummary"></p>
           <button id="logoutBtn" class="button button--ghost" type="button">Wyloguj się</button>
+          <form id="deleteAccountForm" class="account-danger-zone" novalidate>
+            <h3 id="deleteAccountTitle">Usuń konto</h3>
+            <p>Ta operacja trwale usuwa konto i wszystkie zapisane włóczki.</p>
+            <div class="auth-field">
+              <label for="account-delete-password">Twoje hasło</label>
+              <span class="password-field">
+                <input id="account-delete-password" name="password" type="password" autocomplete="current-password" required aria-describedby="deleteAccountHint deleteAccountMessage" />
+                <button class="password-toggle" type="button" data-password-toggle="account-delete-password" aria-controls="account-delete-password" aria-pressed="false" aria-label="Pokaż hasło">Pokaż</button>
+              </span>
+            </div>
+            <label for="account-delete-confirmation">
+              Wpisz: <strong>USUŃ KONTO</strong>
+              <input id="account-delete-confirmation" name="confirmation" autocomplete="off" required aria-describedby="deleteAccountHint deleteAccountMessage" />
+            </label>
+            <p id="deleteAccountHint" class="field-hint">Usunięcie jest natychmiastowe i nie można go cofnąć.</p>
+            <button class="button button--danger" type="submit">Usuń konto bezpowrotnie</button>
+            <p id="deleteAccountMessage" class="auth-message" role="status" aria-live="polite"></p>
+          </form>
         </div>
         <p id="authMessage" class="auth-message" role="status" aria-live="polite" tabindex="-1"></p>
       </section>
