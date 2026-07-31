@@ -340,15 +340,7 @@ function normalizeRecoveryToken(value, field) {
 }
 
 function normalizeAuthLogin(value) {
-  if (typeof value !== "string") {
-    throw new ApiError(400, "Login musi mieć 3-30 znaków: litery, cyfry lub podkreślenie.");
-  }
-
-  const login = value.trim().toLowerCase();
-  if (!/^[a-z0-9_]{3,30}$/u.test(login)) {
-    throw new ApiError(400, "Login musi mieć 3-30 znaków: litery, cyfry lub podkreślenie.");
-  }
-  return login;
+  return normalizeAuthEmail(value);
 }
 
 function validateAuthPassword(value) {
@@ -362,14 +354,6 @@ function validateAuthPassword(value) {
     throw new ApiError(400, "Hasło musi zawierać małą i wielką literę, cyfrę oraz znak specjalny.");
   }
   return value;
-}
-
-function normalizeFullName(value) {
-  if (value === undefined || value === null || value === "") return null;
-  if (typeof value !== "string" || value.trim().length > 200) {
-    throw new ApiError(400, "Imię i nazwisko może mieć maksymalnie 200 znaków.");
-  }
-  return value.trim() || null;
 }
 
 function authClient() {
@@ -387,7 +371,6 @@ function sanitizeAuthUser(user) {
     emailConfirmed: Boolean(user.email_confirmed_at),
     metadata: {
       login: user.user_metadata?.login || null,
-      fullName: user.user_metadata?.full_name || null,
     },
   };
 }
@@ -1155,10 +1138,9 @@ async function handleAuthApi(req, res, url) {
 
   if (req.method === "POST" && url.pathname === "/api/auth/register") {
     const body = await readBody(req);
-    const email = normalizeAuthEmail(body.email);
+    const email = normalizeAuthLogin(body.login);
     const password = validateAuthPassword(body.password);
-    const login = normalizeAuthLogin(body.login);
-    const fullName = normalizeFullName(body.full_name);
+    const login = email;
     const rateLimitKeys = getAuthRateLimitKeys(req, email);
     enforceRequestRateLimit(rateLimitKeys, authRequestRateLimiter, res);
     enforceAuthRateLimit(rateLimitKeys, res);
@@ -1169,7 +1151,6 @@ async function handleAuthApi(req, res, url) {
       options: {
         data: {
           login,
-          full_name: fullName,
         },
       },
     });

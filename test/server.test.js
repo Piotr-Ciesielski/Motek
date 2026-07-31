@@ -137,6 +137,7 @@ test("serwer Motek działa bezpiecznie", async (t) => {
   const syntheticYarns = [];
   let nextSyntheticYarnId = 1;
   const recoveryRequests = [];
+  const signUpRequests = [];
 
     function createSyntheticQuery(table, token) {
       const filters = [];
@@ -209,6 +210,7 @@ test("serwer Motek działa bezpiecznie", async (t) => {
         },
         async signOut() {},
         async signUp({ email, options }) {
+          signUpRequests.push({ email, options });
           return {
             data: {
               user: {
@@ -216,7 +218,6 @@ test("serwer Motek działa bezpiecznie", async (t) => {
                 email,
                 user_metadata: {
                   login: options.data.login,
-                  full_name: options.data.full_name,
                 },
               },
               session: null,
@@ -336,10 +337,8 @@ test("serwer Motek działa bezpiecznie", async (t) => {
         method: "POST",
         headers: { "Content-Type": "application/json", Origin: baseUrl },
         body: JSON.stringify({
-          email: "nowy@example.com",
+          login: " NOWY@EXAMPLE.COM ",
           password: "Haslo123!",
-          login: "nowy_user",
-          full_name: "Nowy Użytkownik",
         }),
       });
       assert.equal(registerResponse.status, 201);
@@ -348,9 +347,13 @@ test("serwer Motek działa bezpiecznie", async (t) => {
           id: "33333333-3333-4333-8333-333333333333",
           email: "nowy@example.com",
           emailConfirmed: false,
-          metadata: { login: "nowy_user", fullName: "Nowy Użytkownik" },
+          metadata: { login: "nowy@example.com" },
         },
         requiresEmailConfirmation: true,
+      });
+      assert.deepEqual(signUpRequests.at(-1), {
+        email: "nowy@example.com",
+        options: { data: { login: "nowy@example.com" } },
       });
 
       const loginResponse = await fetch(`${baseUrl}/api/auth/login`, {
