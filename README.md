@@ -91,6 +91,22 @@ czytać i zmieniać wyłącznie rekordy należące do niego. Backend przekazuje 
 sesji do klienta Supabase, a właściciel rekordu jest ustalany na podstawie
 uwierzytelnionej sesji, nie danych z formularza.
 
+### Konto użytkownika
+
+Rejestracja wymaga wyłącznie adresu e-mail i hasła. Adres podany w polu
+`Login (Twój e-mail)` jest jednocześnie adresem konta w Supabase Auth oraz
+loginem w `profiles`; aplikacja nie zbiera ani nie przechowuje imienia i
+nazwiska.
+
+Payload `POST /api/auth/register` ma postać:
+
+```json
+{
+  "login": "uzytkownik@example.com",
+  "password": "Haslo123!"
+}
+```
+
 ### Supabase jako jedyne źródło danych
 
 Supabase jest wymagane do uruchomienia aplikacji. Backend sprawdza konfigurację
@@ -191,6 +207,7 @@ nie trafia do automatycznego dopasowania jako potwierdzona rekomendacja.
 - magazyn włóczek jest izolowany przez `user_id` i RLS,
 - backend jawnie wybiera dane zwracane przez API,
 - dane wejściowe są walidowane i ograniczane rozmiarem,
+- login profilu jest znormalizowaną kopią adresu e-mail i nie może być zmieniany niezależnie,
 - logowanie i rejestracja mają limit nieudanych prób per adres klienta i e-mail,
 - błędy nie ujawniają sekretów ani tokenów,
 - folder `Wzory` i plik `.env` nie trafiają do repozytorium.

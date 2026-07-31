@@ -1,5 +1,11 @@
 Motek - log zmian
 
+Wersja 2.0.0-alpha.38 (w przygotowaniu) - e-mail jako login konta
+- Formularz rejestracji używa jednego pola `Login (Twój e-mail)` oraz hasła.
+- Adres e-mail jest zapisywany jednocześnie jako e-mail Auth i login profilu.
+- Usunięto zbieranie oraz istniejące dane imienia i nazwiska z profili.
+- Zaktualizowano migrację Supabase i testy przepływu rejestracji.
+
 Wersja 2.0.0-alpha.37 (w przygotowaniu) - dwa motywy wizualne
 - Dodano globalny przełącznik motywów w nagłówku.
 - Jasny wariant używa designu „Koloroterapia”, a ciemny „Nocny Motek”.
