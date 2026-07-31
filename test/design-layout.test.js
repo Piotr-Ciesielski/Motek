@@ -17,6 +17,25 @@ test("inventory keeps the selected design composition", () => {
   assert.match(indexHtml, /data-dark-src="assets\/night-yarn-cat\.v1\.webp"/);
 });
 
+test("auth forms never fall back to GET query strings", () => {
+  assert.match(
+    indexHtml,
+    /<form id="loginForm"[^>]*method="post"[^>]*action="\/api\/auth\/login"/,
+  );
+  assert.match(
+    indexHtml,
+    /<form id="registerForm"[^>]*method="post"[^>]*action="\/api\/auth\/register"/,
+  );
+  assert.match(
+    indexHtml,
+    /<form id="passwordResetForm"[^>]*method="post"[^>]*action="\/api\/auth\/password-reset-request"/,
+  );
+  assert.match(
+    indexHtml,
+    /<form id="passwordUpdateForm"[^>]*method="post"[^>]*action="\/api\/auth\/password"/,
+  );
+});
+
 test("inventory and matches artwork have no caption overlays", () => {
   assert.doesNotMatch(indexHtml, /id="inventoryHeroCaption"/);
   assert.doesNotMatch(indexHtml, /id="matchesHeroCaption"/);
