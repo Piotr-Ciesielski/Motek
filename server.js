@@ -945,13 +945,17 @@ function sendFile(res, filePath) {
     ".css": "text/css; charset=utf-8",
     ".js": "application/javascript; charset=utf-8",
     ".png": "image/png",
+    ".webp": "image/webp",
     ".svg": "image/svg+xml",
   };
+  const cacheControl = ext === ".webp"
+    ? "public, max-age=31536000, immutable"
+    : "no-cache";
   return fsPromises.readFile(filePath).then((buf) => {
     res.writeHead(200, {
       ...SECURITY_HEADERS,
       "Content-Type": types[ext] || "application/octet-stream",
-      "Cache-Control": "no-cache",
+      "Cache-Control": cacheControl,
     });
     res.end(buf);
   });
@@ -1461,6 +1465,12 @@ async function main(options = {}) {
       }
       if (url.pathname === "/assets/night-yarn-cat.png") {
         return await sendFile(res, path.join(rootDir, "assets", "night-yarn-cat.png"));
+      }
+      if (url.pathname === "/assets/color-yarn-cat.v1.webp") {
+        return await sendFile(res, path.join(rootDir, "assets", "color-yarn-cat.v1.webp"));
+      }
+      if (url.pathname === "/assets/night-yarn-cat.v1.webp") {
+        return await sendFile(res, path.join(rootDir, "assets", "night-yarn-cat.v1.webp"));
       }
       if (url.pathname === "/material-policy.js") {
         return await sendFile(res, path.join(rootDir, "material-policy.js"));

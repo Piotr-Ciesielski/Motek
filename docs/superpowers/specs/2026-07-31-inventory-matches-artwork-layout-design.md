@@ -19,10 +19,15 @@ osobną kartę z grafiką z magazynu.
 - „Magazyn” otrzymuje dwukolumnowy układ: główna treść po lewej oraz pionowy
   panel graficzny po prawej, obejmujący wizualnie nagłówek i listę zapasu.
 - „Dopasowanie” otrzymuje kartę hero z tekstem i szeroką grafiką po prawej,
-  wykorzystującą obecne assety `color-yarn-cat.png` i `night-yarn-cat.png`.
-- W jasnym motywie oba miejsca używają `color-yarn-cat.png`, a w ciemnym
-  `night-yarn-cat.png`. Opisy alternatywne i podpisy są aktualizowane razem
-  z motywem.
+  wykorzystującą wersjonowane assety `color-yarn-cat.v1.webp` i
+  `night-yarn-cat.v1.webp`.
+- W jasnym motywie oba miejsca używają `color-yarn-cat.v1.webp`, a w ciemnym
+  `night-yarn-cat.v1.webp`. Opisy alternatywne i podpisy są aktualizowane
+  razem z motywem.
+- Grafiki produkcyjne są dostarczane jako wersjonowane pliki WebP, a źródłowe
+  PNG pozostają w repozytorium jako materiał bazowy. Serwer cache'uje WebP
+  przez rok z `immutable`, dzięki czemu zmiana motywu nie pobiera ponownie
+  obrazu już zapisanego w pamięci przeglądarki.
 - Na ekranach do 960 px układ przechodzi do jednej kolumny; obraz pozostaje
   widoczny i pojawia się pod treścią.
 
@@ -34,14 +39,17 @@ osobną kartę z grafiką z magazynu.
   `renderThemeToggle()`.
 - `styles.css`: układy desktop/mobile, kadrowanie `object-fit: cover`,
   tokeny istniejących motywów i dostępne podpisy.
-- `test/server.test.js`: zachowanie testu dostępności obu assetów PNG.
+- `server.js`: osobne cachowanie wersjonowanych grafik WebP i ich serwowanie.
+- `test/server.test.js`, `test/design-layout.test.js`: zachowanie dostępności
+  assetów oraz gwarancja użycia lżejszych, cache'owalnych grafik.
 - `README.md`, `SPEC.md`, `CHANGELOG.txt`: opis rozdzielenia grafik.
 
 ## Kryteria akceptacji
 
 1. W Magazynie obraz znajduje się po prawej stronie i jest pionowo kadrowany.
 2. W Dopasowaniu widoczna jest osobna karta hero z grafiką po prawej.
-3. Przełączenie motywu aktualizuje oba obrazy, podpisy i tekst alternatywny.
+3. Przełączenie motywu aktualizuje oba obrazy, podpisy i tekst alternatywny,
+   ale po pierwszym pobraniu nie transferuje ponownie tego samego pliku.
 4. Oba widoki zachowują istniejące przyciski, formularze i wyniki dopasowania.
 5. Układ mobilny nie powoduje poziomego przewijania.
 6. Testy aplikacji i kontrola diffu przechodzą bez błędów.

@@ -445,11 +445,15 @@ test("serwer Motek działa bezpiecznie", async (t) => {
       );
       assert.match(await themePolicyResponse.text(), /MotekThemePolicy/);
 
-      for (const assetName of ["color-yarn-cat.png", "night-yarn-cat.png"]) {
+      for (const assetName of ["color-yarn-cat.v1.webp", "night-yarn-cat.v1.webp"]) {
         const assetResponse = await fetch(`${baseUrl}/assets/${assetName}`);
         assert.equal(assetResponse.status, 200);
-        assert.match(assetResponse.headers.get("content-type"), /^image\/png/);
-        assert.ok((await assetResponse.arrayBuffer()).byteLength > 100_000);
+        assert.match(assetResponse.headers.get("content-type"), /^image\/webp/);
+        assert.equal(
+          assetResponse.headers.get("cache-control"),
+          "public, max-age=31536000, immutable",
+        );
+        assert.ok((await assetResponse.arrayBuffer()).byteLength < 300_000);
       }
     });
 

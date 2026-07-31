@@ -329,3 +329,4 @@ Wersja 1.0.0
 - dopasowano jasny i ciemny układ Magazynu do zaakceptowanych wariantów z PR #8
 - przywrócono cztery moduły podsumowania magazynu oraz pionową fotografię po prawej
 - dodano przycisk „Dodaj motek” w nagłówku i zachowano aktualizację statystyk po zmianach
+- zmniejszono grafiki motywów do wersjonowanych WebP i dodano roczny cache immutable

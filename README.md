@@ -59,6 +59,8 @@ Statyczny interfejs HTML, CSS i JavaScript znajduje się w `index.html`,
   przełączane globalnie w nagłówku i zapamiętywane lokalnie.
 - pionową grafikę włóczek i kota po prawej w Magazynie oraz szeroki hero graficzny
   w Dopasowaniu, zmieniane razem z motywem.
+- grafiki motywów są dostarczane jako wersjonowane WebP i cache'owane przez rok;
+  źródłowe PNG pozostają wyłącznie jako materiał bazowy.
 
 Frontend nie otrzymuje sekretnego klucza Supabase. Komunikuje się z backendem
 przez API Motka.
@@ -363,3 +365,7 @@ Motka”. W zakładce „Magazyn” nagłówek, statystyki i lista włóczek są
 a pionowa fotografia włóczek i kota zajmuje prawą kolumnę. Zakładka
 „Dopasowanie” zachowuje osobną kartę z grafiką motywu. Układ pochodzi z
 zaakceptowanych prototypów w PR #8.
+
+Grafiki są ładowane z wersjonowanych plików WebP (`*.v1.webp`) i otrzymują
+roczny cache `immutable`, więc przełączanie motywu nie pobiera ponownie
+wcześniej użytego obrazu.

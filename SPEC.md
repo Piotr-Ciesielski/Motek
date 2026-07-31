@@ -54,9 +54,11 @@ Frontend jest statyczną aplikacją HTML/CSS/JavaScript:
 Frontend obsługuje formularze Auth, magazyn włóczek, katalog, wyszukiwanie,
 filtrowanie i prezentację wyników. Nie otrzymuje sekretnego klucza Supabase.
 W Magazynie pokazuje pionową grafikę włóczek i kota po prawej, a w Dopasowaniu
-szeroki hero z tym samym kierunkiem wizualnym. Oba miejsca korzystają z obrazu
-zgodnego z aktywnym motywem: `assets/color-yarn-cat.png` dla Koloroterapii
-oraz `assets/night-yarn-cat.png` dla Nocnego Motka.
+szeroki hero z tym samym kierunkiem wizualnym. Oba miejsca korzystają z
+wersjonowanego obrazu WebP zgodnego z aktywnym motywem:
+`assets/color-yarn-cat.v1.webp` dla Koloroterapii oraz
+`assets/night-yarn-cat.v1.webp` dla Nocnego Motka. Źródłowe PNG pozostają
+w repozytorium jako materiał bazowy, a pliki WebP są cache'owane przez rok.
 
 ### Backend
 
@@ -320,4 +322,5 @@ Wariant jasny („Koloroterapia”) i ciemny („Nocny Motek”) używają tej s
 architektury widoków. Magazyn ma asymetryczne dwie kolumny: treść i statystyki
 po lewej oraz pionową grafikę po prawej, rozciągniętą przez wysokość widoku.
 Dopasowanie pokazuje szeroką kartę z grafiką wybranego motywu. Obrazy zmieniają
-się razem z globalnym przełącznikiem jasny/ciemny.
+się razem z globalnym przełącznikiem jasny/ciemny, bez ponownego transferu pliku
+już zapisanego w cache przeglądarki.
