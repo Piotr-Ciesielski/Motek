@@ -25,6 +25,10 @@ Użytkownik może:
 - wyszukiwać wzory i łączyć filtry statusu, języka, typu projektu oraz materiału,
 - sprawdzać dopasowania wyłącznie dla wzorów z kompletnymi wymaganiami.
 
+Filtry katalogu działają jako wspólne kryteria „i”. Liczniki typów i materiałów
+są wyliczane dynamicznie względem pozostałych aktywnych filtrów; niemożliwe opcje
+są nieaktywne, a aktualnie wybrana wartość pozostaje dostępna do wyczyszczenia.
+
 Motek nie jest sklepem ani pełnym programem do projektowania dzianin. Jego
 główną funkcją jest świadome wykorzystanie posiadanego zapasu włóczek.
 
@@ -152,6 +156,10 @@ Ranking uwzględnia wymagane metry lub gramy, materiały, klasy grubości, role,
 kolory i liczbę nitek. Jedna rola może użyć kilku kompatybilnych motków, ale
 jeden motek nie może zostać przydzielony do dwóch ról. Brak danych oznacza brak
 możliwości potwierdzenia wykonalności, a nie zgodę na użycie przybliżenia.
+
+Wzór wielomateriałowy może być znaleziony pod każdym użytym materiałem, ale jest
+liczony tylko raz w wynikach. Alternatywne włóczki i elastyczne wymagania są
+przechowywane osobno, bez zastępowania ich jedną uśrednioną wartością.
 
 Dokładne wymagania wdrożono dla 21 wariantów trzech rzeczywistych wzorów:
 Holly, Na Pole i Oslo Hat. Pozostałe rekordy pozostają dostępne opisowo i nie

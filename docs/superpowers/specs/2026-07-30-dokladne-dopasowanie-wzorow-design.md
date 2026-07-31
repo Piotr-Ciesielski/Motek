@@ -1,5 +1,7 @@
 # Dokładne dopasowanie wzorów — projekt
 
+**Status realizacji:** wdrożone dla kontraktu wymagań v2 i 21 zweryfikowanych wariantów.
+
 **Data:** 2026-07-30  
 **Status:** zatwierdzony przez właścicielkę produktu  
 **Zakres:** magazyn włóczek, katalog wzorów i automatyczne dopasowanie
