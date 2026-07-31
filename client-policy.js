@@ -1,16 +1,29 @@
 (function exposeMotekClientPolicy(root, factory) {
-  const policy = factory();
+  const materialPolicy =
+    typeof module === "object" && module.exports
+      ? require("./material-policy")
+      : root?.MotekMaterialPolicy;
+  const policy = factory(materialPolicy);
   if (typeof module === "object" && module.exports) {
     module.exports = policy;
   }
   if (root) {
     root.MotekClientPolicy = policy;
   }
-})(typeof globalThis === "object" ? globalThis : null, () => {
+})(typeof globalThis === "object" ? globalThis : null, (materialPolicy) => {
+  if (!materialPolicy) {
+    throw new Error("Brak wspólnej polityki materiałów Motka.");
+  }
+  const {
+    ANY_MATERIAL,
+    MATERIALS,
+    formatYarnMaterials,
+    matchesPatternMaterialFilter,
+  } = materialPolicy;
   const yarnValueFields = [
     "name",
     "color",
-    "material",
+    "materials",
     "weightClass",
     "length",
     "weight",
@@ -35,6 +48,33 @@
     blanket: { card: "Koc", filter: "Koce" },
     other: { card: "Inny projekt", filter: "Inne" },
   };
+
+  function bindHoldToReveal(button, field) {
+    if (!button || !field) return;
+
+    const reveal = (event) => {
+      event?.preventDefault();
+      field.type = "text";
+      button.setAttribute("aria-pressed", "true");
+    };
+    const mask = (event) => {
+      event?.preventDefault();
+      field.type = "password";
+      button.setAttribute("aria-pressed", "false");
+    };
+    const isRevealKey = (event) => event.key === " " || event.key === "Enter";
+
+    button.addEventListener("pointerdown", reveal);
+    ["pointerup", "pointercancel", "pointerleave", "blur", "click"].forEach(
+      (eventName) => button.addEventListener(eventName, mask),
+    );
+    button.addEventListener("keydown", (event) => {
+      if (isRevealKey(event) && !event.repeat) reveal(event);
+    });
+    button.addEventListener("keyup", (event) => {
+      if (isRevealKey(event)) mask(event);
+    });
+  }
 
   function getProjectTypeLabel(value) {
     return (projectTypeLabels[value] || projectTypeLabels.other).card;
@@ -78,7 +118,7 @@
     const matchesMaterial =
       ignoredFacet === "material"
       || material === "all"
-      || materials.includes(material);
+      || matchesPatternMaterialFilter(materials, material);
 
     return (
       matchesPhrase
@@ -109,6 +149,12 @@
         (Array.isArray(pattern?.materials) ? pattern.materials : [])
           .filter(Boolean)
       );
+      if (uniqueMaterials.has(ANY_MATERIAL)) {
+        MATERIALS.forEach(({ value }) => {
+          materials[value] = (materials[value] || 0) + 1;
+        });
+        return;
+      }
       uniqueMaterials.forEach((material) => {
         materials[material] = (materials[material] || 0) + 1;
       });
@@ -128,6 +174,15 @@
     });
   }
 
+  function ensureSingleNewYarnCard(cards, createCard) {
+    const existing = [...cards].find(
+      (card) => card?.dataset?.saved !== "true",
+    );
+    return existing
+      ? { card: existing, created: false }
+      : { card: createCard(), created: true };
+  }
+
   function shouldRetryRead({
     method,
     status = null,
@@ -143,7 +198,13 @@
   }
 
   function yarnsHaveSameValues(first, second) {
-    return yarnValueFields.every((field) => first?.[field] === second?.[field]);
+    return yarnValueFields.every((field) => {
+      if (field !== "materials") return first?.[field] === second?.[field];
+      const firstMaterials = Array.isArray(first?.materials) ? first.materials : [];
+      const secondMaterials = Array.isArray(second?.materials) ? second.materials : [];
+      return firstMaterials.length === secondMaterials.length
+        && firstMaterials.every((material, index) => material === secondMaterials[index]);
+    });
   }
 
   function findNewlySavedYarn(yarns, draft, knownYarnIds) {
@@ -183,6 +244,63 @@
       return `Włóczka: ${requirements.length} warianty opisane w szczegółach`;
     }
     return `Główna włóczka: ${formatRatio(null)}`;
+  }
+
+  function formatMatchingRequirement(
+    requirement,
+    allocation,
+    formatNumber,
+    formatSkeinCount,
+  ) {
+    const formatRange = (minimum, maximum, unit) => {
+      if (!Number.isFinite(Number(minimum)) || Number(minimum) <= 0) return null;
+      if (Number.isFinite(Number(maximum)) && Number(maximum) >= Number(minimum)) {
+        return `${formatNumber(minimum)}–${formatNumber(maximum)} ${unit}`;
+      }
+      return `min. ${formatNumber(minimum)} ${unit}`;
+    };
+    const meters = formatRange(
+      requirement?.metersMin,
+      requirement?.metersMax,
+      "m",
+    );
+    const grams = formatRange(
+      requirement?.gramsMin,
+      requirement?.gramsMax,
+      "g",
+    );
+    const primary = requirement?.measurementBasis === "grams" ? grams : meters;
+    const secondary = requirement?.measurementBasis === "grams" ? meters : grams;
+    const parts = [primary];
+    if (secondary) parts.push(`${secondary} pomocniczo`);
+    if (Number.isFinite(Number(requirement?.skeinsMin)) && requirement.skeinsMin > 0) {
+      parts.push(
+        Number.isFinite(Number(requirement?.skeinsMax))
+          && requirement.skeinsMax >= requirement.skeinsMin
+          ? `${formatNumber(requirement.skeinsMin)}–${formatNumber(requirement.skeinsMax)} motków wg wzoru`
+          : `${formatSkeinCount(requirement.skeinsMin)} wg wzoru`,
+      );
+    }
+    parts.push(
+      requirement?.materialMatch === "any_material"
+        ? "dowolny materiał"
+        : formatYarnMaterials(requirement?.materials),
+    );
+    if (Array.isArray(requirement?.weightClasses) && requirement.weightClasses.length) {
+      parts.push(`grubość ${requirement.weightClasses.join(", ")}`);
+    }
+    if (Number.isInteger(requirement?.strandCount) && requirement.strandCount > 1) {
+      parts.push(`${formatNumber(requirement.strandCount)} nitki razem`);
+    }
+    if (Array.isArray(allocation) && allocation.length) {
+      parts.push(
+        `z magazynu: ${allocation.map((yarn) =>
+          `${yarn.name || "motek"}${yarn.color ? ` (${yarn.color})` : ""}`
+        ).join(", ")}`,
+      );
+    }
+
+    return `${requirement?.role || "wymagana włóczka"}: ${parts.filter(Boolean).join(" · ")}`;
   }
 
   async function loadPaginatedItems(
@@ -241,10 +359,13 @@
   }
 
   return {
+    bindHoldToReveal,
     buildPatternFacetCounts,
     buildPatternFacetOptions,
+    ensureSingleNewYarnCard,
     filterPatterns,
     findNewlySavedYarn,
+    formatMatchingRequirement,
     formatPatternYarnFact,
     getProjectTypeFilterLabel,
     getProjectTypeLabel,

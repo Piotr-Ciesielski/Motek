@@ -2,7 +2,7 @@
 
 ## 1. Status projektu
 
-- bieżąca wersja rozwojowa: `2.0.0-alpha.34`
+- bieżąca wersja rozwojowa: `2.0.0-alpha.35`
 - ostatnia wersja wydana: `1.0.2`
 - aktualne źródło danych: Supabase
 - lokalny SQLite: usunięty z aplikacji
@@ -31,7 +31,8 @@ główną funkcją jest świadome wykorzystanie posiadanego zapasu włóczek.
 ## 3. Aktualny przepływ użytkownika
 
 1. Użytkownik zakłada konto albo się loguje.
-2. Dodaje motki, podając nazwę, kolor, materiał, klasę grubości, długość i wagę.
+2. Dodaje motki, podając nazwę, kolor, jeden lub kilka materiałów, klasę
+   grubości, długość i wagę.
 3. Aplikacja zapisuje magazyn prywatnie w Supabase.
 4. Użytkownik przegląda katalog wzorów.
 5. Uruchamia dopasowanie.
@@ -100,13 +101,15 @@ Szczegółowe ryzyka przed wdrożeniem produkcyjnym opisuje `AUDYT.md`.
 Pola aplikacyjne:
 
 - `id`, `user_id`,
-- `name`, `color`, `material`, `weight_class`,
+- `name`, `color`, `materials`, `weight_class`,
 - `length_meters`, `weight_grams`,
 - `created_at`, `updated_at`.
 
-Dozwolone materiały to między innymi wełna, bawełna, akryl, alpaka i
-mieszanka. Klasa grubości korzysta z wartości `lace`, `fingering`, `sport`,
-`dk`, `worsted` i `bulky`.
+Pole `materials` przechowuje jeden lub kilka materiałów ze wspólnej,
+kontrolowanej listy używanej również przez katalog wzorów. Wartość „mieszanka”
+oznacza nieokreślony skład i nie łączy się z konkretnymi materiałami. Stare
+pole `material` pozostaje zgodnościowo synchronizowane w bazie. Klasa grubości
+korzysta z wartości `lace`, `fingering`, `sport`, `dk`, `worsted` i `bulky`.
 
 ### 6.2 Wzór — `public.patterns`
 
@@ -119,8 +122,9 @@ Rekord zawiera między innymi:
 - `source_filename`, `source_language`, `needs_review`.
 
 `yarn_requirements` opisuje włóczki występujące we wzorze, w tym role główne,
-dodatkowe, kontrastowe lub alternatywne. `matching_requirements` zawiera
-potwierdzone zużycie dla wariantów lub rozmiarów używane przez ranking.
+dodatkowe, kontrastowe lub alternatywne. `matching_requirements` w wersji 2
+zawiera potwierdzone zużycie, rozmiary, warianty włóczek, role, reguły kolorów
+i liczbę nitek używane przez ranking.
 
 ## 7. Zasada dopasowania
 
@@ -131,14 +135,14 @@ Wzór może pojawić się w wynikach tylko wtedy, gdy:
 - liczba i parametry dostępnych włóczek spełniają wymagania wariantu,
 - jeden motek nie jest używany jednocześnie do dwóch różnych ról.
 
-Ranking uwzględnia wymagane metry, gramy, materiały i klasy grubości. Wyniki
-są sortowane według wyniku procentowego. Jedno wymaganie może użyć kilku
-kompatybilnych motków, jeśli `yarns_needed` oznacza minimalną liczbę motków.
-Brak danych oznacza brak możliwości potwierdzenia wykonalności, a nie zgodę
-na użycie przybliżenia.
+Ranking uwzględnia wymagane metry lub gramy, materiały, klasy grubości, role,
+kolory i liczbę nitek. Jedna rola może użyć kilku kompatybilnych motków, ale
+jeden motek nie może zostać przydzielony do dwóch ról. Brak danych oznacza brak
+możliwości potwierdzenia wykonalności, a nie zgodę na użycie przybliżenia.
 
-Obecne rekordy katalogu mają jeszcze pustą listę wariantów dopasowania, więc
-nie są prezentowane jako potwierdzone wyniki, dopóki wymagania nie zostaną
+Dokładne wymagania wdrożono dla 21 wariantów trzech rzeczywistych wzorów:
+Holly, Na Pole i Oslo Hat. Pozostałe rekordy pozostają dostępne opisowo i nie
+są prezentowane jako potwierdzone wyniki, dopóki ich wymagania nie zostaną
 uzupełnione i zweryfikowane.
 
 Jeśli magazyn użytkownika jest większy niż bieżący limit obliczeń, ranking
@@ -258,14 +262,14 @@ Zrealizowano:
 - Supabase Auth i profile użytkowników,
 - prywatny magazyn włóczek z RLS,
 - zapis i usuwanie włóczek przez aplikację,
-- bezpieczną ścieżkę rankingu z wymaganiami wariantów,
+- wspólną listę materiałów i obsługę kilku materiałów jednego motka,
+- bezpieczną ścieżkę rankingu z dokładnymi wymaganiami 21 wariantów,
 - autosave zapisujący różnice per motek przez `POST`, `PATCH` i `DELETE`,
 - usunięcie SQLite z aplikacji.
 
 Do wykonania pozostają przede wszystkim:
 
-- uzupełnienie kompletnych wymagań zużycia dla rozmiarów i wariantów wybranych
-  wzorów, aby mogły brać udział w automatycznym dopasowaniu,
+- rozszerzenie kompletnych wymagań zużycia na kolejne wzory,
 - uzupełnienie rate limitingu na reverse proxy oraz monitoring prób Auth,
 - wymuszenie HTTPS i HSTS na reverse proxy w produkcji,
 - dalsze ograniczenie kosztu rankingu, testy obciążenia i ewentualny worker,

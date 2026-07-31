@@ -5,7 +5,8 @@
 ### Konto i pierwszy start
 
 - wdrożono odzyskiwanie hasła;
-- dodano możliwość pokazania i ponownego ukrycia hasła;
+- usunięto tekstowy przycisk „Pokaż”; ikona oka pokazuje hasło tylko podczas
+  przytrzymania i po puszczeniu ponownie je maskuje;
 - wymagania hasła są widoczne przy rejestracji i ustawianiu nowego hasła;
 - dodano onboarding pustego magazynu;
 - dodano checklistę pierwszych trzech kroków;
@@ -21,14 +22,22 @@
 - po zmianie pojawiają się `Zapisz` i `Anuluj`;
 - `Anuluj` przywraca poprzednie wartości;
 - dopasowanie nie uruchamia się podczas niedokończonej edycji.
+- wielokrotne kliknięcie `Dodaj motek` utrzymuje jeden formularz i przenosi do
+  niego fokus;
+- motek może mieć kilka materiałów wybranych z tej samej listy co filtr
+  katalogu;
+- „Mieszanka — skład nieokreślony” nie łączy się z konkretnymi materiałami.
 
-### Dopasowanie i dane demo
+### Dokładne dopasowanie wzorów
 
 - przycisk zmieniono na `Dobierz wzór`;
-- dodano trzy syntetyczne wzory demo z kompletnymi wymaganiami dopasowania;
-- wzory demo są zaimportowane do Supabase i służą do testów end-to-end;
-- rzeczywiste wzory bez kompletnych wymagań pozostają opisowe i nie są używane
-  przez ranking;
+- wdrożono walidowany format wymagań v2 z rozmiarami, alternatywnymi włóczkami,
+  rolami, kolorami, liczbą nitek oraz niezależnymi wymaganiami metrów i gramów;
+- dodano 21 potwierdzonych wariantów rzeczywistych wzorów Holly, Na Pole i
+  Oslo Hat;
+- wzory bez kompletnych wymagań pozostają opisowe i nie są używane przez ranking;
+- wynik pokazuje wymagania każdej roli i konkretne przydzielone motki, bez
+  sztucznych wartości `0 m` lub `0 g`;
 - zasady bezpiecznego publikowania opisów wzorów opisano w
   `docs/PATTERN-CATALOG.md`;
 - wynik dopasowania prowadzi do pełnej karty wybranego wzoru w katalogu;
@@ -147,11 +156,14 @@
 
 ## Sprawdzenie
 
-- `npm run check` przechodzi: 43/43 testy;
+- `npm run check` przechodzi: 66/66 testów;
 - start redesignu frontu zapisano w commicie `2a0c94c` na branchu
   `feat/frontend-design-refresh`, a branch został wypchnięty na GitHub;
-- import katalogu demo został sprawdzony w trybie kontrolnym;
-- Supabase zawiera 106 sprawdzonych rekordów, w tym 3 wzory demo;
+- migracje materiałów i wymagań v2 zostały zastosowane w Supabase;
+- import zaktualizował 106 rekordów bez dodawania duplikatów;
+- Supabase zawiera 106 sprawdzonych rekordów i 21 dokładnych wariantów;
+- wszystkie 10 istniejących włóczek zachowało dane i otrzymało nową listę
+  materiałów;
 - kolejne pakiety są sprawdzane interaktywnie w przeglądarce na desktopie i mobile.
 - techniczny test klawiatury potwierdził działanie skip linku i przejścia fokusu
   między głównymi ekranami; pełny odsłuch pozostaje do wykonania w NVDA lub VoiceOver.
@@ -163,10 +175,8 @@
 
 1. **Wzbogacenie danych katalogu**
    - dodać zweryfikowane adresy źródeł;
-   - wybrać pierwszą partię rzeczywistych wzorów z jednoznacznym zużyciem dla
-     rozmiarów;
-   - uzupełnić ich warianty `matching_requirements` i sprawdzić dopasowanie na
-     przykładowych magazynach.
+   - rozszerzać potwierdzone warianty `matching_requirements` na kolejne wzory;
+   - każdą partię sprawdzać na przykładowych magazynach przed importem.
 
 2. **Skalowanie katalogu dopiero przed zwiększeniem limitu**
    - przenieść wyszukiwanie i filtrowanie na serwer;

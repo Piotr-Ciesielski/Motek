@@ -248,6 +248,51 @@
         "quantity_note": "zużycie: 35 g koloru głównego, 26 g CC1 i 10 g CC2"
       }
     ],
+    "matching_requirements": {
+      "version": 2,
+      "variants": [
+        {
+          "id": "s-m-l-wspolne-zuzycie",
+          "label": "S/M/L — zużycie podane wspólnie",
+          "size": "S/M/L",
+          "requirements": [
+            {
+              "role": "kolor główny (MC)",
+              "measurement_basis": "grams",
+              "grams_min": 35,
+              "skeins_min": 1,
+              "materials": [],
+              "material_match": "any_material",
+              "color_mode": "same",
+              "distinct_color_group": "holly-colors",
+              "weight_classes": ["fingering"]
+            },
+            {
+              "role": "kolor kontrastowy 1 (CC1)",
+              "measurement_basis": "grams",
+              "grams_min": 26,
+              "skeins_min": 1,
+              "materials": [],
+              "material_match": "any_material",
+              "color_mode": "same",
+              "distinct_color_group": "holly-colors",
+              "weight_classes": ["fingering"]
+            },
+            {
+              "role": "kolor kontrastowy 2 (CC2)",
+              "measurement_basis": "grams",
+              "grams_min": 10,
+              "skeins_min": 1,
+              "materials": [],
+              "material_match": "any_material",
+              "color_mode": "same",
+              "distinct_color_group": "holly-colors",
+              "weight_classes": ["fingering"]
+            }
+          ]
+        }
+      ]
+    },
     "source_language": "en",
     "needs_review": false,
     "review_notes": [
@@ -358,6 +403,95 @@
         "quantity_note": "6 (6) 7 (8) 9 (10) motków"
       }
     ],
+    "matching_requirements": {
+      "version": 2,
+      "variants": [
+        {
+          "id": "xs-safran",
+          "label": "XS — DROPS Safran",
+          "size": "XS",
+          "yarn_option": "DROPS Safran",
+          "requirements": [{"role":"główna","measurement_basis":"meters","meters_min":800,"grams_min":250,"skeins_min":5,"materials":["bawełna"],"material_match":"all","color_mode":"same","weight_classes":["sport"]}]
+        },
+        {
+          "id": "xs-bamboo-queen",
+          "label": "XS — Performance Bamboo Queen",
+          "size": "XS",
+          "yarn_option": "Performance Bamboo Queen",
+          "requirements": [{"role":"główna","measurement_basis":"meters","meters_min":750,"grams_min":300,"skeins_min":6,"materials":["bawełna","bambus"],"material_match":"all","color_mode":"same","weight_classes":["sport"]}]
+        },
+        {
+          "id": "s-safran",
+          "label": "S — DROPS Safran",
+          "size": "S",
+          "yarn_option": "DROPS Safran",
+          "requirements": [{"role":"główna","measurement_basis":"meters","meters_min":800,"grams_min":250,"skeins_min":5,"materials":["bawełna"],"material_match":"all","color_mode":"same","weight_classes":["sport"]}]
+        },
+        {
+          "id": "s-bamboo-queen",
+          "label": "S — Performance Bamboo Queen",
+          "size": "S",
+          "yarn_option": "Performance Bamboo Queen",
+          "requirements": [{"role":"główna","measurement_basis":"meters","meters_min":750,"grams_min":300,"skeins_min":6,"materials":["bawełna","bambus"],"material_match":"all","color_mode":"same","weight_classes":["sport"]}]
+        },
+        {
+          "id": "m-safran",
+          "label": "M — DROPS Safran",
+          "size": "M",
+          "yarn_option": "DROPS Safran",
+          "requirements": [{"role":"główna","measurement_basis":"meters","meters_min":960,"grams_min":300,"skeins_min":6,"materials":["bawełna"],"material_match":"all","color_mode":"same","weight_classes":["sport"]}]
+        },
+        {
+          "id": "m-bamboo-queen",
+          "label": "M — Performance Bamboo Queen",
+          "size": "M",
+          "yarn_option": "Performance Bamboo Queen",
+          "requirements": [{"role":"główna","measurement_basis":"meters","meters_min":875,"grams_min":350,"skeins_min":7,"materials":["bawełna","bambus"],"material_match":"all","color_mode":"same","weight_classes":["sport"]}]
+        },
+        {
+          "id": "l-safran",
+          "label": "L — DROPS Safran",
+          "size": "L",
+          "yarn_option": "DROPS Safran",
+          "requirements": [{"role":"główna","measurement_basis":"meters","meters_min":1120,"grams_min":350,"skeins_min":7,"materials":["bawełna"],"material_match":"all","color_mode":"same","weight_classes":["sport"]}]
+        },
+        {
+          "id": "l-bamboo-queen",
+          "label": "L — Performance Bamboo Queen",
+          "size": "L",
+          "yarn_option": "Performance Bamboo Queen",
+          "requirements": [{"role":"główna","measurement_basis":"meters","meters_min":1000,"grams_min":400,"skeins_min":8,"materials":["bawełna","bambus"],"material_match":"all","color_mode":"same","weight_classes":["sport"]}]
+        },
+        {
+          "id": "xl-safran",
+          "label": "XL — DROPS Safran",
+          "size": "XL",
+          "yarn_option": "DROPS Safran",
+          "requirements": [{"role":"główna","measurement_basis":"meters","meters_min":1280,"grams_min":400,"skeins_min":8,"materials":["bawełna"],"material_match":"all","color_mode":"same","weight_classes":["sport"]}]
+        },
+        {
+          "id": "xl-bamboo-queen",
+          "label": "XL — Performance Bamboo Queen",
+          "size": "XL",
+          "yarn_option": "Performance Bamboo Queen",
+          "requirements": [{"role":"główna","measurement_basis":"meters","meters_min":1125,"grams_min":450,"skeins_min":9,"materials":["bawełna","bambus"],"material_match":"all","color_mode":"same","weight_classes":["sport"]}]
+        },
+        {
+          "id": "xxl-safran",
+          "label": "XXL — DROPS Safran",
+          "size": "XXL",
+          "yarn_option": "DROPS Safran",
+          "requirements": [{"role":"główna","measurement_basis":"meters","meters_min":1440,"grams_min":450,"skeins_min":9,"materials":["bawełna"],"material_match":"all","color_mode":"same","weight_classes":["sport"]}]
+        },
+        {
+          "id": "xxl-bamboo-queen",
+          "label": "XXL — Performance Bamboo Queen",
+          "size": "XXL",
+          "yarn_option": "Performance Bamboo Queen",
+          "requirements": [{"role":"główna","measurement_basis":"meters","meters_min":1250,"grams_min":500,"skeins_min":10,"materials":["bawełna","bambus"],"material_match":"all","color_mode":"same","weight_classes":["sport"]}]
+        }
+      ]
+    },
     "source_language": "pl",
     "needs_review": false,
     "review_notes": [
@@ -401,6 +535,67 @@
         "quantity_note": "łącznie 100 (150) 150 (150) g"
       }
     ],
+    "matching_requirements": {
+      "version": 2,
+      "variants": [
+        {
+          "id": "xs-arwetta",
+          "label": "XS — Filcolana Arwetta Classic",
+          "size": "XS",
+          "yarn_option": "Filcolana Arwetta Classic",
+          "requirements": [{"role":"główna","measurement_basis":"meters","meters_min":420,"grams_min":100,"skeins_min":2,"materials":["wełna","poliamid"],"material_match":"all","color_mode":"same","weight_classes":["fingering"],"strand_count":2}]
+        },
+        {
+          "id": "xs-sunday",
+          "label": "XS — Sandnes Garn Sunday",
+          "size": "XS",
+          "yarn_option": "Sandnes Garn Sunday",
+          "requirements": [{"role":"główna","measurement_basis":"meters","meters_min":470,"grams_min":100,"skeins_min":2,"materials":["wełna"],"material_match":"all","color_mode":"same","weight_classes":["fingering"],"strand_count":2}]
+        },
+        {
+          "id": "s-arwetta",
+          "label": "S — Filcolana Arwetta Classic",
+          "size": "S",
+          "yarn_option": "Filcolana Arwetta Classic",
+          "requirements": [{"role":"główna","measurement_basis":"meters","meters_min":630,"grams_min":150,"skeins_min":3,"materials":["wełna","poliamid"],"material_match":"all","color_mode":"same","weight_classes":["fingering"],"strand_count":2}]
+        },
+        {
+          "id": "s-sunday",
+          "label": "S — Sandnes Garn Sunday",
+          "size": "S",
+          "yarn_option": "Sandnes Garn Sunday",
+          "requirements": [{"role":"główna","measurement_basis":"meters","meters_min":705,"grams_min":150,"skeins_min":3,"materials":["wełna"],"material_match":"all","color_mode":"same","weight_classes":["fingering"],"strand_count":2}]
+        },
+        {
+          "id": "m-arwetta",
+          "label": "M — Filcolana Arwetta Classic",
+          "size": "M",
+          "yarn_option": "Filcolana Arwetta Classic",
+          "requirements": [{"role":"główna","measurement_basis":"meters","meters_min":630,"grams_min":150,"skeins_min":3,"materials":["wełna","poliamid"],"material_match":"all","color_mode":"same","weight_classes":["fingering"],"strand_count":2}]
+        },
+        {
+          "id": "m-sunday",
+          "label": "M — Sandnes Garn Sunday",
+          "size": "M",
+          "yarn_option": "Sandnes Garn Sunday",
+          "requirements": [{"role":"główna","measurement_basis":"meters","meters_min":705,"grams_min":150,"skeins_min":3,"materials":["wełna"],"material_match":"all","color_mode":"same","weight_classes":["fingering"],"strand_count":2}]
+        },
+        {
+          "id": "l-arwetta",
+          "label": "L — Filcolana Arwetta Classic",
+          "size": "L",
+          "yarn_option": "Filcolana Arwetta Classic",
+          "requirements": [{"role":"główna","measurement_basis":"meters","meters_min":630,"grams_min":150,"skeins_min":3,"materials":["wełna","poliamid"],"material_match":"all","color_mode":"same","weight_classes":["fingering"],"strand_count":2}]
+        },
+        {
+          "id": "l-sunday",
+          "label": "L — Sandnes Garn Sunday",
+          "size": "L",
+          "yarn_option": "Sandnes Garn Sunday",
+          "requirements": [{"role":"główna","measurement_basis":"meters","meters_min":705,"grams_min":150,"skeins_min":3,"materials":["wełna"],"material_match":"all","color_mode":"same","weight_classes":["fingering"],"strand_count":2}]
+        }
+      ]
+    },
     "source_language": "en",
     "needs_review": false,
     "review_notes": [

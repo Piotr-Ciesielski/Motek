@@ -10,5 +10,6 @@ test("limity produktu są współdzielone przez backend i importer", () => {
     maxMatchingVariantsPerPattern: 250,
     maxMatchingRoleRequirements: 8,
     maxMatchingTextLength: 100,
+    maxMatchSearchNodes: 25_000,
   });
 });

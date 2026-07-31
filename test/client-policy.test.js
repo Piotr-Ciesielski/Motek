@@ -2,16 +2,90 @@ const test = require("node:test");
 const assert = require("node:assert/strict");
 
 const {
+  bindHoldToReveal,
   buildPatternFacetCounts,
   buildPatternFacetOptions,
+  ensureSingleNewYarnCard,
   filterPatterns,
   findNewlySavedYarn,
+  formatMatchingRequirement,
   formatPatternYarnFact,
   getExistingYarnState,
   isDeleteConfirmed,
   loadPaginatedItems,
   shouldRetryRead,
+  yarnsHaveSameValues,
 } = require("../client-policy");
+
+class PasswordRevealControl extends EventTarget {
+  constructor() {
+    super();
+    this.attributes = new Map();
+  }
+
+  setAttribute(name, value) {
+    this.attributes.set(name, value);
+  }
+
+  getAttribute(name) {
+    return this.attributes.get(name);
+  }
+}
+
+test("hasło jest widoczne tylko podczas przytrzymania kontrolki", () => {
+  const button = new PasswordRevealControl();
+  const field = { type: "password" };
+
+  bindHoldToReveal(button, field);
+
+  button.dispatchEvent(new Event("click", { cancelable: true }));
+  assert.equal(field.type, "password");
+
+  button.dispatchEvent(new Event("pointerdown", { cancelable: true }));
+  assert.equal(field.type, "text");
+  assert.equal(button.getAttribute("aria-pressed"), "true");
+
+  button.dispatchEvent(new Event("pointerup"));
+  assert.equal(field.type, "password");
+  assert.equal(button.getAttribute("aria-pressed"), "false");
+
+  button.dispatchEvent(new Event("pointerdown", { cancelable: true }));
+  button.dispatchEvent(new Event("pointerleave"));
+  assert.equal(field.type, "password");
+
+  button.dispatchEvent(new Event("pointerdown", { cancelable: true }));
+  button.dispatchEvent(new Event("blur"));
+  assert.equal(field.type, "password");
+
+  const keyDown = new Event("keydown", { cancelable: true });
+  Object.defineProperty(keyDown, "key", { value: " " });
+  button.dispatchEvent(keyDown);
+  assert.equal(field.type, "text");
+
+  const keyUp = new Event("keyup", { cancelable: true });
+  Object.defineProperty(keyUp, "key", { value: " " });
+  button.dispatchEvent(keyUp);
+  assert.equal(field.type, "password");
+});
+
+test("wielokrotne dodawanie wskazuje jeden formularz nowego motka", () => {
+  const cards = [];
+  let createdCards = 0;
+  const createCard = () => {
+    const card = { dataset: { saved: "false" } };
+    cards.push(card);
+    createdCards += 1;
+    return card;
+  };
+
+  const first = ensureSingleNewYarnCard(cards, createCard);
+  const second = ensureSingleNewYarnCard(cards, createCard);
+
+  assert.equal(createdCards, 1);
+  assert.equal(first.created, true);
+  assert.equal(second.created, false);
+  assert.equal(second.card, first.card);
+});
 
 const filterPatternsFixture = [
   {
@@ -43,11 +117,22 @@ const filterPatternsFixture = [
 const draft = {
   name: "Merino",
   color: "ecru",
-  material: "wełna",
+  materials: ["wełna", "poliamid"],
   weightClass: "dk",
   length: 200,
   weight: 100,
 };
+
+test("porównuje pełny skład materiałowy motka", () => {
+  assert.equal(
+    yarnsHaveSameValues(draft, { ...draft, materials: ["wełna", "poliamid"] }),
+    true,
+  );
+  assert.equal(
+    yarnsHaveSameValues(draft, { ...draft, materials: ["wełna"] }),
+    false,
+  );
+});
 
 test("wzór z kilkoma alternatywami nie jest opisany jako brak danych", () => {
   assert.equal(
@@ -273,4 +358,63 @@ test("wyłącza niemożliwe opcje, ale zachowuje aktualnie wybraną", () => {
       { value: "wełna", count: 0, disabled: false },
     ],
   );
+});
+
+test("opis dokładnego wymagania nie dopisuje nieznanej jednostki jako zera", () => {
+  const text = formatMatchingRequirement(
+    {
+      role: "kolor główny",
+      measurementBasis: "grams",
+      gramsMin: 35,
+      gramsMax: null,
+      metersMin: null,
+      metersMax: null,
+      skeinsMin: 1,
+      skeinsMax: null,
+      materials: [],
+      materialMatch: "any_material",
+      weightClasses: ["fingering"],
+      strandCount: null,
+    },
+    [{ name: "Sock", color: "biały" }],
+    (value) => String(value),
+    (value) => `${value} motek`,
+  );
+
+  assert.match(text, /kolor główny: min\. 35 g/);
+  assert.match(text, /dowolny materiał/);
+  assert.match(text, /Sock \(biały\)/);
+  assert.doesNotMatch(text, /0 m|0 g/);
+});
+
+test("elastyczny wzór pasuje do każdego konkretnego materiału", () => {
+  const flexiblePattern = {
+    name: "Dowolna chusta",
+    description: "Włóczka według uznania",
+    projectType: "shawl_scarf",
+    materials: ["dowolny materiał"],
+    sourceLanguage: "pl",
+    needsReview: false,
+  };
+  const patterns = [...filterPatternsFixture, flexiblePattern];
+
+  assert.deepEqual(
+    filterPatterns(patterns, {
+      review: "verified",
+      material: "bawełna",
+    }).map(({ name }) => name),
+    ["Bawełniany top", "Bawełniane skarpety", "Dowolna chusta"],
+  );
+  assert.deepEqual(
+    filterPatterns(patterns, {
+      review: "verified",
+      material: "wełna",
+    }).map(({ name }) => name),
+    ["Wełniany top", "Dowolna chusta"],
+  );
+
+  const counts = buildPatternFacetCounts(patterns, { review: "verified" });
+  assert.equal(counts.materials["dowolny materiał"], undefined);
+  assert.equal(counts.materials.bawełna, 3);
+  assert.equal(counts.materials.wełna, 2);
 });
