@@ -30,14 +30,16 @@ główną funkcją jest świadome dopasowanie zapasu włóczek do wymagań wzoru
 2. Dodaje motki, podając nazwę, kolor, jeden lub kilka materiałów, klasę
    grubości, długość i wagę.
 3. Przegląda katalog wzorów, wyszukuje je i łączy filtry statusu, języka,
-   typu projektu oraz materiału.
+   typu projektu oraz materiału. Wszystkie aktywne kryteria działają łącznie,
+   a liczniki typów i materiałów aktualizują się względem pozostałych filtrów.
 4. Uruchamia dopasowanie.
 5. Backend pobiera prywatny magazyn użytkownika oraz katalog wzorów i zwraca
    tylko potwierdzone warianty, które spełniają wymagania.
 
 Wymagania wzoru mogą opisywać rozmiary lub inne warianty. Mogą też rozdzielać
-włóczkę główną, dodatkową i kontrastową. Jeden motek nie może zostać użyty
-jednocześnie do dwóch różnych ról.
+włóczkę główną, dodatkową i kontrastową. Ranking w wersji 2 dobiera konkretne
+motki do ról, respektuje metry lub gramy, materiały, grubość, kolory i liczbę
+nitek. Jeden motek nie może zostać użyty jednocześnie do dwóch różnych ról.
 
 Jeżeli źródło nie podaje wystarczających danych, rekord otrzymuje
 `needs_review=true` albo pusty zestaw wymagań do rankingu. System nie zgaduje
@@ -299,8 +301,10 @@ Najważniejsze etapy zapisane w `CHANGELOG.txt`:
 - `2.0.0-alpha.8` — Supabase jako jedyne źródło danych i usunięcie SQLite.
 - `2.0.0-alpha.9` — bezpieczny autosave, zabezpieczenia Auth, limity produktu i ograniczenie kosztu rankingu.
 - `2.0.0-alpha.10` — naprawa nagłówków żądań magazynu i synchronizacja wymaganych migracji zdalnego Supabase.
-- `2.0.0-alpha.35` — wiele materiałów na motku i dokładne dopasowanie 21 wariantów rzeczywistych wzorów.
+- `2.0.0-alpha.38` — logowanie adresem e-mail jako jedyną tożsamością konta.
 - `2.0.0-alpha.37` — globalny przełącznik motywów „Koloroterapia” / „Nocny Motek” z lokalnym zapisem preferencji oraz grafikami magazynu.
+- `2.0.0-alpha.36` — natychmiastowe usuwanie konta i prywatnych danych.
+- `2.0.0-alpha.35` — wiele materiałów na motku i dokładne dopasowanie 21 wariantów rzeczywistych wzorów.
 - `2.0.0-alpha.34` — poprawione kategorie oraz dynamiczne, łączone filtry typu projektu i materiału.
 - `2.0.0-alpha.33` — ponowny audyt wszystkich PDF-ów i kompletny, oczyszczony katalog danych włóczek.
 - `2.0.0-alpha.15` — sortowanie katalogu i dostępny stan ładowania ze szkieletami.

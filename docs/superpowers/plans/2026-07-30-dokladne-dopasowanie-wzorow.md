@@ -1,6 +1,8 @@
 # Dokładne dopasowanie wzorów — plan wdrożenia
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+**Status:** ukończony. Kontrakt v2, ranking, dane katalogu, migracje, dokumentacja i testy zostały zrealizowane.
+
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [x]`) syntax for tracking.
 
 **Goal:** Automatyczne dopasowanie ma wiernie obsługiwać rzeczywiste wymagania wzorów oraz pierwsze trzy zweryfikowane PDF-y.
 
@@ -37,7 +39,7 @@
 - Produces: `validateMatchingDocument(value: unknown, context?: string) -> void`
 - Produces: `MatchingRequirement` z polami camelCase
 
-- [ ] **Step 1: Napisać czerwone testy znanej i brakującej jednostki**
+- [x] **Step 1: Napisać czerwone testy znanej i brakującej jednostki**
 
 W `test/matching-policy.test.js` dodać:
 
@@ -103,7 +105,7 @@ test("odrzuca rolę bez wartości podstawowej", () => {
 });
 ```
 
-- [ ] **Step 2: Uruchomić test i potwierdzić porażkę z braku modułu**
+- [x] **Step 2: Uruchomić test i potwierdzić porażkę z braku modułu**
 
 Run:
 
@@ -113,7 +115,7 @@ node --test --test-isolation=none test/matching-policy.test.js
 
 Expected: `FAIL`, ponieważ `matching-policy.js` nie istnieje.
 
-- [ ] **Step 3: Zaimplementować walidację i normalizację**
+- [x] **Step 3: Zaimplementować walidację i normalizację**
 
 Moduł ma:
 
@@ -128,7 +130,7 @@ Moduł ma:
 - zachowywać opcjonalne `size`, `yarn_option`, `strand_count`,
   `held_together_group` i `distinct_color_group`.
 
-- [ ] **Step 4: Uruchomić testy walidacji**
+- [x] **Step 4: Uruchomić testy walidacji**
 
 Run:
 
@@ -151,7 +153,7 @@ Expected: wszystkie przypadki `PASS`.
 - Produces: `matchVariant(variant, yarns) -> { doable: boolean, allocation: object[][], coverage: number }`
 - Consumes: włóczka `{ id, color, materials, weightClass, length, weight }`
 
-- [ ] **Step 1: Napisać czerwony test roli mierzonej tylko w metrach**
+- [x] **Step 1: Napisać czerwony test roli mierzonej tylko w metrach**
 
 ```js
 test("dopasowuje rolę na podstawie metrów bez wymagania gramów", () => {
@@ -172,7 +174,7 @@ test("dopasowuje rolę na podstawie metrów bez wymagania gramów", () => {
 });
 ```
 
-- [ ] **Step 2: Napisać czerwony test kilku ról i odrębnych kolorów**
+- [x] **Step 2: Napisać czerwony test kilku ról i odrębnych kolorów**
 
 ```js
 test("nie używa jednego motka dwa razy i wymaga różnych kolorów kontrastowych", () => {
@@ -198,7 +200,7 @@ test("nie używa jednego motka dwa razy i wymaga różnych kolorów kontrastowyc
 });
 ```
 
-- [ ] **Step 3: Uruchomić testy i potwierdzić porażkę**
+- [x] **Step 3: Uruchomić testy i potwierdzić porażkę**
 
 Run:
 
@@ -208,7 +210,7 @@ node --test --test-isolation=none test/matching-policy.test.js
 
 Expected: `FAIL`, ponieważ przydział nie istnieje.
 
-- [ ] **Step 4: Zaimplementować przydział**
+- [x] **Step 4: Zaimplementować przydział**
 
 Algorytm:
 
@@ -220,7 +222,7 @@ Algorytm:
 6. pilnuje różnych kolorów we wspólnym `distinctColorGroup`;
 7. zatrzymuje wyszukiwanie po `maxMatchSearchNodes`.
 
-- [ ] **Step 5: Uruchomić testy dopasowania**
+- [x] **Step 5: Uruchomić testy dopasowania**
 
 Run:
 
@@ -244,7 +246,7 @@ Expected: wszystkie testy `PASS`, w tym brak ponownego użycia motka.
 - Importer używa `validateMatchingDocument`
 - Trigger bazy akceptuje wyłącznie dokument wersji 2
 
-- [ ] **Step 1: Zmienić test importera na wersję 2**
+- [x] **Step 1: Zmienić test importera na wersję 2**
 
 Dobry przypadek ma zawierać `version: 2`, wariant i niepustą tablicę
 `requirements`. Złe przypadki mają sprawdzać:
@@ -255,7 +257,7 @@ Dobry przypadek ma zawierać `version: 2`, wariant i niepustą tablicę
 - więcej niż osiem ról,
 - powtórzone `id`.
 
-- [ ] **Step 2: Uruchomić test i potwierdzić porażkę starego walidatora**
+- [x] **Step 2: Uruchomić test i potwierdzić porażkę starego walidatora**
 
 Run:
 
@@ -265,7 +267,7 @@ node --test --test-isolation=none test/pattern-validation.test.js
 
 Expected: `FAIL`, ponieważ importer oczekuje pól wersji 1.
 
-- [ ] **Step 3: Delegować walidację do wspólnego modułu**
+- [x] **Step 3: Delegować walidację do wspólnego modułu**
 
 `scripts/import-patterns.js` ma importować `validateMatchingDocument`, dodać
 nazwę pliku do komunikatu kontekstowego i usunąć powieloną walidację wersji 1.
@@ -279,7 +281,7 @@ nazwę pliku do komunikatu kontekstowego i usunąć powieloną walidację wersji
 Pusta lista pozostaje dozwolona wyłącznie dla wzorów, które jeszcze nie
 uczestniczą w dopasowaniu; każdy istniejący wariant musi być kompletny.
 
-- [ ] **Step 4: Utworzyć migrację przez CLI**
+- [x] **Step 4: Utworzyć migrację przez CLI**
 
 Run:
 
@@ -289,7 +291,7 @@ supabase migration new validate_pattern_matching_v2
 
 Expected: CLI tworzy i wypisuje dokładną ścieżkę pliku.
 
-- [ ] **Step 5: Zastąpić trigger walidacją wersji 2**
+- [x] **Step 5: Zastąpić trigger walidacją wersji 2**
 
 Funkcja `public.validate_pattern_matching_requirements()` ma:
 
@@ -304,7 +306,7 @@ Funkcja `public.validate_pattern_matching_requirements()` ma:
 - mieć odebrane wykonanie od `public`, `anon` i `authenticated`, a przyznane
   `service_role`.
 
-- [ ] **Step 6: Zweryfikować lokalnie**
+- [x] **Step 6: Zweryfikować lokalnie**
 
 Run:
 
@@ -331,12 +333,12 @@ Expected: migracja i walidatory przyjmują ten sam kontrakt.
 - API produces: wynik z `requirements` oraz `allocation`
 - UI displays: rozmiar, opcję włóczki, role i wymagane ilości
 
-- [ ] **Step 1: Napisać czerwony test odpowiedzi dla wersji 2**
+- [x] **Step 1: Napisać czerwony test odpowiedzi dla wersji 2**
 
 Test serwera ma przekazać wariant z rolą mierzoną tylko w gramach i oczekiwać,
 że `normalizeCatalogPattern()` zachowa wariant zamiast go odrzucić.
 
-- [ ] **Step 2: Uruchomić test i potwierdzić porażkę**
+- [x] **Step 2: Uruchomić test i potwierdzić porażkę**
 
 Run:
 
@@ -346,7 +348,7 @@ node --test --test-isolation=none test/server.test.js
 
 Expected: stary normalizator wymaga `yarns_needed`, metrów i gramów.
 
-- [ ] **Step 3: Zastąpić starą logikę wspólnym modułem**
+- [x] **Step 3: Zastąpić starą logikę wspólnym modułem**
 
 W `server.js`:
 
@@ -358,7 +360,7 @@ W `server.js`:
 - do wyniku dołączyć przydzielone motki per rola bez danych innych
   użytkowników.
 
-- [ ] **Step 4: Zmienić prezentację wyniku**
+- [x] **Step 4: Zmienić prezentację wyniku**
 
 `app.js` ma dla każdego wariantu pokazać:
 
@@ -371,7 +373,7 @@ W `server.js`:
 
 Nie pokazywać brakującej jednostki jako `0`.
 
-- [ ] **Step 5: Uruchomić testy i kontrolę składni**
+- [x] **Step 5: Uruchomić testy i kontrolę składni**
 
 Run:
 
@@ -396,7 +398,7 @@ Expected: wszystkie testy `PASS`.
 - Produces: 21 rzeczywistych wariantów wersji 2
 - Consumes: dane PDF i istniejące zweryfikowane parametry włóczek
 
-- [ ] **Step 1: Ponownie sprawdzić strony źródłowe**
+- [x] **Step 1: Ponownie sprawdzić strony źródłowe**
 
 Użyć istniejących renderów lub wyrenderować odpowiednie strony. Wzrokowo
 potwierdzić:
@@ -408,7 +410,7 @@ potwierdzić:
 - `Oslo Hat`: rozmiary `XS, S, M, L`, `100, 150, 150, 150 g`, dwie nitki
   i dwie alternatywy nawoju.
 
-- [ ] **Step 2: Dodać Na Pole Tee**
+- [x] **Step 2: Dodać Na Pole Tee**
 
 Utworzyć 12 wariantów:
 
@@ -424,7 +426,7 @@ Utworzyć 12 wariantów:
 Podstawa: `meters`; materiały Safran `["bawełna"]`, Bamboo Queen
 `["bawełna", "bambus"]`; tryb `all`; grubość `sport`; kolor `same`.
 
-- [ ] **Step 3: Dodać Holly Berry Charity Socks**
+- [x] **Step 3: Dodać Holly Berry Charity Socks**
 
 Utworzyć jeden wariant `S/M/L — zużycie podane wspólnie` z trzema rolami:
 
@@ -435,7 +437,7 @@ Utworzyć jeden wariant `S/M/L — zużycie podane wspólnie` z trzema rolami:
 Podstawa: `grams`; materiał `any_material`; grubość `fingering`; kolor
 `same`; wszystkie role mają `distinct_color_group: "holly-colors"`.
 
-- [ ] **Step 4: Dodać Oslo Hat**
+- [x] **Step 4: Dodać Oslo Hat**
 
 Utworzyć osiem wariantów:
 
@@ -450,7 +452,7 @@ Podstawa: `meters`; `strand_count: 2`; Arwetta wymaga
 `["wełna", "poliamid"]`, Sunday `["wełna"]`; tryb `all`; grubość
 `fingering`; kolor `same`.
 
-- [ ] **Step 5: Zbudować import mechanicznie**
+- [x] **Step 5: Zbudować import mechanicznie**
 
 Run:
 
@@ -466,7 +468,7 @@ Expected:
 - dokładnie 21 rzeczywistych wariantów w trzech wzorach,
 - brak błędów walidacji.
 
-- [ ] **Step 6: Dodać test danych katalogu**
+- [x] **Step 6: Dodać test danych katalogu**
 
 W `test/pattern-catalog-data.test.js` sprawdzić:
 
@@ -476,7 +478,7 @@ W `test/pattern-catalog-data.test.js` sprawdzić:
 - brak materiałów spoza wspólnej polityki z wyjątkiem sentinela
   `dowolny materiał` w danych opisowych.
 
-- [ ] **Step 7: Uruchomić pełną kontrolę**
+- [x] **Step 7: Uruchomić pełną kontrolę**
 
 Run:
 
@@ -502,7 +504,7 @@ Expected: wszystkie kontrole `PASS`.
 **Interfaces:**
 - Release: `2.0.0-alpha.35`
 
-- [ ] **Step 1: Poprosić o zgodę na migrację i import**
+- [x] **Step 1: Poprosić o zgodę na migrację i import**
 
 Wyjaśnić osobno:
 
@@ -511,7 +513,7 @@ Wyjaśnić osobno:
 - aktualizację walidatora JSON,
 - import 21 wariantów do trzech istniejących rekordów.
 
-- [ ] **Step 2: Po zgodzie zastosować migracje i import**
+- [x] **Step 2: Po zgodzie zastosować migracje i import**
 
 Run:
 
@@ -523,7 +525,7 @@ npm run patterns:import
 Expected: migracje zastosowane i trzy rekordy zaktualizowane bez zmiany liczby
 wzorów.
 
-- [ ] **Step 3: Zweryfikować zdalne dane**
+- [x] **Step 3: Zweryfikować zdalne dane**
 
 Sprawdzić:
 
@@ -534,7 +536,7 @@ Sprawdzić:
 - 21 wariantów w trzech wzorach,
 - brak dokumentów matching w wersji 1.
 
-- [ ] **Step 4: Sprawdzić aplikację w przeglądarce**
+- [x] **Step 4: Sprawdzić aplikację w przeglądarce**
 
 Scenariusze:
 
@@ -546,12 +548,12 @@ Scenariusze:
 6. wynik nie wyświetla `0 m` ani `0 g` dla nieznanej jednostki;
 7. brak błędów konsoli na komputerze i telefonie.
 
-- [ ] **Step 5: Podbić wersję i dokumentację**
+- [x] **Step 5: Podbić wersję i dokumentację**
 
 Ustawić `2.0.0-alpha.35`, opisać wspólne materiały, pojedynczy formularz,
 matching v2 i trzy rzeczywiste wzory.
 
-- [ ] **Step 6: Wykonać końcową weryfikację**
+- [x] **Step 6: Wykonać końcową weryfikację**
 
 Run:
 
@@ -564,7 +566,7 @@ git status --short --branch
 
 Expected: wszystkie testy `PASS`, import poprawny, brak błędów formatowania.
 
-- [ ] **Step 7: Zaproponować checkpoint Git**
+- [x] **Step 7: Zaproponować checkpoint Git**
 
 Po zgodzie właścicielki produktu:
 

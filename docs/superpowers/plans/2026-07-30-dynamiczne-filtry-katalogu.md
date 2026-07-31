@@ -1,6 +1,8 @@
 # Dynamiczne filtry katalogu wzorów — Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+**Status:** ukończony. Funkcje, import danych, dokumentacja i weryfikacja zostały zrealizowane.
+
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [x]`) syntax for tracking.
 
 **Goal:** Naprawić kategorie wzorów oraz dodać dynamiczne, wzajemnie zawężające się filtry typu projektu i materiału.
 
@@ -48,7 +50,7 @@
 - Consumes: `infer_project_type(title: str, text: str) -> tuple[str, str]`
 - Produces: `resolve_project_type(candidate: dict, override: dict) -> str`
 
-- [ ] **Step 1: Dodać czerwony test końcowych kategorii**
+- [x] **Step 1: Dodać czerwony test końcowych kategorii**
 
 Rozszerzyć `expectedTypes` o wzory, które dziś błędnie pozostają w `other`:
 
@@ -60,7 +62,7 @@ Rozszerzyć `expectedTypes` o wzory, które dziś błędnie pozostają w `other`
 ["Bone", "vest"],
 ```
 
-- [ ] **Step 2: Uruchomić test i potwierdzić właściwą porażkę**
+- [x] **Step 2: Uruchomić test i potwierdzić właściwą porażkę**
 
 Run:
 
@@ -70,7 +72,7 @@ npm test -- test\pattern-catalog-data.test.js
 
 Expected: FAIL dla co najmniej `Na Pole Tee`, ponieważ aktualna wartość to `other`.
 
-- [ ] **Step 3: Wydzielić wybór końcowej kategorii**
+- [x] **Step 3: Wydzielić wybór końcowej kategorii**
 
 W `scripts/build-pattern-import.py` dodać:
 
@@ -98,7 +100,7 @@ merged["source_filename"] = source_filename
 merged["project_type"] = resolve_project_type(candidate, override)
 ```
 
-- [ ] **Step 4: Przebudować katalog**
+- [x] **Step 4: Przebudować katalog**
 
 Run:
 
@@ -114,7 +116,7 @@ Expected:
 "needs_review_count": 0
 ```
 
-- [ ] **Step 5: Uruchomić test kategorii**
+- [x] **Step 5: Uruchomić test kategorii**
 
 Run:
 
@@ -124,7 +126,7 @@ npm test -- test\pattern-catalog-data.test.js
 
 Expected: PASS.
 
-- [ ] **Step 6: Punkt kontrolny**
+- [x] **Step 6: Punkt kontrolny**
 
 Sprawdzić `git diff --check` i zaproponować użytkowniczce checkpoint:
 
@@ -148,7 +150,7 @@ Nie wykonywać commita bez osobnej zgody.
 - Consumes: rekordy wygenerowane przez Task 1
 - Produces: kontrolowany zbiór kategorii bez oczywistych nazw w `other`
 
-- [ ] **Step 1: Wypisać rozkład i rekordy `other`**
+- [x] **Step 1: Wypisać rozkład i rekordy `other`**
 
 Run:
 
@@ -174,13 +176,13 @@ for record in records:
         print(f"{record['source_filename']} | {record['name']}")
 ```
 
-- [ ] **Step 2: Dodać czerwone testy dla oczywistych pomyłek**
+- [x] **Step 2: Dodać czerwone testy dla oczywistych pomyłek**
 
 Dla każdego jednoznacznego rekordu z raportu dodać literalną parę
 `[nazwa, oczekiwany_typ]` do `expectedTypes`. Nie zmieniać rekordów naprawdę
 niejednoznacznych tylko po to, aby usunąć `other`.
 
-- [ ] **Step 3: Rozszerzyć regułę albo dodać ręczny wyjątek**
+- [x] **Step 3: Rozszerzyć regułę albo dodać ręczny wyjątek**
 
 Zasada wyboru:
 
@@ -192,7 +194,7 @@ Zasada wyboru:
 Nie klasyfikować na podstawie luźnych fragmentów słów. Wszystkie regexy muszą
 zachowywać granice `\b` albo jednoznaczny polski rdzeń.
 
-- [ ] **Step 4: Przebudować dane i uruchomić test**
+- [x] **Step 4: Przebudować dane i uruchomić test**
 
 Run:
 
@@ -203,12 +205,12 @@ npm test -- test\pattern-catalog-data.test.js
 
 Expected: 106 rekordów i PASS.
 
-- [ ] **Step 5: Przejrzeć końcową listę `other`**
+- [x] **Step 5: Przejrzeć końcową listę `other`**
 
 Ponownie uruchomić raport. Każdy pozostały wpis ma być rzeczywiście
 niejednoznaczny albo niepasujący do dziesięciu kategorii produktu.
 
-- [ ] **Step 6: Punkt kontrolny**
+- [x] **Step 6: Punkt kontrolny**
 
 Zaproponować checkpoint:
 
@@ -232,7 +234,7 @@ Nie wykonywać commita bez osobnej zgody.
   - `matchesPatternFilters(pattern: object, filters: object, ignoredFacet?: "type" | "material" | null) -> boolean`
   - `filterPatterns(patterns: object[], filters: object, ignoredFacet?: "type" | "material" | null) -> object[]`
 
-- [ ] **Step 1: Dodać czerwony test kombinacji typu i materiału**
+- [x] **Step 1: Dodać czerwony test kombinacji typu i materiału**
 
 Fixture:
 
@@ -280,7 +282,7 @@ assert.deepEqual(
 );
 ```
 
-- [ ] **Step 2: Uruchomić test i potwierdzić porażkę**
+- [x] **Step 2: Uruchomić test i potwierdzić porażkę**
 
 Run:
 
@@ -290,7 +292,7 @@ npm test -- test\client-policy.test.js
 
 Expected: FAIL, ponieważ `filterPatterns` nie jest jeszcze eksportowane.
 
-- [ ] **Step 3: Dodać minimalną implementację**
+- [x] **Step 3: Dodać minimalną implementację**
 
 W `client-policy.js` przenieść mapę etykiet typów z `app.js`:
 
@@ -362,7 +364,7 @@ function filterPatterns(patterns, filters, ignoredFacet = null) {
 
 Wyeksportować funkcje w obiekcie `policy`.
 
-- [ ] **Step 4: Uruchomić test**
+- [x] **Step 4: Uruchomić test**
 
 Run:
 
@@ -372,12 +374,12 @@ npm test -- test\client-policy.test.js
 
 Expected: PASS.
 
-- [ ] **Step 5: Dodać test wzoru wielomateriałowego**
+- [x] **Step 5: Dodać test wzoru wielomateriałowego**
 
 Sprawdzić osobno, że ten sam `Bawełniany top` przechodzi dla `bawełna` i dla
 `bambus`, a nie przechodzi dla `wełna`.
 
-- [ ] **Step 6: Uruchomić test ponownie**
+- [x] **Step 6: Uruchomić test ponownie**
 
 Expected: PASS bez zmiany implementacji albo po minimalnej korekcie użycia
 `materials.includes`.
@@ -395,7 +397,7 @@ Expected: PASS bez zmiany implementacji albo po minimalnej korekcie użycia
 - Produces:
   - `buildPatternFacetCounts(patterns: object[], filters: object) -> { types: Record<string, number>, materials: Record<string, number> }`
 
-- [ ] **Step 1: Dodać czerwony test liczników**
+- [x] **Step 1: Dodać czerwony test liczników**
 
 ```js
 assert.deepEqual(
@@ -419,7 +421,7 @@ Znaczenie:
 - liczniki materiałów ignorują aktywny materiał, ale respektują `top`,
 - wzór bawełna+bambus zwiększa oba odpowiednie liczniki o jeden.
 
-- [ ] **Step 2: Potwierdzić czerwony test**
+- [x] **Step 2: Potwierdzić czerwony test**
 
 Run:
 
@@ -429,7 +431,7 @@ npm test -- test\client-policy.test.js
 
 Expected: FAIL, brak `buildPatternFacetCounts`.
 
-- [ ] **Step 3: Zaimplementować liczniki**
+- [x] **Step 3: Zaimplementować liczniki**
 
 ```js
 function buildPatternFacetCounts(patterns, filters) {
@@ -454,11 +456,11 @@ function buildPatternFacetCounts(patterns, filters) {
 
 Wyeksportować funkcję.
 
-- [ ] **Step 4: Uruchomić test**
+- [x] **Step 4: Uruchomić test**
 
 Expected: PASS.
 
-- [ ] **Step 5: Dodać test pustej kombinacji i aktywnej opcji**
+- [x] **Step 5: Dodać test pustej kombinacji i aktywnej opcji**
 
 Test ma potwierdzić, że liczniki mogą zwrócić zero przez brak klucza, a decyzja
 o pozostawieniu aktywnej opcji należy do warstwy renderowania.
@@ -482,12 +484,12 @@ o pozostawieniu aktywnej opcji należy do warstwy renderowania.
   - `readPatternFilters() -> object`
   - `updatePatternFacetOptions(filters: object, facetCounts: object) -> void`
 
-- [ ] **Step 1: Podłączyć eksportowane funkcje**
+- [x] **Step 1: Podłączyć eksportowane funkcje**
 
 Dodać je do destrukturyzacji `window.MotekClientPolicy` i usunąć lokalną funkcję
 `formatProjectType`, zastępując użycia przez `getProjectTypeLabel`.
 
-- [ ] **Step 2: Dodać odczyt stanu filtrów**
+- [x] **Step 2: Dodać odczyt stanu filtrów**
 
 ```js
 function readPatternFilters() {
@@ -501,7 +503,7 @@ function readPatternFilters() {
 }
 ```
 
-- [ ] **Step 3: Zastąpić lokalne filtrowanie**
+- [x] **Step 3: Zastąpić lokalne filtrowanie**
 
 W `renderPatternCatalog` użyć:
 
@@ -513,7 +515,7 @@ const matchingPatterns = filterPatterns(catalogPatterns, filters)
   .sort(/* zachować obecną logikę sortowania */);
 ```
 
-- [ ] **Step 4: Renderować opcje typu z licznikami**
+- [x] **Step 4: Renderować opcje typu z licznikami**
 
 Użyć stałej kolejności typów:
 
@@ -532,7 +534,7 @@ Etykieta opcji:
 
 Opcja jest `disabled`, gdy `count === 0 && filters.type !== type`.
 
-- [ ] **Step 5: Renderować materiały z licznikami**
+- [x] **Step 5: Renderować materiały z licznikami**
 
 Zachować globalny, posortowany zbiór materiałów z `catalogPatterns`. Etykieta:
 
@@ -543,12 +545,12 @@ Zachować globalny, posortowany zbiór materiałów z `catalogPatterns`. Etykiet
 Opcja jest `disabled`, gdy `count === 0 && filters.material !== material`.
 Wzór wielomateriałowy jest liczony raz dla każdego unikalnego materiału.
 
-- [ ] **Step 6: Zachować wartości kontrolek**
+- [x] **Step 6: Zachować wartości kontrolek**
 
 Przed `replaceChildren` zapisać wartość. Po odbudowaniu ustawić ją ponownie,
 jeżeli odpowiednia opcja istnieje. Nie wywoływać zdarzenia `change` programowo.
 
-- [ ] **Step 7: Sprawdzić składnię i pełne testy**
+- [x] **Step 7: Sprawdzić składnię i pełne testy**
 
 Run:
 
@@ -558,7 +560,7 @@ npm run check
 
 Expected: wszystkie testy PASS.
 
-- [ ] **Step 8: Punkt kontrolny**
+- [x] **Step 8: Punkt kontrolny**
 
 Zaproponować checkpoint:
 
@@ -583,12 +585,12 @@ Nie wykonywać commita bez osobnej zgody.
 **Interfaces:**
 - Produces: wersja `2.0.0-alpha.34`
 
-- [ ] **Step 1: Podbić wersję**
+- [x] **Step 1: Podbić wersję**
 
 Ustawić `2.0.0-alpha.34` w `VERSION`, `package.json` i dwóch polach głównych
 `package-lock.json`.
 
-- [ ] **Step 2: Uzupełnić log zmian**
+- [x] **Step 2: Uzupełnić log zmian**
 
 Dodać sekcję:
 
@@ -601,7 +603,7 @@ Wersja 2.0.0-alpha.34 (w przygotowaniu) - dynamiczne filtry katalogu
 - Wzory wielomateriałowe są dostępne pod każdym użytym materiałem.
 ```
 
-- [ ] **Step 3: Uaktualnić opis katalogu**
+- [x] **Step 3: Uaktualnić opis katalogu**
 
 W `README.md` i `SPEC.md` opisać:
 
@@ -609,7 +611,7 @@ W `README.md` i `SPEC.md` opisać:
 - dynamiczne liczniki,
 - zachowanie wzorów wielomateriałowych.
 
-- [ ] **Step 4: Przebudować i zweryfikować dane**
+- [x] **Step 4: Przebudować i zweryfikować dane**
 
 Run:
 
@@ -641,7 +643,7 @@ Expected:
 - Consumes: `data/patterns-import.json` po wszystkich testach
 - Produces: 106 zaktualizowanych rekordów bez zmian liczebności
 
-- [ ] **Step 1: Pokazać podsumowanie zmian**
+- [x] **Step 1: Pokazać podsumowanie zmian**
 
 Uruchomić:
 
@@ -651,7 +653,7 @@ npm run patterns:check
 
 Odczytać dokładnie liczbę rekordów w pliku i tabeli.
 
-- [ ] **Step 2: Poprosić o zgodę na aktualizację Supabase**
+- [x] **Step 2: Poprosić o zgodę na aktualizację Supabase**
 
 Użyć pełnego firmowego szablonu zgody. Wyjaśnić, że:
 
@@ -660,7 +662,7 @@ Użyć pełnego firmowego szablonu zgody. Wyjaśnić, że:
 - żaden wzór nie będzie usuwany,
 - dane można odtworzyć z pliku importowego i Git.
 
-- [ ] **Step 3: Wykonać import dopiero po zgodzie**
+- [x] **Step 3: Wykonać import dopiero po zgodzie**
 
 Run:
 
@@ -675,7 +677,7 @@ SAVED_RECORDS=106
 FINAL_TABLE_RECORDS=106
 ```
 
-- [ ] **Step 4: Sprawdzić zdalny rozkład**
+- [x] **Step 4: Sprawdzić zdalny rozkład**
 
 Zapytanie:
 
@@ -696,7 +698,7 @@ from public.patterns;
 
 Expected: `total = 106`, `needs_review = 0`.
 
-- [ ] **Step 5: Uruchomić kontrolę po imporcie**
+- [x] **Step 5: Uruchomić kontrolę po imporcie**
 
 Run:
 
@@ -717,7 +719,7 @@ Expected: 106 lokalnie i 106 w tabeli.
 - Consumes: działająca aplikacja lokalna i zaktualizowany Supabase
 - Produces: potwierdzenie zachowania użytkowego
 
-- [ ] **Step 1: Otworzyć katalog i sprawdzić sam typ**
+- [x] **Step 1: Otworzyć katalog i sprawdzić sam typ**
 
 Wybrać „Topy i bluzki”. Potwierdzić:
 
@@ -725,22 +727,22 @@ Wybrać „Topy i bluzki”. Potwierdzić:
 - `Na Pole Tee` ma kategorię „Top lub bluzka”,
 - materiały pokazują dynamiczne liczniki.
 
-- [ ] **Step 2: Sprawdzić kombinację typu i materiału**
+- [x] **Step 2: Sprawdzić kombinację typu i materiału**
 
 Przy aktywnym typie „Topy i bluzki” wybrać „bawełna”. Potwierdzić, że wszystkie
 widoczne karty są topami/bluzkami i zawierają bawełnę.
 
-- [ ] **Step 3: Sprawdzić wielomateriałowość**
+- [x] **Step 3: Sprawdzić wielomateriałowość**
 
 Potwierdzić, że `Na Pole Tee` jest dostępny zarówno przy materiale „bawełna”,
 jak i „bambus”.
 
-- [ ] **Step 4: Sprawdzić dynamiczne blokady**
+- [x] **Step 4: Sprawdzić dynamiczne blokady**
 
 Po wybraniu typu sprawdzić, że materiały bez pasujących wzorów są nieaktywne.
 Po wybraniu materiału sprawdzić analogicznie typy projektu.
 
-- [ ] **Step 5: Sprawdzić reset**
+- [x] **Step 5: Sprawdzić reset**
 
 Kliknąć „Wyczyść filtry”. Potwierdzić:
 
@@ -748,7 +750,7 @@ Kliknąć „Wyczyść filtry”. Potwierdzić:
 - wszystkie typy i materiały dostępne zgodnie z pełnym katalogiem,
 - podsumowanie pokazuje 106 wzorów.
 
-- [ ] **Step 6: Uruchomić świeżą weryfikację końcową**
+- [x] **Step 6: Uruchomić świeżą weryfikację końcową**
 
 Run:
 
@@ -759,7 +761,7 @@ git diff --check
 git status --short --branch
 ```
 
-- [ ] **Step 7: Zaproponować końcowy commit**
+- [x] **Step 7: Zaproponować końcowy commit**
 
 Proponowana nazwa:
 

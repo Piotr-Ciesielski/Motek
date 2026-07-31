@@ -1,5 +1,7 @@
 # Dynamiczne filtry i kategorie katalogu wzorów
 
+**Status:** wdrożone i zweryfikowane w aplikacji oraz testach.
+
 Data: 2026-07-30
 
 ## Cel
