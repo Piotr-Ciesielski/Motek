@@ -47,14 +47,18 @@ test("theme artwork uses optimized immutable assets", () => {
   assert.match(serverJs, /url\.pathname === "\/assets\/night-yarn-cat\.v1\.webp"/);
 });
 
-test("inventory artwork shows the full image without crop", () => {
+test("inventory artwork keeps the prototype crop and focal point", () => {
   assert.match(
     stylesCss,
-    /#inventoryView \.inventory-layout__visual img[\s\S]*?object-fit: contain;/,
+    /#inventoryView \.inventory-layout__visual img[\s\S]*?object-fit: cover;/,
   );
   assert.match(
     stylesCss,
-    /#inventoryView \.inventory-layout__visual img[\s\S]*?object-position: center;/,
+    /#inventoryView \.inventory-layout__visual img[\s\S]*?object-position: right center;/,
+  );
+  assert.doesNotMatch(
+    stylesCss,
+    /#inventoryView \.inventory-layout__visual img[\s\S]*?object-fit: contain;/,
   );
 });
 

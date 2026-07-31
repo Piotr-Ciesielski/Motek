@@ -1821,8 +1821,8 @@ body::before {
 #inventoryView .inventory-layout__visual img {
   height: 100%;
   min-height: 620px;
-  object-fit: contain;
-  object-position: center;
+  object-fit: cover;
+  object-position: right center;
   background: var(--panel-soft);
 }
 
