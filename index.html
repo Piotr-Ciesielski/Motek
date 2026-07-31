@@ -63,16 +63,9 @@
           <form id="registerForm" class="auth-form">
             <h3>Nowe konto</h3>
             <label>
-              Login
-              <input id="register-login" name="login" type="text" minlength="3" maxlength="30" pattern="[A-Za-z0-9_]{3,30}" autocomplete="username" required aria-describedby="authMessage" />
-            </label>
-            <label>
-              E-mail
-              <input id="register-email" name="email" type="email" maxlength="254" autocomplete="email" required aria-describedby="authMessage" />
-            </label>
-            <label>
-              Imię i nazwisko
-              <input id="register-full-name" name="full_name" type="text" maxlength="200" autocomplete="name" aria-describedby="authMessage" />
+              Login (Twój e-mail)
+              <input id="register-login" name="login" type="email" maxlength="254" autocomplete="email" required aria-describedby="registerLoginHint authMessage" />
+              <span id="registerLoginHint" class="field-hint">Adres e-mail będzie Twoim loginem.</span>
             </label>
             <label>
               Hasło

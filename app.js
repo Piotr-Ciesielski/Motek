@@ -670,9 +670,8 @@ function renderAuthState(payload) {
   const profile = payload.profile || {};
   const login = profile.login || payload.user.metadata?.login || payload.user.email;
   authUser.textContent = `Zalogowano jako ${login}`;
-  authProfileSummary.textContent = profile.full_name
-    ? `${profile.full_name} (${profile.email || payload.user.email})`
-    : profile.email || payload.user.email || "Zalogowany użytkownik";
+  authProfileSummary.textContent =
+    profile.email || payload.user.email || "Zalogowany użytkownik";
   authLead.textContent = "Sesja jest aktywna. Twój magazyn włóczek jest przechowywany prywatnie w Supabase.";
 }
 
