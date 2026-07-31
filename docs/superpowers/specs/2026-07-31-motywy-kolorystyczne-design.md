@@ -47,6 +47,10 @@ Preferencja jest przechowywana pod jedną, wersjonowaną nazwą klucza
 localStorage. Przy starcie mały skrypt odczytuje poprawną wartość przed
 renderowaniem głównego interfejsu, aby uniknąć błysku jasnego wariantu.
 
+Przełącznik znajduje się globalnie w nagłówku aplikacji, obok istniejącej
+nawigacji i informacji o zalogowanym użytkowniku. Jest widoczny zarówno dla
+gościa, jak i osoby zalogowanej.
+
 Przełącznik:
 
 - ma jednoznaczną nazwę dla czytnika ekranu;
@@ -58,9 +62,9 @@ Przełącznik:
 ## Integracja z aplikacją
 
 Motyw jest inicjalizowany przed sprawdzeniem sesji i niezależnie od danych
-Supabase. Widok konta udostępnia przełącznik zarówno gościowi, jak i osobie
-zalogowanej. Sekcja usuwania konta korzysta z tych samych tokenów co reszta
-interfejsu, ale zachowuje osobny, wyraźny styl ryzyka.
+Supabase. Globalny nagłówek udostępnia przełącznik zarówno gościowi, jak i
+osobie zalogowanej. Sekcja usuwania konta korzysta z tych samych tokenów co
+reszta interfejsu, ale zachowuje osobny, wyraźny styl ryzyka.
 
 ## Dostępność i responsywność
 
