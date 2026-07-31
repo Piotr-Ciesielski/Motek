@@ -94,7 +94,14 @@ Szczegółowe ryzyka przed wdrożeniem produkcyjnym opisuje `AUDYT.md`.
 
 ## 6. Model danych
 
-### 6.1 Włóczka — `public.yarns`
+### 6.1 Profil użytkownika — `public.profiles`
+
+Profil jest powiązany 1:1 z `auth.users`. Kolumny `login` i `email` przechowują
+ten sam znormalizowany adres e-mail; login nie jest niezależnym pseudonimem.
+Rejestracja przyjmuje `login` jako adres e-mail oraz hasło. Profil nie przechowuje
+imienia i nazwiska.
+
+### 6.2 Włóczka — `public.yarns`
 
 Pola aplikacyjne:
 
@@ -107,7 +114,7 @@ Dozwolone materiały to między innymi wełna, bawełna, akryl, alpaka i
 mieszanka. Klasa grubości korzysta z wartości `lace`, `fingering`, `sport`,
 `dk`, `worsted` i `bulky`.
 
-### 6.2 Wzór — `public.patterns`
+### 6.3 Wzór — `public.patterns`
 
 Rekord zawiera między innymi:
 

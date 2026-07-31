@@ -12,15 +12,15 @@ const {
   validateCookieSecurityConfig,
 } = require("../server");
 
-test("normalizacja Auth trimuje i ujednolica e-mail oraz login", () => {
+test("normalizacja Auth trimuje i ujednolica e-mail oraz login jako e-mail", () => {
   assert.equal(normalizeAuthEmail("  JAN+test@Domena.pl  "), "jan+test@domena.pl");
-  assert.equal(normalizeAuthLogin("  Piotr_01  "), "piotr_01");
+  assert.equal(normalizeAuthLogin("  JAN+test@Domena.pl  "), "jan+test@domena.pl");
 });
 
 test("walidacja Auth odrzuca niepoprawny e-mail i login", () => {
   assert.throws(() => normalizeAuthEmail("jan@"), /prawidłowy adres/);
-  assert.throws(() => normalizeAuthLogin("ab"), /3-30/);
-  assert.throws(() => normalizeAuthLogin("jan😀"), /3-30/);
+  assert.throws(() => normalizeAuthLogin("ab"), /prawidłowy adres/);
+  assert.throws(() => normalizeAuthLogin("Piotr_01"), /prawidłowy adres/);
 });
 
 test("walidacja hasła wymaga podstawowej różnorodności znaków", () => {
