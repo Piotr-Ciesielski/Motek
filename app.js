@@ -1768,17 +1768,7 @@ function renderAuthState(payload) {
   headerUser.title = login;
   headerUser.hidden = false;
   const profileEmail = profile.email || payload.user.email || "";
-  if (profile.full_name) {
-    const profileName = document.createElement("span");
-    const profileEmailLine = document.createElement("span");
-    profileName.className = "auth-profile__name";
-    profileEmailLine.className = "auth-profile__email";
-    profileName.textContent = profile.full_name;
-    profileEmailLine.textContent = profileEmail;
-    authProfileSummary.replaceChildren(profileName, profileEmailLine);
-  } else {
-    authProfileSummary.textContent = profileEmail || "Zalogowany użytkownik";
-  }
+  authProfileSummary.textContent = profileEmail || "Zalogowany użytkownik";
   authTitle.textContent = "Twoje konto";
   authLead.textContent = "Profil i bezpieczeństwo Twojego prywatnego magazynu.";
 }

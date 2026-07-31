@@ -11,8 +11,8 @@
       href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Inter:wght@400;500;600;700&display=swap"
       rel="stylesheet"
     />
-    <script src="theme-policy.js?v=2.0.0-alpha.36"></script>
-    <link rel="stylesheet" href="styles.css?v=2.0.0-alpha.36" />
+    <script src="theme-policy.js?v=2.0.0-alpha.37"></script>
+    <link rel="stylesheet" href="styles.css?v=2.0.0-alpha.37" />
   </head>
   <body>
     <a class="skip-link" href="#main-content">Przejdź do głównej treści</a>
@@ -105,17 +105,9 @@
           <form id="registerForm" class="auth-form" role="tabpanel" aria-labelledby="registerModeBtn" hidden>
             <h3>Nowe konto</h3>
             <label>
-              Login
-              <input id="register-login" name="login" type="text" minlength="3" maxlength="30" pattern="[A-Za-z0-9_]{3,30}" autocomplete="username" required aria-describedby="registerLoginHint authMessage" />
-              <span id="registerLoginHint" class="field-hint">3–30 znaków: litery bez polskich znaków, cyfry lub podkreślenie.</span>
-            </label>
-            <label>
-              E-mail
-              <input id="register-email" name="email" type="email" maxlength="254" autocomplete="email" required aria-describedby="authMessage" />
-            </label>
-            <label>
-              Imię i nazwisko
-              <input id="register-full-name" name="full_name" type="text" maxlength="200" autocomplete="name" aria-describedby="authMessage" />
+              Login (Twój e-mail)
+              <input id="register-login" name="login" type="email" maxlength="254" autocomplete="email" required aria-describedby="registerLoginHint authMessage" />
+              <span id="registerLoginHint" class="field-hint">Adres e-mail będzie Twoim loginem.</span>
             </label>
             <div class="auth-field">
               <label for="register-password">Hasło</label>
@@ -478,8 +470,8 @@
       </div>
     </template>
 
-    <script src="material-policy.js?v=2.0.0-alpha.36"></script>
-    <script src="client-policy.js?v=2.0.0-alpha.36"></script>
-    <script src="app.js?v=2.0.0-alpha.36"></script>
+    <script src="material-policy.js?v=2.0.0-alpha.37"></script>
+    <script src="client-policy.js?v=2.0.0-alpha.37"></script>
+    <script src="app.js?v=2.0.0-alpha.37"></script>
   </body>
 </html>
