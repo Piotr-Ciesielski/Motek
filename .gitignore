@@ -8,6 +8,10 @@ data/*.sqlite
 data/*.db
 data/*.sqlite-journal
 data/*.db-journal
+data/*.sqlite-wal
+data/*.sqlite-shm
+data/*.db-wal
+data/*.db-shm
 
 *.log
 npm-debug.log*
