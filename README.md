@@ -288,7 +288,10 @@ npm run patterns:import
 
 ## Stan projektu i wersjonowanie
 
-Aktualna wersja rozwojowa: **2.0.0-alpha.37**.
+Aktualna wersja rozwojowa: **2.0.0-alpha.38**.
+
+Migracja e-mailowego loginu znajduje się w repozytorium; jej zastosowanie i
+kontrola na zdalnym Supabase są osobnym krokiem operacyjnym.
 
 Najważniejsze etapy zapisane w `CHANGELOG.txt`:
 

@@ -31,6 +31,16 @@ test("migracja usuwa full_name z profilu i metadanych Auth", () => {
   assert.match(sql, /alter table public\.profiles\s+drop column if exists full_name/s);
 });
 
+test("końcowa migracja utrzymuje login równy emailowi i odbiera jego edycję", () => {
+  const sql = fs.readFileSync(migrationPath, "utf8");
+
+  assert.match(sql, /insert into public\.profiles \(id, login, email, avatar_url\)/);
+  assert.match(sql, /set email = normalized_email,[\s\S]*login = normalized_email/);
+  assert.match(sql, /revoke update \(login, full_name, avatar_url\)/);
+  assert.match(sql, /grant update \(avatar_url\)/);
+  assert.match(sql, /profiles_login_email_check/);
+});
+
 test("backend nie odczytuje usuniętej kolumny full_name", () => {
   const server = fs.readFileSync(serverPath, "utf8");
 

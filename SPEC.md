@@ -2,11 +2,14 @@
 
 ## 1. Status projektu
 
-- bieżąca wersja rozwojowa: `2.0.0-alpha.37`
+- bieżąca wersja rozwojowa: `2.0.0-alpha.38`
 - ostatnia wersja wydana: `1.0.2`
 - aktualne źródło danych: Supabase
 - lokalny SQLite: usunięty z aplikacji
 - następny zakres: rozszerzanie dokładnych wymagań wzorów, a później staging
+
+Migracja e-mailowego loginu znajduje się w repozytorium; jej zastosowanie i
+kontrola na zdalnym Supabase są osobnym krokiem operacyjnym.
   z ochroną brzegową
 - limit magazynu: 500 włóczek na użytkownika
 - limit katalogu: 300 wzorów
