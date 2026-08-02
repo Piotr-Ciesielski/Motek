@@ -1433,9 +1433,9 @@ function listen(httpServer, port, host) {
   });
 }
 
-function getRuntimeConfig() {
-  const host = process.env.HOST?.trim() || "127.0.0.1";
-  const rawPort = process.env.PORT?.trim() || "3000";
+function getRuntimeConfig(env = process.env) {
+  const host = env.HOST?.trim() || "127.0.0.1";
+  const rawPort = env.PORT?.trim() || "3001";
   const port = Number(rawPort);
 
   if (!Number.isInteger(port) || port < 0 || port > 65535) {
@@ -1675,6 +1675,7 @@ if (require.main === module) {
 
 module.exports = {
   getClientAddress,
+  getRuntimeConfig,
   main,
   normalizeAuthEmail,
   normalizeAuthLogin,
