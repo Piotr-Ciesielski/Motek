@@ -397,6 +397,8 @@ test("serwer Motek działa bezpiecznie", async (t) => {
     supabaseConnection: fakeSupabaseConnection,
     supabaseAuthConfig: { url: "https://projekt.supabase.co", publishableKey: "sb_publishable_test" },
     supabaseAuthClientFactory: fakeSupabaseAuthClientFactory,
+    captchaConfig: { enabled: true, provider: "turnstile", siteKey: "public-test-key" },
+    metricsEnabled: true,
   });
   const baseUrl = `http://${runtime.host}:${runtime.port}`;
 
@@ -406,12 +408,25 @@ test("serwer Motek działa bezpiecznie", async (t) => {
       assert.equal(response.status, 200);
       assert.deepEqual(await response.json(), { status: "ok" });
       assert.equal(response.headers.get("cache-control"), "no-store");
+
+      const liveResponse = await fetch(`${baseUrl}/health/live`);
+      assert.equal(liveResponse.status, 200);
+      const readyResponse = await fetch(`${baseUrl}/health/ready`);
+      assert.equal(readyResponse.status, 200);
+      const configResponse = await fetch(`${baseUrl}/api/config`);
+      assert.deepEqual(await configResponse.json(), {
+        captcha: { enabled: true, provider: "turnstile", siteKey: "public-test-key" },
+      });
+      const metricsResponse = await fetch(`${baseUrl}/internal/metrics`);
+      assert.equal(metricsResponse.status, 200);
+      assert.match(await metricsResponse.text(), /motek_readiness 1/);
     });
 
     await t.test("zwraca zabezpieczoną stronę", async () => {
       const response = await fetch(`${baseUrl}/`);
       assert.equal(response.status, 200);
       assert.match(response.headers.get("content-security-policy"), /default-src 'self'/);
+      assert.match(response.headers.get("content-security-policy"), /challenges\.cloudflare\.com/);
       assert.equal(response.headers.get("x-content-type-options"), "nosniff");
       assert.equal(response.headers.get("x-frame-options"), "DENY");
       assert.equal(response.headers.get("access-control-allow-origin"), null);
@@ -463,12 +478,20 @@ test("serwer Motek działa bezpiecznie", async (t) => {
     });
 
     await t.test("obsługuje rejestrację i nie ujawnia szczegółów błędu logowania", async () => {
+      const missingCaptchaResponse = await fetch(`${baseUrl}/api/auth/register`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Origin: baseUrl },
+        body: JSON.stringify({ login: "nowy@example.com", password: "Haslo123!" }),
+      });
+      assert.equal(missingCaptchaResponse.status, 400);
+
       const registerResponse = await fetch(`${baseUrl}/api/auth/register`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Origin: baseUrl },
         body: JSON.stringify({
           login: " NOWY@EXAMPLE.COM ",
           password: "Haslo123!",
+          captchaToken: "register-token",
         }),
       });
       assert.equal(registerResponse.status, 201);
@@ -483,13 +506,13 @@ test("serwer Motek działa bezpiecznie", async (t) => {
       });
       assert.deepEqual(signUpRequests.at(-1), {
         email: "nowy@example.com",
-        options: { data: { login: "nowy@example.com" } },
+        options: { data: { login: "nowy@example.com" }, captchaToken: "register-token" },
       });
 
       const loginResponse = await fetch(`${baseUrl}/api/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Origin: baseUrl },
-        body: JSON.stringify({ email: "nowy@example.com", password: "Haslo123!" }),
+        body: JSON.stringify({ email: "nowy@example.com", password: "Haslo123!", captchaToken: "login-token" }),
       });
       assert.equal(loginResponse.status, 401);
       assert.deepEqual(await loginResponse.json(), {

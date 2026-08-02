@@ -11,8 +11,8 @@
       href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Inter:wght@400;500;600;700&display=swap"
       rel="stylesheet"
     />
-    <script src="theme-policy.js?v=2.0.0-alpha.37"></script>
-    <link rel="stylesheet" href="styles.css?v=2.0.0-alpha.37" />
+    <script src="theme-policy.js?v=2.0.0-alpha.38"></script>
+    <link rel="stylesheet" href="styles.css?v=2.0.0-alpha.38" />
   </head>
   <body>
     <a class="skip-link" href="#main-content">Przejdź do głównej treści</a>
@@ -98,6 +98,7 @@
                 </button>
               </span>
             </div>
+            <div class="auth-captcha" data-turnstile-for="login"></div>
             <button class="button" type="submit">Zaloguj się</button>
             <button id="forgotPasswordBtn" class="link-button" type="button">Nie pamiętasz hasła?</button>
           </form>
@@ -122,6 +123,7 @@
               </span>
               <span id="registerPasswordHint" class="field-hint">Minimum 8 znaków, w tym mała i wielka litera, cyfra oraz znak specjalny.</span>
             </div>
+            <div class="auth-captcha" data-turnstile-for="register"></div>
             <button class="button button--secondary" type="submit">Załóż konto</button>
           </form>
         </div>
@@ -239,7 +241,7 @@
               </div>
             </section>
 
-            <section>
+            <section class="inventory-stock">
               <article class="panel inventory-panel">
                 <div class="panel__header">
                   <div>
@@ -301,6 +303,12 @@
             </button>
           </div>
           <div id="summary" class="summary"></div>
+          <div id="matchFreshnessNotice" class="match-freshness" hidden>
+            <span>Wyniki są nieaktualne po zmianie magazynu.</span>
+            <button id="refreshStaleMatchesBtn" class="button button--ghost" type="button">
+              Oblicz ponownie
+            </button>
+          </div>
           <div id="results" class="results"></div>
         </article>
       </section>
@@ -460,13 +468,16 @@
             Waga (g)
             <input type="number" min="0" max="1000000" step="1" data-field="weight" value="50" required />
           </label>
-          <div class="yarn-card__actions">
+          <div>
+            <p class="yarn-save-hint" data-save-hint></p>
+            <div class="yarn-card__actions">
             <button class="button yarn-save" type="button" hidden>
               Zapisz
             </button>
             <button class="button button--ghost yarn-cancel" type="button" hidden>
               Anuluj
             </button>
+            </div>
           </div>
         </div>
         </div>
@@ -523,8 +534,8 @@
       </div>
     </template>
 
-    <script src="material-policy.js?v=2.0.0-alpha.37"></script>
-    <script src="client-policy.js?v=2.0.0-alpha.37"></script>
-    <script src="app.js?v=2.0.0-alpha.37"></script>
+    <script src="material-policy.js?v=2.0.0-alpha.38"></script>
+    <script src="client-policy.js?v=2.0.0-alpha.38"></script>
+    <script src="app.js?v=2.0.0-alpha.38"></script>
   </body>
 </html>

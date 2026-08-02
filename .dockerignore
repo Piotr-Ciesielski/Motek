@@ -1,0 +1,8 @@
+.git
+.worktrees
+node_modules
+.env*
+deploy/staging/certs
+npm-debug.log*
+docs
+test

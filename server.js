@@ -1,4 +1,5 @@
 const http = require("http");
+const net = require("net");
 const crypto = require("crypto");
 const path = require("path");
 const fs = require("fs");
@@ -26,13 +27,23 @@ const {
 } = require("./matching-policy");
 const { ACCOUNT_DELETION_PHRASE, validateAccountDeletionInput } = require("./account-deletion-policy");
 const { deleteSupabaseAccount } = require("./account-deletion-service");
+const {
+  normalizeCaptchaToken,
+  readCaptchaConfig,
+  validateDeploymentConfig,
+} = require("./deployment-policy");
+const { createMetricsRegistry } = require("./observability");
 
 const rootDir = __dirname;
 let server;
 let supabaseConnection;
 let supabaseAuthConfig;
 let supabaseAuthClientFactory = createSupabaseAuthClient;
+let captchaConfig = readCaptchaConfig();
+let metricsEnabled = false;
+let metricsRegistry = createMetricsRegistry();
 let shuttingDown = false;
+let readinessTimer = null;
 
 const MAX_JSON_BODY_BYTES = 16 * 1024;
 const AUTH_ACCESS_COOKIE = "motek_access_token";
@@ -75,7 +86,7 @@ const ALLOWED_WEIGHT_CLASSES = new Set(["lace", "fingering", "sport", "dk", "wor
 const SECURITY_HEADERS = Object.freeze({
   "Content-Security-Policy": [
     "default-src 'self'",
-    "script-src 'self'",
+    "script-src 'self' https://challenges.cloudflare.com",
     "style-src 'self' https://fonts.googleapis.com",
     "font-src 'self' https://fonts.gstatic.com",
     "img-src 'self' data:",
@@ -84,6 +95,7 @@ const SECURITY_HEADERS = Object.freeze({
     "base-uri 'none'",
     "frame-ancestors 'none'",
     "form-action 'self'",
+    "frame-src https://challenges.cloudflare.com",
   ].join("; "),
   "Cross-Origin-Opener-Policy": "same-origin",
   "Cross-Origin-Resource-Policy": "same-origin",
@@ -223,8 +235,14 @@ function createRequestRateLimiter(options = {}) {
   };
 }
 
-function getClientAddress(req) {
-  const address = req.socket?.remoteAddress || "unknown";
+function getClientAddress(req, env = process.env) {
+  const forwarded = String(req.headers?.["x-forwarded-for"] || "")
+    .split(",", 1)[0]
+    .trim();
+  const address = String(env.TRUST_PROXY || "").toLowerCase() === "true"
+    && net.isIP(forwarded)
+    ? forwarded
+    : req.socket?.remoteAddress || "unknown";
   return address.startsWith("::ffff:") ? address.slice(7) : address;
 }
 
@@ -1126,6 +1144,12 @@ async function handleAuthApi(req, res, url) {
     const body = await readBody(req);
     const email = normalizeAuthLogin(body.login);
     const password = validateAuthPassword(body.password);
+    let captchaToken;
+    try {
+      captchaToken = normalizeCaptchaToken(body.captchaToken, captchaConfig.enabled);
+    } catch (error) {
+      throw new ApiError(400, error.message);
+    }
     const login = email;
     const rateLimitKeys = getAuthRateLimitKeys(req, email);
     enforceRequestRateLimit(rateLimitKeys, authRequestRateLimiter, res);
@@ -1138,6 +1162,7 @@ async function handleAuthApi(req, res, url) {
         data: {
           login,
         },
+        ...(captchaToken ? { captchaToken } : {}),
       },
     });
 
@@ -1163,10 +1188,20 @@ async function handleAuthApi(req, res, url) {
     const body = await readBody(req);
     const email = normalizeAuthEmail(body.email);
     const password = validateAuthPassword(body.password);
+    let captchaToken;
+    try {
+      captchaToken = normalizeCaptchaToken(body.captchaToken, captchaConfig.enabled);
+    } catch (error) {
+      throw new ApiError(400, error.message);
+    }
     const rateLimitKeys = getAuthRateLimitKeys(req, email);
     enforceRequestRateLimit(rateLimitKeys, authRequestRateLimiter, res);
     enforceAuthRateLimit(rateLimitKeys, res);
-    const { data, error } = await authClient().auth.signInWithPassword({ email, password });
+    const { data, error } = await authClient().auth.signInWithPassword({
+      email,
+      password,
+      ...(captchaToken ? { options: { captchaToken } } : {}),
+    });
 
     if (error || !data?.user || !data.session) {
       recordAuthFailure(rateLimitKeys);
@@ -1411,6 +1446,8 @@ function getRuntimeConfig() {
 }
 
 async function main(options = {}) {
+  shuttingDown = false;
+  validateDeploymentConfig();
   validateCookieSecurityConfig();
   validateOriginConfig();
   supabaseConnection = Object.prototype.hasOwnProperty.call(
@@ -1423,22 +1460,90 @@ async function main(options = {}) {
     ? options.supabaseAuthConfig
     : readSupabaseAuthConfig();
   supabaseAuthClientFactory = options.supabaseAuthClientFactory || createSupabaseAuthClient;
+  captchaConfig = Object.prototype.hasOwnProperty.call(options, "captchaConfig")
+    ? options.captchaConfig
+    : readCaptchaConfig();
+  metricsEnabled = Object.prototype.hasOwnProperty.call(options, "metricsEnabled")
+    ? Boolean(options.metricsEnabled)
+    : String(process.env.METRICS_ENABLED || "").toLowerCase() === "true";
+  metricsRegistry = options.metricsRegistry || createMetricsRegistry();
   if (!supabaseConnection || !supabaseAuthConfig) {
     throw new Error(
       "Motek wymaga konfiguracji Supabase. Ustaw SUPABASE_URL, SUPABASE_SECRET_KEY i SUPABASE_PUBLISHABLE_KEY."
     );
   }
-  await supabaseConnection.verify();
-  console.log("Połączenie Motka z Supabase działa.");
+  let dependenciesReady = false;
+  let readinessCheck = null;
+  async function updateReadiness({ logFailure = false } = {}) {
+    if (!readinessCheck) {
+      readinessCheck = (async () => {
+        try {
+          await supabaseConnection.verify();
+          dependenciesReady = true;
+          metricsRegistry.setReadiness(true);
+          return true;
+        } catch (error) {
+          dependenciesReady = false;
+          metricsRegistry.setReadiness(false);
+          if (logFailure) console.error(`Readiness nieudany: ${error.message}`);
+          return false;
+        }
+      })();
+    }
+    try {
+      return await readinessCheck;
+    } finally {
+      readinessCheck = null;
+    }
+  }
 
   server = http.createServer(async (req, res) => {
     let url;
+    const requestStartedAt = process.hrtime.bigint();
+    res.once("finish", () => {
+      const pathname = url?.pathname || "/other";
+      if (pathname === "/internal/metrics") return;
+      metricsRegistry.observe({
+        method: req.method,
+        pathname,
+        statusCode: res.statusCode,
+        durationSeconds: Number(process.hrtime.bigint() - requestStartedAt) / 1e9,
+      });
+    });
 
     try {
       url = new URL(req.url, "http://localhost");
 
-      if (req.method === "GET" && url.pathname === "/health") {
+      if (req.method === "GET" && ["/health", "/health/live"].includes(url.pathname)) {
         return sendJson(res, 200, { status: "ok" });
+      }
+
+      if (req.method === "GET" && url.pathname === "/health/ready") {
+        if (await updateReadiness({ logFailure: true })) {
+          return sendJson(res, 200, { status: "ready" });
+        }
+        return sendJson(res, 503, { status: "not_ready" });
+      }
+
+      if (req.method === "GET" && url.pathname === "/internal/metrics" && metricsEnabled) {
+        res.writeHead(200, {
+          ...SECURITY_HEADERS,
+          "Content-Type": "text/plain; version=0.0.4; charset=utf-8",
+          "Cache-Control": "no-store",
+        });
+        return res.end(metricsRegistry.renderPrometheus());
+      }
+
+      if (!dependenciesReady) {
+        res.setHeader("Retry-After", "15");
+        if (url.pathname.startsWith("/api/")) {
+          return sendJson(res, 503, { error: "Usługa jest chwilowo niedostępna." });
+        }
+        return sendText(res, 503, "Usługa jest chwilowo niedostępna.");
+      }
+
+      if (req.method === "GET" && url.pathname === "/api/config") {
+        return sendJson(res, 200, { captcha: captchaConfig });
       }
 
       if (url.pathname.startsWith("/api/")) {
@@ -1504,6 +1609,22 @@ async function main(options = {}) {
 
   const { host, port } = getRuntimeConfig();
   const boundPort = await listen(server, port, host);
+  if (await updateReadiness({ logFailure: true })) {
+    console.log("Połączenie Motka z Supabase działa.");
+  }
+  const readinessIntervalMs = Object.prototype.hasOwnProperty.call(
+    options,
+    "readinessIntervalMs"
+  )
+    ? Number(options.readinessIntervalMs)
+    : 15_000;
+  if (Number.isFinite(readinessIntervalMs) && readinessIntervalMs > 0) {
+    readinessTimer = setInterval(
+      () => void updateReadiness({ logFailure: true }),
+      readinessIntervalMs
+    );
+    readinessTimer.unref?.();
+  }
   return { host, port: boundPort };
 }
 
@@ -1511,6 +1632,11 @@ async function shutdown(signal = "shutdown") {
   if (shuttingDown) return;
   shuttingDown = true;
   console.log(`Zatrzymywanie Motka (${signal})...`);
+
+  if (readinessTimer) {
+    clearInterval(readinessTimer);
+    readinessTimer = null;
+  }
 
   if (server?.listening) {
     await new Promise((resolve, reject) => {
@@ -1548,6 +1674,7 @@ if (require.main === module) {
 }
 
 module.exports = {
+  getClientAddress,
   main,
   normalizeAuthEmail,
   normalizeAuthLogin,

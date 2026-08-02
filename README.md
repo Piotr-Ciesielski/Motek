@@ -288,7 +288,19 @@ npm run patterns:import
 
 ## Stan projektu i wersjonowanie
 
-Aktualna wersja rozwojowa: **2.0.0-alpha.37**.
+Aktualna wersja rozwojowa: **2.0.0-alpha.38**.
+
+Migracja e-mailowego loginu znajduje się w repozytorium; jej zastosowanie i
+kontrola na zdalnym Supabase są osobnym krokiem operacyjnym.
+
+### Staging i ochrona logowania
+
+Repozytorium zawiera gotowy stos stagingowy w `deploy/staging`: aplikację za
+reverse proxy/WAF z OWASP CRS, ochronę logowania i rejestracji Cloudflare
+Turnstile oraz wewnętrzny Prometheus z alertami. Lokalnie CAPTCHA i metryki są
+domyślnie wyłączone. Instrukcja wdrożenia i lista ręcznych ustawień operatora
+znajdują się w `deploy/staging/README.md`; samo wdrożenie nie jest częścią tego
+wydania kodu.
 
 Najważniejsze etapy zapisane w `CHANGELOG.txt`:
 
@@ -325,21 +337,21 @@ Skalowanie ponad obecne limity 500 włóczek na użytkownika i 300 wzorów jest
 opcjonalne. Wrócimy do paginacji, dalszej optymalizacji lub workera dopiero po
 benchmarku wskazującym realny problem albo po zmianie wymagań produktu.
 
-Najbliższym etapem operacyjnym jest przygotowanie stagingu z reverse proxy/WAF,
-limitami połączeń, monitoringiem i automatyczną kontrolą zgodności migracji.
-Przed wdrożeniem produkcyjnym pozostają także retry i obsługa konfliktów
+Najbliższym etapem operacyjnym jest uruchomienie i kontrolowany test przygotowanego
+stagingu. Przed wdrożeniem produkcyjnym pozostają także retry i obsługa konfliktów
 autosave oraz test pełnego importu katalogu z możliwością wycofania.
 
-CAPTCHA w Supabase Auth jest obecnie wyłączona dla działającego środowiska
-testowego. Przed publicznym wdrożeniem należy zintegrować token CAPTCHA z
-formularzami logowania i rejestracji, a następnie ponownie włączyć ochronę.
+Formularze logowania i rejestracji przekazują już token Cloudflare Turnstile do
+Supabase Auth. CAPTCHA pozostaje domyślnie wyłączona lokalnie; na stagingu wymaga
+utworzenia widgetu dla właściwej domeny i wpisania secret key w panelu Supabase.
 
 ### Kolejny etap ochrony infrastruktury
 
 Przed wdrożeniem produkcyjnym trzeba uzupełnić ochronę przed rozproszonymi
-atakami DDoS poza aplikacją: skonfigurować CDN/WAF lub reverse proxy, limity
-ruchu na brzegu, ukryć bezpośredni adres originu, dodać monitoring i procedurę
-reakcji na incydenty. Limity aplikacyjne w Node.js są tylko dodatkową warstwą.
+atakami DDoS poza serwerem stagingowym: skonfigurować zewnętrzny CDN/WAF, ukryć
+bezpośredni adres originu oraz przećwiczyć procedurę reakcji na incydenty.
+Lokalny WAF i limity aplikacyjne są dodatkowymi warstwami, nie zastępują ochrony
+sieciowej dostawcy.
 
 ## Struktura projektu
 

@@ -1,0 +1,23 @@
+groups:
+  - name: motek-staging
+    rules:
+      - alert: MotekUnavailable
+        expr: up{job="motek"} == 0
+        for: 2m
+        labels: { severity: critical }
+        annotations: { summary: "Staging Motka nie odpowiada" }
+      - alert: MotekNotReady
+        expr: motek_readiness == 0
+        for: 2m
+        labels: { severity: warning }
+        annotations: { summary: "Staging Motka nie ma połączenia z Supabase" }
+      - alert: MotekHighServerErrorRate
+        expr: sum(rate(motek_http_requests_total{status=~"5.."}[5m])) / clamp_min(sum(rate(motek_http_requests_total[5m])), 0.001) > 0.05
+        for: 5m
+        labels: { severity: warning }
+        annotations: { summary: "Ponad 5% odpowiedzi stagingu kończy się błędem 5xx" }
+      - alert: MotekSlowResponses
+        expr: sum(rate(motek_http_request_duration_seconds_sum[5m])) / clamp_min(sum(rate(motek_http_request_duration_seconds_count[5m])), 0.001) > 1
+        for: 10m
+        labels: { severity: warning }
+        annotations: { summary: "Średni czas odpowiedzi stagingu przekracza sekundę" }
