@@ -45,9 +45,23 @@ test("light and dark variants define the prototype layout rules", () => {
   assert.match(stylesCss, /\[data-theme="light"\] \.app-header/);
   assert.match(stylesCss, /\[data-theme="dark"\] \.app-header/);
   assert.match(stylesCss, /#inventoryView \.inventory-layout/);
-  assert.match(stylesCss, /grid-template-rows: auto auto minmax\(600px, auto\)/);
-  assert.match(stylesCss, /grid-row: 1 \/ span 3/);
   assert.match(stylesCss, /object-position: center/);
+});
+
+test("mobile inventory orders stats before stock and artwork", () => {
+  assert.match(indexHtml, /class="inventory-stock"/);
+  assert.match(
+    stylesCss,
+    /grid-template-areas:[\s\S]*"heading visual"[\s\S]*"stats visual"[\s\S]*"stock visual"/,
+  );
+  assert.match(
+    stylesCss,
+    /@media \(max-width: 980px\)[\s\S]*grid-template-areas:[\s\S]*"heading"[\s\S]*"onboarding"[\s\S]*"stats"[\s\S]*"stock"[\s\S]*"visual"/,
+  );
+  assert.doesNotMatch(
+    stylesCss,
+    /inventory-layout__content > section:not\(#onboarding\)[\s\S]{0,120}grid-row: 4/,
+  );
 });
 
 test("inventory stats update together with the existing summary", () => {

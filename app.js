@@ -3,6 +3,8 @@ const resultTemplate = document.getElementById("resultTemplate");
 const patternSkeletonTemplate = document.getElementById("patternSkeletonTemplate");
 const yarnList = document.getElementById("yarnList");
 const results = document.getElementById("results");
+const matchFreshnessNotice = document.getElementById("matchFreshnessNotice");
+const refreshStaleMatchesBtn = document.getElementById("refreshStaleMatchesBtn");
 const summary = document.getElementById("summary");
 const storageMessage = document.getElementById("storageMessage");
 const addYarnBtn = document.getElementById("addYarnBtn");
@@ -78,6 +80,8 @@ const {
   getProjectTypeFilterLabel,
   getProjectTypeLabel,
   getExistingYarnState,
+  getMatchFreshnessState,
+  getYarnSaveHint,
   isDeleteConfirmed,
   loadPaginatedItems,
   shouldRetryRead,
@@ -142,6 +146,8 @@ let catalogVisibleLimit = 12;
 let networkStatusTimer = null;
 let preserveDraftAfterLogin = false;
 let preservedDraftRequiresSave = false;
+let hasCalculatedMatches = false;
+let inventoryChangedSinceMatch = false;
 const numberFormatter = new Intl.NumberFormat("pl-PL", {
   maximumFractionDigits: 2,
   useGrouping: "always",
@@ -854,18 +860,55 @@ function setYarnFieldsDisabled(card, disabled) {
 function updateYarnSaveButton(card) {
   const saveButton = card.querySelector(".yarn-save");
   const cancelButton = card.querySelector(".yarn-cancel");
-  const complete = isYarnComplete(card);
   const isNew = card.dataset.saved !== "true";
   const isEditing = isNew || card.dataset.editing === "true";
   const changed = isNew || isYarnChanged(card);
+  const hint = getYarnSaveHint({
+    yarn: collectYarnFromCard(card),
+    isEditing,
+    isNew,
+    changed,
+    busy: card.dataset.busy === "true",
+  });
   card.querySelector(".yarn-edit").hidden = isNew || isEditing;
   cancelButton.hidden = !isEditing;
+  cancelButton.disabled = card.dataset.busy === "true";
   cancelButton.textContent = isNew ? "Anuluj dodawanie" : "Anuluj";
-  saveButton.hidden = !isEditing || !complete || !changed;
-  saveButton.disabled = !complete || !changed;
+  saveButton.hidden = !hint.visible;
+  saveButton.disabled = hint.disabled || !isYarnComplete(card);
+  saveButton.textContent = card.dataset.busy === "true" ? "Zapisywanie…" : "Zapisz";
+  const hintNode = card.querySelector("[data-save-hint]");
+  hintNode.hidden = !hint.visible;
+  hintNode.textContent = hint.message;
+}
+
+function setYarnCardBusy(card, busy) {
+  card.dataset.busy = busy ? "true" : "false";
+  updateYarnSaveButton(card);
+}
+
+function updateMatchFreshnessNotice() {
+  const state = getMatchFreshnessState({
+    hasCalculatedMatches,
+    inventoryChanged: inventoryChangedSinceMatch,
+  });
+  matchFreshnessNotice.hidden = !state.stale;
+  matchFreshnessNotice.querySelector("span").textContent = state.message;
+}
+
+function markMatchesStale() {
+  inventoryChangedSinceMatch = true;
+  updateMatchFreshnessNotice();
+}
+
+function markMatchesFresh() {
+  hasCalculatedMatches = true;
+  inventoryChangedSinceMatch = false;
+  updateMatchFreshnessNotice();
 }
 
 async function refreshSummaryAfterConfirmedSave(successMessage) {
+  markMatchesStale();
   try {
     await renderSummary();
     setStorageMessage(successMessage, "success");
@@ -884,7 +927,6 @@ async function refreshSummaryAfterConfirmedSave(successMessage) {
 }
 
 async function saveNewYarn(card) {
-  const saveButton = card.querySelector(".yarn-save");
   if (!isYarnComplete(card)) {
     card.querySelector('[data-field="name"]').reportValidity();
     return;
@@ -895,7 +937,7 @@ async function saveNewYarn(card) {
     [...yarnList.querySelectorAll('.yarn-card[data-saved="true"]')]
       .map((savedCard) => savedCard.dataset.id)
   );
-  saveButton.disabled = true;
+  setYarnCardBusy(card, true);
   setStorageMessage("Zapisuję motek...");
   let savedYarn;
   try {
@@ -905,7 +947,6 @@ async function saveNewYarn(card) {
       body: JSON.stringify(draft),
     });
   } catch (error) {
-    saveButton.disabled = false;
     if (isYarnVersionConflict(error)) {
       showYarnVersionConflict({
         retryOperation: () => saveNewYarn(card),
@@ -925,6 +966,8 @@ async function saveNewYarn(card) {
     }
     setStorageMessage(`${error.message} Motek pozostał w formularzu.`, "error");
     return;
+  } finally {
+    setYarnCardBusy(card, false);
   }
 
   markYarnCardAsSaved(card, savedYarn);
@@ -933,11 +976,10 @@ async function saveNewYarn(card) {
 }
 
 async function saveExistingYarn(card) {
-  const saveButton = card.querySelector(".yarn-save");
   if (!isYarnComplete(card) || !isYarnChanged(card)) return;
 
   const draft = collectYarnFromCard(card);
-  saveButton.disabled = true;
+  setYarnCardBusy(card, true);
   setStorageMessage("Zapisuję zmiany motka...");
   let savedYarn;
   try {
@@ -947,7 +989,6 @@ async function saveExistingYarn(card) {
       body: JSON.stringify(draft),
     });
   } catch (error) {
-    saveButton.disabled = false;
     if (isYarnVersionConflict(error)) {
       showYarnVersionConflict({
         retryOperation: () => saveExistingYarn(card),
@@ -968,6 +1009,8 @@ async function saveExistingYarn(card) {
     }
     setStorageMessage(`${error.message} Zmiany pozostały w formularzu.`, "error");
     return;
+  } finally {
+    setYarnCardBusy(card, false);
   }
 
   markYarnCardAsSaved(card, savedYarn);
@@ -975,8 +1018,11 @@ async function saveExistingYarn(card) {
 }
 
 async function refreshAfterConfirmedMutation(successMessage) {
+  markMatchesStale();
   try {
-    await refresh();
+    const yarns = collectYarnsFromDom();
+    renderOnboarding(yarns);
+    await renderSummary(yarns);
     setStorageMessage(successMessage, "success");
   } catch (error) {
     setStorageMessage(
@@ -1602,6 +1648,7 @@ async function renderResults() {
     const matches = await loadMatches();
     const matchScopeLimited = api.lastMatchScope === "subset";
     results.replaceChildren();
+    markMatchesFresh();
 
     if (!matches.length) {
       showMessage(
@@ -2118,6 +2165,7 @@ findBtn.addEventListener("click", async () => {
       return;
     }
     findBtn.disabled = true;
+    refreshStaleMatchesBtn.disabled = true;
     findBtn.textContent = "Dobieram...";
     showMessage(results, "Pobieram dopasowane wzory...", "loading");
     await refresh();
@@ -2126,8 +2174,13 @@ findBtn.addEventListener("click", async () => {
     showResultsError(error.message);
   } finally {
     findBtn.disabled = false;
+    refreshStaleMatchesBtn.disabled = false;
     findBtn.textContent = "Dobierz wzór";
   }
+});
+
+refreshStaleMatchesBtn.addEventListener("click", () => {
+  findBtn.click();
 });
 
 function resetPatternCatalogView() {

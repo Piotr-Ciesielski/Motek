@@ -228,6 +228,48 @@
     return !yarns.some((yarn) => yarn.id === yarnId);
   }
 
+  function joinPolishList(items) {
+    if (items.length < 2) return items[0] || "";
+    return `${items.slice(0, -1).join(", ")} i ${items.at(-1)}`;
+  }
+
+  function getYarnSaveHint({
+    yarn = {},
+    isEditing = false,
+    changed = false,
+    busy = false,
+  } = {}) {
+    const missing = [];
+    if (!String(yarn.name || "").trim()) missing.push("nazwę");
+    if (!String(yarn.color || "").trim()) missing.push("kolor");
+    if (!Array.isArray(yarn.materials) || yarn.materials.length === 0) {
+      missing.push("materiał");
+    }
+
+    let message = "";
+    if (busy) message = "Zapisywanie…";
+    else if (missing.length) message = `Uzupełnij: ${joinPolishList(missing)}.`;
+    else if (!changed) message = "Brak nowych zmian.";
+    else message = "Dane są gotowe do zapisania.";
+
+    return {
+      visible: Boolean(isEditing),
+      disabled: Boolean(busy || missing.length || !changed),
+      message,
+    };
+  }
+
+  function getMatchFreshnessState({
+    hasCalculatedMatches = false,
+    inventoryChanged = false,
+  } = {}) {
+    const stale = Boolean(hasCalculatedMatches && inventoryChanged);
+    return {
+      stale,
+      message: stale ? "Wyniki są nieaktualne po zmianie magazynu." : "",
+    };
+  }
+
   function formatPatternYarnFact(pattern, formatRatio) {
     const requirements = Array.isArray(pattern?.yarnRequirements)
       ? pattern.yarnRequirements
@@ -370,6 +412,8 @@
     getProjectTypeFilterLabel,
     getProjectTypeLabel,
     getExistingYarnState,
+    getMatchFreshnessState,
+    getYarnSaveHint,
     isDeleteConfirmed,
     loadPaginatedItems,
     matchesPatternFilters,

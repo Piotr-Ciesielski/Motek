@@ -239,7 +239,7 @@
               </div>
             </section>
 
-            <section>
+            <section class="inventory-stock">
               <article class="panel inventory-panel">
                 <div class="panel__header">
                   <div>
@@ -301,6 +301,12 @@
             </button>
           </div>
           <div id="summary" class="summary"></div>
+          <div id="matchFreshnessNotice" class="match-freshness" hidden>
+            <span>Wyniki są nieaktualne po zmianie magazynu.</span>
+            <button id="refreshStaleMatchesBtn" class="button button--ghost" type="button">
+              Oblicz ponownie
+            </button>
+          </div>
           <div id="results" class="results"></div>
         </article>
       </section>
@@ -460,13 +466,16 @@
             Waga (g)
             <input type="number" min="0" max="1000000" step="1" data-field="weight" value="50" required />
           </label>
-          <div class="yarn-card__actions">
+          <div>
+            <p class="yarn-save-hint" data-save-hint></p>
+            <div class="yarn-card__actions">
             <button class="button yarn-save" type="button" hidden>
               Zapisz
             </button>
             <button class="button button--ghost yarn-cancel" type="button" hidden>
               Anuluj
             </button>
+            </div>
           </div>
         </div>
         </div>

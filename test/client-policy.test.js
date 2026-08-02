@@ -11,11 +11,48 @@ const {
   formatMatchingRequirement,
   formatPatternYarnFact,
   getExistingYarnState,
+  getMatchFreshnessState,
+  getYarnSaveHint,
   isDeleteConfirmed,
   loadPaginatedItems,
   shouldRetryRead,
   yarnsHaveSameValues,
 } = require("../client-policy");
+
+test("wyjaśnia brakujące dane zamiast ukrywać zapis", () => {
+  assert.deepEqual(
+    getYarnSaveHint({
+      yarn: { name: "", color: "", materials: [] },
+      isEditing: true,
+      isNew: true,
+      changed: true,
+      busy: false,
+    }),
+    {
+      visible: true,
+      disabled: true,
+      message: "Uzupełnij: nazwę, kolor i materiał.",
+    },
+  );
+});
+
+test("opisuje zapis, brak zmian i trwającą operację", () => {
+  const yarn = { name: "Merino", color: "Granat", materials: ["wool"] };
+  assert.equal(getYarnSaveHint({ yarn, isEditing: true, isNew: true, changed: true }).disabled, false);
+  assert.equal(getYarnSaveHint({ yarn, isEditing: true, isNew: false, changed: false }).message, "Brak nowych zmian.");
+  assert.equal(getYarnSaveHint({ yarn, isEditing: true, isNew: false, changed: true, busy: true }).message, "Zapisywanie…");
+});
+
+test("oznacza wcześniejsze dopasowanie jako nieaktualne po zmianie", () => {
+  assert.deepEqual(
+    getMatchFreshnessState({ hasCalculatedMatches: true, inventoryChanged: true }),
+    { stale: true, message: "Wyniki są nieaktualne po zmianie magazynu." },
+  );
+  assert.equal(
+    getMatchFreshnessState({ hasCalculatedMatches: false, inventoryChanged: true }).stale,
+    false,
+  );
+});
 
 class PasswordRevealControl extends EventTarget {
   constructor() {
