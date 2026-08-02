@@ -235,7 +235,7 @@ npm install
 npm start
 ```
 
-Domyślny adres to `http://localhost:3000`.
+Domyślny adres to `http://127.0.0.1:3001`.
 
 Konfiguracja Supabase jest przekazywana przez lokalny `.env`:
 

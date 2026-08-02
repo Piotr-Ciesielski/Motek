@@ -70,7 +70,7 @@ APP_ORIGIN=http://127.0.0.1:3001
 
 Znaczenie ustawień:
 
-- `HOST` i `PORT` określają interfejs sieciowy oraz port nasłuchu. Domyślne wartości serwera bez konfiguracji to odpowiednio `127.0.0.1` i `3000`, ale `.env.example` jawnie ustawia port `3001`;
+- `HOST` i `PORT` określają interfejs sieciowy oraz port nasłuchu. Domyślne wartości serwera bez konfiguracji to odpowiednio `127.0.0.1` i `3001`;
 - `NODE_ENV=production` wymaga jawnego `APP_ORIGIN`; HTTPS pozostaje obowiązkowym wymaganiem publicznego wdrożenia;
 - `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY` i `SUPABASE_SECRET_KEY` są wymagane przy starcie. Klucz sekretny służy wyłącznie backendowi;
 - `COOKIE_SECURE=true` pozwala wysyłać ciasteczka sesji tylko przez HTTPS i powinno być ustawione w produkcji;

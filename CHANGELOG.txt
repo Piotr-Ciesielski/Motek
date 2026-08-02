@@ -5,6 +5,7 @@ Wersja 2.0.0-alpha.38 (w przygotowaniu) - e-mail jako login konta
 - Adres e-mail jest zapisywany jednocześnie jako e-mail Auth i login profilu.
 - Usunięto zbieranie oraz istniejące dane imienia i nazwiska z profili.
 - Zaktualizowano migrację Supabase i testy przepływu rejestracji.
+- Ujednolicono domyślny adres lokalnej aplikacji i skrót uruchomieniowy na http://127.0.0.1:3001.
 
 Wersja 2.0.0-alpha.37 (w przygotowaniu) - dwa motywy wizualne
 - Dodano globalny przełącznik motywów w nagłówku.

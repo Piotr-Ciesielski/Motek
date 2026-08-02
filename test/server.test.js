@@ -4,6 +4,7 @@ process.env.HOST = "127.0.0.1";
 process.env.PORT = "0";
 
 const {
+  getRuntimeConfig,
   main,
   normalizeCatalogPattern,
   scorePattern,
@@ -14,6 +15,19 @@ const {
   validateYarn,
   validateYarnStorageCapacity,
 } = require("../server");
+test("konfiguracja uruchomieniowa bez zmiennych używa lokalnego portu 3001", () => {
+  assert.deepEqual(getRuntimeConfig?.({}), {
+    host: "127.0.0.1",
+    port: 3001,
+  });
+});
+
+test("konfiguracja uruchomieniowa respektuje jawne HOST i PORT", () => {
+  assert.deepEqual(getRuntimeConfig?.({ HOST: "0.0.0.0", PORT: "4321" }), {
+    host: "0.0.0.0",
+    port: 4321,
+  });
+});
 
 test("katalog zachowuje wariant mierzony wyłącznie w gramach", () => {
   const pattern = normalizeCatalogPattern({
