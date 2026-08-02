@@ -1,0 +1,21 @@
+services:
+  grafana:
+    image: grafana/grafana:13.1.0
+    environment:
+      GF_SERVER_HTTP_ADDR: 0.0.0.0
+      GF_AUTH_ANONYMOUS_ENABLED: "false"
+    expose:
+      - "3000"
+    volumes:
+      - grafana-data:/var/lib/grafana
+    restart: unless-stopped
+    networks:
+      - private
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 512M
+
+volumes:
+  grafana-data:

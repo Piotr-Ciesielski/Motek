@@ -228,6 +228,16 @@
     return !yarns.some((yarn) => yarn.id === yarnId);
   }
 
+  function buildAuthPayload(values = {}, { captchaEnabled = false, captchaToken = null } = {}) {
+    if (captchaEnabled && !String(captchaToken || "").trim()) {
+      throw new Error("Potwierdź zabezpieczenie formularza.");
+    }
+    return {
+      ...values,
+      ...(captchaEnabled ? { captchaToken: String(captchaToken).trim() } : {}),
+    };
+  }
+
   function joinPolishList(items) {
     if (items.length < 2) return items[0] || "";
     return `${items.slice(0, -1).join(", ")} i ${items.at(-1)}`;
@@ -402,6 +412,7 @@
 
   return {
     bindHoldToReveal,
+    buildAuthPayload,
     buildPatternFacetCounts,
     buildPatternFacetOptions,
     ensureSingleNewYarnCard,

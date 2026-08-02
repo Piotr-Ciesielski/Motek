@@ -70,6 +70,7 @@ const REQUEST_TIMEOUT_MS = 12_000;
 const READ_RETRY_DELAY_MS = 700;
 const {
   bindHoldToReveal,
+  buildAuthPayload,
   buildPatternFacetCounts,
   buildPatternFacetOptions,
   ensureSingleNewYarnCard,
@@ -148,6 +149,47 @@ let preserveDraftAfterLogin = false;
 let preservedDraftRequiresSave = false;
 let hasCalculatedMatches = false;
 let inventoryChangedSinceMatch = false;
+let authCaptchaConfig = { enabled: false, provider: null, siteKey: null };
+const captchaTokens = { login: null, register: null };
+const captchaWidgetIds = { login: null, register: null };
+
+function loadTurnstileScript() {
+  if (window.turnstile) return Promise.resolve();
+  return new Promise((resolve, reject) => {
+    const script = document.createElement("script");
+    script.src = "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit";
+    script.async = true;
+    script.defer = true;
+    script.onload = resolve;
+    script.onerror = () => reject(new Error("Nie udało się załadować zabezpieczenia formularza."));
+    document.head.appendChild(script);
+  });
+}
+
+async function initializeCaptcha() {
+  const config = await api("/api/config");
+  authCaptchaConfig = config.captcha || authCaptchaConfig;
+  if (!authCaptchaConfig.enabled) return;
+  await loadTurnstileScript();
+  ["login", "register"].forEach((kind) => {
+    const container = document.querySelector(`[data-turnstile-for="${kind}"]`);
+    captchaWidgetIds[kind] = window.turnstile.render(container, {
+      sitekey: authCaptchaConfig.siteKey,
+      theme: "auto",
+      callback: (token) => { captchaTokens[kind] = token; },
+      "expired-callback": () => { captchaTokens[kind] = null; },
+      "error-callback": () => { captchaTokens[kind] = null; },
+    });
+  });
+}
+
+function resetCaptchaForForm(form) {
+  const kind = form === registerForm ? "register" : "login";
+  captchaTokens[kind] = null;
+  if (captchaWidgetIds[kind] !== null && window.turnstile) {
+    window.turnstile.reset(captchaWidgetIds[kind]);
+  }
+}
 const numberFormatter = new Intl.NumberFormat("pl-PL", {
   maximumFractionDigits: 2,
   useGrouping: "always",
@@ -1915,7 +1957,11 @@ async function submitAuthForm(form, endpoint, successMessage) {
   setAuthMessage("Przetwarzam...");
   try {
     const formData = new FormData(form);
-    const body = Object.fromEntries(formData.entries());
+    const kind = form === registerForm ? "register" : "login";
+    const body = buildAuthPayload(Object.fromEntries(formData.entries()), {
+      captchaEnabled: authCaptchaConfig.enabled,
+      captchaToken: captchaTokens[kind],
+    });
     const payload = await api(endpoint, {
       method: "POST",
       body: JSON.stringify(body),
@@ -1936,6 +1982,7 @@ async function submitAuthForm(form, endpoint, successMessage) {
   } catch (error) {
     setAuthMessage(error.message, "error");
   } finally {
+    resetCaptchaForForm(form);
     setAuthBusy(form, false);
   }
 }
@@ -2221,6 +2268,7 @@ detectRuntimeMode()
     const recoveryHandled = await startPasswordRecovery();
     if (recoveryHandled) return;
     await Promise.all([
+      initializeCaptcha().catch((error) => setAuthMessage(error.message, "error")),
       refreshAuthSession(),
       refreshPatternCatalog().catch(showPatternCatalogError),
     ]);

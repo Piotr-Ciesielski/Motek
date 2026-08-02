@@ -200,3 +200,9 @@ obecnych prac nad katalogiem:
 Po zakończeniu każdego większego pakietu należy wykonać test ręczny w
 przeglądarce, a następnie zapisać osobny commit. Push na GitHub wykonuje
 użytkownik skryptem z katalogu `tmp/` na aktualnym branchu zadaniowym.
+# Status alpha.38
+
+- mobilny magazyn ma stałą kolejność: nagłówek, onboarding, statystyki, lista i grafika;
+- formularz motka wyjaśnia brakujące dane i pokazuje stan zapisu;
+- zmiana magazynu nie usuwa wyników, lecz oznacza je jako wymagające ponownego obliczenia;
+- zmiany kontrastu i accessibility zostały świadomie odłożone poza ten etap.

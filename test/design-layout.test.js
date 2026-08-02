@@ -62,6 +62,8 @@ test("mobile inventory orders stats before stock and artwork", () => {
     stylesCss,
     /inventory-layout__content > section:not\(#onboarding\)[\s\S]{0,120}grid-row: 4/,
   );
+  assert.equal((indexHtml.match(/data-turnstile-for=/g) || []).length, 2);
+  assert.match(appJs, /challenges\.cloudflare\.com\/turnstile\/v0\/api\.js\?render=explicit/);
 });
 
 test("inventory stats update together with the existing summary", () => {

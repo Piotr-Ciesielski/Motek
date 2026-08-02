@@ -6,11 +6,16 @@
 - ostatnia wersja wydana: `1.0.2`
 - aktualne źródło danych: Supabase
 - lokalny SQLite: usunięty z aplikacji
-- następny zakres: rozszerzanie dokładnych wymagań wzorów, a później staging
+- następny zakres: uruchomienie i kontrolowany test przygotowanego stagingu
 
 Migracja e-mailowego loginu znajduje się w repozytorium; jej zastosowanie i
 kontrola na zdalnym Supabase są osobnym krokiem operacyjnym.
-  z ochroną brzegową
+
+Staging uruchamia aplikację wyłącznie za HTTPS reverse proxy z ModSecurity i
+OWASP CRS. Logowanie i rejestracja wymagają Turnstile, a błędna konfiguracja
+stagingu zatrzymuje start. Liveness nie zależy od Supabase; readiness potwierdza
+połączenie. Metryki Prometheus są dostępne tylko w prywatnej sieci kontenerów.
+Negatywny readiness blokuje zwykły ruch, zachowując endpointy diagnostyczne.
 - limit magazynu: 500 włóczek na użytkownika
 - limit katalogu: 300 wzorów
 

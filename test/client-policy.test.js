@@ -3,6 +3,7 @@ const assert = require("node:assert/strict");
 
 const {
   bindHoldToReveal,
+  buildAuthPayload,
   buildPatternFacetCounts,
   buildPatternFacetOptions,
   ensureSingleNewYarnCard,
@@ -18,6 +19,21 @@ const {
   shouldRetryRead,
   yarnsHaveSameValues,
 } = require("../client-policy");
+
+test("payload Auth dodaje token tylko przy włączonej CAPTCHA", () => {
+  assert.deepEqual(
+    buildAuthPayload({ email: "a@example.test", password: "Secret1!" }, { captchaEnabled: false }),
+    { email: "a@example.test", password: "Secret1!" },
+  );
+  assert.deepEqual(
+    buildAuthPayload({ login: "a@example.test", password: "Secret1!" }, { captchaEnabled: true, captchaToken: "token" }),
+    { login: "a@example.test", password: "Secret1!", captchaToken: "token" },
+  );
+  assert.throws(
+    () => buildAuthPayload({ email: "a@example.test" }, { captchaEnabled: true }),
+    /zabezpieczenie/,
+  );
+});
 
 test("wyjaśnia brakujące dane zamiast ukrywać zapis", () => {
   assert.deepEqual(
