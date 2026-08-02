@@ -145,6 +145,12 @@ npm run patterns:import
 
 Proces katalogu nie publikuje instrukcji z PDF-ów ani długich cytatów. Zachowuje tylko własny opis, źródło i parametry potrzebne do filtrowania lub dopasowania. Aktualny stan danych i zasady katalogu opisuje [docs/PATTERN-CATALOG.md](docs/PATTERN-CATALOG.md).
 
+## Staging
+
+Gotowy stos w `deploy/staging` uruchamia aplikację za reverse proxy i WAF z OWASP CRS. Logowanie i rejestracja mogą wymagać Cloudflare Turnstile, którego publiczną konfigurację frontend pobiera z `/api/config`.
+
+Endpointy `/health/live` i `/health/ready` rozdzielają stan procesu od gotowości połączenia z Supabase. Metryki Prometheus pod `/internal/metrics` pozostają dostępne tylko w prywatnej sieci stagingu. Zasady bezpiecznej konfiguracji skupia `deployment-policy.js`, a metryki implementuje `observability.js`. Instrukcja wdrożenia i ręcznych ustawień operatora znajduje się w `deploy/staging/README.md`.
+
 ## Dokumentacja i wersja
 
 - [SPEC.md](SPEC.md) — pełniejsza specyfikacja produktu, API i danych;

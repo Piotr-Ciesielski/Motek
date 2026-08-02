@@ -1,0 +1,95 @@
+services:
+  app:
+    build:
+      context: ../..
+      dockerfile: deploy/staging/Dockerfile
+    image: motek:2.0.0-alpha.38
+    env_file:
+      - ${MOTEK_ENV_FILE:-./.env.staging}
+    environment:
+      DEPLOYMENT_ENV: staging
+      NODE_ENV: production
+      HOST: 0.0.0.0
+      PORT: "3000"
+      COOKIE_SECURE: "true"
+      TRUST_PROXY: "true"
+      CAPTCHA_ENABLED: "true"
+      CAPTCHA_PROVIDER: turnstile
+      METRICS_ENABLED: "true"
+    expose:
+      - "3000"
+    restart: unless-stopped
+    init: true
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    networks:
+      - private
+      - egress
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 512M
+
+  waf:
+    image: owasp/modsecurity-crs:4.28.0-nginx-202607160307
+    depends_on:
+      app:
+        condition: service_healthy
+    environment:
+      BACKEND: http://app:3000
+      SERVER_NAME: ${SERVER_NAME:?ustaw SERVER_NAME w pliku staging env}
+      MODSEC_RULE_ENGINE: "On"
+      BLOCKING_PARANOIA: "1"
+      ANOMALY_INBOUND: "5"
+      ANOMALY_OUTBOUND: "4"
+      ALLOWED_METHODS: "GET HEAD POST OPTIONS PATCH DELETE"
+    ports:
+      - "443:8443"
+    volumes:
+      - ./nginx/templates/default.conf.template:/etc/nginx/templates/conf.d/default.conf.template:ro
+      - ./nginx/crs/REQUEST-900-EXCLUSION-RULES-BEFORE-CRS.conf:/etc/modsecurity.d/owasp-crs/rules/REQUEST-900-EXCLUSION-RULES-BEFORE-CRS.conf:ro
+      - ./certs/server.crt:/etc/nginx/conf/server.crt:ro
+      - ./certs/server.key:/etc/nginx/conf/server.key:ro
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      - public
+      - private
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 512M
+
+  prometheus:
+    image: prom/prometheus:v3.12.0
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.retention.time=15d
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./prometheus/alerts.yml:/etc/prometheus/alerts.yml:ro
+      - prometheus-data:/prometheus
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      - private
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 512M
+
+networks:
+  public:
+  private:
+    internal: true
+  egress:
+
+volumes:
+  prometheus-data:
