@@ -1219,11 +1219,20 @@ async function handleAuthApi(req, res, url) {
   if (req.method === "POST" && url.pathname === "/api/auth/password-reset-request") {
     const body = await readBody(req);
     const email = normalizeAuthEmail(body.email);
+    let captchaToken;
+    try {
+      captchaToken = normalizeCaptchaToken(body.captchaToken, captchaConfig.enabled);
+    } catch (error) {
+      throw new ApiError(400, error.message);
+    }
     const rateLimitKeys = getAuthRateLimitKeys(req, email);
     enforceRequestRateLimit(rateLimitKeys, authRequestRateLimiter, res);
 
     const redirectTo = new URL("/?recovery=1", getExpectedOrigin(req)).toString();
-    const { error } = await authClient().auth.resetPasswordForEmail(email, { redirectTo });
+    const { error } = await authClient().auth.resetPasswordForEmail(email, {
+      redirectTo,
+      ...(captchaToken ? { captchaToken } : {}),
+    });
     if (error) {
       console.warn("Nie udało się wysłać wiadomości odzyskiwania hasła.");
       throw new ApiError(503, "Odzyskiwanie hasła jest chwilowo niedostępne. Spróbuj ponownie później.");
