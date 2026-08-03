@@ -1,6 +1,5 @@
 const http = require("http");
 const net = require("net");
-const crypto = require("crypto");
 const path = require("path");
 const fs = require("fs");
 const fsPromises = require("fs/promises");
@@ -507,33 +506,23 @@ function normalizeSupabaseYarn(yarn) {
   };
 }
 
-function getYarnCollectionVersion(yarns) {
-  return `"${crypto
-    .createHash("sha256")
-    .update(JSON.stringify(yarns.map((yarn) => [
-      yarn.id,
-      yarn.updatedAt,
-      yarn.name,
-      yarn.color,
-      yarn.materials,
-      yarn.weightClass,
-      yarn.length,
-      yarn.weight,
-    ])))
-    .digest("hex")}"`;
+function getYarnCollectionVersion(version) {
+  return `"yarn-v${version}"`;
 }
 
-async function requireCurrentYarnVersion(req, session) {
+function parseYarnVersion(value) {
+  const match = /^"yarn-v(\d+)"$/.exec(value || "");
+  if (!match) return null;
+  return Number(match[1]);
+}
+
+async function requireCurrentYarnVersion(req) {
   const expectedVersion = req.headers["if-match"];
-  if (typeof expectedVersion !== "string" || !expectedVersion) {
+  const parsedVersion = parseYarnVersion(expectedVersion);
+  if (parsedVersion === null) {
     throw new ApiError(428, "Odśwież magazyn przed zapisaniem zmian.");
   }
-
-  const currentYarns = await getSupabaseYarns(session);
-  const currentVersion = getYarnCollectionVersion(currentYarns);
-  if (expectedVersion !== currentVersion) {
-    throw new ApiError(409, "Magazyn został zmieniony w innej karcie. Odśwież dane i spróbuj ponownie.");
-  }
+  return parsedVersion;
 }
 
 function toSupabaseYarn(yarn, userId) {
@@ -571,12 +560,40 @@ async function getSupabaseYarns(session) {
   return data.map(normalizeSupabaseYarn);
 }
 
+async function getSupabaseYarnVersion(session) {
+  const { data, error } = await supabaseAuthClientFactory(
+    supabaseAuthConfig,
+    session.accessToken
+  ).rpc("get_yarn_store_version");
+  if (error) {
+    throw new Error(`Nie udało się pobrać wersji magazynu z Supabase: ${error.message}`);
+  }
+  return Number(data);
+}
+
+function handleYarnRpcError(error, action) {
+  if (error.code === "40001") {
+    throw new ApiError(409, "Magazyn został zmieniony w innej karcie. Odśwież dane i spróbuj ponownie.");
+  }
+  if (error.code === "P0002") {
+    throw new ApiError(404, "Nie znaleziono włóczki o podanym identyfikatorze.");
+  }
+  if (error.code === "P0001") {
+    throw new ApiError(409, "Magazyn osiągnął limit 500 włóczek na użytkownika.");
+  }
+  if (error.code === "PGRST202" || error.code === "42883") {
+    throw new ApiError(503, "Backend Supabase nie ma wymaganej migracji magazynu. Skontaktuj się z administratorem.");
+  }
+  throw new Error(`${action}: ${error.message}`);
+}
+
 async function insertSupabaseYarn(session, yarn) {
   const { data, error } = await supabaseAuthClientFactory(
     supabaseAuthConfig,
     session.accessToken
   )
-    .rpc("insert_yarn_with_limit", {
+    .rpc("insert_yarn_versioned", {
+      p_expected_version: yarn.expectedVersion,
       p_name: yarn.name,
       p_color: yarn.color,
       p_materials: yarn.materials,
@@ -586,24 +603,12 @@ async function insertSupabaseYarn(session, yarn) {
     });
 
   if (error) {
-    if (error.code === "P0001") {
-      throw new ApiError(409, "Magazyn osiągnął limit 500 włóczek na użytkownika.");
-    }
-    if (error.code === "PGRST202" || error.code === "42883") {
-      throw new ApiError(
-        503,
-        "Backend Supabase nie ma wymaganej migracji magazynu. Skontaktuj się z administratorem."
-      );
-    }
-    throw new Error(`Nie udało się zapisać włóczki w Supabase: ${error.message}`);
+    handleYarnRpcError(error, "Nie udało się zapisać włóczki w Supabase");
   }
-
-  const insertedYarn = Array.isArray(data) ? data[0] : data;
-  if (!insertedYarn) {
+  if (!data?.yarn) {
     throw new Error("Supabase nie zwróciło zapisanej włóczki.");
   }
-
-  return normalizeSupabaseYarn(insertedYarn);
+  return { yarn: normalizeSupabaseYarn(data.yarn), version: Number(data.version) };
 }
 
 async function updateSupabaseYarn(session, id, yarn) {
@@ -611,47 +616,43 @@ async function updateSupabaseYarn(session, id, yarn) {
     supabaseAuthConfig,
     session.accessToken
   )
-    .from("yarns")
-    .update(toSupabaseYarnFields(yarn))
-    .eq("id", id)
-    .eq("user_id", session.user.id)
-    .select("id,name,color,materials,weight_class,length_meters,weight_grams")
-    .single();
+    .rpc("update_yarn_versioned", {
+      p_expected_version: yarn.expectedVersion,
+      p_id: id,
+      p_name: yarn.name,
+      p_color: yarn.color,
+      p_materials: yarn.materials,
+      p_weight_class: yarn.weightClass,
+      p_length_meters: yarn.length,
+      p_weight_grams: yarn.weight,
+    });
 
   if (error) {
-    if (error.code === "PGRST116") {
-      throw new ApiError(404, "Nie znaleziono włóczki o podanym identyfikatorze.");
-    }
-    throw new Error(`Nie udało się zaktualizować włóczki w Supabase: ${error.message}`);
+    handleYarnRpcError(error, "Nie udało się zaktualizować włóczki w Supabase");
   }
-
-  return normalizeSupabaseYarn(data);
+  if (!data?.yarn) throw new Error("Supabase nie zwróciło zaktualizowanej włóczki.");
+  return { yarn: normalizeSupabaseYarn(data.yarn), version: Number(data.version) };
 }
 
-async function deleteSupabaseYarn(session, id) {
+async function deleteSupabaseYarn(session, id, expectedVersion) {
   const { data, error } = await supabaseAuthClientFactory(
     supabaseAuthConfig,
     session.accessToken
   )
-    .from("yarns")
-    .delete()
-    .eq("id", id)
-    .eq("user_id", session.user.id)
-    .select("id");
+    .rpc("delete_yarn_versioned", {
+      p_expected_version: expectedVersion,
+      p_id: id,
+    });
 
   if (error) {
-    throw new Error(`Nie udało się usunąć włóczki z Supabase: ${error.message}`);
+    handleYarnRpcError(error, "Nie udało się usunąć włóczki z Supabase");
   }
-
-  if (!data.length) {
-    throw new ApiError(404, "Nie znaleziono włóczki o podanym identyfikatorze.");
-  }
+  return { version: Number(data?.version) };
 }
 
-async function sendYarnMutationResponse(res, status, payload, session) {
-  const currentYarns = await getSupabaseYarns(session);
-  res.setHeader("ETag", getYarnCollectionVersion(currentYarns));
-  return sendJson(res, status, payload);
+async function sendYarnMutationResponse(res, status, mutation) {
+  res.setHeader("ETag", getYarnCollectionVersion(mutation.version));
+  return sendJson(res, status, status === 204 ? null : mutation.yarn);
 }
 
 function yarnMatchesLegacyMaterials(yarn, materials) {
@@ -1376,7 +1377,7 @@ async function handleApi(req, res, url) {
   if (req.method === "GET" && url.pathname === "/api/yarns") {
     const session = await requireAuthenticatedSession(req, res);
     const yarns = await getSupabaseYarns(session);
-    res.setHeader("ETag", getYarnCollectionVersion(yarns));
+    res.setHeader("ETag", getYarnCollectionVersion(await getSupabaseYarnVersion(session)));
     return sendJson(res, 200, yarns);
   }
 
@@ -1385,8 +1386,8 @@ async function handleApi(req, res, url) {
     const yarn = validateYarn(body);
     const session = await requireAuthenticatedSession(req, res);
     enforceRequestRateLimit([`user:${session.user.id}`], yarnWriteRateLimiter, res);
-    await requireCurrentYarnVersion(req, session);
-    return sendYarnMutationResponse(res, 201, await insertSupabaseYarn(session, yarn), session);
+    yarn.expectedVersion = await requireCurrentYarnVersion(req);
+    return sendYarnMutationResponse(res, 201, await insertSupabaseYarn(session, yarn));
   }
 
   if (req.method === "PATCH" && url.pathname.startsWith("/api/yarns/")) {
@@ -1398,8 +1399,8 @@ async function handleApi(req, res, url) {
     const yarn = validateYarn(body);
     const session = await requireAuthenticatedSession(req, res);
     enforceRequestRateLimit([`user:${session.user.id}`], yarnWriteRateLimiter, res);
-    await requireCurrentYarnVersion(req, session);
-    return sendYarnMutationResponse(res, 200, await updateSupabaseYarn(session, id, yarn), session);
+    yarn.expectedVersion = await requireCurrentYarnVersion(req);
+    return sendYarnMutationResponse(res, 200, await updateSupabaseYarn(session, id, yarn));
   }
 
   if (req.method === "DELETE" && url.pathname.startsWith("/api/yarns/")) {
@@ -1409,9 +1410,9 @@ async function handleApi(req, res, url) {
     }
     const session = await requireAuthenticatedSession(req, res);
     enforceRequestRateLimit([`user:${session.user.id}`], yarnWriteRateLimiter, res);
-    await requireCurrentYarnVersion(req, session);
-    await deleteSupabaseYarn(session, id);
-    return sendYarnMutationResponse(res, 204, null, session);
+    const expectedVersion = await requireCurrentYarnVersion(req);
+    const mutation = await deleteSupabaseYarn(session, id, expectedVersion);
+    return sendYarnMutationResponse(res, 204, mutation);
   }
 
   if (req.method === "GET" && url.pathname === "/api/patterns") {
