@@ -73,7 +73,15 @@ Workflow `.github/workflows/post-deploy-regression.yml` bierze SHA ze zdarzenia 
 3. Ustaw SSL/TLS na **Full (strict)** i włącz **Always Use HTTPS**.
 4. Dodaj stałe przekierowanie `rysia.org/*` do `https://www.rysia.org/$1`, zachowując query string.
 5. Włącz dostępne zarządzane reguły WAF. Dodaj limity dla `/api/auth/*`, ostrzejsze dla rejestracji i resetu hasła. Nie cache'uj `/api/*`, Auth ani treści konta.
-6. Na stagingu ustaw `X-Robots-Tag: noindex, nofollow`. Jeśli używasz Cloudflare Access, zezwól GitHub Actions na testy — ochrona nie może blokować workflow regresji.
+6. Na stagingu ustaw `X-Robots-Tag: noindex, nofollow`. **Nie włączaj obecnie
+   Cloudflare Access dla `staging.rysia.org`**: istniejący workflow nie wysyła
+   nagłówków service-token, więc Access zablokuje automatyczną regresję.
+
+WAF, rate limits i `noindex` pozostają wymagane. Przyszłe włączenie Access
+wymaga osobnej zmiany runnera/workflow: wysyłania nagłówków
+`CF-Access-Client-Id` i `CF-Access-Client-Secret` oraz dwóch odpowiadających im
+sekretów w GitHub Environment `staging`. Nie twórz allowlisty na podstawie
+zmiennych adresów IP runnerów GitHub Actions.
 
 Po ustabilizowaniu HTTPS można rozpocząć HSTS od `max-age=86400`, bez `includeSubDomains`. Proxy i WAF nie dowodzą, że originu Railway nie da się ominąć; usuń zbędne domeny Railway dopiero po sprawdzeniu domen własnych i healthchecka.
 
@@ -118,8 +126,9 @@ Nie wklejaj sekretów do polecenia, logu ani raportu. Workflow pobiera je z wła
 | usuń dokładny testowy motek i logout | tak | nie | produkcja: tak | bezpieczne sprzątanie danych QA |
 | apex `rysia.org` -> `www` | nie | tak | tak | reguła jest zewnętrzna |
 | rejestracja, e-mail, reset hasła | nie | nie | staging i produkcja | wymagają e-maila i realnego Turnstile |
-| usunięcie konta | nie | nie | staging przed promocją | nieodwracalne; nigdy automatycznie na produkcji |
-| WAF/rate limit/noindex/Access | nie | nie | tak | ustawienia Cloudflare są zewnętrzne |
+| usunięcie konta | nie | nie | jednorazowe konto Auth | destrukcyjne i nieodwracalne |
+| WAF/rate limit/noindex | nie | nie | tak | ustawienia Cloudflare są zewnętrzne |
+| Cloudflare Access | nieobsługiwany | nie dotyczy | nie włączać teraz | workflow nie wysyła nagłówków service-token |
 | RLS i izolacja projektów | nie | nie | tak | wymaga kontroli obu projektów |
 
 Zielony wynik oznacza, że przetestowano wskazany SHA i profil. Czerwony wynik oznacza brak akceptacji, nie automatyczny rollback. Brak workflow oznacza problem ze zdarzeniem, Environment albo regułą gałęzi — nie sukces.
@@ -145,9 +154,9 @@ W Railway wybierz **poprzedni udany deployment tego samego środowiska**, potem 
 
 **Stop/no-go**: inne SHA, readiness różne od 200, nieudana wymagana regresja, niepewny cleanup, błędy 5xx, sekret w logu, problem RLS/advisors, wspólny Supabase dla obu środowisk, TLS inny niż Full (strict), WAF blokujący poprawny ruch lub brak sprawdzonego rollbacku.
 
-## 11. Ręczny QA produkcji
+## 11. Ręczny niedestrukcyjny QA produkcji
 
-Użyj dedykowanego zwykłego konta QA i prawdziwego Turnstile:
+Użyj dedykowanego, stałego zwykłego konta QA i prawdziwego Turnstile:
 
 1. Zaloguj się i potwierdź prywatny magazyn.
 2. Zanotuj stan. Dodaj dokładnie jedną włóczkę `prod-qa-<data-i-id>` i zapisz jej dokładne ID.
@@ -155,4 +164,30 @@ Użyj dedykowanego zwykłego konta QA i prawdziwego Turnstile:
 4. Usuń wyłącznie rekord o zanotowanym ID i sprawdź jego brak.
 5. Wyloguj się i potwierdź brak dostępu do magazynu.
 
-Nie uruchamiaj `regression:full` na produkcji. Nie automatyzuj tam usunięcia konta i nie przekazuj Actions klucza administracyjnego Supabase. Rejestrację, e-mail i reset hasła sprawdź ręcznie; konto QA zachowaj do niedestrukcyjnych kontroli.
+Nie uruchamiaj `regression:full` na produkcji. Nie usuwaj stałego konta QA i nie
+przekazuj Actions klucza administracyjnego Supabase. To konto zachowaj do
+powtarzalnych, niedestrukcyjnych kontroli.
+
+## 12. Ręczny pełny Auth na produkcyjnym Turnstile
+
+Ten scenariusz jest **destrukcyjny** i służy do jednorazowego sprawdzenia
+pełnego Auth. Utwórz nowy, jednorazowy adres/konto przeznaczone wyłącznie do
+tego przebiegu. Nie używaj stałego konta QA, konta operatora ani konta
+zawierającego potrzebne dane.
+
+1. Przy prawdziwym produkcyjnym Turnstile zarejestruj jednorazowe konto.
+2. Odbierz wiadomość i potwierdź adres e-mail; sprawdź powrót na właściwą
+   produkcyjną domenę.
+3. Zaloguj się tym kontem i potwierdź aktywną sesję.
+4. Wyloguj się, uruchom reset hasła, odbierz e-mail i ustaw nowe hasło przez
+   produkcyjny adres `/?recovery=1`.
+5. Zaloguj się ponownie nowym hasłem.
+6. Usuń konto, podając aktualne hasło i dokładną frazę potwierdzającą
+   `USUŃ KONTO`. Ta operacja jest nieodwracalna i usuwa konto oraz jego prywatne
+   dane.
+7. Potwierdź brak aktywnej sesji i brak możliwości ponownego zalogowania.
+
+Nie automatyzuj tego scenariusza i nie wykonuj go na stałym QA. Jeżeli
+którykolwiek krok przed usunięciem konta zawiedzie, zatrzymaj test i zachowaj
+jednorazowe konto wyłącznie na czas diagnozy; usuń je dopiero po ustaleniu
+przyczyny bez naruszania innych kont.

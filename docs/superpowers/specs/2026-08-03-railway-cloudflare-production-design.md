@@ -156,10 +156,14 @@ https://rysia.org/* -> https://www.rysia.org/$1
 Przekierowanie jest stałe i zachowuje parametry zapytania. Dzięki temu aplikacja
 ma jeden kanoniczny origin zgodny z `APP_ORIGIN` i ochroną CSRF.
 
-Staging nie powinien być indeksowany przez wyszukiwarki. Preferowana jest
-dodatkowa kontrola dostępu Cloudflare przed publicznym udostępnieniem stagingu;
-co najmniej należy zastosować `X-Robots-Tag: noindex, nofollow` lub równoważną
-regułę.
+Staging nie powinien być indeksowany przez wyszukiwarki; należy zastosować
+`X-Robots-Tag: noindex, nofollow` lub równoważną regułę. Obecny workflow nie
+obsługuje nagłówków service-token Cloudflare Access, dlatego Access nie może
+być teraz włączony dla `staging.rysia.org`, bo zablokuje automatyczną regresję.
+Przyszłe włączenie wymaga osobnej implementacji nagłówków
+`CF-Access-Client-Id` i `CF-Access-Client-Secret` oraz dwóch sekretów GitHub
+Environment `staging`; nie należy stosować allowlisty zmiennych IP GitHub
+Actions.
 
 Po udanym teście domen własnych należy usunąć niepotrzebne publiczne domeny
 `*.up.railway.app`, aby nie pozostawiać oczywistej drogi omijającej Cloudflare.
@@ -310,7 +314,11 @@ szerokim filtrem nazwy, czyścić całego magazynu ani używać konta operatora.
 
 Pełny cykl rejestracji, potwierdzenia e-maila, resetu hasła i usunięcia konta
 pozostaje automatyczny na niższych poziomach z atrapą Supabase oraz jest
-wykonywany ręcznie na stagingu przed pierwszą publikacją. Produkcyjny Turnstile
+wykonywany ręcznie na stagingu przed pierwszą publikacją. Na produkcji wymaga
+osobnego ręcznego, destrukcyjnego przebiegu z nowym jednorazowym kontem: pełne
+Auth kończy się usunięciem tego konta dokładną frazą i hasłem oraz kontrolą
+braku sesji. Nie wolno do tego używać stałego konta QA, które służy wyłącznie
+do niedestrukcyjnych kontroli magazynu i dopasowań. Produkcyjny Turnstile
 nie może być obchodzony przez automat. Po wdrożeniu produkcyjnym automatycznie
 uruchamia się profil `smoke`, a zalogowany smoke test wykonuje operator na
 dedykowanym koncie QA. Nie dodajemy publicznego testowego endpointu logowania i

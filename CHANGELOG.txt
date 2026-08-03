@@ -346,4 +346,6 @@ Wersja 1.0.0
 - Dodano runbook dla stagingu, bramki promocji, produkcji, diagnozy i rollbacku.
 - Udokumentowano rozdział sekretów i danych między Railway, GitHub Environments i dwoma projektami Supabase.
 - Dodano macierz testów oraz sprzątanie wyłącznie dokładnego ID testowej włóczki.
+- Doprecyzowano, że Cloudflare Access wymaga przyszłej obsługi service-token i nie może jeszcze chronić stagingu.
+- Rozdzielono stały niedestrukcyjny QA od destrukcyjnego pełnego Auth na jednorazowym koncie.
 - Zaznaczono, że konfiguracja usług i wdrożenie pozostają krokami zewnętrznymi.
