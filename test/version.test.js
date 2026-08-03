@@ -17,5 +17,6 @@ test("publikowane pliki wskazują jedną wersję alpha.38", () => {
   assert.equal(lock.version, expected);
   assert.equal(lock.packages[""].version, expected);
   assert.doesNotMatch(html, /2\.0\.0-alpha\.37/);
-  assert.equal((html.match(/2\.0\.0-alpha\.38/g) || []).length, 5);
+  // The catalog controller is a versioned browser asset loaded alongside app.js.
+  assert.equal((html.match(/2\.0\.0-alpha\.38/g) || []).length, 6);
 });
