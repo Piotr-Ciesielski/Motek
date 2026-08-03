@@ -7,7 +7,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: post-deploy-regression-${{ github.event.deployment.environment }}
+  group: post-deploy-regression-${{ contains(github.event.deployment.environment, ' / staging') && 'staging' || 'production' }}
   cancel-in-progress: true
 
 jobs:
@@ -15,15 +15,15 @@ jobs:
     if: >-
       github.event.deployment_status.state == 'success' &&
       github.event.deployment.repository_url == github.event.repository.url &&
-      ((github.event.deployment.environment == 'staging' && github.event.deployment.ref == 'staging') ||
-      (github.event.deployment.environment == 'production' && github.event.deployment.ref == 'main'))
+      ((contains(github.event.deployment.environment, ' / staging') && github.event.deployment.ref == github.event.deployment.sha) ||
+      (endsWith(github.event.deployment.environment, ' / production') && github.event.deployment.ref == github.event.deployment.sha))
     runs-on: ubuntu-latest
     timeout-minutes: 25
-    environment: ${{ github.event.deployment.environment }}
+    environment: ${{ contains(github.event.deployment.environment, ' / staging') && 'staging' || 'production' }}
     env:
       MOTEK_BASE_URL: ${{ vars.MOTEK_BASE_URL }}
       MOTEK_EXPECTED_SHA: ${{ github.event.deployment.sha }}
-      MOTEK_ENVIRONMENT: ${{ github.event.deployment.environment }}
+      MOTEK_ENVIRONMENT: ${{ contains(github.event.deployment.environment, ' / staging') && 'staging' || 'production' }}
 
     steps:
       - name: Pobierz wdrożoną wersję kodu
@@ -41,12 +41,12 @@ jobs:
         run: npm ci
 
       - name: Uruchom pełną regresję staging
-        if: github.event.deployment.environment == 'staging'
+        if: contains(github.event.deployment.environment, ' / staging')
         run: npm run regression:full
         env:
           MOTEK_QA_EMAIL: ${{ secrets.MOTEK_QA_EMAIL }}
           MOTEK_QA_PASSWORD: ${{ secrets.MOTEK_QA_PASSWORD }}
 
       - name: Uruchom smoke testy produkcji
-        if: github.event.deployment.environment == 'production'
+        if: endsWith(github.event.deployment.environment, ' / production')
         run: npm run regression:smoke
