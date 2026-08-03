@@ -33,6 +33,7 @@ const {
 } = require("./server/matching-service");
 const { createStaticFileHandler } = require("./server/static-files");
 const { createPatternRouter } = require("./server/pattern-routes");
+const { createYarnRouter } = require("./server/yarn-routes");
 
 const rootDir = __dirname;
 let server;
@@ -160,6 +161,24 @@ function sendText(res, status, text, contentType = "text/plain; charset=utf-8") 
   });
   res.end(text);
 }
+
+const yarnRouter = createYarnRouter({
+  ApiError,
+  sendJson,
+  getYarnCollectionVersion,
+  getSupabaseYarns,
+  getSupabaseYarnVersion,
+  insertSupabaseYarn,
+  updateSupabaseYarn,
+  deleteSupabaseYarn,
+  sendYarnMutationResponse,
+  requireAuthenticatedSession,
+  requireCurrentYarnVersion,
+  validateYarn,
+  readBody,
+  enforceRequestRateLimit,
+  yarnWriteRateLimiter,
+});
 
 function parseCookies(header) {
   return String(header || "")
@@ -1212,46 +1231,7 @@ async function handleApi(req, res, url) {
     return res.end();
   }
 
-  if (req.method === "GET" && url.pathname === "/api/yarns") {
-    const session = await requireAuthenticatedSession(req, res);
-    const yarns = await getSupabaseYarns(session);
-    res.setHeader("ETag", getYarnCollectionVersion(await getSupabaseYarnVersion(session)));
-    return sendJson(res, 200, yarns);
-  }
-
-  if (req.method === "POST" && url.pathname === "/api/yarns") {
-    const body = await readBody(req);
-    const yarn = validateYarn(body);
-    const session = await requireAuthenticatedSession(req, res);
-    enforceRequestRateLimit([`user:${session.user.id}`], yarnWriteRateLimiter, res);
-    yarn.expectedVersion = await requireCurrentYarnVersion(req);
-    return sendYarnMutationResponse(res, 201, await insertSupabaseYarn(session, yarn));
-  }
-
-  if (req.method === "PATCH" && url.pathname.startsWith("/api/yarns/")) {
-    const id = Number(url.pathname.split("/").pop());
-    if (!Number.isInteger(id) || id < 1) {
-      throw new ApiError(400, "Identyfikator włóczki musi być dodatnią liczbą całkowitą.");
-    }
-    const body = await readBody(req);
-    const yarn = validateYarn(body);
-    const session = await requireAuthenticatedSession(req, res);
-    enforceRequestRateLimit([`user:${session.user.id}`], yarnWriteRateLimiter, res);
-    yarn.expectedVersion = await requireCurrentYarnVersion(req);
-    return sendYarnMutationResponse(res, 200, await updateSupabaseYarn(session, id, yarn));
-  }
-
-  if (req.method === "DELETE" && url.pathname.startsWith("/api/yarns/")) {
-    const id = Number(url.pathname.split("/").pop());
-    if (!Number.isInteger(id) || id < 1) {
-      throw new ApiError(400, "Identyfikator włóczki musi być dodatnią liczbą całkowitą.");
-    }
-    const session = await requireAuthenticatedSession(req, res);
-    enforceRequestRateLimit([`user:${session.user.id}`], yarnWriteRateLimiter, res);
-    const expectedVersion = await requireCurrentYarnVersion(req);
-    const mutation = await deleteSupabaseYarn(session, id, expectedVersion);
-    return sendYarnMutationResponse(res, 204, mutation);
-  }
+  if (await yarnRouter.handle(req, res, url)) return;
 
   if (await patternRouter.handle(req, res, url)) return;
 
