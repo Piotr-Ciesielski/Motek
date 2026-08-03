@@ -65,7 +65,7 @@ async function runPublicRegression({ baseUrl, expectedSha, expectedEnvironment, 
 
   const page = await requireStaticMarker(session, '/', /<title>Motek\b/i);
   requireSecurityHeaders(page, '/');
-  await requireStaticMarker(session, '/styles.css', /:root\s*\{/);
+  await requireStaticMarker(session, '/styles.css', /--hero-gradient\s*:/);
   await requireStaticMarker(session, '/app.js', /MotekClientPolicy/);
 
   const config = await requireJson(session, '/api/config');

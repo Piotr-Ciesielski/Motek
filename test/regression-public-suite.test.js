@@ -32,7 +32,7 @@ function validResponses(overrides = {}) {
       status: 'ready', commit: SHA, environment: 'production', version: '2.0.0',
     }),
     '/': textResponse(200, '<title>Motek - dobierz wzór do włóczek</title>', SECURITY_HEADERS),
-    '/styles.css': textResponse(200, ':root { --color-background: #fff; }'),
+    '/styles.css': textResponse(200, ':root,\n[data-theme="light"] {\n  --hero-gradient: linear-gradient(145deg, #e94f4b, #a88be8);\n}'),
     '/app.js': textResponse(200, 'window.MotekClientPolicy;'),
     '/api/config': jsonResponse(200, {
       captcha: { enabled: true, provider: 'turnstile', siteKey: 'public-site-key' },
@@ -142,6 +142,16 @@ test('odrzuca publicznie dostępne metryki i nie umieszcza ich treści w błędz
   await assert.rejects(
     runPublicRegression({ baseUrl: BASE_URL, expectedSha: SHA, expectedEnvironment: 'production', fetchImpl: controlledFetch(responses) }),
     (error) => /internal\/metrics/.test(error.message) && !/motek_secret_metric|12345/.test(error.message),
+  );
+});
+
+test('odrzuca arkusz bez stabilnego tokena wizualnego Motka', async () => {
+  const responses = validResponses({
+    '/styles.css': textResponse(200, ':root,\n[data-theme="light"] { color: black; }'),
+  });
+  await assert.rejects(
+    runPublicRegression({ baseUrl: BASE_URL, expectedSha: SHA, expectedEnvironment: 'production', fetchImpl: controlledFetch(responses) }),
+    /styles\.css.*Motek content marker/i,
   );
 });
 
