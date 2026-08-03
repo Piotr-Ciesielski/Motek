@@ -30,6 +30,15 @@ jobs:
       - name: Sprawdź podatności zależności
         run: npm audit --omit=dev --audit-level=moderate
 
+      - name: Sprawdź jakość kodu (ESLint)
+        run: npm run lint
+
+      - name: Sprawdź formatowanie
+        run: npm run format:check
+
+      - name: Sprawdź pokrycie testami
+        run: npm run coverage
+
       - name: Sprawdź kod i uruchom testy
         run: npm run check
 
