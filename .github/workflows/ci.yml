@@ -32,3 +32,23 @@ jobs:
 
       - name: Sprawdź kod i uruchom testy
         run: npm run check
+
+  database:
+    needs: test
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Pobierz kod
+        uses: actions/checkout@v6
+
+      - name: Przygotuj Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: 2.111.0
+
+      - name: Odtwórz migracje i uruchom testy bazy
+        run: |
+          supabase start
+          supabase db reset --local
+          supabase test db --local

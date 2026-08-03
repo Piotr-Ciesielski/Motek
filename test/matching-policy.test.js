@@ -218,3 +218,11 @@ test("wymaga osobnych motków dla dziergania z dwóch nitek", () => {
     true,
   );
 });
+
+test("zachowuje nazwę grupy nitek trzymanych razem", () => {
+  const document = structuredClone(metersDocument);
+  document.variants[0].requirements[0].held_together_group = "oslo-hat";
+
+  const [variant] = normalizeMatchingDocument(document);
+  assert.equal(variant.requirements[0].heldTogetherGroup, "oslo-hat");
+});
