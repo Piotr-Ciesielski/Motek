@@ -17,6 +17,16 @@ test("inventory keeps the selected design composition", () => {
   assert.match(indexHtml, /data-dark-src="assets\/night-yarn-cat\.v1\.webp"/);
 });
 
+test("main navigation uses text labels without decorative symbols", () => {
+  const navigation = indexHtml.match(/<nav class="app-nav"[\s\S]*?<\/nav>/)?.[0] || "";
+  assert.match(navigation, />Magazyn<\/span>/);
+  assert.match(navigation, />Dopasowanie<\/span>/);
+  assert.match(navigation, />Katalog<\/span>/);
+  assert.match(navigation, />Konto<\/span>/);
+  assert.doesNotMatch(navigation, /aria-hidden="true"/);
+  assert.doesNotMatch(navigation, /[⌂✦▦○]/);
+});
+
 test("auth forms never fall back to GET query strings", () => {
   assert.match(
     indexHtml,
