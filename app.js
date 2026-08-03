@@ -2274,11 +2274,10 @@ backToCatalogFiltersBtn.addEventListener("click", () => {
 detectRuntimeMode()
   .then(async () => {
     const recoveryHandled = await startPasswordRecovery();
-    if (recoveryHandled) return;
     await Promise.all([
       initializeCaptcha().catch((error) => setAuthMessage(error.message, "error")),
-      refreshAuthSession(),
-      refreshPatternCatalog().catch(showPatternCatalogError),
+      recoveryHandled ? Promise.resolve() : refreshAuthSession(),
+      recoveryHandled ? Promise.resolve() : refreshPatternCatalog().catch(showPatternCatalogError),
     ]);
   })
   .catch((error) => {

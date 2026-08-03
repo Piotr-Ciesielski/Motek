@@ -36,6 +36,14 @@ test("auth forms never fall back to GET query strings", () => {
   );
 });
 
+test("captcha initializes even when the page opens from password recovery", () => {
+  assert.match(
+    appJs,
+    /const recoveryHandled = await startPasswordRecovery\(\);[\s\S]*await Promise\.all\(\[[\s\S]*initializeCaptcha\(\)/,
+  );
+  assert.doesNotMatch(appJs, /const recoveryHandled = await startPasswordRecovery\(\);\s*if \(recoveryHandled\) return;/);
+});
+
 test("inventory and matches artwork have no caption overlays", () => {
   assert.doesNotMatch(indexHtml, /id="inventoryHeroCaption"/);
   assert.doesNotMatch(indexHtml, /id="matchesHeroCaption"/);
