@@ -180,3 +180,34 @@ test('does not allow an absolute request path to bypass the HTTPS restriction', 
 
   await assert.rejects(session.request('http://remote.example.test/private'), /HTTPS/);
 });
+
+test('rejects an absolute HTTPS URL from another origin before cookies can leave the session', async () => {
+  let fetchCalled = false;
+  const session = createHttpSession({
+    baseUrl: 'https://example.test',
+    origin: 'https://example.test',
+    fetchImpl: async () => {
+      fetchCalled = true;
+      return response({ status: 204 });
+    },
+  });
+
+  await assert.rejects(session.request('https://other.example.test/private'), /origin/);
+  assert.equal(fetchCalled, false);
+});
+
+test('fetch failures use a constant reason and never expose a controlled error name', async () => {
+  const failure = new Error('SECRET_MESSAGE');
+  failure.name = 'SECRET_NAME';
+  const session = createHttpSession({
+    baseUrl: 'https://example.test',
+    origin: 'https://example.test',
+    fetchImpl: async () => { throw failure; },
+  });
+
+  await assert.rejects(
+    session.request('/private?token=SECRET_QUERY'),
+    (error) => error.message === 'GET /private failed: request failed'
+      && !/SECRET_NAME|SECRET_MESSAGE|SECRET_QUERY/.test(error.message),
+  );
+});

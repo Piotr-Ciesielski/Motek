@@ -62,6 +62,9 @@ function createHttpSession({ baseUrl, origin, fetchImpl = globalThis.fetch }) {
   async function request(path, options = {}) {
     const url = new URL(path, base);
     validateBaseUrl(url);
+    if (url.origin !== base.origin) {
+      throw new Error('Regression HTTP sessions reject cross-origin requests');
+    }
     const method = String(options.method || 'GET').toUpperCase();
     const headers = new Headers(options.headers);
     let body = options.body;
@@ -84,9 +87,8 @@ function createHttpSession({ baseUrl, origin, fetchImpl = globalThis.fetch }) {
         body,
         signal: options.signal || AbortSignal.timeout(10_000),
       });
-    } catch (error) {
-      const reason = error?.name || 'request failed';
-      throw new Error(`${safeRequestLabel(method, url)} failed: ${reason}`);
+    } catch {
+      throw new Error(`${safeRequestLabel(method, url)} failed: request failed`);
     }
     updateCookieJar(jar, response.headers);
     return response;
