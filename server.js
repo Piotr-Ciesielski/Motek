@@ -624,7 +624,7 @@ async function getSupabaseYarnVersion(session) {
 }
 
 function handleYarnRpcError(error, action) {
-  if (error.code === "P0003") {
+  if (error.code === "P0003" || error.code === "40001") {
     throw new ApiError(409, "Magazyn został zmieniony w innej karcie. Odśwież dane i spróbuj ponownie.");
   }
   if (error.code === "P0002") {
