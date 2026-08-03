@@ -1,0 +1,52 @@
+name: Post-deploy regression
+
+'on':
+  deployment_status:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: post-deploy-regression-${{ contains(github.event.deployment.environment, ' / staging') && 'staging' || 'production' }}
+  cancel-in-progress: true
+
+jobs:
+  regression:
+    if: >-
+      github.event.deployment_status.state == 'success' &&
+      github.event.deployment.repository_url == github.event.repository.url &&
+      ((contains(github.event.deployment.environment, ' / staging') && github.event.deployment.ref == github.event.deployment.sha) ||
+      (endsWith(github.event.deployment.environment, ' / production') && github.event.deployment.ref == github.event.deployment.sha))
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    environment: ${{ contains(github.event.deployment.environment, ' / staging') && 'staging' || 'production' }}
+    env:
+      MOTEK_BASE_URL: ${{ contains(github.event.deployment.environment, ' / staging') && 'https://staging.rysia.org' || vars.MOTEK_BASE_URL }}
+      MOTEK_EXPECTED_SHA: ${{ github.event.deployment.sha }}
+      MOTEK_ENVIRONMENT: ${{ contains(github.event.deployment.environment, ' / staging') && 'staging' || 'production' }}
+
+    steps:
+      - name: Pobierz wdrożoną wersję kodu
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          ref: ${{ github.event.deployment.sha }}
+
+      - name: Przygotuj Node.js
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Zainstaluj zależności
+        run: npm ci
+
+      - name: Uruchom pełną regresję staging
+        if: contains(github.event.deployment.environment, ' / staging')
+        run: npm run regression:full
+        env:
+          MOTEK_QA_EMAIL: ${{ secrets.MOTEK_QA_EMAIL }}
+          MOTEK_QA_PASSWORD: ${{ secrets.MOTEK_QA_PASSWORD }}
+
+      - name: Uruchom smoke testy produkcji
+        if: endsWith(github.event.deployment.environment, ' / production')
+        run: npm run regression:smoke

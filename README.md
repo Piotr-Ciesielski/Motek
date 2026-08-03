@@ -61,3 +61,29 @@ Import katalogu do Supabase (`npm run patterns:import`) wykonuj dopiero po przej
 - [docs/PATTERN-CATALOG.md](docs/PATTERN-CATALOG.md) — zasady katalogu wzorów;
 - [docs/QUALITY.md](docs/QUALITY.md) — bramka jakości;
 - [VERSION](VERSION) i [CHANGELOG.txt](CHANGELOG.txt) — wersja oraz historia zmian.
+Proces katalogu nie publikuje instrukcji z PDF-ów ani długich cytatów. Zachowuje tylko własny opis, źródło i parametry potrzebne do filtrowania lub dopasowania. Aktualny stan danych i zasady katalogu opisuje [docs/PATTERN-CATALOG.md](docs/PATTERN-CATALOG.md).
+
+## Staging
+
+Gotowy stos w `deploy/staging` uruchamia aplikację za reverse proxy i WAF z OWASP CRS. Logowanie i rejestracja mogą wymagać Cloudflare Turnstile, którego publiczną konfigurację frontend pobiera z `/api/config`.
+
+Endpointy `/health/live` i `/health/ready` rozdzielają stan procesu od gotowości połączenia z Supabase. Metryki Prometheus pod `/internal/metrics` pozostają dostępne tylko w prywatnej sieci stagingu. Zasady bezpiecznej konfiguracji skupia `deployment-policy.js`, a metryki implementuje `observability.js`. Instrukcja wdrożenia i ręcznych ustawień operatora znajduje się w `deploy/staging/README.md`.
+
+## Railway, Cloudflare i regresja po wdrożeniu
+
+Repozytorium zawiera lokalną konfigurację Railway, obraz runtime, endpoint
+`/health/release`, komendy `npm run railway:check`,
+`npm run regression:smoke` i `npm run regression:full` oraz workflow po
+wdrożeniu. Nie oznacza to, że usługi zewnętrzne są już skonfigurowane.
+Kolejność stagingu, promocji, produkcji, diagnozy i rollbacku opisuje
+[runbook wdrożenia i regresji](docs/operations/post-deploy-regression.md).
+
+## Dokumentacja i wersja
+
+- [SPEC.md](SPEC.md) — pełniejsza specyfikacja produktu, API i danych;
+- [docs/PATTERN-CATALOG.md](docs/PATTERN-CATALOG.md) — stan, jakość i zasady katalogu wzorów;
+- [docs/operations/post-deploy-regression.md](docs/operations/post-deploy-regression.md) — bezpieczne wdrożenie Railway/Cloudflare i regresja;
+- [VERSION](VERSION) — bieżąca wersja projektu;
+- [CHANGELOG.txt](CHANGELOG.txt) — historia zmian między wersjami.
+
+README celowo nie powiela numeru bieżącej wersji ani historii wydań. Źródłami prawdy są pliki `VERSION` i `CHANGELOG.txt`.

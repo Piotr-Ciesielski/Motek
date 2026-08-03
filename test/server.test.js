@@ -170,6 +170,29 @@ test("ranking respektuje limity rozmiaru i może użyć kilku motków dla jednej
   assert.equal(impossible.doable, false);
 });
 
+test("endpoint release pozostaje niedostępny bez gotowego Supabase", async () => {
+  const runtime = await main({
+    supabaseConnection: {
+      async verify() { throw new Error("database unavailable"); },
+    },
+    supabaseAuthConfig: {
+      url: "https://project.supabase.co",
+      publishableKey: "sb_publishable_test",
+    },
+    captchaConfig: { enabled: false, provider: null, siteKey: null },
+    readinessIntervalMs: 0,
+  });
+  const baseUrl = `http://${runtime.host}:${runtime.port}`;
+
+  try {
+    const response = await fetch(`${baseUrl}/health/release`);
+    assert.equal(response.status, 503);
+    assert.deepEqual(await response.json(), { status: "not_ready" });
+  } finally {
+    await shutdown("release-not-ready-test");
+  }
+});
+
 test("serwer Motek działa bezpiecznie", async (t) => {
   const supabasePatterns = [
     {
@@ -485,6 +508,14 @@ test("serwer Motek działa bezpiecznie", async (t) => {
       assert.equal(liveResponse.status, 200);
       const readyResponse = await fetch(`${baseUrl}/health/ready`);
       assert.equal(readyResponse.status, 200);
+      const releaseResponse = await fetch(`${baseUrl}/health/release`);
+      assert.equal(releaseResponse.status, 200);
+      assert.deepEqual(await releaseResponse.json(), {
+        status: "ready",
+        version: "2.0.0-alpha.38",
+        commit: "local",
+        environment: "local",
+      });
       const configResponse = await fetch(`${baseUrl}/api/config`);
       assert.deepEqual(await configResponse.json(), {
         captcha: { enabled: true, provider: "turnstile", siteKey: "public-test-key" },

@@ -1,5 +1,7 @@
 const http = require("http");
 const net = require("net");
+const path = require("path");
+const fs = require("fs");
 const {
   createSupabaseAuthClient,
   createSupabaseConnection,
@@ -34,6 +36,7 @@ const {
 const { createStaticFileHandler } = require("./server/static-files");
 const { createPatternRouter } = require("./server/pattern-routes");
 const { createYarnRouter } = require("./server/yarn-routes");
+const { readReleaseInfo } = require("./release-info");
 
 const rootDir = __dirname;
 let server;
@@ -1276,6 +1279,10 @@ async function main(options = {}) {
   validateDeploymentConfig();
   validateCookieSecurityConfig();
   validateOriginConfig();
+  const releaseInfo = readReleaseInfo(
+    process.env,
+    fs.readFileSync(path.join(rootDir, "VERSION"), "utf8").trim()
+  );
   supabaseConnection = Object.prototype.hasOwnProperty.call(
     options,
     "supabaseConnection"
@@ -1347,6 +1354,13 @@ async function main(options = {}) {
       if (req.method === "GET" && url.pathname === "/health/ready") {
         if (await updateReadiness({ logFailure: true })) {
           return sendJson(res, 200, { status: "ready" });
+        }
+        return sendJson(res, 503, { status: "not_ready" });
+      }
+
+      if (req.method === "GET" && url.pathname === "/health/release") {
+        if (await updateReadiness({ logFailure: true })) {
+          return sendJson(res, 200, { status: "ready", ...releaseInfo });
         }
         return sendJson(res, 503, { status: "not_ready" });
       }

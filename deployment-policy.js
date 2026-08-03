@@ -19,7 +19,8 @@ function normalizeCaptchaToken(value, required = false) {
 }
 
 function validateDeploymentConfig(env = process.env) {
-  if (String(env.DEPLOYMENT_ENV || "local").trim() !== "staging") return;
+  const deploymentEnv = String(env.DEPLOYMENT_ENV || "local").trim();
+  if (deploymentEnv !== "staging" && deploymentEnv !== "production") return;
   const missing = [];
   if (env.NODE_ENV !== "production") missing.push("NODE_ENV");
   try {
@@ -34,7 +35,10 @@ function validateDeploymentConfig(env = process.env) {
   if (!isTrue(env.CAPTCHA_ENABLED)) missing.push("CAPTCHA_ENABLED");
   if (env.CAPTCHA_PROVIDER !== "turnstile") missing.push("CAPTCHA_PROVIDER");
   if (!String(env.CAPTCHA_SITE_KEY || "").trim()) missing.push("CAPTCHA_SITE_KEY");
-  if (missing.length) throw new Error(`Nieprawidłowa konfiguracja stagingu: ${missing.join(", ")}`);
+  if (!String(env.SUPABASE_URL || "").trim()) missing.push("SUPABASE_URL");
+  if (!String(env.SUPABASE_SECRET_KEY || "").trim()) missing.push("SUPABASE_SECRET_KEY");
+  if (!String(env.SUPABASE_PUBLISHABLE_KEY || "").trim()) missing.push("SUPABASE_PUBLISHABLE_KEY");
+  if (missing.length) throw new Error(`Nieprawidłowa konfiguracja publicznego wdrożenia: ${missing.join(", ")}`);
 }
 
 module.exports = { normalizeCaptchaToken, readCaptchaConfig, validateDeploymentConfig };
