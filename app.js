@@ -65,9 +65,9 @@ const inventoryAddYarnBtn = document.getElementById("inventoryAddYarnBtn");
 const backToInventoryBtn = document.getElementById("backToInventoryBtn");
 const heroAuthBtn = document.getElementById("heroAuthBtn");
 const networkStatus = document.getElementById("networkStatus");
+const { createApiClient, ApiError, RequestError, isResponseEnvelope } = window.MotekApiClient;
 
 const REQUEST_TIMEOUT_MS = 12_000;
-const READ_RETRY_DELAY_MS = 700;
 const {
   buildAuthPayload,
   buildPatternFacetCounts,
@@ -84,10 +84,8 @@ const {
   getYarnSaveHint,
   isDeleteConfirmed,
   initializePasswordRevealControls,
-  loadPaginatedItems,
   loadNextPaginatedPage,
   formatCatalogSummary,
-  shouldRetryRead,
 } = window.MotekClientPolicy;
 const {
   MATERIALS,
@@ -117,22 +115,6 @@ const PROJECT_TYPE_ORDER = [
   "other",
 ];
 
-class ApiError extends Error {
-  constructor(message, status) {
-    super(message);
-    this.name = "ApiError";
-    this.status = status;
-  }
-}
-
-class RequestError extends Error {
-  constructor(message, kind) {
-    super(message);
-    this.name = "RequestError";
-    this.kind = kind;
-  }
-}
-
 let baseUrl = window.location.origin;
 let isAuthenticated = false;
 let pendingWriteCount = 0;
@@ -154,6 +136,18 @@ let inventoryChangedSinceMatch = false;
 let authCaptchaConfig = { enabled: false, provider: null, siteKey: null };
 const captchaTokens = { login: null, register: null };
 const captchaWidgetIds = { login: null, register: null };
+const apiClient = createApiClient({
+  fetchImpl: window.fetch.bind(window),
+  timeoutMs: REQUEST_TIMEOUT_MS,
+  onUnauthorized: (requestPath) => {
+    const pathname = new URL(requestPath, window.location.origin).pathname;
+    const protectedPath = pathname === "/api/matches"
+      || pathname === "/api/yarns"
+      || pathname.startsWith("/api/yarns/")
+      || pathname === "/api/account";
+    if (protectedPath) handleSessionExpired();
+  },
+});
 
 function loadTurnstileScript() {
   if (window.turnstile) return Promise.resolve();
@@ -309,128 +303,20 @@ async function api(path, options = {}) {
   if (!baseUrl) {
     throw new Error("Brak adresu backendu Motka.");
   }
-
-  const {
-    headers: optionHeaders = {},
-    signal: requestSignal,
-    ...requestOptions
-  } = options;
-  const method = String(requestOptions.method || "GET").toUpperCase();
+  const method = String(options.method || "GET").toUpperCase();
   const isWriteRequest = !["GET", "HEAD"].includes(method);
-  const maxAttempts = isWriteRequest ? 1 : 2;
   if (isWriteRequest) pendingWriteCount += 1;
-
   try {
-    let response;
-
-    for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
-      const controller = new AbortController();
-      const abortRequest = () => controller.abort();
-      const timeout = window.setTimeout(abortRequest, REQUEST_TIMEOUT_MS);
-      if (requestSignal) {
-        if (requestSignal.aborted) abortRequest();
-        else requestSignal.addEventListener("abort", abortRequest, { once: true });
-      }
-
-      try {
-        response = await fetch(`${baseUrl}${path}`, {
-          credentials: "same-origin",
-          ...requestOptions,
-          signal: controller.signal,
-          headers: {
-            "Content-Type": "application/json",
-            ...optionHeaders,
-          },
-        });
-      } catch (error) {
-        const externallyAborted = requestSignal?.aborted;
-        const canRetryNetworkError = shouldRetryRead({
-          method,
-          errorName: error.name,
-          externallyAborted,
-          attempt,
-          maxAttempts,
-        });
-
-        if (canRetryNetworkError) {
-          await new Promise((resolve) => window.setTimeout(resolve, READ_RETRY_DELAY_MS));
-          continue;
-        }
-
-        if (error.name === "AbortError") {
-          throw new RequestError(
-            externallyAborted
-              ? "Operacja została przerwana."
-              : "Motek nie odpowiedział na czas. Sprawdź połączenie i spróbuj ponownie.",
-            externallyAborted ? "aborted" : "timeout"
-          );
-        }
-        if (error instanceof TypeError) {
-          throw new RequestError(
-            navigator.onLine
-              ? "Nie udało się połączyć z Motkiem. Spróbuj ponownie."
-              : "Brak połączenia z internetem. Sprawdź sieć i spróbuj ponownie.",
-            "network"
-          );
-        }
-        throw error;
-      } finally {
-        window.clearTimeout(timeout);
-        requestSignal?.removeEventListener("abort", abortRequest);
-      }
-
-      if (shouldRetryRead({ method, status: response.status, attempt, maxAttempts })) {
-        await new Promise((resolve) => window.setTimeout(resolve, READ_RETRY_DELAY_MS));
-        continue;
-      }
-
-      break;
-    }
-
-    if (!response.ok && response.status !== 204) {
-      let message = "";
-      try {
-        const payload = await response.clone().json();
-        message = typeof payload?.error === "string" ? payload.error.trim() : "";
-      } catch {
-        // ignore non-JSON error body
-      }
-      const protectedPath =
-        path === "/api/matches" ||
-        path === "/api/yarns" ||
-        path.startsWith("/api/yarns/") ||
-        path === "/api/account";
-      if (response.status === 401 && protectedPath) {
-        handleSessionExpired();
-        throw new ApiError(
-          "Sesja wygasła. Zaloguj się ponownie, aby dokończyć operację.",
-          response.status
-        );
-      }
-      throw new ApiError(
-        message || "Nie udało się połączyć z Motkiem. Spróbuj ponownie.",
-        response.status
-      );
-    }
-
+    const result = await apiClient.request(`${baseUrl}${path}`, options);
+    const payload = isResponseEnvelope(result) ? result.data : result;
+    const response = isResponseEnvelope(result) ? result.response : result?.response;
     if (path === "/api/yarns" || path.startsWith("/api/yarns/")) {
-      yarnVersion = response.headers.get("etag") || yarnVersion;
+      yarnVersion = response?.headers?.get?.("etag") || yarnVersion;
     }
-
     api.lastMatchScope = path === "/api/matches"
-      ? response.headers.get("X-Motek-Match-Scope") || "full"
+      ? response?.headers?.get?.("X-Motek-Match-Scope") || "full"
       : null;
-    if (response.status === 204) return null;
-    try {
-      return await response.json();
-    } catch {
-      throw new RequestError(
-        isWriteRequest
-          ? "Połączenie przerwało się przed potwierdzeniem zapisu."
-          : "Nie udało się odczytać odpowiedzi Motka. Spróbuj ponownie.",
-        "response"
-      );
-    }
+    return payload;
   } finally {
     if (isWriteRequest) pendingWriteCount -= 1;
   }
