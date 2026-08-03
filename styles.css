@@ -197,7 +197,6 @@ body {
 .app-nav__button {
   display: inline-flex;
   align-items: center;
-  gap: 7px;
   min-height: 44px;
   border: 0;
   border-radius: 999px;
@@ -1533,9 +1532,6 @@ body::before {
     padding-inline: 10px;
   }
 
-  .app-nav__button span[aria-hidden="true"] {
-    display: none;
-  }
 }
 
 @media (max-width: 640px) {
@@ -1614,11 +1610,6 @@ body::before {
     border-radius: 12px;
     padding: 6px 3px;
     font-size: 0.7rem;
-  }
-
-  .app-nav__button span[aria-hidden="true"] {
-    display: block;
-    font-size: 1.05rem;
   }
 
   .header-user {

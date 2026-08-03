@@ -4,6 +4,8 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci --omit=dev
 COPY *.js *.json *.html *.css *.svg VERSION ./
+COPY client ./client
+COPY server ./server
 COPY assets ./assets
 
 ENV NODE_ENV=production HOST=0.0.0.0

@@ -51,6 +51,17 @@ function validateConfig(config) {
   return loadConfig(config?.profile, env);
 }
 
+function sanitizeErrorMessage(error, env = process.env) {
+  let message = String(error?.message || 'Unknown regression failure')
+    .replace(/https?:\/\/\S+/gi, '[url]')
+    .replace(/[\r\n]+/g, ' ')
+    .trim();
+  for (const secret of [env.MOTEK_QA_EMAIL, env.MOTEK_QA_PASSWORD, env.SUPABASE_SECRET_KEY, env.CAPTCHA_SECRET_KEY]) {
+    if (typeof secret === 'string' && secret) message = message.split(secret).join('[redacted]');
+  }
+  return message || 'Unknown regression failure';
+}
+
 async function runRegression(config, dependencies = {}) {
   const validated = validateConfig(config);
   const wait = dependencies.waitForRelease || waitForRelease;
@@ -86,10 +97,10 @@ async function main(argv = process.argv.slice(2), env = process.env) {
 }
 
 if (require.main === module) {
-  main().catch(() => {
-    process.stderr.write('Regression run failed. Check the sanitized test output and configuration.\n');
+  main().catch((error) => {
+    process.stderr.write(`Regression run failed: ${sanitizeErrorMessage(error)}\n`);
     process.exitCode = 1;
   });
 }
 
-module.exports = { DUMMY_CAPTCHA_TOKEN, loadConfig, runRegression, main };
+module.exports = { DUMMY_CAPTCHA_TOKEN, loadConfig, runRegression, sanitizeErrorMessage, main };

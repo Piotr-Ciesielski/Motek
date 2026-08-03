@@ -49,9 +49,9 @@ select is(has_function_privilege('public', 'public.delete_yarn_versioned(bigint,
 select is(has_function_privilege('anon', 'public.delete_yarn_versioned(bigint,bigint)', 'EXECUTE'), false, 'anon nie może wykonać RPC delete');
 
 -- Bez lokalnego użytkownika Auth testujemy stabilny kontrakt stale expected_version przez treść funkcji.
-select is((select position('40001' in prosrc) > 0 from pg_proc where oid = 'public.insert_yarn_versioned(bigint,text,text,text[],text,integer,integer)'::regprocedure), true, 'RPC insert zwraca SQLSTATE 40001 dla konfliktu wersji');
-select is((select position('40001' in prosrc) > 0 from pg_proc where oid = 'public.update_yarn_versioned(bigint,bigint,text,text,text[],text,integer,integer)'::regprocedure), true, 'RPC update zwraca SQLSTATE 40001 dla konfliktu wersji');
-select is((select position('40001' in prosrc) > 0 from pg_proc where oid = 'public.delete_yarn_versioned(bigint,bigint)'::regprocedure), true, 'RPC delete zwraca SQLSTATE 40001 dla konfliktu wersji');
+select is((select position('P0003' in prosrc) > 0 from pg_proc where oid = 'public.insert_yarn_versioned(bigint,text,text,text[],text,integer,integer)'::regprocedure), true, 'RPC insert zwraca SQLSTATE P0003 dla konfliktu wersji');
+select is((select position('P0003' in prosrc) > 0 from pg_proc where oid = 'public.update_yarn_versioned(bigint,bigint,text,text,text[],text,integer,integer)'::regprocedure), true, 'RPC update zwraca SQLSTATE P0003 dla konfliktu wersji');
+select is((select position('P0003' in prosrc) > 0 from pg_proc where oid = 'public.delete_yarn_versioned(bigint,bigint)'::regprocedure), true, 'RPC delete zwraca SQLSTATE P0003 dla konfliktu wersji');
 
 select * from finish();
 rollback;
