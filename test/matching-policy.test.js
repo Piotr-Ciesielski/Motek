@@ -218,3 +218,13 @@ test("wymaga osobnych motków dla dziergania z dwóch nitek", () => {
     true,
   );
 });
+
+test("odrzuca nieobsługiwaną grupę nitek trzymanych razem", () => {
+  const document = structuredClone(metersDocument);
+  document.variants[0].requirements[0].held_together_group = "oslo-hat";
+
+  assert.throws(
+    () => validateMatchingDocument(document, "test"),
+    /held_together_group nie jest obsługiwane/,
+  );
+});

@@ -6,6 +6,7 @@ const {
   normalizeAuthLogin,
   validateAuthPassword,
   buildAuthCookie,
+  createAccountDeletionRateLimiter,
   createAuthRateLimiter,
   createRequestRateLimiter,
   shouldUseSecureCookies,
@@ -114,4 +115,20 @@ test("limiter żądań blokuje zalewanie endpointu i wygasa", () => {
 
   now = 150;
   assert.equal(limiter.getRetryAfterMs("ip:127.0.0.1"), 0);
+});
+
+test("limiter usuwania konta blokuje po pięciu błędnych hasłach przez 15 minut", () => {
+  let now = 0;
+  const limiter = createAccountDeletionRateLimiter({ now: () => now });
+
+  for (let attempt = 0; attempt < 4; attempt += 1) {
+    limiter.recordFailure("user:user-a");
+    assert.equal(limiter.getRetryAfterMs("user:user-a"), 0);
+  }
+
+  limiter.recordFailure("user:user-a");
+  assert.equal(limiter.getRetryAfterMs("user:user-a"), 15 * 60 * 1000);
+
+  now = 15 * 60 * 1000;
+  assert.equal(limiter.getRetryAfterMs("user:user-a"), 0);
 });
