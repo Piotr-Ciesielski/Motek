@@ -345,30 +345,7 @@ function showMessage(container, message, kind = "status", action = null) {
 }
 
 function setStorageMessage(message, kind = "", actions = []) {
-  storageMessage.replaceChildren();
-  storageMessage.dataset.kind = kind;
-  storageMessage.setAttribute("role", kind === "error" ? "alert" : "status");
-  storageMessage.setAttribute("aria-live", kind === "error" ? "assertive" : "polite");
-
-  if (message) {
-    const text = document.createElement("p");
-    text.textContent = message;
-    storageMessage.appendChild(text);
-  }
-
-  if (actions.length) {
-    const actionList = document.createElement("div");
-    actionList.className = "storage-message__actions";
-    actions.forEach(({ label, onClick, primary = false }) => {
-      const button = document.createElement("button");
-      button.className = primary ? "button" : "button button--ghost";
-      button.type = "button";
-      button.textContent = label;
-      button.addEventListener("click", onClick);
-      actionList.appendChild(button);
-    });
-    storageMessage.appendChild(actionList);
-  }
+  MotekDomUtils.setMessage(storageMessage, { text: message, kind, actions });
 }
 
 function isYarnVersionConflict(error) {
@@ -2170,3 +2147,4 @@ detectRuntimeMode()
   .catch((error) => {
     showMessage(results, error.message, "error");
   });
+/* global MotekDomUtils */
