@@ -51,6 +51,20 @@ test('kończy natychmiast błędem przy właściwym SHA w innym środowisku', as
   assert.equal(calls, 1);
 });
 
+test('kończy natychmiast błędem przy innym środowisku także dla starego SHA', async () => {
+  const { waitForRelease } = require('../scripts/regression/wait-for-release');
+  let calls = 0;
+  await assert.rejects(waitForRelease({
+    baseUrl: 'https://staging.example.test', expectedSha: SHA, expectedEnvironment: 'staging',
+    sleepImpl: async () => { throw new Error('nie powinien czekać'); },
+    fetchImpl: async () => {
+      calls += 1;
+      return jsonResponse(200, { status: 'ready', commit: OLD_SHA, environment: 'production' });
+    },
+  }), /environment/i);
+  assert.equal(calls, 1);
+});
+
 test('kończy oczekiwanie po timeout i nie ujawnia body odpowiedzi', async () => {
   const { waitForRelease } = require('../scripts/regression/wait-for-release');
   let now = 0;
@@ -59,6 +73,34 @@ test('kończy oczekiwanie po timeout i nie ujawnia body odpowiedzi', async () =>
     intervalMs: 1, nowImpl: () => now, sleepImpl: async (ms) => { now += ms; },
     fetchImpl: async () => jsonResponse(503, { password: 'bardzo-tajne' }),
   }), (error) => /timed out/i.test(error.message) && !/bardzo-tajne|password/i.test(error.message));
+});
+
+test('deadline przerywa zawieszony fetch i przekazuje mu sygnał anulowania', async () => {
+  const { waitForRelease } = require('../scripts/regression/wait-for-release');
+  let receivedSignal;
+  const startedAt = Date.now();
+  await assert.rejects(waitForRelease({
+    baseUrl: 'https://staging.example.test', expectedSha: SHA, expectedEnvironment: 'staging',
+    timeoutMs: 20, intervalMs: 5,
+    fetchImpl: async (_url, options) => {
+      receivedSignal = options.signal;
+      return new Promise(() => {});
+    },
+  }), /timed out/i);
+  assert.ok(receivedSignal instanceof AbortSignal);
+  assert.equal(receivedSignal.aborted, true);
+  assert.ok(Date.now() - startedAt < 500);
+});
+
+test('zamrożony zegar i natychmiastowy sleep nie tworzą nieskończonej pętli', async () => {
+  const { waitForRelease } = require('../scripts/regression/wait-for-release');
+  let calls = 0;
+  await assert.rejects(waitForRelease({
+    baseUrl: 'https://staging.example.test', expectedSha: SHA, expectedEnvironment: 'staging',
+    timeoutMs: 3, intervalMs: 1, nowImpl: () => 0, sleepImpl: async () => {},
+    fetchImpl: async () => { calls += 1; return jsonResponse(503, {}); },
+  }), /timed out/i);
+  assert.equal(calls, 3);
 });
 
 test('odrzuca niebezpieczny URL i niepełny lub wielkoliterowy SHA', async () => {

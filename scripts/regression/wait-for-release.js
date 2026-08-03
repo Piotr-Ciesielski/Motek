@@ -38,10 +38,37 @@ async function waitForRelease({
   const base = validateOptions({ baseUrl, expectedSha, expectedEnvironment, timeoutMs, intervalMs, fetchImpl });
   const endpoint = new URL('/health/release', base);
   const startedAt = nowImpl();
+  let logicalElapsed = 0;
+
+  function elapsed() {
+    return Math.max(logicalElapsed, nowImpl() - startedAt);
+  }
+
+  async function beforeDeadline(operation, controller) {
+    const remaining = timeoutMs - elapsed();
+    if (remaining <= 0) throw new Error('Timed out waiting for the expected release');
+    let timer;
+    const deadline = new Promise((_, reject) => {
+      timer = setTimeout(() => {
+        controller?.abort();
+        reject(new Error('Timed out waiting for the expected release'));
+      }, remaining);
+    });
+    try {
+      return await Promise.race([operation, deadline]);
+    } finally {
+      clearTimeout(timer);
+    }
+  }
 
   while (true) {
+    if (elapsed() >= timeoutMs) throw new Error('Timed out waiting for the expected release');
     try {
-      const response = await fetchImpl(endpoint, { method: 'GET', headers: new Headers() });
+      const controller = new AbortController();
+      const response = await beforeDeadline(
+        fetchImpl(endpoint, { method: 'GET', headers: new Headers(), signal: controller.signal }),
+        controller,
+      );
       if (response.status === 200) {
         let body;
         try {
@@ -49,20 +76,23 @@ async function waitForRelease({
         } catch {
           body = null;
         }
+        if (body?.status === 'ready' && body.environment !== expectedEnvironment) {
+          throw new Error('Release environment does not match the expected environment');
+        }
         if (body?.status === 'ready' && body.commit === expectedSha) {
-          if (body.environment !== expectedEnvironment) {
-            throw new Error('Release environment does not match the expected environment');
-          }
           return body;
         }
       }
     } catch (error) {
       if (error?.message === 'Release environment does not match the expected environment') throw error;
+      if (error?.message === 'Timed out waiting for the expected release') throw error;
     }
 
-    const elapsed = nowImpl() - startedAt;
-    if (elapsed >= timeoutMs) throw new Error('Timed out waiting for the expected release');
-    await sleepImpl(Math.min(intervalMs, timeoutMs - elapsed));
+    const remaining = timeoutMs - elapsed();
+    if (remaining <= 0) throw new Error('Timed out waiting for the expected release');
+    const sleepDuration = Math.min(intervalMs, remaining);
+    await beforeDeadline(Promise.resolve().then(() => sleepImpl(sleepDuration)));
+    logicalElapsed += sleepDuration;
   }
 }
 
