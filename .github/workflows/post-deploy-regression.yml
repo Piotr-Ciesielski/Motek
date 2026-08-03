@@ -21,7 +21,7 @@ jobs:
     timeout-minutes: 25
     environment: ${{ contains(github.event.deployment.environment, ' / staging') && 'staging' || 'production' }}
     env:
-      MOTEK_BASE_URL: ${{ vars.MOTEK_BASE_URL }}
+      MOTEK_BASE_URL: ${{ contains(github.event.deployment.environment, ' / staging') && 'https://staging.rysia.org' || vars.MOTEK_BASE_URL }}
       MOTEK_EXPECTED_SHA: ${{ github.event.deployment.sha }}
       MOTEK_ENVIRONMENT: ${{ contains(github.event.deployment.environment, ' / staging') && 'staging' || 'production' }}
 

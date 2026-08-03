@@ -34,7 +34,7 @@ test('post-deploy workflow uses least privilege, deployment SHA and environment-
   assert.match(workflow, new RegExp(`uses: actions/checkout@${CHECKOUT_SHA} # v6\\.1\\.0\\s*\\n\\s+with:\\s*\\n\\s+ref: \\$\\{\\{ github\\.event\\.deployment\\.sha \\}\\}`));
   assert.match(workflow, new RegExp(`uses: actions/setup-node@${SETUP_NODE_SHA} # v6\\.4\\.0\\s*\\n\\s+with:\\s*\\n\\s+node-version: 24`));
   assert.match(workflow, /run: npm ci/);
-  assert.match(workflow, /MOTEK_BASE_URL: \$\{\{ vars\.MOTEK_BASE_URL \}\}/);
+  assert.match(workflow, /MOTEK_BASE_URL: \$\{\{ contains\(github\.event\.deployment\.environment, ' \/ staging'\) && 'https:\/\/staging\.rysia\.org' \|\| vars\.MOTEK_BASE_URL \}\}/);
   assert.match(workflow, /MOTEK_EXPECTED_SHA: \$\{\{ github\.event\.deployment\.sha \}\}/);
   assert.match(workflow, /MOTEK_ENVIRONMENT: \$\{\{ contains\(github\.event\.deployment\.environment, ' \/ staging'\) && 'staging' \|\| 'production' \}\}/);
 });
