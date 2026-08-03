@@ -36,6 +36,14 @@ test("auth forms never fall back to GET query strings", () => {
   );
 });
 
+test("captcha initializes even when the page opens from password recovery", () => {
+  assert.match(
+    appJs,
+    /const recoveryHandled = await startPasswordRecovery\(\);[\s\S]*await Promise\.all\(\[[\s\S]*initializeCaptcha\(\)/,
+  );
+  assert.doesNotMatch(appJs, /const recoveryHandled = await startPasswordRecovery\(\);\s*if \(recoveryHandled\) return;/);
+});
+
 test("inventory and matches artwork have no caption overlays", () => {
   assert.doesNotMatch(indexHtml, /id="inventoryHeroCaption"/);
   assert.doesNotMatch(indexHtml, /id="matchesHeroCaption"/);
@@ -62,7 +70,8 @@ test("mobile inventory orders stats before stock and artwork", () => {
     stylesCss,
     /inventory-layout__content > section:not\(#onboarding\)[\s\S]{0,120}grid-row: 4/,
   );
-  assert.equal((indexHtml.match(/data-turnstile-for=/g) || []).length, 2);
+  assert.equal((indexHtml.match(/data-turnstile-for=/g) || []).length, 3);
+  assert.match(indexHtml, /data-turnstile-for="passwordReset"/);
   assert.match(appJs, /challenges\.cloudflare\.com\/turnstile\/v0\/api\.js\?render=explicit/);
 });
 

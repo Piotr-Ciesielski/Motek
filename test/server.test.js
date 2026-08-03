@@ -627,7 +627,7 @@ test("serwer Motek działa bezpiecznie", async (t) => {
       const resetResponse = await fetch(`${baseUrl}/api/auth/password-reset-request`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Origin: baseUrl },
-        body: JSON.stringify({ email: " A@EXAMPLE.COM " }),
+        body: JSON.stringify({ email: " A@EXAMPLE.COM ", captchaToken: "reset-token" }),
       });
       assert.equal(resetResponse.status, 202);
       assert.match(
@@ -636,7 +636,7 @@ test("serwer Motek działa bezpiecznie", async (t) => {
       );
       assert.deepEqual(recoveryRequests[0], {
         email: "a@example.com",
-        options: { redirectTo: `${baseUrl}/?recovery=1` },
+        options: { redirectTo: `${baseUrl}/?recovery=1`, captchaToken: "reset-token" },
       });
 
       const recoveryResponse = await fetch(`${baseUrl}/api/auth/recovery`, {

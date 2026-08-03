@@ -147,8 +147,8 @@ let preservedDraftRequiresSave = false;
 let hasCalculatedMatches = false;
 let inventoryChangedSinceMatch = false;
 let authCaptchaConfig = { enabled: false, provider: null, siteKey: null };
-const captchaTokens = { login: null, register: null };
-const captchaWidgetIds = { login: null, register: null };
+const captchaTokens = { login: null, register: null, passwordReset: null };
+const captchaWidgetIds = { login: null, register: null, passwordReset: null };
 const apiClient = createApiClient({
   fetchImpl: window.fetch.bind(window),
   timeoutMs: REQUEST_TIMEOUT_MS,
@@ -180,8 +180,9 @@ async function initializeCaptcha() {
   authCaptchaConfig = config.captcha || authCaptchaConfig;
   if (!authCaptchaConfig.enabled) return;
   await loadTurnstileScript();
-  ["login", "register"].forEach((kind) => {
+  ["login", "register", "passwordReset"].forEach((kind) => {
     const container = document.querySelector(`[data-turnstile-for="${kind}"]`);
+    if (!container) return;
     captchaWidgetIds[kind] = window.turnstile.render(container, {
       sitekey: authCaptchaConfig.siteKey,
       theme: "auto",
@@ -193,7 +194,7 @@ async function initializeCaptcha() {
 }
 
 function resetCaptchaForForm(form) {
-  const kind = form === registerForm ? "register" : "login";
+  const kind = form === registerForm ? "register" : form === passwordResetForm ? "passwordReset" : "login";
   captchaTokens[kind] = null;
   if (captchaWidgetIds[kind] !== null && window.turnstile) {
     window.turnstile.reset(captchaWidgetIds[kind]);
@@ -1704,9 +1705,13 @@ async function startPasswordRecovery() {
   const hash = new URLSearchParams(window.location.hash.slice(1));
   const accessToken = hash.get("access_token");
   const refreshToken = hash.get("refresh_token");
-  if (!accessToken || !refreshToken || new URLSearchParams(window.location.search).get("recovery") !== "1") {
+  const isRecovery = new URLSearchParams(window.location.search).get("recovery") === "1"
+    || hash.get("type") === "recovery";
+  if (!accessToken || !refreshToken || !isRecovery) {
     return false;
   }
+  // Usuń token z adresu przed pierwszym żądaniem sieciowym.
+  window.history.replaceState({}, document.title, window.location.pathname);
 
   try {
     setAuthMessage("Sprawdzam link odzyskiwania hasła...");
@@ -1922,7 +1927,10 @@ passwordResetForm.addEventListener("submit", async (event) => {
   setAuthBusy(passwordResetForm, true);
   setAuthMessage("Wysyłam instrukcję...");
   try {
-    const body = Object.fromEntries(new FormData(passwordResetForm).entries());
+    const body = buildAuthPayload(Object.fromEntries(new FormData(passwordResetForm).entries()), {
+      captchaEnabled: authCaptchaConfig.enabled,
+      captchaToken: captchaTokens.passwordReset,
+    });
     const payload = await api("/api/auth/password-reset-request", {
       method: "POST",
       body: JSON.stringify(body),
@@ -2151,11 +2159,10 @@ backToCatalogFiltersBtn.addEventListener("click", () => {
 detectRuntimeMode()
   .then(async () => {
     const recoveryHandled = await startPasswordRecovery();
-    if (recoveryHandled) return;
     await Promise.all([
       initializeCaptcha().catch((error) => setAuthMessage(error.message, "error")),
-      refreshAuthSession(),
-      refreshPatternCatalog().catch(showPatternCatalogError),
+      recoveryHandled ? Promise.resolve() : refreshAuthSession(),
+      recoveryHandled ? Promise.resolve() : refreshPatternCatalog().catch(showPatternCatalogError),
     ]);
   })
   .catch((error) => {
