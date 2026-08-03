@@ -164,6 +164,22 @@ test('does not patch or delete when the fresh collection does not confirm the cr
   assert.equal(script.remaining.length, 0);
 });
 
+test('does not delete when the yarn identity changed before the normal delete', async () => {
+  const { runAuthenticatedRegression } = require('../scripts/regression/authenticated-suite');
+  const steps = successSteps().slice(0, 8);
+  steps.push(
+    { request: 'GET /api/yarns', response: jsonResponse(200, [{ ...patchedYarn, name: 'foreign' }], { etag: '"v3"' }) },
+    { request: 'GET /api/yarns', response: jsonResponse(200, [{ ...patchedYarn, name: 'foreign' }], { etag: '"cleanup"' }) },
+    { request: 'POST /api/auth/logout', response: jsonResponse(200, { authenticated: false }) },
+  );
+  const script = scriptedFetch(steps);
+
+  await assert.rejects(runAuthenticatedRegression({ ...credentials, fetchImpl: script.fetchImpl }), /did not confirm the yarn before delete/i);
+
+  assert.equal(script.calls.some(({ method }) => method === 'DELETE'), false);
+  assert.equal(script.remaining.length, 0);
+});
+
 test('rejects unsafe input without exposing credentials in errors', async () => {
   const { runAuthenticatedRegression } = require('../scripts/regression/authenticated-suite');
   const secrets = [credentials.email, credentials.password, credentials.captchaToken];

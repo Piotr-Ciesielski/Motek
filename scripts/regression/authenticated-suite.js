@@ -124,6 +124,11 @@ async function runAuthenticatedRegression(options) {
     await requireJson(session, '/api/matches');
     const beforeDelete = await requireJson(session, '/api/yarns');
     const beforeDeleteEtag = requireEtag(beforeDelete.response, 'GET /api/yarns');
+    requireCondition(
+      Array.isArray(beforeDelete.body)
+        && beforeDelete.body.some((yarn) => yarn?.id === createdId && matchesYarnPayload(yarn, expectedStoredPayload)),
+      'GET /api/yarns did not confirm the yarn before delete',
+    );
     await requireResponse(session, yarnPath, {
       method: 'DELETE',
       headers: { 'If-Match': beforeDeleteEtag },
