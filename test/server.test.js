@@ -934,7 +934,6 @@ test("serwer Motek działa bezpiecznie", async (t) => {
               colorMode: "same",
               weightClasses: ["dk"],
               strandCount: null,
-              heldTogetherGroup: null,
               distinctColorGroup: null,
             }],
           },

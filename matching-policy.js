@@ -147,12 +147,7 @@ function normalizeRequirement(value, context) {
       context,
       { optional: true },
     ),
-    heldTogetherGroup: requireText(
-      value.held_together_group,
-      "held_together_group",
-      context,
-      { optional: true },
-    ),
+    heldTogetherGroup: rejectUnsupportedGroup(value.held_together_group, "held_together_group", context),
     distinctColorGroup: requireText(
       value.distinct_color_group,
       "distinct_color_group",
@@ -160,6 +155,13 @@ function normalizeRequirement(value, context) {
       { optional: true },
     ),
   };
+}
+
+function rejectUnsupportedGroup(value, field, context) {
+  if (value !== undefined && value !== null && value !== "") {
+    fail(context, `${field} nie jest obsługiwane.`);
+  }
+  return undefined;
 }
 
 function normalizeMatchingDocument(value, context = "matching_requirements") {
