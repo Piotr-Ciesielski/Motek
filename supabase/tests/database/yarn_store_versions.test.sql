@@ -9,16 +9,16 @@ select has_function('public', 'get_yarn_store_version', '{}', 'Odczyt wersji jes
 select has_function(
   'public',
   'insert_yarn_versioned',
-  'bigint, text, text, text[], text, integer, integer',
+  array['bigint', 'text', 'text', 'text[]', 'text', 'integer', 'integer'],
   'RPC insert przyjmuje expected_version'
 );
 select has_function(
   'public',
   'update_yarn_versioned',
-  'bigint, bigint, text, text, text[], text, integer, integer',
+  array['bigint', 'bigint', 'text', 'text', 'text[]', 'text', 'integer', 'integer'],
   'RPC update przyjmuje expected_version'
 );
-select has_function('public', 'delete_yarn_versioned', 'bigint, bigint', 'RPC delete przyjmuje expected_version');
+select has_function('public', 'delete_yarn_versioned', array['bigint', 'bigint'], 'RPC delete przyjmuje expected_version');
 
 select is((select prosecdef from pg_proc where oid = 'public.get_yarn_store_version()'::regprocedure), true, 'RPC get działa jako security definer');
 select is((select prosecdef from pg_proc where oid = 'public.insert_yarn_versioned(bigint,text,text,text[],text,integer,integer)'::regprocedure), true, 'RPC insert działa jako security definer');
