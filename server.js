@@ -1,8 +1,5 @@
 const http = require("http");
 const net = require("net");
-const path = require("path");
-const fs = require("fs");
-const fsPromises = require("fs/promises");
 const {
   createSupabaseAuthClient,
   createSupabaseConnection,
@@ -34,6 +31,7 @@ const {
   scorePattern,
   selectMatchingYarns,
 } = require("./server/matching-service");
+const { createStaticFileHandler } = require("./server/static-files");
 
 const rootDir = __dirname;
 let server;
@@ -105,6 +103,28 @@ const SECURITY_HEADERS = Object.freeze({
   "X-Content-Type-Options": "nosniff",
   "X-Frame-Options": "DENY",
   "X-Permitted-Cross-Domain-Policies": "none",
+});
+
+const staticFileHandler = createStaticFileHandler({
+  rootDir,
+  securityHeaders: SECURITY_HEADERS,
+  files: {
+    "/": "index.html",
+    "/index.html": "index.html",
+    "/styles.css": "styles.css",
+    "/app.js": "app.js",
+    "/client-policy.js": "client-policy.js",
+    "/theme-policy.js": "theme-policy.js",
+    "/material-policy.js": "material-policy.js",
+    "/client/api-client.js": "client/api-client.js",
+    "/client/dom-utils.js": "client/dom-utils.js",
+    "/client/catalog-controller.js": "client/catalog-controller.js",
+    "/assets/color-yarn-cat.png": "assets/color-yarn-cat.png",
+    "/assets/night-yarn-cat.png": "assets/night-yarn-cat.png",
+    "/assets/color-yarn-cat.v1.webp": "assets/color-yarn-cat.v1.webp",
+    "/assets/night-yarn-cat.v1.webp": "assets/night-yarn-cat.v1.webp",
+    "/favicon.svg": "favicon.svg",
+  },
 });
 
 class ApiError extends Error {
@@ -799,29 +819,6 @@ async function readBody(req) {
   }
 }
 
-function sendFile(res, filePath) {
-  const ext = path.extname(filePath).toLowerCase();
-  const types = {
-    ".html": "text/html; charset=utf-8",
-    ".css": "text/css; charset=utf-8",
-    ".js": "application/javascript; charset=utf-8",
-    ".png": "image/png",
-    ".webp": "image/webp",
-    ".svg": "image/svg+xml",
-  };
-  const cacheControl = ext === ".webp"
-    ? "public, max-age=31536000, immutable"
-    : "no-cache";
-  return fsPromises.readFile(filePath).then((buf) => {
-    res.writeHead(200, {
-      ...SECURITY_HEADERS,
-      "Content-Type": types[ext] || "application/octet-stream",
-      "Cache-Control": cacheControl,
-    });
-    res.end(buf);
-  });
-}
-
 function normalizeCatalogPattern(pattern) {
   const ratio =
     pattern.meters_per_100g === null || pattern.meters_per_100g === undefined
@@ -1399,39 +1396,7 @@ async function main(options = {}) {
         return await handleApi(req, res, url);
       }
 
-      if (url.pathname === "/" || url.pathname === "/index.html") {
-        return await sendFile(res, path.join(rootDir, "index.html"));
-      }
-      if (url.pathname === "/styles.css") {
-        return await sendFile(res, path.join(rootDir, "styles.css"));
-      }
-      if (url.pathname === "/app.js") {
-        return await sendFile(res, path.join(rootDir, "app.js"));
-      }
-      if (url.pathname === "/client-policy.js") {
-        return await sendFile(res, path.join(rootDir, "client-policy.js"));
-      }
-      if (url.pathname === "/theme-policy.js") {
-        return await sendFile(res, path.join(rootDir, "theme-policy.js"));
-      }
-      if (url.pathname === "/assets/color-yarn-cat.png") {
-        return await sendFile(res, path.join(rootDir, "assets", "color-yarn-cat.png"));
-      }
-      if (url.pathname === "/assets/night-yarn-cat.png") {
-        return await sendFile(res, path.join(rootDir, "assets", "night-yarn-cat.png"));
-      }
-      if (url.pathname === "/assets/color-yarn-cat.v1.webp") {
-        return await sendFile(res, path.join(rootDir, "assets", "color-yarn-cat.v1.webp"));
-      }
-      if (url.pathname === "/assets/night-yarn-cat.v1.webp") {
-        return await sendFile(res, path.join(rootDir, "assets", "night-yarn-cat.v1.webp"));
-      }
-      if (url.pathname === "/material-policy.js") {
-        return await sendFile(res, path.join(rootDir, "material-policy.js"));
-      }
-      if (url.pathname === "/favicon.svg") {
-        return await sendFile(res, path.join(rootDir, "favicon.svg"));
-      }
+      if (await staticFileHandler.handle(req, res, url)) return;
 
       return sendText(res, 404, "Nie znaleziono zasobu");
     } catch (error) {
