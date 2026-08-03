@@ -1,0 +1,52 @@
+name: Post-deploy regression
+
+'on':
+  deployment_status:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: post-deploy-regression-${{ github.event.deployment.environment }}
+  cancel-in-progress: true
+
+jobs:
+  regression:
+    if: >-
+      github.event.deployment_status.state == 'success' &&
+      github.event.deployment.repository_url == github.event.repository.url &&
+      ((github.event.deployment.environment == 'staging' && github.event.deployment.ref == 'staging') ||
+      (github.event.deployment.environment == 'production' && github.event.deployment.ref == 'main'))
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: ${{ github.event.deployment.environment }}
+    env:
+      MOTEK_BASE_URL: ${{ vars.MOTEK_BASE_URL }}
+      MOTEK_EXPECTED_SHA: ${{ github.event.deployment.sha }}
+      MOTEK_ENVIRONMENT: ${{ github.event.deployment.environment }}
+
+    steps:
+      - name: Pobierz wdrożoną wersję kodu
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.deployment.sha }}
+
+      - name: Przygotuj Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Zainstaluj zależności
+        run: npm ci
+
+      - name: Uruchom pełną regresję staging
+        if: github.event.deployment.environment == 'staging'
+        run: npm run regression:full
+        env:
+          MOTEK_QA_EMAIL: ${{ secrets.MOTEK_QA_EMAIL }}
+          MOTEK_QA_PASSWORD: ${{ secrets.MOTEK_QA_PASSWORD }}
+
+      - name: Uruchom smoke testy produkcji
+        if: github.event.deployment.environment == 'production'
+        run: npm run regression:smoke
