@@ -6,6 +6,8 @@ const test = require('node:test');
 const root = path.join(__dirname, '..');
 const workflowPath = path.join(root, '.github', 'workflows', 'post-deploy-regression.yml');
 const ciPath = path.join(root, '.github', 'workflows', 'ci.yml');
+const CHECKOUT_SHA = 'd23441a48e516b6c34aea4fa41551a30e30af803';
+const SETUP_NODE_SHA = '48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e';
 
 function read(file) {
   return fs.readFileSync(file, 'utf8');
@@ -29,8 +31,8 @@ test('post-deploy workflow uses least privilege, deployment SHA and environment-
   assert.doesNotMatch(workflow, /^\s+[\w-]+: write\s*$/m);
   assert.match(workflow, /environment:\s*\$\{\{ github\.event\.deployment\.environment \}\}/);
   assert.match(workflow, /concurrency:\s*\n\s+group: post-deploy-regression-\$\{\{ github\.event\.deployment\.environment \}\}\s*\n\s+cancel-in-progress: true/);
-  assert.match(workflow, /uses: actions\/checkout@v6\s*\n\s+with:\s*\n\s+ref: \$\{\{ github\.event\.deployment\.sha \}\}/);
-  assert.match(workflow, /uses: actions\/setup-node@v6\s*\n\s+with:\s*\n\s+node-version: 24/);
+  assert.match(workflow, new RegExp(`uses: actions/checkout@${CHECKOUT_SHA} # v6\\.1\\.0\\s*\\n\\s+with:\\s*\\n\\s+ref: \\$\\{\\{ github\\.event\\.deployment\\.sha \\}\\}`));
+  assert.match(workflow, new RegExp(`uses: actions/setup-node@${SETUP_NODE_SHA} # v6\\.4\\.0\\s*\\n\\s+with:\\s*\\n\\s+node-version: 24`));
   assert.match(workflow, /run: npm ci/);
   assert.match(workflow, /MOTEK_BASE_URL: \$\{\{ vars\.MOTEK_BASE_URL \}\}/);
   assert.match(workflow, /MOTEK_EXPECTED_SHA: \$\{\{ github\.event\.deployment\.sha \}\}/);
@@ -44,7 +46,7 @@ test('post-deploy workflow runs full staging checks with QA secrets and smoke-on
   assert.match(workflow, /if: github\.event\.deployment\.environment == 'production'\s*\n\s+run: npm run regression:smoke/);
   assert.doesNotMatch(workflow, /(?:SUPABASE|RAILWAY|TURNSTILE)/i);
   assert.doesNotMatch(workflow, /run:[^\n]*\$\{\{/);
-  assert.match(workflow, /timeout-minutes: (?:[1-9]|[1-5][0-9]|60)\b/);
+  assert.match(workflow, /timeout-minutes: 25\b/);
 });
 
 test('CI validates pushes to main and staging while pull requests remain limited to main', () => {
@@ -52,4 +54,7 @@ test('CI validates pushes to main and staging while pull requests remain limited
 
   assert.match(ci, /push:\s*\n\s+branches: \[main, staging\]/);
   assert.match(ci, /pull_request:\s*\n\s+branches: \[main\]/);
+  assert.match(ci, new RegExp(`uses: actions/checkout@${CHECKOUT_SHA} # v6\\.1\\.0`));
+  assert.match(ci, new RegExp(`uses: actions/setup-node@${SETUP_NODE_SHA} # v6\\.4\\.0`));
+  assert.doesNotMatch(`${ci}\n${read(workflowPath)}`, /uses: actions\/(?:checkout|setup-node)@v\d+/);
 });
