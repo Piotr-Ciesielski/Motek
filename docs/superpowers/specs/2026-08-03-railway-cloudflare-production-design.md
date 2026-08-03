@@ -142,8 +142,8 @@ W Cloudflare powstaną rekordy DNS wymagane przez Railway dla:
 - rekordów weryfikacyjnych TXT wskazanych przez Railway.
 
 Cloudflare ma obsługiwać proxy dla publicznych rekordów aplikacji. Konfiguracja
-TLS ma używać trybu `Full`, zgodnie z bieżącymi wymaganiami Railway dla domen
-proxowanych przez Cloudflare. W trakcie wykonania wartości rekordów zostaną
+TLS ma używać trybu `Full (strict)`, aby Cloudflare weryfikował certyfikat
+Railway dla domeny własnej. W trakcie wykonania wartości rekordów zostaną
 przepisane dokładnie z panelu Railway, a zgodność trybu TLS zostanie ponownie
 sprawdzona w dokumentacji przed zmianą DNS.
 
@@ -403,3 +403,18 @@ Motek jest gotowy do publicznego uruchomienia, gdy jednocześnie:
 - `rysia.org` przekierowuje do domeny kanonicznej;
 - istnieje działający monitoring i sprawdzona procedura rollbacku;
 - dopiero wtedy publiczny ruch zostaje skierowany na produkcję.
+
+## 14. Stan realizacji
+
+W repozytorium zaimplementowano lokalne artefakty: `railway.json`,
+`deploy/railway/Dockerfile`, walidację środowiska, `/health/release`, publiczny
+i uwierzytelniony runner regresji, komendy `npm run railway:check`,
+`npm run regression:smoke`, `npm run regression:full` oraz workflow
+`.github/workflows/post-deploy-regression.yml`. Procedurę operatorską zawiera
+`docs/operations/post-deploy-regression.md`.
+
+Te pliki nie potwierdzają wykonanego wdrożenia. Nadal oczekują: utworzenie i
+konfiguracja Railway `staging`/`production`, dwóch projektów Supabase, GitHub
+Environments, DNS/proxy/WAF/TLS Full (strict), osobnych ustawień Turnstile,
+kontrolowane zastosowanie migracji, ręczne testy oraz decyzja o skierowaniu
+ruchu produkcyjnego.

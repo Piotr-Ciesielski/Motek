@@ -6,7 +6,7 @@
 - ostatnia wersja wydana: `1.0.2`
 - aktualne źródło danych: Supabase
 - lokalny SQLite: usunięty z aplikacji
-- następny zakres: uruchomienie i kontrolowany test przygotowanego stagingu
+- następny zakres: zewnętrzna konfiguracja Railway, Cloudflare, GitHub Environments i dwóch projektów Supabase, a następnie kontrolowany test stagingu
 
 Migracja e-mailowego loginu znajduje się w repozytorium; jej zastosowanie i
 kontrola na zdalnym Supabase są osobnym krokiem operacyjnym.
@@ -258,6 +258,16 @@ Podstawowe sprawdzenie projektu:
 ```bash
 npm run check
 ```
+
+Konfigurację Railway sprawdza `npm run railway:check`. Po wdrożeniu workflow
+uruchamia `npm run regression:full` tylko dla `staging` z gałęzi `staging` i
+`npm run regression:smoke` dla `production` z `main`. Profile weryfikują SHA
+z `/health/release`; produkcja nie otrzymuje sekretów konta QA.
+
+Lokalnie przygotowano `railway.json`, `deploy/railway/Dockerfile`, endpointy
+gotowości i wydania, runner regresji oraz workflow GitHub Actions. Konfiguracja
+usług zewnętrznych, DNS/WAF/TLS, osobnych Supabase, migracje i wdrożenia nadal
+wymagają operatora według `docs/operations/post-deploy-regression.md`.
 
 ### 10.1 Odzyskiwanie hasła
 
