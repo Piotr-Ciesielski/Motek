@@ -623,6 +623,31 @@ test("serwer Motek działa bezpiecznie", async (t) => {
       assert.deepEqual(deletedUserIds, [syntheticUsers["token-user-a"].id]);
     });
 
+    await t.test("blokuje szóstą błędną próbę potwierdzenia hasła przy usuwaniu konta", async () => {
+      const request = () => fetch(`${baseUrl}/api/account`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          Origin: baseUrl,
+          Cookie: "motek_access_token=token-user-b",
+        },
+        body: JSON.stringify({
+          password: "BledneHaslo1!",
+          confirmation: "USUŃ KONTO",
+        }),
+      });
+
+      for (let attempt = 0; attempt < 5; attempt += 1) {
+        const response = await request();
+        assert.equal(response.status, 400);
+        assert.equal(response.headers.get("retry-after"), null);
+      }
+
+      const blockedResponse = await request();
+      assert.equal(blockedResponse.status, 429);
+      assert.equal(blockedResponse.headers.get("retry-after"), "900");
+    });
+
     await t.test("izoluje syntetyczne dane włóczek między użytkownikami", async () => {
       const userACookies = "motek_access_token=token-user-a";
       const userBCookies = "motek_access_token=token-user-b";

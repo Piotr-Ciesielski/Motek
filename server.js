@@ -67,6 +67,7 @@ const HTTP_BODY_TIMEOUT_MS = 10 * 1000;
 const MAX_MATCH_SEARCH_NODES = 25_000;
 const MAX_PATTERN_PAGE_SIZE = 50;
 const authRateLimiter = createAuthRateLimiter();
+const accountDeletionRateLimiter = createAccountDeletionRateLimiter();
 const authRequestRateLimiter = createRequestRateLimiter({
   windowMs: AUTH_REQUEST_WINDOW_MS,
   maxRequests: AUTH_REQUEST_MAX,
@@ -217,6 +218,15 @@ function createAuthRateLimiter(options = {}) {
       return entries.size;
     },
   };
+}
+
+function createAccountDeletionRateLimiter(options = {}) {
+  return createAuthRateLimiter({
+    windowMs: 15 * 60 * 1000,
+    maxFailures: 5,
+    blockMs: 15 * 60 * 1000,
+    ...options,
+  });
 }
 
 function createRequestRateLimiter(options = {}) {
@@ -1321,11 +1331,7 @@ async function handleApi(req, res, url) {
 
   if (req.method === "DELETE" && url.pathname === "/api/account") {
     const session = await requireAuthenticatedSession(req, res);
-    enforceRequestRateLimit(
-      [`ip:${getClientAddress(req)}`, `user:${session.user.id}`],
-      yarnWriteRateLimiter,
-      res,
-    );
+    const rateLimitKeys = [`ip:${getClientAddress(req)}`, `user:${session.user.id}`];
 
     const body = await readBody(req);
     let deletionInput;
@@ -1333,6 +1339,14 @@ async function handleApi(req, res, url) {
       deletionInput = validateAccountDeletionInput(body);
     } catch (error) {
       throw new ApiError(400, error.message || `Wpisz dokładnie: ${ACCOUNT_DELETION_PHRASE}.`);
+    }
+
+    const retryAfterMs = Math.max(
+      ...rateLimitKeys.map((key) => accountDeletionRateLimiter.getRetryAfterMs(key)),
+    );
+    if (retryAfterMs > 0) {
+      res.setHeader("Retry-After", String(Math.ceil(retryAfterMs / 1000)));
+      throw new ApiError(429, "Zbyt wiele nieudanych prób. Spróbuj ponownie później.");
     }
 
     try {
@@ -1344,11 +1358,13 @@ async function handleApi(req, res, url) {
       });
     } catch (error) {
       if (error.message === "Nie udało się potwierdzić hasła.") {
+        rateLimitKeys.forEach((key) => accountDeletionRateLimiter.recordFailure(key));
         throw new ApiError(400, error.message);
       }
       throw error;
     }
 
+    accountDeletionRateLimiter.clear(`user:${session.user.id}`);
     clearAuthCookies(res);
     res.writeHead(204, {
       ...SECURITY_HEADERS,
@@ -1688,6 +1704,7 @@ module.exports = {
   validateYarnStorageCapacity,
   toSupabaseYarn,
   buildAuthCookie,
+  createAccountDeletionRateLimiter,
   createAuthRateLimiter,
   createRequestRateLimiter,
   validateMatchLimits,
