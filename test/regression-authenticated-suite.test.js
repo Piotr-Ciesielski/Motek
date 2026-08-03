@@ -11,6 +11,16 @@ const credentials = {
   captchaToken: 'captcha-secret-token',
   runId: 'run-123',
 };
+const createdYarn = {
+  id: 41,
+  name: 'regression-run-123',
+  color: 'zielony',
+  materials: ['wełna'],
+  weightClass: 'dk',
+  length: 300,
+  weight: 100,
+};
+const patchedYarn = { ...createdYarn, color: 'granatowy' };
 
 function jsonResponse(status, body, headers = {}) {
   return new Response(status === 204 ? null : JSON.stringify(body), {
@@ -51,12 +61,12 @@ function successSteps() {
     { request: 'POST /api/yarns', check: ({ body, headers }) => {
       assert.deepEqual(body, { name: 'regression-run-123', color: 'zielony', materials: ['wełna'], weightClass: 'dk', length: 300, weight: 100 });
       assert.equal(headers.get('if-match'), '"v1"');
-    }, response: jsonResponse(201, { id: 41, name: 'regression-run-123' }, { etag: '"v2"' }) },
-    { request: 'GET /api/yarns', response: jsonResponse(200, [{ id: 99 }, { id: 41 }], { etag: '"v2"' }) },
+    }, response: jsonResponse(201, createdYarn, { etag: '"v2"' }) },
+    { request: 'GET /api/yarns', response: jsonResponse(200, [{ id: 99 }, createdYarn], { etag: '"v2"' }) },
     { request: 'PATCH /api/yarns/41', check: ({ headers }) => assert.equal(headers.get('if-match'), '"v2"'), response: jsonResponse(200, { id: 41 }, { etag: '"v3"' }) },
     { request: 'PATCH /api/yarns/41', check: ({ headers }) => assert.equal(headers.get('if-match'), '"v2"'), response: jsonResponse(409, { error: 'conflict' }) },
     { request: 'GET /api/matches', response: jsonResponse(200, []) },
-    { request: 'GET /api/yarns', response: jsonResponse(200, [{ id: 99 }, { id: 41 }], { etag: '"v3"' }) },
+    { request: 'GET /api/yarns', response: jsonResponse(200, [{ id: 99 }, patchedYarn], { etag: '"v3"' }) },
     { request: 'DELETE /api/yarns/41', check: ({ headers }) => assert.equal(headers.get('if-match'), '"v3"'), response: jsonResponse(204) },
     { request: 'POST /api/auth/logout', response: jsonResponse(200, { authenticated: false }) },
     { request: 'GET /api/auth/session', response: jsonResponse(200, { authenticated: false, user: null }) },
@@ -78,7 +88,7 @@ test('cleans up the exact created yarn after a later failure', async () => {
   const steps = successSteps().slice(0, 6);
   steps.push(
     { request: 'PATCH /api/yarns/41', response: jsonResponse(500, { error: 'failed' }) },
-    { request: 'GET /api/yarns', response: jsonResponse(200, [{ id: 99 }, { id: 41 }], { etag: '"cleanup"' }) },
+    { request: 'GET /api/yarns', response: jsonResponse(200, [{ id: 99 }, patchedYarn], { etag: '"cleanup"' }) },
     { request: 'DELETE /api/yarns/41', check: ({ headers }) => assert.equal(headers.get('if-match'), '"cleanup"'), response: jsonResponse(204) },
     { request: 'POST /api/auth/logout', response: jsonResponse(200, { authenticated: false }) },
   );
@@ -115,8 +125,43 @@ test('never deletes a foreign yarn when creation did not return a valid id', asy
   );
   const script = scriptedFetch(steps);
 
-  await assert.rejects(runAuthenticatedRegression({ ...credentials, fetchImpl: script.fetchImpl }), /created yarn id/i);
+  await assert.rejects(runAuthenticatedRegression({ ...credentials, fetchImpl: script.fetchImpl }), /created yarn/i);
   assert.equal(script.calls.some(({ method }) => method === 'DELETE'), false);
+});
+
+test('does not mutate a positive id when the POST response is not the unique created yarn', async () => {
+  const { runAuthenticatedRegression } = require('../scripts/regression/authenticated-suite');
+  const steps = successSteps().slice(0, 3);
+  steps.push(
+    { request: 'POST /api/yarns', response: jsonResponse(201, {
+      ...createdYarn,
+      id: 99,
+      name: 'foreign',
+    }, { etag: '"v2"' }) },
+    { request: 'POST /api/auth/logout', response: jsonResponse(200, { authenticated: false }) },
+  );
+  const script = scriptedFetch(steps);
+
+  await assert.rejects(runAuthenticatedRegression({ ...credentials, fetchImpl: script.fetchImpl }), /created yarn/i);
+
+  assert.equal(script.calls.some(({ method }) => method === 'PATCH' || method === 'DELETE'), false);
+  assert.equal(script.remaining.length, 0);
+});
+
+test('does not patch or delete when the fresh collection does not confirm the created yarn identity', async () => {
+  const { runAuthenticatedRegression } = require('../scripts/regression/authenticated-suite');
+  const steps = successSteps().slice(0, 4);
+  steps.push(
+    { request: 'GET /api/yarns', response: jsonResponse(200, [{ ...createdYarn, name: 'foreign' }], { etag: '"v2"' }) },
+    { request: 'GET /api/yarns', response: jsonResponse(200, [{ ...createdYarn, name: 'foreign' }], { etag: '"cleanup"' }) },
+    { request: 'POST /api/auth/logout', response: jsonResponse(200, { authenticated: false }) },
+  );
+  const script = scriptedFetch(steps);
+
+  await assert.rejects(runAuthenticatedRegression({ ...credentials, fetchImpl: script.fetchImpl }), /did not confirm the unique created yarn/i);
+
+  assert.equal(script.calls.some(({ method }) => method === 'PATCH' || method === 'DELETE'), false);
+  assert.equal(script.remaining.length, 0);
 });
 
 test('rejects unsafe input without exposing credentials in errors', async () => {

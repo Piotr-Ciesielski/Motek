@@ -53,6 +53,17 @@ function yarnPayload(runId) {
   };
 }
 
+function matchesYarnPayload(yarn, payload) {
+  return yarn?.name === payload.name
+    && yarn.color === payload.color
+    && Array.isArray(yarn.materials)
+    && yarn.materials.length === payload.materials.length
+    && yarn.materials.every((material, index) => material === payload.materials[index])
+    && yarn.weightClass === payload.weightClass
+    && yarn.length === payload.length
+    && yarn.weight === payload.weight;
+}
+
 async function runAuthenticatedRegression(options) {
   validateInputs(options || {});
   const { baseUrl, email, password, captchaToken, runId, fetchImpl } = options;
@@ -60,6 +71,7 @@ async function runAuthenticatedRegression(options) {
   const payload = yarnPayload(runId);
   let createdId = null;
   let recordMayExist = false;
+  let expectedStoredPayload = payload;
   let logoutAttempted = false;
   let primaryError = null;
   let cleanupError = null;
@@ -81,18 +93,28 @@ async function runAuthenticatedRegression(options) {
       headers: { 'If-Match': initialEtag },
       body: payload,
     }, 201);
-    requireCondition(Number.isInteger(created.body?.id) && created.body.id > 0, 'POST /api/yarns returned an invalid created yarn id');
+    requireCondition(
+      Number.isInteger(created.body?.id) && created.body.id > 0 && matchesYarnPayload(created.body, payload),
+      'POST /api/yarns did not return the unique created yarn',
+    );
     createdId = created.body.id;
     recordMayExist = true;
 
     const afterCreate = await requireJson(session, '/api/yarns');
     const afterCreateEtag = requireEtag(afterCreate.response, 'GET /api/yarns');
+    requireCondition(
+      Array.isArray(afterCreate.body)
+        && afterCreate.body.some((yarn) => yarn?.id === createdId && matchesYarnPayload(yarn, payload)),
+      'GET /api/yarns did not confirm the unique created yarn',
+    );
     const yarnPath = `/api/yarns/${createdId}`;
+    const patchedPayload = { ...payload, color: 'granatowy' };
     await requireJson(session, yarnPath, {
       method: 'PATCH',
       headers: { 'If-Match': afterCreateEtag },
-      body: { ...payload, color: 'granatowy' },
+      body: patchedPayload,
     });
+    expectedStoredPayload = patchedPayload;
     await requireResponse(session, yarnPath, {
       method: 'PATCH',
       headers: { 'If-Match': afterCreateEtag },
@@ -118,7 +140,8 @@ async function runAuthenticatedRegression(options) {
     if (recordMayExist && createdId !== null) {
       try {
         const current = await requireJson(session, '/api/yarns');
-        const stillExists = Array.isArray(current.body) && current.body.some((yarn) => yarn?.id === createdId);
+        const stillExists = Array.isArray(current.body)
+          && current.body.some((yarn) => yarn?.id === createdId && matchesYarnPayload(yarn, expectedStoredPayload));
         if (stillExists) {
           await requireResponse(session, `/api/yarns/${createdId}`, {
             method: 'DELETE',
