@@ -69,7 +69,6 @@ const networkStatus = document.getElementById("networkStatus");
 const REQUEST_TIMEOUT_MS = 12_000;
 const READ_RETRY_DELAY_MS = 700;
 const {
-  bindHoldToReveal,
   buildAuthPayload,
   buildPatternFacetCounts,
   buildPatternFacetOptions,
@@ -84,6 +83,7 @@ const {
   getMatchFreshnessState,
   getYarnSaveHint,
   isDeleteConfirmed,
+  initializePasswordRevealControls,
   loadPaginatedItems,
   shouldRetryRead,
 } = window.MotekClientPolicy;
@@ -1263,10 +1263,7 @@ document.querySelectorAll("label").forEach((label) => {
   if (field?.id) label.htmlFor = field.id;
 });
 
-document.querySelectorAll("[data-password-reveal]").forEach((button) => {
-  const field = document.getElementById(button.dataset.passwordReveal);
-  bindHoldToReveal(button, field);
-});
+initializePasswordRevealControls(document);
 
 async function loadYarns() {
   if (!isAuthenticated) return [];

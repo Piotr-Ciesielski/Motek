@@ -14,5 +14,8 @@
   },
   "dependencies": {
     "@supabase/supabase-js": "2.110.8"
+  },
+  "devDependencies": {
+    "jsdom": "30.0.1"
   }
 }

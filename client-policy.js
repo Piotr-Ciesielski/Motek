@@ -76,6 +76,13 @@
     });
   }
 
+  function initializePasswordRevealControls(documentRoot) {
+    documentRoot.querySelectorAll("[data-password-reveal]").forEach((button) => {
+      const input = documentRoot.getElementById(button.dataset.passwordReveal);
+      if (input) bindHoldToReveal(button, input);
+    });
+  }
+
   function getProjectTypeLabel(value) {
     return (projectTypeLabels[value] || projectTypeLabels.other).card;
   }
@@ -412,6 +419,7 @@
 
   return {
     bindHoldToReveal,
+    initializePasswordRevealControls,
     buildAuthPayload,
     buildPatternFacetCounts,
     buildPatternFacetOptions,

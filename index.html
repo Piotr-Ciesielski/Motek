@@ -170,7 +170,11 @@
               <label for="account-delete-password">Twoje hasło</label>
               <span class="password-field">
                 <input id="account-delete-password" name="password" type="password" autocomplete="current-password" required aria-describedby="deleteAccountHint deleteAccountMessage" />
-                <button class="password-toggle" type="button" data-password-toggle="account-delete-password" aria-controls="account-delete-password" aria-pressed="false" aria-label="Pokaż hasło">Pokaż</button>
+                <button class="password-reveal" type="button"
+                  data-password-reveal="account-delete-password"
+                  aria-controls="account-delete-password" aria-pressed="false"
+                  aria-label="Przytrzymaj, aby pokazać hasło">
+                </button>
               </span>
             </div>
             <label for="account-delete-confirmation">
