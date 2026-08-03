@@ -6,3 +6,8 @@ deploy/staging/certs
 npm-debug.log*
 docs
 test
+.agents
+.codex
+.superpowers
+coverage
+*.md
