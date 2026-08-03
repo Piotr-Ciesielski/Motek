@@ -6,7 +6,7 @@ const test = require("node:test");
 const indexHtml = readFileSync(path.join(__dirname, "..", "index.html"), "utf8");
 const stylesCss = readFileSync(path.join(__dirname, "..", "styles.css"), "utf8");
 const appJs = readFileSync(path.join(__dirname, "..", "app.js"), "utf8");
-const serverJs = readFileSync(path.join(__dirname, "..", "server.js"), "utf8");
+const staticFilesJs = readFileSync(path.join(__dirname, "..", "server", "static-files.js"), "utf8");
 
 test("inventory keeps the selected design composition", () => {
   assert.match(indexHtml, /class="inventory-layout"/);
@@ -90,10 +90,8 @@ test("theme artwork uses optimized immutable assets", () => {
     (indexHtml.match(/data-dark-src="assets\/night-yarn-cat\.v1\.webp"/g) || []).length,
     2,
   );
-  assert.match(serverJs, /"\.webp": "image\/webp"/);
-  assert.match(serverJs, /public, max-age=31536000, immutable/);
-  assert.match(serverJs, /url\.pathname === "\/assets\/color-yarn-cat\.v1\.webp"/);
-  assert.match(serverJs, /url\.pathname === "\/assets\/night-yarn-cat\.v1\.webp"/);
+  assert.match(staticFilesJs, /"\.webp": "image\/webp"/);
+  assert.match(staticFilesJs, /public, max-age=31536000, immutable/);
 });
 
 test("inventory artwork keeps the prototype crop and focal point", () => {

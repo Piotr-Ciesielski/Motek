@@ -129,14 +129,19 @@ function createSupabaseAuthClient(config, accessToken, clientOptions = {}) {
   return createClient(config.url, config.publishableKey, options);
 }
 
-async function verifySupabaseDataApi(config, fetchImpl = globalThis.fetch) {
+async function verifySupabaseDataApi(
+  config,
+  fetchImpl = globalThis.fetch,
+  timeoutMs = SUPABASE_AUTH_REQUEST_TIMEOUT_MS,
+) {
   if (typeof fetchImpl !== "function") {
     throw new Error("Ta wersja Node.js nie udostępnia funkcji fetch wymaganej przez Supabase.");
   }
 
   let response;
   try {
-    response = await fetchImpl(`${config.url}/rest/v1/`, {
+    const timedFetch = createTimedFetch(fetchImpl, timeoutMs);
+    response = await timedFetch(`${config.url}/rest/v1/`, {
       method: "GET",
       headers: {
         Accept: "application/openapi+json",
@@ -174,7 +179,7 @@ function createSupabaseConnection(options = {}) {
 
   return {
     client,
-    verify: () => verifySupabaseDataApi(config, options.fetchImpl),
+    verify: () => verifySupabaseDataApi(config, options.fetchImpl, options.timeoutMs),
   };
 }
 

@@ -1,0 +1,9 @@
+node_modules/
+.worktrees/
+build/
+dist/
+coverage/
+tmp/
+__pycache__/
+supabase/.branches/
+supabase/.temp/
