@@ -32,6 +32,7 @@ const {
   selectMatchingYarns,
 } = require("./server/matching-service");
 const { createStaticFileHandler } = require("./server/static-files");
+const { createPatternRouter } = require("./server/pattern-routes");
 
 const rootDir = __dirname;
 let server;
@@ -125,6 +126,14 @@ const staticFileHandler = createStaticFileHandler({
     "/assets/night-yarn-cat.v1.webp": "assets/night-yarn-cat.v1.webp",
     "/favicon.svg": "favicon.svg",
   },
+});
+
+const patternRouter = createPatternRouter({
+  sendJson,
+  requireAuthenticatedSession,
+  getCatalogPatterns,
+  getSupabaseMatches,
+  parsePatternPage,
 });
 
 class ApiError extends Error {
@@ -1244,16 +1253,7 @@ async function handleApi(req, res, url) {
     return sendYarnMutationResponse(res, 204, mutation);
   }
 
-  if (req.method === "GET" && url.pathname === "/api/patterns") {
-    return sendJson(res, 200, await getCatalogPatterns(parsePatternPage(url)));
-  }
-
-  if (req.method === "GET" && url.pathname === "/api/matches") {
-    const session = await requireAuthenticatedSession(req, res);
-    const result = await getSupabaseMatches(session);
-    res.setHeader("X-Motek-Match-Scope", result.limited ? "subset" : "full");
-    return sendJson(res, 200, result.matches);
-  }
+  if (await patternRouter.handle(req, res, url)) return;
 
   sendJson(res, 404, { error: "Nieznany endpoint" });
 }
