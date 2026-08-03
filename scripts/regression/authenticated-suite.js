@@ -1,0 +1,151 @@
+'use strict';
+
+const { createHttpSession } = require('./http-session');
+
+const RUN_ID_PATTERN = /^[a-z0-9](?:[a-z0-9-]{0,30}[a-z0-9])?$/;
+
+function requireCondition(condition, message) {
+  if (!condition) throw new Error(message);
+}
+
+function validateInputs({ baseUrl, email, password, captchaToken, runId }) {
+  requireCondition(typeof baseUrl === 'string' && baseUrl.trim(), 'Regression base URL is required');
+  requireCondition(typeof email === 'string' && email.trim(), 'Regression email is required');
+  requireCondition(typeof password === 'string' && password, 'Regression password is required');
+  requireCondition(typeof captchaToken === 'string' && captchaToken.trim(), 'Regression CAPTCHA token is required');
+  requireCondition(RUN_ID_PATTERN.test(String(runId || '')), 'Regression runId must be a short safe identifier');
+}
+
+async function readJson(response, label) {
+  try {
+    return JSON.parse(await response.text());
+  } catch {
+    throw new Error(`${label} returned invalid JSON`);
+  }
+}
+
+async function requireResponse(session, path, options, expectedStatus) {
+  const method = String(options?.method || 'GET').toUpperCase();
+  const response = await session.request(path, options);
+  requireCondition(response.status === expectedStatus, `${method} ${path} returned status ${response.status}`);
+  return response;
+}
+
+async function requireJson(session, path, options = {}, expectedStatus = 200) {
+  const response = await requireResponse(session, path, options, expectedStatus);
+  return { response, body: await readJson(response, `${String(options.method || 'GET').toUpperCase()} ${path}`) };
+}
+
+function requireEtag(response, label) {
+  const etag = response.headers.get('etag');
+  requireCondition(Boolean(etag), `${label} did not return an ETag`);
+  return etag;
+}
+
+function yarnPayload(runId) {
+  return {
+    name: `regression-${runId}`,
+    color: 'zielony',
+    materials: ['wełna'],
+    weightClass: 'dk',
+    length: 300,
+    weight: 100,
+  };
+}
+
+async function runAuthenticatedRegression(options) {
+  validateInputs(options || {});
+  const { baseUrl, email, password, captchaToken, runId, fetchImpl } = options;
+  const session = createHttpSession({ baseUrl, origin: new URL(baseUrl).origin, fetchImpl: fetchImpl || globalThis.fetch });
+  const payload = yarnPayload(runId);
+  let createdId = null;
+  let recordMayExist = false;
+  let logoutAttempted = false;
+  let primaryError = null;
+  let cleanupError = null;
+  let logoutError = null;
+
+  try {
+    await requireJson(session, '/api/auth/login', {
+      method: 'POST',
+      body: { email, password, captchaToken },
+    });
+
+    const authenticated = await requireJson(session, '/api/auth/session');
+    requireCondition(authenticated.body?.authenticated === true, 'Authenticated session was not established');
+
+    const initial = await requireJson(session, '/api/yarns');
+    const initialEtag = requireEtag(initial.response, 'GET /api/yarns');
+    const created = await requireJson(session, '/api/yarns', {
+      method: 'POST',
+      headers: { 'If-Match': initialEtag },
+      body: payload,
+    }, 201);
+    requireCondition(Number.isInteger(created.body?.id) && created.body.id > 0, 'POST /api/yarns returned an invalid created yarn id');
+    createdId = created.body.id;
+    recordMayExist = true;
+
+    const afterCreate = await requireJson(session, '/api/yarns');
+    const afterCreateEtag = requireEtag(afterCreate.response, 'GET /api/yarns');
+    const yarnPath = `/api/yarns/${createdId}`;
+    await requireJson(session, yarnPath, {
+      method: 'PATCH',
+      headers: { 'If-Match': afterCreateEtag },
+      body: { ...payload, color: 'granatowy' },
+    });
+    await requireResponse(session, yarnPath, {
+      method: 'PATCH',
+      headers: { 'If-Match': afterCreateEtag },
+      body: payload,
+    }, 409);
+
+    await requireJson(session, '/api/matches');
+    const beforeDelete = await requireJson(session, '/api/yarns');
+    const beforeDeleteEtag = requireEtag(beforeDelete.response, 'GET /api/yarns');
+    await requireResponse(session, yarnPath, {
+      method: 'DELETE',
+      headers: { 'If-Match': beforeDeleteEtag },
+    }, 204);
+    recordMayExist = false;
+
+    logoutAttempted = true;
+    await requireJson(session, '/api/auth/logout', { method: 'POST' });
+    const loggedOut = await requireJson(session, '/api/auth/session');
+    requireCondition(loggedOut.body?.authenticated === false, 'Session remained authenticated after logout');
+  } catch (error) {
+    primaryError = error;
+  } finally {
+    if (recordMayExist && createdId !== null) {
+      try {
+        const current = await requireJson(session, '/api/yarns');
+        const stillExists = Array.isArray(current.body) && current.body.some((yarn) => yarn?.id === createdId);
+        if (stillExists) {
+          await requireResponse(session, `/api/yarns/${createdId}`, {
+            method: 'DELETE',
+            headers: { 'If-Match': requireEtag(current.response, 'GET /api/yarns during cleanup') },
+          }, 204);
+        }
+      } catch (error) {
+        cleanupError = error;
+      }
+    }
+
+    if (!logoutAttempted) {
+      try {
+        await requireJson(session, '/api/auth/logout', { method: 'POST' });
+      } catch (error) {
+        logoutError = error;
+      }
+    }
+  }
+
+  if (primaryError) {
+    if (cleanupError) primaryError.cleanupError = cleanupError;
+    if (logoutError) primaryError.logoutError = logoutError;
+    throw primaryError;
+  }
+  if (cleanupError) throw cleanupError;
+  if (logoutError) throw logoutError;
+}
+
+module.exports = { runAuthenticatedRegression };
