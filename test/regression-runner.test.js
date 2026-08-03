@@ -132,6 +132,15 @@ test('pełny profil wymaga stagingu i danych QA, ale żadnego sekretu administra
   assert.equal(config.supabaseSecret, undefined);
 });
 
+test('sanityzuje komunikat regresji bez ujawniania sekretów ani pełnych URL-i', () => {
+  const { sanitizeErrorMessage } = require('../scripts/run-regression');
+  const message = sanitizeErrorMessage(
+    new Error('POST https://staging.example.test/api/auth/login failed for qa@example.test with pass-123'),
+    { MOTEK_QA_EMAIL: 'qa@example.test', MOTEK_QA_PASSWORD: 'pass-123' },
+  );
+  assert.equal(message, 'POST [url] failed for [redacted] with [redacted]');
+});
+
 test('uruchamia wait, public i authenticated w kolejności oraz przekazuje apex dla produkcji smoke', async (t) => {
   const { loadConfig, runRegression } = require('../scripts/run-regression');
   await t.test('full staging', async () => {
