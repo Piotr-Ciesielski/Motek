@@ -417,6 +417,44 @@
     };
   }
 
+  // Pobiera pojedynczą stronę, zachowując już załadowane elementy do kolejnego wywołania.
+  async function loadNextPaginatedPage(
+    fetchPage,
+    { items = [], offset = 0, total = items.length } = {},
+  ) {
+    const loadedItems = [...items];
+    const knownIds = new Set(loadedItems.map((item) => String(item.id)));
+    try {
+      const page = await fetchPage(offset);
+      const pageItems = Array.isArray(page?.items) ? page.items : [];
+      pageItems.forEach((item) => {
+        const id = String(item.id);
+        if (knownIds.has(id)) return;
+        knownIds.add(id);
+        loadedItems.push(item);
+      });
+      const nextOffset = offset + pageItems.length;
+      const nextTotal = Number.isInteger(page?.total) ? page.total : total;
+      const complete = !page?.hasMore && (pageItems.length > 0 || loadedItems.length >= nextTotal);
+      return {
+        items: loadedItems,
+        nextOffset,
+        total: nextTotal,
+        complete,
+        error: null,
+      };
+    } catch (error) {
+      if (!loadedItems.length) throw error;
+      return { items: loadedItems, nextOffset: offset, total, complete: false, error };
+    }
+  }
+
+  function formatCatalogSummary({ visible = 0, matching = 0, loaded = 0, total = 0, complete = true } = {}) {
+    return `Pokazano ${Number(visible).toLocaleString("pl-PL")} z ${Number(matching).toLocaleString("pl-PL")} pasujących wzorów.`
+      + ` Załadowano ${Number(loaded).toLocaleString("pl-PL")} z ${Number(total).toLocaleString("pl-PL")} wzorów.`
+      + (complete ? "" : " Pobieram kolejne wzory...");
+  }
+
   return {
     bindHoldToReveal,
     initializePasswordRevealControls,
@@ -435,6 +473,8 @@
     getYarnSaveHint,
     isDeleteConfirmed,
     loadPaginatedItems,
+    loadNextPaginatedPage,
+    formatCatalogSummary,
     matchesPatternFilters,
     shouldRetryRead,
     yarnsHaveSameValues,

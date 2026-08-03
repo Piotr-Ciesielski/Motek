@@ -85,6 +85,8 @@ const {
   isDeleteConfirmed,
   initializePasswordRevealControls,
   loadPaginatedItems,
+  loadNextPaginatedPage,
+  formatCatalogSummary,
   shouldRetryRead,
 } = window.MotekClientPolicy;
 const {
@@ -1323,15 +1325,16 @@ async function loadMatches() {
 }
 
 async function loadPatternCatalog({ resume = false, onPage = null } = {}) {
-  return loadPaginatedItems(
+  const result = await loadNextPaginatedPage(
     (offset) => api(`/api/patterns?limit=50&offset=${offset}`),
     {
       items: resume ? catalogPatterns : [],
       offset: resume ? catalogNextOffset : 0,
       total: resume ? catalogTotal : 0,
-      onPage,
-    }
+    },
   );
+  onPage?.(result);
+  return result;
 }
 
 function formatRatio(value) {
@@ -1536,10 +1539,13 @@ function renderPatternCatalog() {
   const visiblePatterns = matchingPatterns.slice(0, catalogVisibleLimit);
 
   const totalCatalog = Math.max(catalogTotal, catalogPatterns.length);
-  patternCatalogSummary.textContent =
-    `Pokazano ${formatNumber(visiblePatterns.length)} z ${formatNumber(matchingPatterns.length)} pasujących wzorów. ` +
-    `Cały katalog: ${formatNumber(totalCatalog)}.` +
-    (catalogComplete ? "" : " Pobieram kolejne wzory...");
+  patternCatalogSummary.textContent = formatCatalogSummary({
+    visible: visiblePatterns.length,
+    matching: matchingPatterns.length,
+    loaded: catalogPatterns.length,
+    total: totalCatalog,
+    complete: catalogComplete,
+  });
   patternCatalog.replaceChildren();
   patternCatalogActions.hidden = matchingPatterns.length === 0;
   loadMorePatternsBtn.hidden = visiblePatterns.length >= matchingPatterns.length;
@@ -2248,9 +2254,14 @@ resetCatalogFiltersBtn.addEventListener("click", () => {
   resetPatternCatalogView();
   patternSearch.focus({ preventScroll: true });
 });
-loadMorePatternsBtn.addEventListener("click", () => {
-  catalogVisibleLimit += 12;
-  renderPatternCatalog();
+loadMorePatternsBtn.addEventListener("click", async () => {
+  if (catalogVisibleLimit < filterPatterns(catalogPatterns, readPatternFilters()).length) {
+    catalogVisibleLimit += 12;
+    renderPatternCatalog();
+    return;
+  }
+  if (catalogComplete || patternCatalog.hasAttribute("aria-busy")) return;
+  await refreshPatternCatalog({ resume: true });
 });
 backToCatalogFiltersBtn.addEventListener("click", () => {
   document.getElementById("catalogFilters").scrollIntoView({
