@@ -14,12 +14,75 @@ const {
   getExistingYarnState,
   getMatchFreshnessState,
   getYarnSaveHint,
+  withYarnVersionRetry,
   isDeleteConfirmed,
   loadPaginatedItems,
   loadNextPaginatedPage,
   shouldRetryRead,
   yarnsHaveSameValues,
 } = require("../client-policy");
+
+test("odświeża wersję przed zapisem i ponawia jednorazowo po HTTP 428", async () => {
+  let version = null;
+  let refreshes = 0;
+  let writes = 0;
+
+  const result = await withYarnVersionRetry({
+    getVersion: () => version,
+    refreshVersion: async () => {
+      refreshes += 1;
+      version = '"yarn-v4"';
+    },
+    operation: async () => {
+      writes += 1;
+      if (writes === 1) {
+        const error = new Error("missing version");
+        error.status = 428;
+        throw error;
+      }
+      return "saved";
+    },
+  });
+
+  assert.equal(result, "saved");
+  assert.equal(refreshes, 2);
+  assert.equal(writes, 2);
+});
+
+test("nie ponawia niepowiązanego błędu ani drugiego HTTP 428", async () => {
+  let refreshes = 0;
+  let writes = 0;
+  const error = new Error("still missing version");
+  error.status = 428;
+
+  await assert.rejects(
+    withYarnVersionRetry({
+      getVersion: () => '"yarn-v4"',
+      refreshVersion: async () => { refreshes += 1; },
+      operation: async () => {
+        writes += 1;
+        throw error;
+      },
+    }),
+    (caught) => caught === error,
+  );
+
+  assert.equal(refreshes, 1);
+  assert.equal(writes, 2);
+});
+
+test("nie odświeża wersji, gdy bieżąca wersja jest poprawna", async () => {
+  let refreshes = 0;
+
+  const result = await withYarnVersionRetry({
+    getVersion: () => '"yarn-v7"',
+    refreshVersion: async () => { refreshes += 1; },
+    operation: async () => "saved",
+  });
+
+  assert.equal(result, "saved");
+  assert.equal(refreshes, 0);
+});
 
 test("ładuje dokładnie jedną stronę katalogu i deduplikuje elementy", async () => {
   const calls = [];

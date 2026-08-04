@@ -84,6 +84,7 @@ const {
   getExistingYarnState,
   getMatchFreshnessState,
   getYarnSaveHint,
+  withYarnVersionRetry,
   isDeleteConfirmed,
   initializePasswordRevealControls,
   loadNextPaginatedPage,
@@ -877,10 +878,14 @@ async function saveNewYarn(card) {
   setStorageMessage("Zapisuję motek...");
   let savedYarn;
   try {
-    savedYarn = await api("/api/yarns", {
-      method: "POST",
-      headers: { "If-Match": yarnVersion },
-      body: JSON.stringify(draft),
+    savedYarn = await withYarnVersionRetry({
+      getVersion: () => yarnVersion,
+      refreshVersion: () => loadYarns(),
+      operation: () => api("/api/yarns", {
+        method: "POST",
+        headers: { "If-Match": yarnVersion },
+        body: JSON.stringify(draft),
+      }),
     });
   } catch (error) {
     if (isYarnVersionConflict(error)) {
@@ -919,10 +924,14 @@ async function saveExistingYarn(card) {
   setStorageMessage("Zapisuję zmiany motka...");
   let savedYarn;
   try {
-    savedYarn = await api(`/api/yarns/${card.dataset.id}`, {
-      method: "PATCH",
-      headers: { "If-Match": yarnVersion },
-      body: JSON.stringify(draft),
+    savedYarn = await withYarnVersionRetry({
+      getVersion: () => yarnVersion,
+      refreshVersion: () => loadYarns(),
+      operation: () => api(`/api/yarns/${card.dataset.id}`, {
+        method: "PATCH",
+        headers: { "If-Match": yarnVersion },
+        body: JSON.stringify(draft),
+      }),
     });
   } catch (error) {
     if (isYarnVersionConflict(error)) {
@@ -1205,9 +1214,13 @@ async function deleteYarn(id) {
   if (!isAuthenticated) {
     throw new Error("Zaloguj się, aby zmieniać swój magazyn włóczek.");
   }
-  await api(`/api/yarns/${id}`, {
-    method: "DELETE",
-    headers: { "If-Match": yarnVersion },
+  await withYarnVersionRetry({
+    getVersion: () => yarnVersion,
+    refreshVersion: () => loadYarns(),
+    operation: () => api(`/api/yarns/${id}`, {
+      method: "DELETE",
+      headers: { "If-Match": yarnVersion },
+    }),
   });
 }
 
