@@ -54,6 +54,18 @@ test("captcha initializes even when the page opens from password recovery", () =
   assert.doesNotMatch(appJs, /const recoveryHandled = await startPasswordRecovery\(\);\s*if \(recoveryHandled\) return;/);
 });
 
+test("password recovery exchanges only a one-time code while signup handles URL tokens", () => {
+  assert.match(appJs, /const code = query\.get\("code"\)/);
+  assert.match(appJs, /body: JSON\.stringify\(\{ code \}\)/);
+  assert.match(appJs, /hash\.get\("access_token"\)/);
+  assert.match(appJs, /access_token: accessToken/);
+});
+
+test("email confirmation removes signup tokens from the address", () => {
+  assert.match(appJs, /hash\.get\("type"\) === "signup"/);
+  assert.match(appJs, /api\("\/api\/auth\/confirmation"/);
+});
+
 test("inventory and matches artwork have no caption overlays", () => {
   assert.doesNotMatch(indexHtml, /id="inventoryHeroCaption"/);
   assert.doesNotMatch(indexHtml, /id="matchesHeroCaption"/);
@@ -64,6 +76,16 @@ test("light and dark variants define the prototype layout rules", () => {
   assert.match(stylesCss, /\[data-theme="dark"\] \.app-header/);
   assert.match(stylesCss, /#inventoryView \.inventory-layout/);
   assert.match(stylesCss, /object-position: center/);
+});
+
+test("dark hero panel keeps readable text on its dark gradient", () => {
+  assert.match(stylesCss, /--on-hero:\s*#f3eadc/);
+  assert.match(stylesCss, /\.auth-visual\s*\{[\s\S]*?color:\s*var\(--on-hero\)/);
+  assert.match(stylesCss, /\.auth-visual::after\s*\{[\s\S]*?var\(--on-hero\)/);
+  assert.match(stylesCss, /\.auth-visual h1\s*\{[\s\S]*?color:\s*var\(--on-hero\)/);
+  assert.match(stylesCss, /\.auth-visual \.lead\s*\{[\s\S]*?var\(--on-hero\)/);
+  assert.match(stylesCss, /\.hero-cta\s*\{[\s\S]*?color:\s*var\(--on-hero\)/);
+  assert.match(stylesCss, /\.hero-cta\s*\{[\s\S]*?color-mix\(in srgb, var\(--on-hero\)/);
 });
 
 test("mobile inventory orders stats before stock and artwork", () => {
@@ -89,6 +111,13 @@ test("inventory stats update together with the existing summary", () => {
   assert.match(appJs, /const inventoryStats = document\.getElementById\("inventoryStats"\)/);
   assert.match(appJs, /inventoryStats\?\.replaceChildren/);
   assert.match(appJs, /inventoryAddYarnBtn\.addEventListener/);
+});
+
+test("catalog controller asset has a deployment cache buster", () => {
+  assert.match(
+    indexHtml,
+    /client\/catalog-controller\.js\?v=2\.0\.0-alpha\.39&rev=[a-f0-9]{7,40}/,
+  );
 });
 
 test("theme artwork uses optimized immutable assets", () => {

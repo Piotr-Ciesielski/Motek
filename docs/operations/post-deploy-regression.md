@@ -12,7 +12,7 @@ użytkownik -> Cloudflare (DNS, proxy, WAF, TLS)
 ```
 
 - `staging.rysia.org` prowadzi do Railway `staging`, gałęzi `staging` i stagingowego Supabase z wyłącznie testowymi danymi.
-- `www.rysia.org` prowadzi do Railway `production`, gałęzi `main` i produkcyjnego Supabase.
+- `www.rysia.org` prowadzi do Railway `production`, gałęzi `main` i produkcyjnego Supabase. Auto-deploy produkcji jest wyłączony.
 - `rysia.org` wykonuje stałe przekierowanie 301 lub 308 do `www.rysia.org`, z zachowaniem ścieżki i parametrów.
 - Cloudflare używa TLS **Full (strict)** i weryfikuje certyfikat Railway.
 
@@ -22,13 +22,19 @@ użytkownik -> Cloudflare (DNS, proxy, WAF, TLS)
 2. Najpierw skonfiguruj staging, zastosuj migracje, dodaj testowe dane i konto QA, a potem podłącz `staging.rysia.org`.
 3. Uruchom `npm run railway:check`, wdróż gałąź `staging` i wymagaj zielonego `regression:full` oraz ręcznej macierzy z sekcji 8. Każde niepowodzenie oznacza **no-go**.
 4. Dopiero po przejściu stagingu skonfiguruj produkcyjny Supabase i Railway, zastosuj ocenione migracje i wdróż `main`.
-5. Sprawdź produkcję na domenie Railway, potem własną domenę i `regression:smoke`. Wykonaj ręczny QA z sekcji 11 przed skierowaniem ruchu.
+5. Po ręcznym uruchomieniu deployu sprawdź produkcję na domenie Railway, potem własną domenę i `regression:smoke`. Wykonaj ręczny QA z sekcji 11.
 
 Automat nie tworzy środowisk, DNS, WAF, kluczy Turnstile ani konta QA; nie stosuje migracji, nie importuje wzorów, nie promuje wdrożenia i nie robi rollbacku. Nie automatyzuje rejestracji, potwierdzenia e-maila, resetu hasła ani usunięcia konta na prawdziwym Turnstile.
 
 ## 3. Railway
 
-Połącz `staging` z gałęzią `staging`, a `production` z `main`. Ustaw jedną replikę. `railway.json` i `deploy/railway/Dockerfile` definiują start `node server.js`, Node.js 24, healthcheck `/health/ready`, 300 sekund oczekiwania i restart po błędzie. `PORT` pozostaw Railway — nie twórz ani nie nadpisuj tej zmiennej.
+Połącz `staging` z gałęzią `staging`, a `production` z `main`. Staging wdraża się automatycznie po pushu, natomiast produkcja wymaga ręcznego deployu. Ustaw jedną replikę. `railway.json` i `deploy/railway/Dockerfile` definiują start `node server.js`, Node.js 24, healthcheck `/health/ready`, 300 sekund oczekiwania i restart po błędzie. `PORT` pozostaw Railway — nie twórz ani nie nadpisuj tej zmiennej.
+
+Ręczny deploy produkcji:
+
+```powershell
+railway redeploy --service Motek --environment production --from-source --yes
+```
 
 W Railway Variables ustaw osobno dla każdego środowiska:
 
@@ -115,7 +121,7 @@ Nie wklejaj sekretów do polecenia, logu ani raportu. Workflow pobiera je z wła
 
 ## 8. Macierz testów
 
-| Obszar | Staging auto `full` | Produkcja auto `smoke` | Ręcznie | Powód |
+| Obszar | Staging auto `full` | Produkcja po ręcznym deployu `smoke` | Ręcznie | Powód |
 | --- | --- | --- | --- | --- |
 | SHA, live, ready, HTTPS | tak | tak | przy diagnozie | automat potwierdza dokładny release |
 | frontend, CSS, JS, CSP, brak CORS | tak | tak | widok telefon/desktop | automat nie ocenia wyglądu |

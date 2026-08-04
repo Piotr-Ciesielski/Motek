@@ -35,7 +35,9 @@ function createYarnRouter(dependencies) {
       if (req.method === "GET" && url.pathname === "/api/yarns") {
         const session = await requireAuthenticatedSession(req, res);
         const yarns = await getSupabaseYarns(session);
-        res.setHeader("ETag", getYarnCollectionVersion(await getSupabaseYarnVersion(session)));
+        const version = getYarnCollectionVersion(await getSupabaseYarnVersion(session));
+        res.setHeader("ETag", version);
+        res.setHeader("X-Motek-Yarn-Version", version);
         sendJson(res, 200, yarns);
         return true;
       }

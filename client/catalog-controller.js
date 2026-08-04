@@ -1,4 +1,9 @@
-'use strict';
+(function exposeCatalogController(root, factory) {
+  const api = factory();
+  if (typeof module === "object" && module.exports) module.exports = api;
+  if (root) root.createCatalogController = api.createCatalogController;
+})(typeof window !== "undefined" ? window : globalThis, () => {
+"use strict";
 
 /**
  * Small state controller for catalog screens.
@@ -107,5 +112,5 @@ function createCatalogController(options) {
   return controller;
 }
 
-module.exports = { createCatalogController };
-if (typeof window !== 'undefined') window.createCatalogController = createCatalogController;
+return { createCatalogController };
+});

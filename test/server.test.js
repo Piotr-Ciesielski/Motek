@@ -275,6 +275,7 @@ test("serwer Motek działa bezpiecznie", async (t) => {
   let versionedRpcBatchScheduled = false;
   let nextSyntheticYarnId = 1;
   const recoveryRequests = [];
+  const exchangedRecoveryCodes = [];
   const signUpRequests = [];
   const deletedUserIds = [];
 
@@ -382,6 +383,16 @@ test("serwer Motek działa bezpiecznie", async (t) => {
         async resetPasswordForEmail(email, options) {
           recoveryRequests.push({ email, options });
           return { data: {}, error: null };
+        },
+        async exchangeCodeForSession(code) {
+          exchangedRecoveryCodes.push(code);
+          return {
+            data: {
+              user: syntheticUsers["token-user-a"],
+              session: { access_token: "token-user-a", refresh_token: "refresh-user-a" },
+            },
+            error: null,
+          };
         },
         async setSession({ access_token, refresh_token }) {
           assert.equal(access_token, token);
@@ -630,7 +641,11 @@ test("serwer Motek działa bezpiecznie", async (t) => {
       });
       assert.deepEqual(signUpRequests.at(-1), {
         email: "nowy@example.com",
-        options: { data: { login: "nowy@example.com" }, captchaToken: "register-token" },
+        options: {
+          data: { login: "nowy@example.com" },
+          captchaToken: "register-token",
+          emailRedirectTo: `${baseUrl}/?confirmed=1`,
+        },
       });
 
       const loginResponse = await fetch(`${baseUrl}/api/auth/login`, {
@@ -663,12 +678,10 @@ test("serwer Motek działa bezpiecznie", async (t) => {
       const recoveryResponse = await fetch(`${baseUrl}/api/auth/recovery`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Origin: baseUrl },
-        body: JSON.stringify({
-          access_token: "token-user-a",
-          refresh_token: "refresh-user-a",
-        }),
+        body: JSON.stringify({ code: "recovery-code" }),
       });
       assert.equal(recoveryResponse.status, 200);
+      assert.deepEqual(exchangedRecoveryCodes, ["recovery-code"]);
       const recoveryCookies = recoveryResponse.headers
         .getSetCookie()
         .map((cookie) => cookie.split(";", 1)[0])

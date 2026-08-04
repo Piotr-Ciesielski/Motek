@@ -84,6 +84,8 @@ const {
   getExistingYarnState,
   getMatchFreshnessState,
   getYarnSaveHint,
+  readYarnVersionHeader,
+  withYarnVersionRetry,
   isDeleteConfirmed,
   initializePasswordRevealControls,
   loadNextPaginatedPage,
@@ -369,7 +371,7 @@ async function api(path, options = {}) {
     const payload = isResponseEnvelope(result) ? result.data : result;
     const response = isResponseEnvelope(result) ? result.response : result?.response;
     if (path === "/api/yarns" || path.startsWith("/api/yarns/")) {
-      yarnVersion = response?.headers?.get?.("etag") || yarnVersion;
+      yarnVersion = readYarnVersionHeader(response?.headers) || yarnVersion;
     }
     api.lastMatchScope = path === "/api/matches"
       ? response?.headers?.get?.("X-Motek-Match-Scope") || "full"
@@ -906,10 +908,14 @@ async function saveNewYarn(card) {
   setStorageMessage("Zapisuję motek...");
   let savedYarn;
   try {
-    savedYarn = await api("/api/yarns", {
-      method: "POST",
-      headers: { "If-Match": yarnVersion },
-      body: JSON.stringify(draft),
+    savedYarn = await withYarnVersionRetry({
+      getVersion: () => yarnVersion,
+      refreshVersion: () => loadYarns(),
+      operation: () => api("/api/yarns", {
+        method: "POST",
+        headers: { "If-Match": yarnVersion },
+        body: JSON.stringify(draft),
+      }),
     });
   } catch (error) {
     if (isYarnVersionConflict(error)) {
@@ -948,10 +954,14 @@ async function saveExistingYarn(card) {
   setStorageMessage("Zapisuję zmiany motka...");
   let savedYarn;
   try {
-    savedYarn = await api(`/api/yarns/${card.dataset.id}`, {
-      method: "PATCH",
-      headers: { "If-Match": yarnVersion },
-      body: JSON.stringify(draft),
+    savedYarn = await withYarnVersionRetry({
+      getVersion: () => yarnVersion,
+      refreshVersion: () => loadYarns(),
+      operation: () => api(`/api/yarns/${card.dataset.id}`, {
+        method: "PATCH",
+        headers: { "If-Match": yarnVersion },
+        body: JSON.stringify(draft),
+      }),
     });
   } catch (error) {
     if (isYarnVersionConflict(error)) {
@@ -1245,9 +1255,13 @@ async function deleteYarn(id) {
   if (!isAuthenticated) {
     throw new Error("Zaloguj się, aby zmieniać swój magazyn włóczek.");
   }
-  await api(`/api/yarns/${id}`, {
-    method: "DELETE",
-    headers: { "If-Match": yarnVersion },
+  await withYarnVersionRetry({
+    getVersion: () => yarnVersion,
+    refreshVersion: () => loadYarns(),
+    operation: () => api(`/api/yarns/${id}`, {
+      method: "DELETE",
+      headers: { "If-Match": yarnVersion },
+    }),
   });
 }
 
@@ -1758,22 +1772,37 @@ function showAuthForm(form) {
 }
 
 async function startPasswordRecovery() {
+  const query = new URLSearchParams(window.location.search);
+  const code = query.get("code");
   const hash = new URLSearchParams(window.location.hash.slice(1));
   const accessToken = hash.get("access_token");
   const refreshToken = hash.get("refresh_token");
-  const isRecovery = new URLSearchParams(window.location.search).get("recovery") === "1"
-    || hash.get("type") === "recovery";
-  if (!accessToken || !refreshToken || !isRecovery) {
+  if (accessToken && refreshToken && hash.get("type") === "signup") {
+    window.history.replaceState({}, document.title, window.location.pathname);
+    try {
+      setAuthMessage("Potwierdzam adres e-mail...");
+      await api("/api/auth/confirmation", {
+        method: "POST",
+        body: JSON.stringify({ access_token: accessToken, refresh_token: refreshToken }),
+      });
+      setAuthMessage("Adres e-mail został potwierdzony. Konto jest gotowe do użycia.", "success");
+      return false;
+    } catch (error) {
+      setAuthMessage(`${error.message} Poproś o nowy link potwierdzający.`, "error");
+      return true;
+    }
+  }
+  if (!code || query.get("recovery") !== "1") {
     return false;
   }
-  // Usuń token z adresu przed pierwszym żądaniem sieciowym.
+  // Usuń jednorazowy kod z adresu przed pierwszym żądaniem sieciowym.
   window.history.replaceState({}, document.title, window.location.pathname);
 
   try {
     setAuthMessage("Sprawdzam link odzyskiwania hasła...");
     await api("/api/auth/recovery", {
       method: "POST",
-      body: JSON.stringify({ access_token: accessToken, refresh_token: refreshToken }),
+      body: JSON.stringify({ code }),
     });
     window.history.replaceState({}, document.title, window.location.pathname);
     authForms.hidden = false;

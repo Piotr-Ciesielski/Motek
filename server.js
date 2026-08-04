@@ -759,7 +759,9 @@ async function deleteSupabaseYarn(session, id, expectedVersion) {
 }
 
 async function sendYarnMutationResponse(res, status, mutation) {
-  res.setHeader("ETag", getYarnCollectionVersion(mutation.version));
+  const version = getYarnCollectionVersion(mutation.version);
+  res.setHeader("ETag", version);
+  res.setHeader("X-Motek-Yarn-Version", version);
   return sendJson(res, status, status === 204 ? null : mutation.yarn);
 }
 
@@ -1089,6 +1091,7 @@ async function handleAuthApi(req, res, url) {
         data: {
           login,
         },
+        emailRedirectTo: new URL("/?confirmed=1", getExpectedOrigin(req)).toString(),
         ...(captchaToken ? { captchaToken } : {}),
       },
     });
@@ -1171,18 +1174,13 @@ async function handleAuthApi(req, res, url) {
 
   if (req.method === "POST" && url.pathname === "/api/auth/recovery") {
     const body = await readBody(req);
-    const accessToken = normalizeRecoveryToken(body.access_token, "dostępu");
-    const refreshToken = normalizeRecoveryToken(body.refresh_token, "odświeżania");
+    const code = normalizeRecoveryToken(body.code, "jednorazowy");
     const client = authClient();
-    const { data, error } = await client.auth.getUser(accessToken);
-    if (error || !data?.user) {
+    const { data, error } = await client.auth.exchangeCodeForSession(code);
+    if (error || !data?.user || !data?.session) {
       throw new ApiError(400, "Link odzyskiwania hasła jest nieprawidłowy lub wygasł.");
     }
-
-    setAuthCookies(res, {
-      access_token: accessToken,
-      refresh_token: refreshToken,
-    });
+    setAuthCookies(res, data.session);
     return sendJson(res, 200, { user: sanitizeAuthUser(data.user) });
   }
 

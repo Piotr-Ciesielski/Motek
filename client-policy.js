@@ -276,6 +276,27 @@
     };
   }
 
+  function readYarnVersionHeader(headers) {
+    return headers?.get?.("X-Motek-Yarn-Version")
+      || headers?.get?.("x-motek-yarn-version")
+      || headers?.get?.("ETag")
+      || headers?.get?.("etag")
+      || null;
+  }
+
+  async function withYarnVersionRetry({ getVersion, refreshVersion, operation } = {}) {
+    const hasVersion = /^"yarn-v\d+"$/.test(String(getVersion?.() || ""));
+    if (!hasVersion) await refreshVersion();
+
+    try {
+      return await operation();
+    } catch (error) {
+      if (error?.status !== 428) throw error;
+      await refreshVersion();
+      return operation();
+    }
+  }
+
   function getMatchFreshnessState({
     hasCalculatedMatches = false,
     inventoryChanged = false,
@@ -471,6 +492,8 @@
     getExistingYarnState,
     getMatchFreshnessState,
     getYarnSaveHint,
+    readYarnVersionHeader,
+    withYarnVersionRetry,
     isDeleteConfirmed,
     loadPaginatedItems,
     loadNextPaginatedPage,
