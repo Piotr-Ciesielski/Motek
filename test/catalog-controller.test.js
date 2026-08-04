@@ -2,7 +2,17 @@
 
 const test = require('node:test');
 const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const path = require('node:path');
+const vm = require('node:vm');
 const { createCatalogController } = require('../client/catalog-controller');
+
+test('catalog controller can load as a browser script without CommonJS module', () => {
+  const source = fs.readFileSync(path.join(__dirname, '..', 'client', 'catalog-controller.js'), 'utf8');
+  const context = { window: {} };
+  vm.runInNewContext(source, context);
+  assert.equal(typeof context.window.createCatalogController, 'function');
+});
 
 test('catalog controller exposes the required contract', () => {
   const controller = createCatalogController();

@@ -271,7 +271,7 @@
       "needs_review": false
     },
     {
-      "name": "ALTA socks (PL) dla WÅÃ³czkomaniaczki (poprawione)",
+      "name": "ALTA socks (PL) dla Włóczkomaniaczki (poprawione)",
       "description": "Instrukcja wykonania projektu: skarpetki, z wzorem wielokolorowym, konstrukcją od góry. Opis przygotowany na podstawie dokumentu źródłowego.",
       "project_type": "socks",
       "materials": [
@@ -298,7 +298,7 @@
         "version": 2,
         "variants": []
       },
-      "source_filename": "ALTA socks (PL) dla WÅÃ³czkomaniaczki (poprawione).pdf",
+      "source_filename": "ALTA socks (PL) dla Włóczkomaniaczki (poprawione).pdf",
       "source_language": "pl",
       "needs_review": false
     },
@@ -4617,7 +4617,7 @@
       "reference_sources": []
     },
     {
-      "source_filename": "ALTA socks (PL) dla WÅÃ³czkomaniaczki (poprawione).pdf",
+      "source_filename": "ALTA socks (PL) dla Włóczkomaniaczki (poprawione).pdf",
       "manual_override": false,
       "review_reasons": [],
       "review_notes": [],
