@@ -2,6 +2,7 @@ const { test } = require("node:test");
 const assert = require("node:assert/strict");
 process.env.HOST = "127.0.0.1";
 process.env.PORT = "0";
+process.env.IDLE_SESSION_SECRET = "test-idle-session-secret";
 
 const {
   getRuntimeConfig,
@@ -14,7 +15,27 @@ const {
   validateMatchLimits,
   validateYarn,
   validateYarnStorageCapacity,
+  getIdleTimeoutSeconds,
+  buildIdleActivityCookie,
+  parseIdleActivityCookie,
 } = require("../server");
+
+test("limit bezczynności ma domyślnie 2 godziny i respektuje konfigurację", () => {
+  assert.equal(getIdleTimeoutSeconds({}), 7200);
+  assert.equal(getIdleTimeoutSeconds({ AUTH_IDLE_TIMEOUT_SECONDS: "900" }), 900);
+  assert.throws(
+    () => getIdleTimeoutSeconds({ AUTH_IDLE_TIMEOUT_SECONDS: "0" }),
+    /dodatnią liczbą całkowitą/i,
+  );
+});
+
+test("podpisane ciasteczko aktywności odrzuca zmieniony timestamp", () => {
+  const env = { NODE_ENV: "test", IDLE_SESSION_SECRET: "test-idle-secret" };
+  const cookie = buildIdleActivityCookie(1_700_000_000, env);
+  assert.equal(parseIdleActivityCookie(cookie.split(";")[0].split("=")[1], env, 1_700_000_100), 1_700_000_000);
+  const tampered = cookie.replace("1700000000", "1700000001");
+  assert.equal(parseIdleActivityCookie(tampered.split(";")[0].split("=")[1], env, 1_700_000_100), null);
+});
 test("konfiguracja uruchomieniowa bez zmiennych używa lokalnego portu 3001", () => {
   assert.deepEqual(getRuntimeConfig?.({}), {
     host: "127.0.0.1",
@@ -652,6 +673,15 @@ test("serwer Motek działa bezpiecznie", async (t) => {
         .getSetCookie()
         .map((cookie) => cookie.split(";", 1)[0])
         .join("; ");
+
+      const activityResponse = await fetch(`${baseUrl}/api/auth/activity`, {
+        method: "POST",
+        headers: { Origin: baseUrl, Cookie: recoveryCookies },
+        body: "{}",
+      });
+      assert.equal(activityResponse.status, 200);
+      assert.deepEqual(await activityResponse.json(), { authenticated: true });
+      assert.match(activityResponse.headers.get("set-cookie"), /motek_idle_activity=/);
 
       const updateResponse = await fetch(`${baseUrl}/api/auth/password`, {
         method: "POST",
