@@ -8,6 +8,8 @@
 
 **Tech Stack:** Node.js 24, `node:test`, natywny `fetch`, GitHub Actions, Railway Config as Code, Supabase, Cloudflare DNS/WAF/Turnstile.
 
+> **Aktualizacja 2026-08-04:** plan został wykonany dla bieżącego środowiska. Staging działa z gałęzi `staging` i wdraża się automatycznie. Produkcja działa z `main`, ale auto-deploy jest wyłączony; deploy produkcyjny uruchamia operator ręcznie po akceptacji regresji stagingu. Bieżące polecenia i kryteria operacyjne znajdują się w [runbooku po wdrożeniu](../operations/post-deploy-regression.md).
+
 ## Global Constraints
 
 - Produkcja działa wyłącznie pod kanonicznym originem `https://www.rysia.org`.
@@ -15,7 +17,7 @@
 - Produkcja wdraża wyłącznie `main`; staging wdraża wyłącznie `staging`.
 - `SUPABASE_SECRET_KEY`, hasła QA, cookies i tokeny sesji nigdy nie trafiają do logów ani Git.
 - Produkcyjny Turnstile nie może mieć testowych kluczy ani obejścia dla CI.
-- Pełna automatyczna regresja zalogowanego użytkownika działa na stagingu; produkcja automatycznie wykonuje profil niedestrukcyjny.
+- Pełna automatyczna regresja zalogowanego użytkownika działa na stagingu; produkcja wykonuje profil niedestrukcyjny po ręcznie uruchomionym deployu.
 - Każdy zapis testowy używa prefiksu `regression-<run-id>` i jest usuwany po dokładnym ID w `finally`.
 - Railway uruchamia jedną replikę, dopóki rate limiting aplikacji przechowuje stan w pamięci procesu.
 - `PORT` pochodzi z Railway, a aplikacja nasłuchuje na `HOST=0.0.0.0`.
@@ -533,7 +535,7 @@ git commit -m "ci: run regression after Railway deployments"
 
 - [ ] **Step 1: Udokumentować macierz regresji**
 
-Tabela ma jawnie wskazać: test, staging automatycznie, produkcja automatycznie, test ręczny oraz powód ograniczenia. Rejestracja/e-mail/reset/usunięcie konta pozostają ręczne na publicznych konfiguracjach z prawdziwym Turnstile.
+Tabela ma jawnie wskazać: test, staging automatycznie, produkcja po ręcznym deployu, test ręczny oraz powód ograniczenia. Rejestracja/e-mail/reset/usunięcie konta pozostają ręczne na publicznych konfiguracjach z prawdziwym Turnstile.
 
 - [ ] **Step 2: Udokumentować GitHub Environments**
 
@@ -639,7 +641,7 @@ Potwierdzić zgodny SHA w `/health/release`, zielony `regression:full`, brak osi
 - External state: Supabase production, Railway production, Cloudflare
 
 **Interfaces:**
-- Produces: `https://www.rysia.org` z automatycznym profilem `smoke`.
+- Produces: `https://www.rysia.org` z profilem `smoke` uruchamianym po ręcznym deployu.
 
 - [ ] **Step 1: Potwierdzić bramkę stagingową**
 
@@ -657,7 +659,7 @@ Wprowadzić produkcyjne zmienne bez kopiowania stagingowych sekretów, pozostawi
 
 Skierować `www.rysia.org` do produkcji, ustawić stałe przekierowanie apex z zachowaniem ścieżki/query, wyłączyć cache `/api/*`, włączyć uzgodnione reguły WAF/rate limit i dopiero po stabilnym HTTPS włączyć krótkie HSTS `max-age=86400` bez `includeSubDomains`.
 
-- [ ] **Step 5: Potwierdzić automatyczny profil produkcyjny**
+- [ ] **Step 5: Potwierdzić smoke test produkcji po ręcznym deployu**
 
 GitHub Action musi sprawdzić dokładny SHA, HTTPS, frontend, zasoby, katalog, nagłówki, brak dostępu bez sesji, CSRF, brak metryk i przekierowanie domeny.
 

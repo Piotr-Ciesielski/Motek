@@ -65,6 +65,15 @@ Numer wersji jest w pliku [`VERSION`](VERSION) (obecnie `2.0.0-alpha.38`) i musi
 
 Przy błędzie logowania regresji sprawdź sekrety `MOTEK_QA_EMAIL` i `MOTEK_QA_PASSWORD` w GitHub Environment `staging`.
 
+## Railway i środowiska
+
+- staging działa z gałęzi `staging` pod `https://staging.rysia.org` i wdraża się automatycznie;
+- produkcja działa z gałęzi `main` pod `https://www.rysia.org`, a auto-deploy jest wyłączony — publikację uruchamia operator ręcznie;
+- Cloudflare obsługuje DNS, proxy/WAF i HTTPS, a każde środowisko korzysta z osobnego Supabase;
+- po deployu stagingu uruchamia się `regression:full`, a po ręcznym deployu produkcji `regression:smoke`.
+
+Sesja użytkownika wygasa po 2 godzinach bezczynności (`AUTH_IDLE_TIMEOUT_SECONDS=7200`).
+
 ## Dokumentacja
 
 - [Architektura](docs/ARCHITECTURE.md)
