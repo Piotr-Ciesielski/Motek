@@ -103,6 +103,13 @@ test("inventory stats update together with the existing summary", () => {
   assert.match(appJs, /inventoryAddYarnBtn\.addEventListener/);
 });
 
+test("catalog controller asset has a deployment cache buster", () => {
+  assert.match(
+    indexHtml,
+    /client\/catalog-controller\.js\?v=2\.0\.0-alpha\.38&rev=[a-f0-9]{7,40}/,
+  );
+});
+
 test("theme artwork uses optimized immutable assets", () => {
   assert.equal(
     (indexHtml.match(/data-light-src="assets\/color-yarn-cat\.v1\.webp"/g) || []).length,
