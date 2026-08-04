@@ -84,6 +84,7 @@ const {
   getExistingYarnState,
   getMatchFreshnessState,
   getYarnSaveHint,
+  readYarnVersionHeader,
   withYarnVersionRetry,
   isDeleteConfirmed,
   initializePasswordRevealControls,
@@ -341,7 +342,7 @@ async function api(path, options = {}) {
     const payload = isResponseEnvelope(result) ? result.data : result;
     const response = isResponseEnvelope(result) ? result.response : result?.response;
     if (path === "/api/yarns" || path.startsWith("/api/yarns/")) {
-      yarnVersion = response?.headers?.get?.("etag") || yarnVersion;
+      yarnVersion = readYarnVersionHeader(response?.headers) || yarnVersion;
     }
     api.lastMatchScope = path === "/api/matches"
       ? response?.headers?.get?.("X-Motek-Match-Scope") || "full"
