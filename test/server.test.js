@@ -641,7 +641,11 @@ test("serwer Motek działa bezpiecznie", async (t) => {
       });
       assert.deepEqual(signUpRequests.at(-1), {
         email: "nowy@example.com",
-        options: { data: { login: "nowy@example.com" }, captchaToken: "register-token" },
+        options: {
+          data: { login: "nowy@example.com" },
+          captchaToken: "register-token",
+          emailRedirectTo: `${baseUrl}/?confirmed=1`,
+        },
       });
 
       const loginResponse = await fetch(`${baseUrl}/api/auth/login`, {
