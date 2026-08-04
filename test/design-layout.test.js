@@ -54,6 +54,18 @@ test("captcha initializes even when the page opens from password recovery", () =
   assert.doesNotMatch(appJs, /const recoveryHandled = await startPasswordRecovery\(\);\s*if \(recoveryHandled\) return;/);
 });
 
+test("password recovery exchanges only a one-time code while signup handles URL tokens", () => {
+  assert.match(appJs, /const code = query\.get\("code"\)/);
+  assert.match(appJs, /body: JSON\.stringify\(\{ code \}\)/);
+  assert.match(appJs, /hash\.get\("access_token"\)/);
+  assert.match(appJs, /access_token: accessToken/);
+});
+
+test("email confirmation removes signup tokens from the address", () => {
+  assert.match(appJs, /hash\.get\("type"\) === "signup"/);
+  assert.match(appJs, /api\("\/api\/auth\/confirmation"/);
+});
+
 test("inventory and matches artwork have no caption overlays", () => {
   assert.doesNotMatch(indexHtml, /id="inventoryHeroCaption"/);
   assert.doesNotMatch(indexHtml, /id="matchesHeroCaption"/);

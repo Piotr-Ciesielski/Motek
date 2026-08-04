@@ -1717,22 +1717,37 @@ function showAuthForm(form) {
 }
 
 async function startPasswordRecovery() {
+  const query = new URLSearchParams(window.location.search);
+  const code = query.get("code");
   const hash = new URLSearchParams(window.location.hash.slice(1));
   const accessToken = hash.get("access_token");
   const refreshToken = hash.get("refresh_token");
-  const isRecovery = new URLSearchParams(window.location.search).get("recovery") === "1"
-    || hash.get("type") === "recovery";
-  if (!accessToken || !refreshToken || !isRecovery) {
+  if (accessToken && refreshToken && hash.get("type") === "signup") {
+    window.history.replaceState({}, document.title, window.location.pathname);
+    try {
+      setAuthMessage("Potwierdzam adres e-mail...");
+      await api("/api/auth/confirmation", {
+        method: "POST",
+        body: JSON.stringify({ access_token: accessToken, refresh_token: refreshToken }),
+      });
+      setAuthMessage("Adres e-mail został potwierdzony. Konto jest gotowe do użycia.", "success");
+      return false;
+    } catch (error) {
+      setAuthMessage(`${error.message} Poproś o nowy link potwierdzający.`, "error");
+      return true;
+    }
+  }
+  if (!code || query.get("recovery") !== "1") {
     return false;
   }
-  // Usuń token z adresu przed pierwszym żądaniem sieciowym.
+  // Usuń jednorazowy kod z adresu przed pierwszym żądaniem sieciowym.
   window.history.replaceState({}, document.title, window.location.pathname);
 
   try {
     setAuthMessage("Sprawdzam link odzyskiwania hasła...");
     await api("/api/auth/recovery", {
       method: "POST",
-      body: JSON.stringify({ access_token: accessToken, refresh_token: refreshToken }),
+      body: JSON.stringify({ code }),
     });
     window.history.replaceState({}, document.title, window.location.pathname);
     authForms.hidden = false;
