@@ -42,6 +42,8 @@ const onboarding = document.getElementById("onboarding");
 const onboardingAddYarnBtn = document.getElementById("onboardingAddYarnBtn");
 const onboardingSkipBtn = document.getElementById("onboardingSkipBtn");
 const logoutBtn = document.getElementById("logoutBtn");
+const idleSessionWarning = document.getElementById("idleSessionWarning");
+const idleSessionStayBtn = document.getElementById("idleSessionStayBtn");
 const forgotPasswordBtn = document.getElementById("forgotPasswordBtn");
 const passwordResetForm = document.getElementById("passwordResetForm");
 const passwordUpdateForm = document.getElementById("passwordUpdateForm");
@@ -159,6 +161,19 @@ const apiClient = createApiClient({
       || pathname.startsWith("/api/yarns/")
       || pathname === "/api/account";
     if (protectedPath) handleSessionExpired();
+  },
+});
+
+const idleSessionController = window.MotekIdleSession.createIdleSessionController({
+  api: (path, options) => api(path, options),
+  onWarning: () => {
+    idleSessionWarning.hidden = false;
+    idleSessionStayBtn.focus({ preventScroll: true });
+  },
+  onExpired: () => {
+    idleSessionWarning.hidden = true;
+    handleSessionExpired();
+    setAuthMessage("Sesja wygasła z powodu 2 godzin bezczynności. Zaloguj się ponownie.", "error");
   },
 });
 
@@ -1751,6 +1766,8 @@ function renderAuthState(payload) {
   inventoryMatchBtn.disabled = !authenticated;
   updateNavigationState();
   if (!authenticated) {
+    idleSessionController.stop();
+    idleSessionWarning.hidden = true;
     onboardingDismissed = false;
     onboarding.hidden = true;
     headerUser.hidden = true;
@@ -1802,6 +1819,8 @@ async function refreshAuthSession() {
     setAuthMessage("Możesz założyć konto lub zalogować się.");
     return;
   }
+
+  idleSessionController.start();
 
   if (preserveDraftAfterLogin) {
     const requiresSave = preservedDraftRequiresSave;
@@ -1979,6 +1998,8 @@ logoutBtn.addEventListener("click", async () => {
   }
 
   logoutBtn.disabled = true;
+  idleSessionController.stop();
+  idleSessionWarning.hidden = true;
   setAuthMessage("Wylogowuję...");
   try {
     await api("/api/auth/logout", { method: "POST", body: "{}" });
@@ -1992,6 +2013,16 @@ logoutBtn.addEventListener("click", async () => {
     setAuthMessage(error.message, "error");
   } finally {
     logoutBtn.disabled = false;
+  }
+});
+
+idleSessionStayBtn.addEventListener("click", async () => {
+  idleSessionStayBtn.disabled = true;
+  try {
+    const refreshed = await idleSessionController.markActivity({ force: true });
+    if (refreshed) idleSessionWarning.hidden = true;
+  } finally {
+    idleSessionStayBtn.disabled = false;
   }
 });
 

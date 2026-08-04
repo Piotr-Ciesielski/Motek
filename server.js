@@ -2,6 +2,7 @@ const http = require("http");
 const net = require("net");
 const path = require("path");
 const fs = require("fs");
+const crypto = require("crypto");
 const {
   createSupabaseAuthClient,
   createSupabaseConnection,
@@ -52,8 +53,10 @@ let readinessTimer = null;
 const MAX_JSON_BODY_BYTES = 16 * 1024;
 const AUTH_ACCESS_COOKIE = "motek_access_token";
 const AUTH_REFRESH_COOKIE = "motek_refresh_token";
+const AUTH_IDLE_COOKIE = "motek_idle_activity";
 const AUTH_ACCESS_MAX_AGE = 60 * 60;
 const AUTH_REFRESH_MAX_AGE = 60 * 60 * 24 * 30;
+const AUTH_IDLE_TIMEOUT_SECONDS = 2 * 60 * 60;
 const AUTH_RATE_LIMIT_WINDOW_MS = 15 * 60 * 1000;
 const AUTH_RATE_LIMIT_MAX_FAILURES = 5;
 const AUTH_RATE_LIMIT_BLOCK_MS = 15 * 60 * 1000;
@@ -124,6 +127,7 @@ const staticFileHandler = createStaticFileHandler({
     "/client/api-client.js": "client/api-client.js",
     "/client/dom-utils.js": "client/dom-utils.js",
     "/client/catalog-controller.js": "client/catalog-controller.js",
+    "/client/idle-session-controller.js": "client/idle-session-controller.js",
     "/assets/color-yarn-cat.png": "assets/color-yarn-cat.png",
     "/assets/night-yarn-cat.png": "assets/night-yarn-cat.png",
     "/assets/color-yarn-cat.v1.webp": "assets/color-yarn-cat.v1.webp",
@@ -388,6 +392,50 @@ function buildAuthCookie(name, value, maxAge, env = process.env) {
   return `${name}=${encodeURIComponent(value)}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${maxAge}${secure}`;
 }
 
+function getIdleTimeoutSeconds(env = process.env) {
+  const raw = env.AUTH_IDLE_TIMEOUT_SECONDS;
+  if (raw === undefined || raw === null || String(raw).trim() === "") return AUTH_IDLE_TIMEOUT_SECONDS;
+  const value = Number(raw);
+  if (!Number.isInteger(value) || value <= 0) {
+    throw new Error("AUTH_IDLE_TIMEOUT_SECONDS musi być dodatnią liczbą całkowitą.");
+  }
+  return value;
+}
+
+function getIdleSessionSecret(env = process.env) {
+  const secret = String(env.IDLE_SESSION_SECRET || env.SUPABASE_SECRET_KEY || "");
+  if (!secret) throw new Error("Brak sekretu podpisu sesji bezczynności.");
+  return secret;
+}
+
+function signIdleActivity(timestamp, env = process.env) {
+  return crypto.createHmac("sha256", getIdleSessionSecret(env))
+    .update(String(timestamp))
+    .digest("base64url");
+}
+
+function buildIdleActivityCookie(timestamp, env = process.env) {
+  const normalizedTimestamp = Math.floor(Number(timestamp));
+  const value = `${normalizedTimestamp}.${signIdleActivity(normalizedTimestamp, env)}`;
+  return buildAuthCookie(AUTH_IDLE_COOKIE, value, getIdleTimeoutSeconds(env), env);
+}
+
+function parseIdleActivityCookie(value, env = process.env, now = Math.floor(Date.now() / 1000)) {
+  if (typeof value !== "string") return null;
+  const [rawTimestamp, signature] = value.split(".");
+  const timestamp = Number(rawTimestamp);
+  if (!Number.isSafeInteger(timestamp) || !signature) return null;
+  const expectedBuffer = Buffer.from(signIdleActivity(timestamp, env));
+  const receivedBuffer = Buffer.from(signature);
+  if (receivedBuffer.length !== expectedBuffer.length || !crypto.timingSafeEqual(receivedBuffer, expectedBuffer)) return null;
+  const age = now - timestamp;
+  return age >= 0 && age <= getIdleTimeoutSeconds(env) ? timestamp : null;
+}
+
+function setIdleActivityCookie(res, timestamp = Math.floor(Date.now() / 1000)) {
+  appendSetCookie(res, buildIdleActivityCookie(timestamp));
+}
+
 function setAuthCookies(res, session) {
   if (!session?.access_token || !session?.refresh_token) return;
   appendSetCookie(
@@ -398,11 +446,13 @@ function setAuthCookies(res, session) {
     res,
     buildAuthCookie(AUTH_REFRESH_COOKIE, session.refresh_token, AUTH_REFRESH_MAX_AGE)
   );
+  setIdleActivityCookie(res);
 }
 
 function clearAuthCookies(res) {
   appendSetCookie(res, buildAuthCookie(AUTH_ACCESS_COOKIE, "", 0));
   appendSetCookie(res, buildAuthCookie(AUTH_REFRESH_COOKIE, "", 0));
+  appendSetCookie(res, buildAuthCookie(AUTH_IDLE_COOKIE, "", 0));
 }
 
 function normalizeAuthEmail(value) {
@@ -489,6 +539,10 @@ async function getAuthenticatedSession(req, res) {
   const accessToken = cookies[AUTH_ACCESS_COOKIE];
   const refreshToken = cookies[AUTH_REFRESH_COOKIE];
   if (!accessToken && !refreshToken) return null;
+  if (cookies[AUTH_IDLE_COOKIE] && !parseIdleActivityCookie(cookies[AUTH_IDLE_COOKIE])) {
+    clearAuthCookies(res);
+    return null;
+  }
 
   const client = supabaseAuthClientFactory(supabaseAuthConfig);
   let activeAccessToken = accessToken;
@@ -529,6 +583,8 @@ async function getAuthenticatedSession(req, res) {
     clearAuthCookies(res);
     throw new ApiError(403, "Konto jest zawieszone lub zablokowane.");
   }
+
+  setIdleActivityCookie(res);
 
   return {
     user: userResult.data.user,
@@ -1171,6 +1227,11 @@ async function handleAuthApi(req, res, url) {
     return sendJson(res, 200, { authenticated: false });
   }
 
+  if (req.method === "POST" && url.pathname === "/api/auth/activity") {
+    await requireAuthenticatedSession(req, res);
+    return sendJson(res, 200, { authenticated: true });
+  }
+
   if (req.method === "GET" && url.pathname === "/api/auth/session") {
     const session = await getAuthenticatedSession(req, res);
     return sendJson(res, 200, {
@@ -1512,6 +1573,9 @@ module.exports = {
   shouldUseSecureCookies,
   shutdown,
   validateCookieSecurityConfig,
+  getIdleTimeoutSeconds,
+  buildIdleActivityCookie,
+  parseIdleActivityCookie,
   validateAuthPassword,
   normalizeRecoveryToken,
 };

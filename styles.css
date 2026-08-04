@@ -1698,6 +1698,34 @@ body::before {
   }
 }
 
+.idle-session-warning {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  max-width: min(520px, calc(100vw - 32px));
+  padding: 16px 18px;
+  border: 1px solid var(--border-strong, var(--border));
+  border-radius: 14px;
+  background: var(--surface, #fff);
+  box-shadow: 0 16px 40px rgb(0 0 0 / 16%);
+}
+
+.idle-session-warning p { margin: 0; }
+
+@media (max-width: 640px) {
+  .idle-session-warning {
+    right: 16px;
+    bottom: 16px;
+    left: 16px;
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+
 /* Accepted directions 4/5 from PR #8: the inventory is an asymmetric editorial grid. */
 #inventoryView .inventory-layout {
   grid-template-areas:
