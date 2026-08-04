@@ -57,6 +57,7 @@ function successSteps() {
       captchaToken: credentials.captchaToken,
     }), response: jsonResponse(200, { user: { id: 'user-1' } }, { 'set-cookie': 'motek_access_token=cookie; Path=/; HttpOnly' }) },
     { request: 'GET /api/auth/session', response: jsonResponse(200, { authenticated: true, user: { id: 'user-1' } }) },
+    { request: 'POST /api/auth/activity', response: jsonResponse(200, { authenticated: true }) },
     { request: 'GET /api/yarns', response: jsonResponse(200, [{ id: 99, name: 'foreign' }], { etag: '"v1"' }) },
     { request: 'POST /api/yarns', check: ({ body, headers }) => {
       assert.deepEqual(body, { name: 'regression-run-123', color: 'zielony', materials: ['wełna'], weightClass: 'dk', length: 300, weight: 100 });
@@ -85,7 +86,7 @@ test('runs the complete authenticated regression using only the created yarn id'
 
 test('cleans up the exact created yarn after a later failure', async () => {
   const { runAuthenticatedRegression } = require('../scripts/regression/authenticated-suite');
-  const steps = successSteps().slice(0, 6);
+  const steps = successSteps().slice(0, 7);
   steps.push(
     { request: 'PATCH /api/yarns/41', response: jsonResponse(500, { error: 'failed' }) },
     { request: 'GET /api/yarns', response: jsonResponse(200, [{ id: 99 }, patchedYarn], { etag: '"cleanup"' }) },
@@ -101,7 +102,7 @@ test('cleans up the exact created yarn after a later failure', async () => {
 
 test('preserves the primary failure and attaches a cleanup failure', async () => {
   const { runAuthenticatedRegression } = require('../scripts/regression/authenticated-suite');
-  const steps = successSteps().slice(0, 6);
+  const steps = successSteps().slice(0, 7);
   steps.push(
     { request: 'PATCH /api/yarns/41', response: jsonResponse(500, {}) },
     { request: 'GET /api/yarns', response: jsonResponse(503, {}) },
@@ -118,7 +119,7 @@ test('preserves the primary failure and attaches a cleanup failure', async () =>
 
 test('never deletes a foreign yarn when creation did not return a valid id', async () => {
   const { runAuthenticatedRegression } = require('../scripts/regression/authenticated-suite');
-  const steps = successSteps().slice(0, 3);
+  const steps = successSteps().slice(0, 4);
   steps.push(
     { request: 'POST /api/yarns', response: jsonResponse(201, { id: 0 }, { etag: '"v2"' }) },
     { request: 'POST /api/auth/logout', response: jsonResponse(200, { authenticated: false }) },
@@ -131,7 +132,7 @@ test('never deletes a foreign yarn when creation did not return a valid id', asy
 
 test('does not mutate a positive id when the POST response is not the unique created yarn', async () => {
   const { runAuthenticatedRegression } = require('../scripts/regression/authenticated-suite');
-  const steps = successSteps().slice(0, 3);
+  const steps = successSteps().slice(0, 4);
   steps.push(
     { request: 'POST /api/yarns', response: jsonResponse(201, {
       ...createdYarn,
@@ -150,7 +151,7 @@ test('does not mutate a positive id when the POST response is not the unique cre
 
 test('does not patch or delete when the fresh collection does not confirm the created yarn identity', async () => {
   const { runAuthenticatedRegression } = require('../scripts/regression/authenticated-suite');
-  const steps = successSteps().slice(0, 4);
+  const steps = successSteps().slice(0, 5);
   steps.push(
     { request: 'GET /api/yarns', response: jsonResponse(200, [{ ...createdYarn, name: 'foreign' }], { etag: '"v2"' }) },
     { request: 'GET /api/yarns', response: jsonResponse(200, [{ ...createdYarn, name: 'foreign' }], { etag: '"cleanup"' }) },
@@ -166,7 +167,7 @@ test('does not patch or delete when the fresh collection does not confirm the cr
 
 test('does not delete when the yarn identity changed before the normal delete', async () => {
   const { runAuthenticatedRegression } = require('../scripts/regression/authenticated-suite');
-  const steps = successSteps().slice(0, 8);
+  const steps = successSteps().slice(0, 9);
   steps.push(
     { request: 'GET /api/yarns', response: jsonResponse(200, [{ ...patchedYarn, name: 'foreign' }], { etag: '"v3"' }) },
     { request: 'GET /api/yarns', response: jsonResponse(200, [{ ...patchedYarn, name: 'foreign' }], { etag: '"cleanup"' }) },

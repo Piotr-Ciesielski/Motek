@@ -86,6 +86,9 @@ async function runAuthenticatedRegression(options) {
     const authenticated = await requireJson(session, '/api/auth/session');
     requireCondition(authenticated.body?.authenticated === true, 'Authenticated session was not established');
 
+    const activity = await requireJson(session, '/api/auth/activity', { method: 'POST' });
+    requireCondition(activity.body?.authenticated === true, 'Authenticated activity refresh failed');
+
     const initial = await requireJson(session, '/api/yarns');
     const initialEtag = requireEtag(initial.response, 'GET /api/yarns');
     const created = await requireJson(session, '/api/yarns', {
