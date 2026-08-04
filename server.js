@@ -1,9 +1,8 @@
 const http = require("http");
 const net = require("net");
-const crypto = require("crypto");
 const path = require("path");
 const fs = require("fs");
-const fsPromises = require("fs/promises");
+const crypto = require("crypto");
 const {
   createSupabaseAuthClient,
   createSupabaseConnection,
@@ -17,8 +16,6 @@ const {
   maxMatchingTextLength: MAX_MATCHING_TEXT_LENGTH,
 } = require("./limits");
 const {
-  ANY_MATERIAL,
-  matchesMaterialRule,
   normalizeYarnMaterials,
 } = require("./material-policy");
 const {
@@ -33,6 +30,14 @@ const {
   validateDeploymentConfig,
 } = require("./deployment-policy");
 const { createMetricsRegistry } = require("./observability");
+const {
+  scorePattern,
+  selectMatchingYarns,
+} = require("./server/matching-service");
+const { createStaticFileHandler } = require("./server/static-files");
+const { createPatternRouter } = require("./server/pattern-routes");
+const { createYarnRouter } = require("./server/yarn-routes");
+const { readReleaseInfo } = require("./release-info");
 
 const rootDir = __dirname;
 let server;
@@ -48,8 +53,10 @@ let readinessTimer = null;
 const MAX_JSON_BODY_BYTES = 16 * 1024;
 const AUTH_ACCESS_COOKIE = "motek_access_token";
 const AUTH_REFRESH_COOKIE = "motek_refresh_token";
+const AUTH_IDLE_COOKIE = "motek_idle_activity";
 const AUTH_ACCESS_MAX_AGE = 60 * 60;
 const AUTH_REFRESH_MAX_AGE = 60 * 60 * 24 * 30;
+const AUTH_IDLE_TIMEOUT_SECONDS = 2 * 60 * 60;
 const AUTH_RATE_LIMIT_WINDOW_MS = 15 * 60 * 1000;
 const AUTH_RATE_LIMIT_MAX_FAILURES = 5;
 const AUTH_RATE_LIMIT_BLOCK_MS = 15 * 60 * 1000;
@@ -64,9 +71,9 @@ const HTTP_REQUEST_TIMEOUT_MS = 30 * 1000;
 const HTTP_HEADERS_TIMEOUT_MS = 10 * 1000;
 const HTTP_KEEP_ALIVE_TIMEOUT_MS = 5 * 1000;
 const HTTP_BODY_TIMEOUT_MS = 10 * 1000;
-const MAX_MATCH_SEARCH_NODES = 25_000;
 const MAX_PATTERN_PAGE_SIZE = 50;
 const authRateLimiter = createAuthRateLimiter();
+const accountDeletionRateLimiter = createAccountDeletionRateLimiter();
 const authRequestRateLimiter = createRequestRateLimiter({
   windowMs: AUTH_REQUEST_WINDOW_MS,
   maxRequests: AUTH_REQUEST_MAX,
@@ -106,6 +113,37 @@ const SECURITY_HEADERS = Object.freeze({
   "X-Permitted-Cross-Domain-Policies": "none",
 });
 
+const staticFileHandler = createStaticFileHandler({
+  rootDir,
+  securityHeaders: SECURITY_HEADERS,
+  files: {
+    "/": "index.html",
+    "/index.html": "index.html",
+    "/styles.css": "styles.css",
+    "/app.js": "app.js",
+    "/client-policy.js": "client-policy.js",
+    "/theme-policy.js": "theme-policy.js",
+    "/material-policy.js": "material-policy.js",
+    "/client/api-client.js": "client/api-client.js",
+    "/client/dom-utils.js": "client/dom-utils.js",
+    "/client/catalog-controller.js": "client/catalog-controller.js",
+    "/client/idle-session-controller.js": "client/idle-session-controller.js",
+    "/assets/color-yarn-cat.png": "assets/color-yarn-cat.png",
+    "/assets/night-yarn-cat.png": "assets/night-yarn-cat.png",
+    "/assets/color-yarn-cat.v1.webp": "assets/color-yarn-cat.v1.webp",
+    "/assets/night-yarn-cat.v1.webp": "assets/night-yarn-cat.v1.webp",
+    "/favicon.svg": "favicon.svg",
+  },
+});
+
+const patternRouter = createPatternRouter({
+  sendJson,
+  requireAuthenticatedSession,
+  getCatalogPatterns,
+  getSupabaseMatches,
+  parsePatternPage,
+});
+
 class ApiError extends Error {
   constructor(status, message) {
     super(message);
@@ -130,6 +168,24 @@ function sendText(res, status, text, contentType = "text/plain; charset=utf-8") 
   });
   res.end(text);
 }
+
+const yarnRouter = createYarnRouter({
+  ApiError,
+  sendJson,
+  getYarnCollectionVersion,
+  getSupabaseYarns,
+  getSupabaseYarnVersion,
+  insertSupabaseYarn,
+  updateSupabaseYarn,
+  deleteSupabaseYarn,
+  sendYarnMutationResponse,
+  requireAuthenticatedSession,
+  requireCurrentYarnVersion,
+  validateYarn,
+  readBody,
+  enforceRequestRateLimit,
+  yarnWriteRateLimiter,
+});
 
 function parseCookies(header) {
   return String(header || "")
@@ -217,6 +273,15 @@ function createAuthRateLimiter(options = {}) {
       return entries.size;
     },
   };
+}
+
+function createAccountDeletionRateLimiter(options = {}) {
+  return createAuthRateLimiter({
+    windowMs: 15 * 60 * 1000,
+    maxFailures: 5,
+    blockMs: 15 * 60 * 1000,
+    ...options,
+  });
 }
 
 function createRequestRateLimiter(options = {}) {
@@ -327,6 +392,50 @@ function buildAuthCookie(name, value, maxAge, env = process.env) {
   return `${name}=${encodeURIComponent(value)}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${maxAge}${secure}`;
 }
 
+function getIdleTimeoutSeconds(env = process.env) {
+  const raw = env.AUTH_IDLE_TIMEOUT_SECONDS;
+  if (raw === undefined || raw === null || String(raw).trim() === "") return AUTH_IDLE_TIMEOUT_SECONDS;
+  const value = Number(raw);
+  if (!Number.isInteger(value) || value <= 0) {
+    throw new Error("AUTH_IDLE_TIMEOUT_SECONDS musi być dodatnią liczbą całkowitą.");
+  }
+  return value;
+}
+
+function getIdleSessionSecret(env = process.env) {
+  const secret = String(env.IDLE_SESSION_SECRET || env.SUPABASE_SECRET_KEY || "");
+  if (!secret) throw new Error("Brak sekretu podpisu sesji bezczynności.");
+  return secret;
+}
+
+function signIdleActivity(timestamp, env = process.env) {
+  return crypto.createHmac("sha256", getIdleSessionSecret(env))
+    .update(String(timestamp))
+    .digest("base64url");
+}
+
+function buildIdleActivityCookie(timestamp, env = process.env) {
+  const normalizedTimestamp = Math.floor(Number(timestamp));
+  const value = `${normalizedTimestamp}.${signIdleActivity(normalizedTimestamp, env)}`;
+  return buildAuthCookie(AUTH_IDLE_COOKIE, value, getIdleTimeoutSeconds(env), env);
+}
+
+function parseIdleActivityCookie(value, env = process.env, now = Math.floor(Date.now() / 1000)) {
+  if (typeof value !== "string") return null;
+  const [rawTimestamp, signature] = value.split(".");
+  const timestamp = Number(rawTimestamp);
+  if (!Number.isSafeInteger(timestamp) || !signature) return null;
+  const expectedBuffer = Buffer.from(signIdleActivity(timestamp, env));
+  const receivedBuffer = Buffer.from(signature);
+  if (receivedBuffer.length !== expectedBuffer.length || !crypto.timingSafeEqual(receivedBuffer, expectedBuffer)) return null;
+  const age = now - timestamp;
+  return age >= 0 && age <= getIdleTimeoutSeconds(env) ? timestamp : null;
+}
+
+function setIdleActivityCookie(res, timestamp = Math.floor(Date.now() / 1000)) {
+  appendSetCookie(res, buildIdleActivityCookie(timestamp));
+}
+
 function setAuthCookies(res, session) {
   if (!session?.access_token || !session?.refresh_token) return;
   appendSetCookie(
@@ -337,11 +446,13 @@ function setAuthCookies(res, session) {
     res,
     buildAuthCookie(AUTH_REFRESH_COOKIE, session.refresh_token, AUTH_REFRESH_MAX_AGE)
   );
+  setIdleActivityCookie(res);
 }
 
 function clearAuthCookies(res) {
   appendSetCookie(res, buildAuthCookie(AUTH_ACCESS_COOKIE, "", 0));
   appendSetCookie(res, buildAuthCookie(AUTH_REFRESH_COOKIE, "", 0));
+  appendSetCookie(res, buildAuthCookie(AUTH_IDLE_COOKIE, "", 0));
 }
 
 function normalizeAuthEmail(value) {
@@ -428,6 +539,10 @@ async function getAuthenticatedSession(req, res) {
   const accessToken = cookies[AUTH_ACCESS_COOKIE];
   const refreshToken = cookies[AUTH_REFRESH_COOKIE];
   if (!accessToken && !refreshToken) return null;
+  if (cookies[AUTH_IDLE_COOKIE] && !parseIdleActivityCookie(cookies[AUTH_IDLE_COOKIE])) {
+    clearAuthCookies(res);
+    return null;
+  }
 
   const client = supabaseAuthClientFactory(supabaseAuthConfig);
   let activeAccessToken = accessToken;
@@ -469,6 +584,8 @@ async function getAuthenticatedSession(req, res) {
     throw new ApiError(403, "Konto jest zawieszone lub zablokowane.");
   }
 
+  setIdleActivityCookie(res);
+
   return {
     user: userResult.data.user,
     profile: profileResult.data,
@@ -497,33 +614,23 @@ function normalizeSupabaseYarn(yarn) {
   };
 }
 
-function getYarnCollectionVersion(yarns) {
-  return `"${crypto
-    .createHash("sha256")
-    .update(JSON.stringify(yarns.map((yarn) => [
-      yarn.id,
-      yarn.updatedAt,
-      yarn.name,
-      yarn.color,
-      yarn.materials,
-      yarn.weightClass,
-      yarn.length,
-      yarn.weight,
-    ])))
-    .digest("hex")}"`;
+function getYarnCollectionVersion(version) {
+  return `"yarn-v${version}"`;
 }
 
-async function requireCurrentYarnVersion(req, session) {
+function parseYarnVersion(value) {
+  const match = /^"yarn-v(\d+)"$/.exec(value || "");
+  if (!match) return null;
+  return Number(match[1]);
+}
+
+async function requireCurrentYarnVersion(req) {
   const expectedVersion = req.headers["if-match"];
-  if (typeof expectedVersion !== "string" || !expectedVersion) {
+  const parsedVersion = parseYarnVersion(expectedVersion);
+  if (parsedVersion === null) {
     throw new ApiError(428, "Odśwież magazyn przed zapisaniem zmian.");
   }
-
-  const currentYarns = await getSupabaseYarns(session);
-  const currentVersion = getYarnCollectionVersion(currentYarns);
-  if (expectedVersion !== currentVersion) {
-    throw new ApiError(409, "Magazyn został zmieniony w innej karcie. Odśwież dane i spróbuj ponownie.");
-  }
+  return parsedVersion;
 }
 
 function toSupabaseYarn(yarn, userId) {
@@ -561,12 +668,40 @@ async function getSupabaseYarns(session) {
   return data.map(normalizeSupabaseYarn);
 }
 
+async function getSupabaseYarnVersion(session) {
+  const { data, error } = await supabaseAuthClientFactory(
+    supabaseAuthConfig,
+    session.accessToken
+  ).rpc("get_yarn_store_version");
+  if (error) {
+    throw new Error(`Nie udało się pobrać wersji magazynu z Supabase: ${error.message}`);
+  }
+  return Number(data);
+}
+
+function handleYarnRpcError(error, action) {
+  if (error.code === "P0003" || error.code === "40001") {
+    throw new ApiError(409, "Magazyn został zmieniony w innej karcie. Odśwież dane i spróbuj ponownie.");
+  }
+  if (error.code === "P0002") {
+    throw new ApiError(404, "Nie znaleziono włóczki o podanym identyfikatorze.");
+  }
+  if (error.code === "P0001") {
+    throw new ApiError(409, "Magazyn osiągnął limit 500 włóczek na użytkownika.");
+  }
+  if (error.code === "PGRST202" || error.code === "42883") {
+    throw new ApiError(503, "Backend Supabase nie ma wymaganej migracji magazynu. Skontaktuj się z administratorem.");
+  }
+  throw new Error(`${action}: ${error.message}`);
+}
+
 async function insertSupabaseYarn(session, yarn) {
   const { data, error } = await supabaseAuthClientFactory(
     supabaseAuthConfig,
     session.accessToken
   )
-    .rpc("insert_yarn_with_limit", {
+    .rpc("insert_yarn_versioned", {
+      p_expected_version: yarn.expectedVersion,
       p_name: yarn.name,
       p_color: yarn.color,
       p_materials: yarn.materials,
@@ -576,24 +711,12 @@ async function insertSupabaseYarn(session, yarn) {
     });
 
   if (error) {
-    if (error.code === "P0001") {
-      throw new ApiError(409, "Magazyn osiągnął limit 500 włóczek na użytkownika.");
-    }
-    if (error.code === "PGRST202" || error.code === "42883") {
-      throw new ApiError(
-        503,
-        "Backend Supabase nie ma wymaganej migracji magazynu. Skontaktuj się z administratorem."
-      );
-    }
-    throw new Error(`Nie udało się zapisać włóczki w Supabase: ${error.message}`);
+    handleYarnRpcError(error, "Nie udało się zapisać włóczki w Supabase");
   }
-
-  const insertedYarn = Array.isArray(data) ? data[0] : data;
-  if (!insertedYarn) {
+  if (!data?.yarn) {
     throw new Error("Supabase nie zwróciło zapisanej włóczki.");
   }
-
-  return normalizeSupabaseYarn(insertedYarn);
+  return { yarn: normalizeSupabaseYarn(data.yarn), version: Number(data.version) };
 }
 
 async function updateSupabaseYarn(session, id, yarn) {
@@ -601,195 +724,43 @@ async function updateSupabaseYarn(session, id, yarn) {
     supabaseAuthConfig,
     session.accessToken
   )
-    .from("yarns")
-    .update(toSupabaseYarnFields(yarn))
-    .eq("id", id)
-    .eq("user_id", session.user.id)
-    .select("id,name,color,materials,weight_class,length_meters,weight_grams")
-    .single();
+    .rpc("update_yarn_versioned", {
+      p_expected_version: yarn.expectedVersion,
+      p_id: id,
+      p_name: yarn.name,
+      p_color: yarn.color,
+      p_materials: yarn.materials,
+      p_weight_class: yarn.weightClass,
+      p_length_meters: yarn.length,
+      p_weight_grams: yarn.weight,
+    });
 
   if (error) {
-    if (error.code === "PGRST116") {
-      throw new ApiError(404, "Nie znaleziono włóczki o podanym identyfikatorze.");
-    }
-    throw new Error(`Nie udało się zaktualizować włóczki w Supabase: ${error.message}`);
+    handleYarnRpcError(error, "Nie udało się zaktualizować włóczki w Supabase");
   }
-
-  return normalizeSupabaseYarn(data);
+  if (!data?.yarn) throw new Error("Supabase nie zwróciło zaktualizowanej włóczki.");
+  return { yarn: normalizeSupabaseYarn(data.yarn), version: Number(data.version) };
 }
 
-async function deleteSupabaseYarn(session, id) {
+async function deleteSupabaseYarn(session, id, expectedVersion) {
   const { data, error } = await supabaseAuthClientFactory(
     supabaseAuthConfig,
     session.accessToken
   )
-    .from("yarns")
-    .delete()
-    .eq("id", id)
-    .eq("user_id", session.user.id)
-    .select("id");
+    .rpc("delete_yarn_versioned", {
+      p_expected_version: expectedVersion,
+      p_id: id,
+    });
 
   if (error) {
-    throw new Error(`Nie udało się usunąć włóczki z Supabase: ${error.message}`);
+    handleYarnRpcError(error, "Nie udało się usunąć włóczki z Supabase");
   }
-
-  if (!data.length) {
-    throw new ApiError(404, "Nie znaleziono włóczki o podanym identyfikatorze.");
-  }
+  return { version: Number(data?.version) };
 }
 
-async function sendYarnMutationResponse(res, status, payload, session) {
-  const currentYarns = await getSupabaseYarns(session);
-  res.setHeader("ETag", getYarnCollectionVersion(currentYarns));
-  return sendJson(res, status, payload);
-}
-
-function yarnMatchesLegacyMaterials(yarn, materials) {
-  if (materials.includes(ANY_MATERIAL)) {
-    return Array.isArray(yarn.materials) && yarn.materials.length > 0;
-  }
-  return matchesMaterialRule(yarn.materials, {
-    material_match: "any",
-    materials,
-  });
-}
-
-function scorePattern(pattern, yarns) {
-  if (Array.isArray(pattern.requirements) && pattern.requirements.length > 0) {
-    const allocation = allocateRequirementYarns(pattern.requirements, yarns);
-    if (!allocation) {
-      return {
-        total: 0,
-        doable: false,
-        totalLength: 0,
-        totalWeight: 0,
-        matchedYarns: 0,
-      };
-    }
-
-    const requiredLength = pattern.requirements.reduce(
-      (sum, requirement) => sum + requirement.metersNeeded,
-      0
-    );
-    const requiredWeight = pattern.requirements.reduce(
-      (sum, requirement) => sum + requirement.gramsNeeded,
-      0
-    );
-    const totalLength = allocation.flat().reduce((sum, yarn) => sum + yarn.length, 0);
-    const totalWeight = allocation.flat().reduce((sum, yarn) => sum + yarn.weight, 0);
-    const lengthScore = Math.min(totalLength / requiredLength, 1);
-    const weightScore = Math.min(totalWeight / requiredWeight, 1);
-    const total = Math.round(lengthScore * 40 + weightScore * 25 + 25 + 10);
-
-    return {
-      total,
-      doable: true,
-      totalLength,
-      totalWeight,
-      matchedYarns: allocation.flat().length,
-    };
-  }
-
-  const materials = Array.isArray(pattern.materials) ? pattern.materials : [];
-  const weightClasses = Array.isArray(pattern.weightClasses) ? pattern.weightClasses : [];
-  const totalLength = yarns.reduce((sum, yarn) => sum + yarn.length, 0);
-  const totalWeight = yarns.reduce((sum, yarn) => sum + yarn.weight, 0);
-  const matchedYarns = yarns.filter(
-    (yarn) =>
-      yarnMatchesLegacyMaterials(yarn, materials)
-      && weightClasses.includes(yarn.weightClass),
-  ).length;
-  const lengthScore = Math.min(totalLength / pattern.metersNeeded, 1);
-  const weightScore = Math.min(totalWeight / pattern.gramsNeeded, 1);
-  const materialScore = Math.min(matchedYarns / pattern.yarnsNeeded, 1);
-  const colorScore = pattern.colors === "dowolny" ? 1 : 0.8;
-  const total = Math.round(lengthScore * 40 + weightScore * 25 + materialScore * 25 + colorScore * 10);
-  const doable = totalLength >= pattern.metersNeeded && totalWeight >= pattern.gramsNeeded && matchedYarns >= pattern.yarnsNeeded;
-  return { total, doable, totalLength, totalWeight, matchedYarns };
-}
-
-function allocateRequirementYarns(requirements, yarns) {
-  for (const requirement of requirements) {
-    const eligible = yarns.filter(
-      (yarn) =>
-        yarnMatchesLegacyMaterials(yarn, requirement.materials) &&
-        requirement.weightClasses.includes(yarn.weightClass)
-    );
-    const availableLength = eligible.reduce((sum, yarn) => sum + yarn.length, 0);
-    const availableWeight = eligible.reduce((sum, yarn) => sum + yarn.weight, 0);
-
-    if (
-      eligible.length < requirement.yarnsNeeded ||
-      availableLength < requirement.metersNeeded ||
-      availableWeight < requirement.gramsNeeded
-    ) {
-      return null;
-    }
-  }
-
-  let searchNodes = 0;
-
-  function choose(index, used, allocation) {
-    searchNodes += 1;
-    if (searchNodes > MAX_MATCH_SEARCH_NODES) {
-      throw new ApiError(503, "Dopasowanie jest zbyt złożone. Zmniejsz magazyn lub wybierz prostszy wzór.");
-    }
-    if (index === requirements.length) return allocation;
-
-    const requirement = requirements[index];
-    const eligible = yarns.filter(
-      (yarn, yarnIndex) =>
-        !used.has(yarnIndex) &&
-        yarnMatchesLegacyMaterials(yarn, requirement.materials) &&
-        requirement.weightClasses.includes(yarn.weightClass)
-    );
-
-    const remainingLength = new Array(eligible.length + 1).fill(0);
-    const remainingWeight = new Array(eligible.length + 1).fill(0);
-    for (let candidate = eligible.length - 1; candidate >= 0; candidate -= 1) {
-      remainingLength[candidate] = remainingLength[candidate + 1] + eligible[candidate].length;
-      remainingWeight[candidate] = remainingWeight[candidate + 1] + eligible[candidate].weight;
-    }
-
-    function chooseGroup(start, group, length, weight) {
-      searchNodes += 1;
-      if (searchNodes > MAX_MATCH_SEARCH_NODES) {
-        throw new ApiError(503, "Dopasowanie jest zbyt złożone. Zmniejsz magazyn lub wybierz prostszy wzór.");
-      }
-      if (
-        group.length + eligible.length - start < requirement.yarnsNeeded ||
-        length + remainingLength[start] < requirement.metersNeeded ||
-        weight + remainingWeight[start] < requirement.gramsNeeded
-      ) {
-        return null;
-      }
-      if (
-        group.length >= requirement.yarnsNeeded &&
-        length >= requirement.metersNeeded &&
-        weight >= requirement.gramsNeeded
-      ) {
-        const nextUsed = new Set(used);
-        group.forEach((yarn) => nextUsed.add(yarns.indexOf(yarn)));
-        const result = choose(index + 1, nextUsed, [...allocation, group]);
-        if (result) return result;
-      }
-
-      for (let candidate = start; candidate < eligible.length; candidate += 1) {
-        const result = chooseGroup(
-          candidate + 1,
-          [...group, eligible[candidate]],
-          length + eligible[candidate].length,
-          weight + eligible[candidate].weight
-        );
-        if (result) return result;
-      }
-      return null;
-    }
-
-    return chooseGroup(0, [], 0, 0);
-  }
-
-  return choose(0, new Set(), []);
+async function sendYarnMutationResponse(res, status, mutation) {
+  res.setHeader("ETag", getYarnCollectionVersion(mutation.version));
+  return sendJson(res, status, status === 204 ? null : mutation.yarn);
 }
 
 async function getSupabaseMatches(session) {
@@ -874,27 +845,6 @@ function validateMatchLimits(patterns) {
   }
 }
 
-function selectMatchingYarns(pattern, yarns) {
-  const requirements = Array.isArray(pattern.requirements) && pattern.requirements.length > 0
-    ? pattern.requirements
-    : [{
-        yarnsNeeded: pattern.yarnsNeeded,
-        metersNeeded: pattern.metersNeeded,
-        gramsNeeded: pattern.gramsNeeded,
-        materials: pattern.materials,
-        weightClasses: pattern.weightClasses,
-      }];
-  const eligible = yarns.filter((yarn) =>
-    requirements.some(
-      (requirement) =>
-        yarnMatchesLegacyMaterials(yarn, requirement.materials) &&
-        requirement.weightClasses.includes(yarn.weightClass)
-    )
-  );
-
-  return { yarns: eligible, limited: false };
-}
-
 async function readBodyContent(req) {
   const chunks = [];
   let receivedBytes = 0;
@@ -954,29 +904,6 @@ async function readBody(req) {
   } finally {
     clearTimeout(timeout);
   }
-}
-
-function sendFile(res, filePath) {
-  const ext = path.extname(filePath).toLowerCase();
-  const types = {
-    ".html": "text/html; charset=utf-8",
-    ".css": "text/css; charset=utf-8",
-    ".js": "application/javascript; charset=utf-8",
-    ".png": "image/png",
-    ".webp": "image/webp",
-    ".svg": "image/svg+xml",
-  };
-  const cacheControl = ext === ".webp"
-    ? "public, max-age=31536000, immutable"
-    : "no-cache";
-  return fsPromises.readFile(filePath).then((buf) => {
-    res.writeHead(200, {
-      ...SECURITY_HEADERS,
-      "Content-Type": types[ext] || "application/octet-stream",
-      "Cache-Control": cacheControl,
-    });
-    res.end(buf);
-  });
 }
 
 function normalizeCatalogPattern(pattern) {
@@ -1218,11 +1145,20 @@ async function handleAuthApi(req, res, url) {
   if (req.method === "POST" && url.pathname === "/api/auth/password-reset-request") {
     const body = await readBody(req);
     const email = normalizeAuthEmail(body.email);
+    let captchaToken;
+    try {
+      captchaToken = normalizeCaptchaToken(body.captchaToken, captchaConfig.enabled);
+    } catch (error) {
+      throw new ApiError(400, error.message);
+    }
     const rateLimitKeys = getAuthRateLimitKeys(req, email);
     enforceRequestRateLimit(rateLimitKeys, authRequestRateLimiter, res);
 
     const redirectTo = new URL("/?recovery=1", getExpectedOrigin(req)).toString();
-    const { error } = await authClient().auth.resetPasswordForEmail(email, { redirectTo });
+    const { error } = await authClient().auth.resetPasswordForEmail(email, {
+      redirectTo,
+      ...(captchaToken ? { captchaToken } : {}),
+    });
     if (error) {
       console.warn("Nie udało się wysłać wiadomości odzyskiwania hasła.");
       throw new ApiError(503, "Odzyskiwanie hasła jest chwilowo niedostępne. Spróbuj ponownie później.");
@@ -1291,6 +1227,11 @@ async function handleAuthApi(req, res, url) {
     return sendJson(res, 200, { authenticated: false });
   }
 
+  if (req.method === "POST" && url.pathname === "/api/auth/activity") {
+    await requireAuthenticatedSession(req, res);
+    return sendJson(res, 200, { authenticated: true });
+  }
+
   if (req.method === "GET" && url.pathname === "/api/auth/session") {
     const session = await getAuthenticatedSession(req, res);
     return sendJson(res, 200, {
@@ -1321,11 +1262,7 @@ async function handleApi(req, res, url) {
 
   if (req.method === "DELETE" && url.pathname === "/api/account") {
     const session = await requireAuthenticatedSession(req, res);
-    enforceRequestRateLimit(
-      [`ip:${getClientAddress(req)}`, `user:${session.user.id}`],
-      yarnWriteRateLimiter,
-      res,
-    );
+    const rateLimitKeys = [`ip:${getClientAddress(req)}`, `user:${session.user.id}`];
 
     const body = await readBody(req);
     let deletionInput;
@@ -1333,6 +1270,14 @@ async function handleApi(req, res, url) {
       deletionInput = validateAccountDeletionInput(body);
     } catch (error) {
       throw new ApiError(400, error.message || `Wpisz dokładnie: ${ACCOUNT_DELETION_PHRASE}.`);
+    }
+
+    const retryAfterMs = Math.max(
+      ...rateLimitKeys.map((key) => accountDeletionRateLimiter.getRetryAfterMs(key)),
+    );
+    if (retryAfterMs > 0) {
+      res.setHeader("Retry-After", String(Math.ceil(retryAfterMs / 1000)));
+      throw new ApiError(429, "Zbyt wiele nieudanych prób. Spróbuj ponownie później.");
     }
 
     try {
@@ -1344,11 +1289,13 @@ async function handleApi(req, res, url) {
       });
     } catch (error) {
       if (error.message === "Nie udało się potwierdzić hasła.") {
+        rateLimitKeys.forEach((key) => accountDeletionRateLimiter.recordFailure(key));
         throw new ApiError(400, error.message);
       }
       throw error;
     }
 
+    accountDeletionRateLimiter.clear(`user:${session.user.id}`);
     clearAuthCookies(res);
     res.writeHead(204, {
       ...SECURITY_HEADERS,
@@ -1357,57 +1304,9 @@ async function handleApi(req, res, url) {
     return res.end();
   }
 
-  if (req.method === "GET" && url.pathname === "/api/yarns") {
-    const session = await requireAuthenticatedSession(req, res);
-    const yarns = await getSupabaseYarns(session);
-    res.setHeader("ETag", getYarnCollectionVersion(yarns));
-    return sendJson(res, 200, yarns);
-  }
+  if (await yarnRouter.handle(req, res, url)) return;
 
-  if (req.method === "POST" && url.pathname === "/api/yarns") {
-    const body = await readBody(req);
-    const yarn = validateYarn(body);
-    const session = await requireAuthenticatedSession(req, res);
-    enforceRequestRateLimit([`user:${session.user.id}`], yarnWriteRateLimiter, res);
-    await requireCurrentYarnVersion(req, session);
-    return sendYarnMutationResponse(res, 201, await insertSupabaseYarn(session, yarn), session);
-  }
-
-  if (req.method === "PATCH" && url.pathname.startsWith("/api/yarns/")) {
-    const id = Number(url.pathname.split("/").pop());
-    if (!Number.isInteger(id) || id < 1) {
-      throw new ApiError(400, "Identyfikator włóczki musi być dodatnią liczbą całkowitą.");
-    }
-    const body = await readBody(req);
-    const yarn = validateYarn(body);
-    const session = await requireAuthenticatedSession(req, res);
-    enforceRequestRateLimit([`user:${session.user.id}`], yarnWriteRateLimiter, res);
-    await requireCurrentYarnVersion(req, session);
-    return sendYarnMutationResponse(res, 200, await updateSupabaseYarn(session, id, yarn), session);
-  }
-
-  if (req.method === "DELETE" && url.pathname.startsWith("/api/yarns/")) {
-    const id = Number(url.pathname.split("/").pop());
-    if (!Number.isInteger(id) || id < 1) {
-      throw new ApiError(400, "Identyfikator włóczki musi być dodatnią liczbą całkowitą.");
-    }
-    const session = await requireAuthenticatedSession(req, res);
-    enforceRequestRateLimit([`user:${session.user.id}`], yarnWriteRateLimiter, res);
-    await requireCurrentYarnVersion(req, session);
-    await deleteSupabaseYarn(session, id);
-    return sendYarnMutationResponse(res, 204, null, session);
-  }
-
-  if (req.method === "GET" && url.pathname === "/api/patterns") {
-    return sendJson(res, 200, await getCatalogPatterns(parsePatternPage(url)));
-  }
-
-  if (req.method === "GET" && url.pathname === "/api/matches") {
-    const session = await requireAuthenticatedSession(req, res);
-    const result = await getSupabaseMatches(session);
-    res.setHeader("X-Motek-Match-Scope", result.limited ? "subset" : "full");
-    return sendJson(res, 200, result.matches);
-  }
+  if (await patternRouter.handle(req, res, url)) return;
 
   sendJson(res, 404, { error: "Nieznany endpoint" });
 }
@@ -1450,6 +1349,10 @@ async function main(options = {}) {
   validateDeploymentConfig();
   validateCookieSecurityConfig();
   validateOriginConfig();
+  const releaseInfo = readReleaseInfo(
+    process.env,
+    fs.readFileSync(path.join(rootDir, "VERSION"), "utf8").trim()
+  );
   supabaseConnection = Object.prototype.hasOwnProperty.call(
     options,
     "supabaseConnection"
@@ -1525,6 +1428,13 @@ async function main(options = {}) {
         return sendJson(res, 503, { status: "not_ready" });
       }
 
+      if (req.method === "GET" && url.pathname === "/health/release") {
+        if (await updateReadiness({ logFailure: true })) {
+          return sendJson(res, 200, { status: "ready", ...releaseInfo });
+        }
+        return sendJson(res, 503, { status: "not_ready" });
+      }
+
       if (req.method === "GET" && url.pathname === "/internal/metrics" && metricsEnabled) {
         res.writeHead(200, {
           ...SECURITY_HEADERS,
@@ -1550,39 +1460,7 @@ async function main(options = {}) {
         return await handleApi(req, res, url);
       }
 
-      if (url.pathname === "/" || url.pathname === "/index.html") {
-        return await sendFile(res, path.join(rootDir, "index.html"));
-      }
-      if (url.pathname === "/styles.css") {
-        return await sendFile(res, path.join(rootDir, "styles.css"));
-      }
-      if (url.pathname === "/app.js") {
-        return await sendFile(res, path.join(rootDir, "app.js"));
-      }
-      if (url.pathname === "/client-policy.js") {
-        return await sendFile(res, path.join(rootDir, "client-policy.js"));
-      }
-      if (url.pathname === "/theme-policy.js") {
-        return await sendFile(res, path.join(rootDir, "theme-policy.js"));
-      }
-      if (url.pathname === "/assets/color-yarn-cat.png") {
-        return await sendFile(res, path.join(rootDir, "assets", "color-yarn-cat.png"));
-      }
-      if (url.pathname === "/assets/night-yarn-cat.png") {
-        return await sendFile(res, path.join(rootDir, "assets", "night-yarn-cat.png"));
-      }
-      if (url.pathname === "/assets/color-yarn-cat.v1.webp") {
-        return await sendFile(res, path.join(rootDir, "assets", "color-yarn-cat.v1.webp"));
-      }
-      if (url.pathname === "/assets/night-yarn-cat.v1.webp") {
-        return await sendFile(res, path.join(rootDir, "assets", "night-yarn-cat.v1.webp"));
-      }
-      if (url.pathname === "/material-policy.js") {
-        return await sendFile(res, path.join(rootDir, "material-policy.js"));
-      }
-      if (url.pathname === "/favicon.svg") {
-        return await sendFile(res, path.join(rootDir, "favicon.svg"));
-      }
+      if (await staticFileHandler.handle(req, res, url)) return;
 
       return sendText(res, 404, "Nie znaleziono zasobu");
     } catch (error) {
@@ -1688,12 +1566,16 @@ module.exports = {
   validateYarnStorageCapacity,
   toSupabaseYarn,
   buildAuthCookie,
+  createAccountDeletionRateLimiter,
   createAuthRateLimiter,
   createRequestRateLimiter,
   validateMatchLimits,
   shouldUseSecureCookies,
   shutdown,
   validateCookieSecurityConfig,
+  getIdleTimeoutSeconds,
+  buildIdleActivityCookie,
+  parseIdleActivityCookie,
   validateAuthPassword,
   normalizeRecoveryToken,
 };

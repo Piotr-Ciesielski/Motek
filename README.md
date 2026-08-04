@@ -1,172 +1,84 @@
 # Motek
 
-Motek to prywatna aplikacja webowa dla osób robiących na drutach i szydełku. Pomaga odpowiedzieć na praktyczne pytanie: **który wzór mogę wykonać z włóczek, które już mam?**
+Prywatna aplikacja webowa do zarządzania włóczkami, katalogiem wzorów i ich dopasowaniem.
 
-Użytkownik zapisuje własny magazyn motków, przegląda katalog wzorów i otrzymuje tylko dopasowania oparte na potwierdzonych wymaganiach. Motek nie zgaduje zużycia włóczki, gdy dane wzoru są niepełne.
+## Lokalny start
 
-## Najważniejsze funkcje
+Wymagane: Node.js 24, npm i projekt Supabase.
 
-- rejestracja i logowanie adresem e-mail, bez zbierania imienia i nazwiska;
-- prywatny magazyn włóczek z nazwą, kolorem, materiałami, grubością, długością i wagą;
-- edycja, automatyczny zapis i usuwanie motków;
-- katalog wzorów z wyszukiwaniem oraz łączonymi filtrami statusu, języka, typu projektu i materiału;
-- dokładne dopasowanie motków do ról i wariantów wzoru, z uwzględnieniem metrów lub gramów, materiału, grubości, kolorów i liczby nitek;
-- dwa zapamiętywane lokalnie motywy interfejsu: jasny i ciemny;
-- odzyskiwanie hasła i trwałe usunięcie konta wraz z prywatnymi danymi.
+```bash
+npm install
+copy .env.example .env   # PowerShell: Copy-Item .env.example .env
+npm start
+```
 
-Jeden motek nie może zostać przypisany jednocześnie do dwóch różnych ról we wzorze. Rekordy bez kompletnych, zweryfikowanych wymagań pozostają widoczne w katalogu, ale nie są przedstawiane jako pewne dopasowania.
+Aplikacja: `http://127.0.0.1:3001`.
 
-Obowiązujące limity produktu to 500 włóczek na użytkownika i 300 wzorów w katalogu.
-
-## Szybki start
-
-Wymagane są Node.js 24 (wersja używana w CI), npm oraz projekt Supabase z zastosowanymi migracjami z katalogu `supabase/migrations/`.
-
-1. Zainstaluj zależności:
-
-   ```bash
-   npm install
-   ```
-
-2. Skopiuj `.env.example` do lokalnego pliku `.env` i uzupełnij dane projektu Supabase. Plik `.env` zawiera sekrety i nie może trafić do Git.
-
-3. Uruchom aplikację:
-
-   ```bash
-   npm start
-   ```
-
-4. Otwórz **adres wypisany w logu serwera**. Przy wartościach z `.env.example` będzie to:
-
-   ```text
-   http://127.0.0.1:3001
-   ```
-
-Serwer wymaga połączenia z Supabase — aplikacja nie ma lokalnego zapasowego źródła danych.
-
-## Konfiguracja środowiska
-
-Przykładowy plik `.env`:
+Minimalne zmienne `.env`:
 
 ```dotenv
-# Lokalny adres i port serwera
 HOST=127.0.0.1
 PORT=3001
-
-# Środowisko: development lokalnie, production na wdrożeniu
 NODE_ENV=development
-
-# Dane projektu Supabase
 SUPABASE_URL=https://twoj-projekt.supabase.co
-SUPABASE_PUBLISHABLE_KEY=uzupelnij_klucz_publiczny
-SUPABASE_SECRET_KEY=uzupelnij_klucz_backendu
-
-# Lokalnie false; w produkcji true i wyłącznie HTTPS
-COOKIE_SECURE=false
-
-# Publiczny origin aplikacji; bez ścieżki i końcowego ukośnika
+SUPABASE_PUBLISHABLE_KEY=...
+SUPABASE_SECRET_KEY=...
 APP_ORIGIN=http://127.0.0.1:3001
+COOKIE_SECURE=false
 ```
 
-Znaczenie ustawień:
-
-- `HOST` i `PORT` określają interfejs sieciowy oraz port nasłuchu. Domyślne wartości serwera bez konfiguracji to odpowiednio `127.0.0.1` i `3001`;
-- `NODE_ENV=production` wymaga jawnego `APP_ORIGIN`; HTTPS pozostaje obowiązkowym wymaganiem publicznego wdrożenia;
-- `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY` i `SUPABASE_SECRET_KEY` są wymagane przy starcie. Klucz sekretny służy wyłącznie backendowi;
-- `COOKIE_SECURE=true` pozwala wysyłać ciasteczka sesji tylko przez HTTPS i powinno być ustawione w produkcji;
-- `APP_ORIGIN` definiuje dozwolone źródło żądań zmieniających dane i chroni przed żądaniami z obcych stron. Lokalnie powinien odpowiadać adresowi wypisanemu przez serwer.
-
-W Supabase Auth trzeba również dodać adres aplikacji z `/?recovery=1` do listy dozwolonych adresów przekierowania, aby działało odzyskiwanie hasła.
-
-## Architektura w skrócie
-
-- `index.html`, `styles.css` i `app.js` tworzą interfejs użytkownika;
-- `server.js` serwuje frontend, waliduje żądania i udostępnia API HTTP bez dodatkowego frameworka;
-- `material-policy.js`, `matching-policy.js`, `client-policy.js` i `theme-policy.js` zawierają współdzielone reguły produktu;
-- Supabase przechowuje konta (`auth.users`), profile, prywatne włóczki i wspólny katalog wzorów;
-- `supabase/migrations/` zawiera wersjonowany schemat i zabezpieczenia bazy;
-- `scripts/` oraz `data/` służą do przygotowania i kontroli danych katalogu;
-- `test/` zawiera automatyczne testy backendu, polityk, migracji, importu i danych katalogu.
-
-Frontend komunikuje się wyłącznie z API Motka i nigdy nie otrzymuje sekretnego klucza Supabase. Backend przekazuje token zalogowanego użytkownika do Supabase, aby reguły Row Level Security mogły egzekwować własność danych.
-
-## API
-
-API jest podzielone na kilka grup:
-
-- `/api/auth/*` — rejestracja, logowanie, sesja, wylogowanie i odzyskiwanie hasła;
-- `/api/yarns` oraz `/api/yarns/:id` — odczyt i dodawanie motków, a także aktualizacja przez `PATCH` i usuwanie przez `DELETE`;
-- `/api/patterns` — wspólny katalog wzorów;
-- `/api/matches` — wykonalne dopasowania z prywatnego magazynu użytkownika;
-- `/api/account` — trwałe usunięcie konta po ponownym potwierdzeniu hasłem;
-- `/health` — kontrola stanu serwera.
-
-Operacje na magazynie, dopasowaniach i koncie wymagają właściwej sesji. Szerszy opis API i modelu danych znajduje się w [SPEC.md](SPEC.md).
-
-## Bezpieczeństwo i prywatność
-
-- sekretny klucz Supabase pozostaje wyłącznie po stronie backendu;
-- sesja jest przechowywana w ciasteczkach `HttpOnly`, a w produkcji także `Secure`;
-- Row Level Security oraz `user_id` izolują magazyny użytkowników;
-- właściciel rekordu wynika z uwierzytelnionej sesji, a nie z danych formularza;
-- backend waliduje format i rozmiar danych oraz jawnie wybiera pola odpowiedzi;
-- rejestracja i logowanie mają limity nieudanych prób;
-- kontrola originu chroni operacje zmieniające dane przed żądaniami z obcych stron;
-- błędy nie powinny ujawniać tokenów ani sekretów;
-- źródłowe PDF-y w katalogu `Wzory` i lokalny `.env` nie są publicznie serwowane ani wersjonowane.
-
-Przed publicznym ruchem należy użyć HTTPS, ustawić `NODE_ENV=production`, `COOKIE_SECURE=true` i poprawny `APP_ORIGIN`, włączyć ochronę CAPTCHA dla Auth oraz zapewnić HSTS, monitoring i limity ruchu na poziomie reverse proxy lub WAF.
-
-## Testy i kontrola importu
-
-Pełna podstawowa kontrola projektu sprawdza składnię backendu i frontendu oraz uruchamia testy automatyczne:
+## Najważniejsze polecenia
 
 ```bash
-npm run check
+npm run check             # testy i kontrola kodu
+npm run lint              # ESLint
+npm run format:check      # Prettier
+npm run railway:check     # sprawdzenie konfiguracji Railway
+npm run regression:smoke  # szybki test wdrożenia
+npm run regression:full   # pełna regresja stagingu
 ```
 
-Sam zestaw testów:
+## Środowiska i wdrożenia
 
-```bash
-npm test
-```
+| Środowisko | Domena | Branch | Test po wdrożeniu |
+|---|---|---|---|
+| Staging | [staging.rysia.org](https://staging.rysia.org) | `staging` | pełna regresja |
+| Produkcja | [www.rysia.org](https://www.rysia.org) | `main` | smoke test |
 
-Kontrola przygotowanego katalogu wzorów bez zapisu do Supabase:
+`rysia.org` przekierowuje do `www.rysia.org`. Każde środowisko ma osobny projekt Supabase i osobne sekrety.
 
-```bash
-npm run patterns:check
-```
+Railway buduje `Dockerfile`, uruchamia Node.js 24 i sprawdza gotowość przez `/health/ready`. Cloudflare obsługuje DNS, proxy, HTTPS/TLS i WAF. API nie powinno być cache'owane.
 
-Import wykonawczy zmienia dane w skonfigurowanym Supabase i powinien być uruchamiany dopiero po przejrzeniu wyniku kontroli oraz świadomym potwierdzeniu:
+Przepływ: PR → CI → `staging` → regresja → `main` → produkcja. Wdrożenie z błędnym SHA, niesprawnym healthcheckiem lub nieudaną regresją jest blokowane.
 
-```bash
-npm run patterns:import
-```
+## CI/CD i wersja
 
-Proces katalogu nie publikuje instrukcji z PDF-ów ani długich cytatów. Zachowuje tylko własny opis, źródło i parametry potrzebne do filtrowania lub dopasowania. Aktualny stan danych i zasady katalogu opisuje [docs/PATTERN-CATALOG.md](docs/PATTERN-CATALOG.md).
+GitHub Actions uruchamiają testy, lint, formatowanie, audyt npm i testy Supabase. Po wdrożeniu workflow sprawdza właściwy commit oraz uruchamia regresję.
 
-## Staging
+Numer wersji jest w pliku [`VERSION`](VERSION) (obecnie `2.0.0-alpha.38`) i musi odpowiadać wersji w `package.json`. CI kontroluje wersję i SHA; numer wydania aktualizuje się świadomie w repozytorium.
 
-Gotowy stos w `deploy/staging` uruchamia aplikację za reverse proxy i WAF z OWASP CRS. Logowanie i rejestracja mogą wymagać Cloudflare Turnstile, którego publiczną konfigurację frontend pobiera z `/api/config`.
+## Diagnostyka
 
-Endpointy `/health/live` i `/health/ready` rozdzielają stan procesu od gotowości połączenia z Supabase. Metryki Prometheus pod `/internal/metrics` pozostają dostępne tylko w prywatnej sieci stagingu. Zasady bezpiecznej konfiguracji skupia `deployment-policy.js`, a metryki implementuje `observability.js`. Instrukcja wdrożenia i ręcznych ustawień operatora znajduje się w `deploy/staging/README.md`.
+- `/health/live` — proces działa;
+- `/health/ready` — aplikacja i zależności są gotowe;
+- `/health/release` — wersja, SHA i środowisko.
 
-## Wdrożenie Railway i domeny
+Przy błędzie logowania regresji sprawdź sekrety `MOTEK_QA_EMAIL` i `MOTEK_QA_PASSWORD` w GitHub Environment `staging`.
 
-- staging działa z gałęzi `staging` pod `https://staging.rysia.org` i wdraża się automatycznie po wypchnięciu zmian;
-- produkcja działa z gałęzi `main` pod `https://www.rysia.org`, a auto-deploy jest wyłączony — publikację uruchamia operator ręcznie.
+## Railway i środowiska
 
-Domena `rysia.org` jest zarejestrowana w Railway, natomiast DNS oraz proxy/WAF obsługuje Cloudflare. Publiczny ruch odbywa się przez HTTPS. Sekrety Supabase, Railway i Turnstile są przechowywane wyłącznie w ustawieniach środowisk.
+- staging działa z gałęzi `staging` pod `https://staging.rysia.org` i wdraża się automatycznie;
+- produkcja działa z gałęzi `main` pod `https://www.rysia.org`, a auto-deploy jest wyłączony — publikację uruchamia operator ręcznie;
+- Cloudflare obsługuje DNS, proxy/WAF i HTTPS, a każde środowisko korzysta z osobnego Supabase;
+- po deployu stagingu uruchamia się `regression:full`, a po ręcznym deployu produkcji `regression:smoke`.
 
-Po udanym deployu uruchamiana jest regresja: pełny profil na stagingu oraz niedestrukcyjny smoke test na produkcji. Procedurę, ręczny deploy i rollback opisuje [runbook po wdrożeniu](docs/operations/post-deploy-regression.md).
+Sesja użytkownika wygasa po 2 godzinach bezczynności (`AUTH_IDLE_TIMEOUT_SECONDS=7200`).
 
-Sesja użytkownika wygasa po 2 godzinach bezczynności (`AUTH_IDLE_TIMEOUT_SECONDS=7200`); aktywność użytkownika odświeża licznik.
+## Dokumentacja
 
-## Dokumentacja i wersja
-
-- [SPEC.md](SPEC.md) — pełniejsza specyfikacja produktu, API i danych;
-- [docs/PATTERN-CATALOG.md](docs/PATTERN-CATALOG.md) — stan, jakość i zasady katalogu wzorów;
-- [VERSION](VERSION) — bieżąca wersja projektu;
-- [CHANGELOG.txt](CHANGELOG.txt) — historia zmian między wersjami.
-
-README celowo nie powiela numeru bieżącej wersji ani historii wydań. Źródłami prawdy są pliki `VERSION` i `CHANGELOG.txt`.
+- [Architektura](docs/ARCHITECTURE.md)
+- [Specyfikacja](SPEC.md)
+- [Jakość i testy](docs/QUALITY.md)
+- [Katalog wzorów](docs/PATTERN-CATALOG.md)
+- [Runbook Railway/Cloudflare i regresji](docs/operations/post-deploy-regression.md)
+- [Historia zmian](CHANGELOG.txt)

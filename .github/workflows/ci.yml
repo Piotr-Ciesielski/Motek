@@ -1,8 +1,8 @@
 name: CI
 
-on:
+'on':
   push:
-    branches: [main]
+    branches: [main, staging]
   pull_request:
     branches: [main]
 
@@ -16,10 +16,10 @@ jobs:
 
     steps:
       - name: Pobierz kod
-        uses: actions/checkout@v6
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
 
       - name: Przygotuj Node.js
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
         with:
           node-version: 24
           cache: npm
@@ -30,5 +30,34 @@ jobs:
       - name: Sprawdź podatności zależności
         run: npm audit --omit=dev --audit-level=moderate
 
+      - name: Sprawdź jakość kodu (ESLint)
+        run: npm run lint
+
+      - name: Sprawdź formatowanie
+        run: npm run format:check
+
+      - name: Sprawdź pokrycie testami
+        run: npm run coverage
+
       - name: Sprawdź kod i uruchom testy
         run: npm run check
+
+  database:
+    needs: test
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Pobierz kod
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+
+      - name: Przygotuj Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: 2.111.0
+
+      - name: Odtwórz migracje i uruchom testy bazy
+        run: |
+          supabase start
+          supabase db reset --local
+          supabase test db --local

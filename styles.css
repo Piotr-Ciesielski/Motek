@@ -197,7 +197,6 @@ body {
 .app-nav__button {
   display: inline-flex;
   align-items: center;
-  gap: 7px;
   min-height: 44px;
   border: 0;
   border-radius: 999px;
@@ -1533,9 +1532,6 @@ body::before {
     padding-inline: 10px;
   }
 
-  .app-nav__button span[aria-hidden="true"] {
-    display: none;
-  }
 }
 
 @media (max-width: 640px) {
@@ -1614,11 +1610,6 @@ body::before {
     border-radius: 12px;
     padding: 6px 3px;
     font-size: 0.7rem;
-  }
-
-  .app-nav__button span[aria-hidden="true"] {
-    display: block;
-    font-size: 1.05rem;
   }
 
   .header-user {
@@ -1704,6 +1695,34 @@ body::before {
 
   .account-view.is-authenticated .auth-layout {
     margin-top: 18px;
+  }
+}
+
+.idle-session-warning {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  max-width: min(520px, calc(100vw - 32px));
+  padding: 16px 18px;
+  border: 1px solid var(--border-strong, var(--border));
+  border-radius: 14px;
+  background: var(--surface, #fff);
+  box-shadow: 0 16px 40px rgb(0 0 0 / 16%);
+}
+
+.idle-session-warning p { margin: 0; }
+
+@media (max-width: 640px) {
+  .idle-session-warning {
+    right: 16px;
+    bottom: 16px;
+    left: 16px;
+    flex-direction: column;
+    align-items: stretch;
   }
 }
 

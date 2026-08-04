@@ -24,19 +24,15 @@
         </button>
         <nav class="app-nav" aria-label="Główna nawigacja">
           <button class="app-nav__button" type="button" data-view-target="inventory">
-            <span aria-hidden="true">⌂</span>
             <span>Magazyn</span>
           </button>
           <button class="app-nav__button" type="button" data-view-target="matches">
-            <span aria-hidden="true">✦</span>
             <span>Dopasowanie</span>
           </button>
           <button class="app-nav__button" type="button" data-view-target="catalog">
-            <span aria-hidden="true">▦</span>
             <span>Katalog</span>
           </button>
           <button class="app-nav__button" type="button" data-view-target="account">
-            <span aria-hidden="true">○</span>
             <span>Konto</span>
           </button>
         </nav>
@@ -135,6 +131,7 @@
             E-mail
             <input id="reset-email" name="email" type="email" maxlength="254" autocomplete="email" required aria-describedby="authMessage" />
           </label>
+          <div class="auth-captcha" data-turnstile-for="passwordReset"></div>
           <div class="form-actions">
             <button class="button" type="submit">Wyślij instrukcję</button>
             <button id="cancelPasswordResetBtn" class="button button--ghost" type="button">Wróć do logowania</button>
@@ -170,7 +167,11 @@
               <label for="account-delete-password">Twoje hasło</label>
               <span class="password-field">
                 <input id="account-delete-password" name="password" type="password" autocomplete="current-password" required aria-describedby="deleteAccountHint deleteAccountMessage" />
-                <button class="password-toggle" type="button" data-password-toggle="account-delete-password" aria-controls="account-delete-password" aria-pressed="false" aria-label="Pokaż hasło">Pokaż</button>
+                <button class="password-reveal" type="button"
+                  data-password-reveal="account-delete-password"
+                  aria-controls="account-delete-password" aria-pressed="false"
+                  aria-label="Przytrzymaj, aby pokazać hasło">
+                </button>
               </span>
             </div>
             <label for="account-delete-confirmation">
@@ -181,6 +182,10 @@
             <button class="button button--danger" type="submit">Usuń konto bezpowrotnie</button>
             <p id="deleteAccountMessage" class="auth-message" role="status" aria-live="polite"></p>
           </form>
+        </div>
+        <div id="idleSessionWarning" class="idle-session-warning" role="alertdialog" aria-live="assertive" hidden>
+          <p>Sesja wygaśnie za 5 minut z powodu bezczynności.</p>
+          <button id="idleSessionStayBtn" class="button" type="button">Pozostań zalogowany</button>
         </div>
         <p id="authMessage" class="auth-message" role="status" aria-live="polite" tabindex="-1"></p>
       </section>
@@ -536,6 +541,10 @@
 
     <script src="material-policy.js?v=2.0.0-alpha.38"></script>
     <script src="client-policy.js?v=2.0.0-alpha.38"></script>
+    <script src="client/api-client.js"></script>
+    <script src="client/dom-utils.js"></script>
+    <script src="client/catalog-controller.js?v=2.0.0-alpha.38"></script>
+    <script src="client/idle-session-controller.js"></script>
     <script src="app.js?v=2.0.0-alpha.38"></script>
   </body>
 </html>

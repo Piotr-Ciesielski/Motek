@@ -114,3 +114,24 @@ test("błąd połączenia nie ujawnia sekretnego klucza", async () => {
     }
   );
 });
+
+test("weryfikacja Data API przerywa wiszące żądanie po zadanym czasie", async () => {
+  const verification = verifySupabaseDataApi(
+    {
+      url: "https://projekt.supabase.co",
+      secretKey: "sb_secret_test",
+    },
+    (_url, { signal }) => new Promise((_resolve, reject) => {
+      signal.addEventListener("abort", () => reject(signal.reason), { once: true });
+    }),
+    10,
+  );
+
+  await assert.rejects(
+    Promise.race([
+      verification,
+      new Promise((_, reject) => setTimeout(() => reject(new Error("test timeout")), 100)),
+    ]),
+    /abort/i,
+  );
+});

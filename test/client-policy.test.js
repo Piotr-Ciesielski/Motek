@@ -16,9 +16,43 @@ const {
   getYarnSaveHint,
   isDeleteConfirmed,
   loadPaginatedItems,
+  loadNextPaginatedPage,
   shouldRetryRead,
   yarnsHaveSameValues,
 } = require("../client-policy");
+
+test("ładuje dokładnie jedną stronę katalogu i deduplikuje elementy", async () => {
+  const calls = [];
+  const result = await loadNextPaginatedPage(
+    async (offset) => {
+      calls.push(offset);
+      return { items: [{ id: 2 }, { id: 3 }], total: 3, hasMore: false };
+    },
+    { items: [{ id: 1 }, { id: 2 }], offset: 2, total: 3 },
+  );
+  assert.deepEqual(calls, [2]);
+  assert.deepEqual(result.items, [{ id: 1 }, { id: 2 }, { id: 3 }]);
+  assert.equal(result.complete, true);
+});
+
+test("pusta strona nie oznacza ukończenia, gdy serwer sygnalizuje dalsze dane", async () => {
+  const result = await loadNextPaginatedPage(
+    async () => ({ items: [], total: 4, hasMore: true }),
+    { items: [{ id: 1 }], offset: 1, total: 4 },
+  );
+  assert.equal(result.complete, false);
+  assert.equal(result.nextOffset, 1);
+});
+
+test("zachowuje częściowy wynik i błąd bez fałszywego complete", async () => {
+  const error = new Error("chwilowy błąd");
+  const result = await loadNextPaginatedPage(async () => { throw error; }, {
+    items: [{ id: 1 }], offset: 1, total: 2,
+  });
+  assert.deepEqual(result.items, [{ id: 1 }]);
+  assert.equal(result.complete, false);
+  assert.equal(result.error, error);
+});
 
 test("payload Auth dodaje token tylko przy włączonej CAPTCHA", () => {
   assert.deepEqual(

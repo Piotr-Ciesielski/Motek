@@ -42,6 +42,8 @@ const onboarding = document.getElementById("onboarding");
 const onboardingAddYarnBtn = document.getElementById("onboardingAddYarnBtn");
 const onboardingSkipBtn = document.getElementById("onboardingSkipBtn");
 const logoutBtn = document.getElementById("logoutBtn");
+const idleSessionWarning = document.getElementById("idleSessionWarning");
+const idleSessionStayBtn = document.getElementById("idleSessionStayBtn");
 const forgotPasswordBtn = document.getElementById("forgotPasswordBtn");
 const passwordResetForm = document.getElementById("passwordResetForm");
 const passwordUpdateForm = document.getElementById("passwordUpdateForm");
@@ -65,11 +67,10 @@ const inventoryAddYarnBtn = document.getElementById("inventoryAddYarnBtn");
 const backToInventoryBtn = document.getElementById("backToInventoryBtn");
 const heroAuthBtn = document.getElementById("heroAuthBtn");
 const networkStatus = document.getElementById("networkStatus");
+const { createApiClient, ApiError, RequestError, isResponseEnvelope } = window.MotekApiClient;
 
 const REQUEST_TIMEOUT_MS = 12_000;
-const READ_RETRY_DELAY_MS = 700;
 const {
-  bindHoldToReveal,
   buildAuthPayload,
   buildPatternFacetCounts,
   buildPatternFacetOptions,
@@ -84,8 +85,9 @@ const {
   getMatchFreshnessState,
   getYarnSaveHint,
   isDeleteConfirmed,
-  loadPaginatedItems,
-  shouldRetryRead,
+  initializePasswordRevealControls,
+  loadNextPaginatedPage,
+  formatCatalogSummary,
 } = window.MotekClientPolicy;
 const {
   MATERIALS,
@@ -115,43 +117,65 @@ const PROJECT_TYPE_ORDER = [
   "other",
 ];
 
-class ApiError extends Error {
-  constructor(message, status) {
-    super(message);
-    this.name = "ApiError";
-    this.status = status;
-  }
-}
-
-class RequestError extends Error {
-  constructor(message, kind) {
-    super(message);
-    this.name = "RequestError";
-    this.kind = kind;
-  }
-}
-
 let baseUrl = window.location.origin;
 let isAuthenticated = false;
 let pendingWriteCount = 0;
-let catalogPatterns = [];
-let catalogNextOffset = 0;
-let catalogComplete = false;
-let catalogTotal = 0;
+const catalogController = createCatalogController({
+  initialFilters: {},
+  load: async ({ page }) => {
+    const offset = Math.max(0, (page - 1) * 50);
+    const payload = await api(`/api/patterns?limit=50&offset=${offset}`);
+    const items = Array.isArray(payload) ? payload : (payload.items || payload.data || []);
+    const total = Number(payload && payload.total);
+    return {
+      items,
+      hasMore: Number.isFinite(total) ? offset + items.length < total : items.length >= 50,
+      total: Number.isFinite(total) ? total : undefined,
+    };
+  },
+  onStateChange: () => {
+    if (typeof renderPatternCatalog === "function") renderPatternCatalog();
+  },
+});
 let yarnVersion = null;
 let onboardingDismissed = false;
 let yarnFormSequence = 0;
 let activeView = "account";
+let catalogDisplayLimit = 12;
 let initialSessionResolved = false;
-let catalogVisibleLimit = 12;
 let networkStatusTimer = null;
 let preserveDraftAfterLogin = false;
 let preservedDraftRequiresSave = false;
 let hasCalculatedMatches = false;
 let inventoryChangedSinceMatch = false;
 let authCaptchaConfig = { enabled: false, provider: null, siteKey: null };
-const captchaTokens = { login: null, register: null };
-const captchaWidgetIds = { login: null, register: null };
+const captchaTokens = { login: null, register: null, passwordReset: null };
+const captchaWidgetIds = { login: null, register: null, passwordReset: null };
+const apiClient = createApiClient({
+  fetchImpl: window.fetch.bind(window),
+  timeoutMs: REQUEST_TIMEOUT_MS,
+  onUnauthorized: (requestPath) => {
+    const pathname = new URL(requestPath, window.location.origin).pathname;
+    const protectedPath = pathname === "/api/matches"
+      || pathname === "/api/yarns"
+      || pathname.startsWith("/api/yarns/")
+      || pathname === "/api/account";
+    if (protectedPath) handleSessionExpired();
+  },
+});
+
+const idleSessionController = window.MotekIdleSession.createIdleSessionController({
+  api: (path, options) => api(path, options),
+  onWarning: () => {
+    idleSessionWarning.hidden = false;
+    idleSessionStayBtn.focus({ preventScroll: true });
+  },
+  onExpired: () => {
+    idleSessionWarning.hidden = true;
+    handleSessionExpired();
+    setAuthMessage("Sesja wygasła z powodu 2 godzin bezczynności. Zaloguj się ponownie.", "error");
+  },
+});
 
 function loadTurnstileScript() {
   if (window.turnstile) return Promise.resolve();
@@ -171,8 +195,9 @@ async function initializeCaptcha() {
   authCaptchaConfig = config.captcha || authCaptchaConfig;
   if (!authCaptchaConfig.enabled) return;
   await loadTurnstileScript();
-  ["login", "register"].forEach((kind) => {
+  ["login", "register", "passwordReset"].forEach((kind) => {
     const container = document.querySelector(`[data-turnstile-for="${kind}"]`);
+    if (!container) return;
     captchaWidgetIds[kind] = window.turnstile.render(container, {
       sitekey: authCaptchaConfig.siteKey,
       theme: "auto",
@@ -184,7 +209,7 @@ async function initializeCaptcha() {
 }
 
 function resetCaptchaForForm(form) {
-  const kind = form === registerForm ? "register" : "login";
+  const kind = form === registerForm ? "register" : form === passwordResetForm ? "passwordReset" : "login";
   captchaTokens[kind] = null;
   if (captchaWidgetIds[kind] !== null && window.turnstile) {
     window.turnstile.reset(captchaWidgetIds[kind]);
@@ -307,128 +332,20 @@ async function api(path, options = {}) {
   if (!baseUrl) {
     throw new Error("Brak adresu backendu Motka.");
   }
-
-  const {
-    headers: optionHeaders = {},
-    signal: requestSignal,
-    ...requestOptions
-  } = options;
-  const method = String(requestOptions.method || "GET").toUpperCase();
+  const method = String(options.method || "GET").toUpperCase();
   const isWriteRequest = !["GET", "HEAD"].includes(method);
-  const maxAttempts = isWriteRequest ? 1 : 2;
   if (isWriteRequest) pendingWriteCount += 1;
-
   try {
-    let response;
-
-    for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
-      const controller = new AbortController();
-      const abortRequest = () => controller.abort();
-      const timeout = window.setTimeout(abortRequest, REQUEST_TIMEOUT_MS);
-      if (requestSignal) {
-        if (requestSignal.aborted) abortRequest();
-        else requestSignal.addEventListener("abort", abortRequest, { once: true });
-      }
-
-      try {
-        response = await fetch(`${baseUrl}${path}`, {
-          credentials: "same-origin",
-          ...requestOptions,
-          signal: controller.signal,
-          headers: {
-            "Content-Type": "application/json",
-            ...optionHeaders,
-          },
-        });
-      } catch (error) {
-        const externallyAborted = requestSignal?.aborted;
-        const canRetryNetworkError = shouldRetryRead({
-          method,
-          errorName: error.name,
-          externallyAborted,
-          attempt,
-          maxAttempts,
-        });
-
-        if (canRetryNetworkError) {
-          await new Promise((resolve) => window.setTimeout(resolve, READ_RETRY_DELAY_MS));
-          continue;
-        }
-
-        if (error.name === "AbortError") {
-          throw new RequestError(
-            externallyAborted
-              ? "Operacja została przerwana."
-              : "Motek nie odpowiedział na czas. Sprawdź połączenie i spróbuj ponownie.",
-            externallyAborted ? "aborted" : "timeout"
-          );
-        }
-        if (error instanceof TypeError) {
-          throw new RequestError(
-            navigator.onLine
-              ? "Nie udało się połączyć z Motkiem. Spróbuj ponownie."
-              : "Brak połączenia z internetem. Sprawdź sieć i spróbuj ponownie.",
-            "network"
-          );
-        }
-        throw error;
-      } finally {
-        window.clearTimeout(timeout);
-        requestSignal?.removeEventListener("abort", abortRequest);
-      }
-
-      if (shouldRetryRead({ method, status: response.status, attempt, maxAttempts })) {
-        await new Promise((resolve) => window.setTimeout(resolve, READ_RETRY_DELAY_MS));
-        continue;
-      }
-
-      break;
-    }
-
-    if (!response.ok && response.status !== 204) {
-      let message = "";
-      try {
-        const payload = await response.clone().json();
-        message = typeof payload?.error === "string" ? payload.error.trim() : "";
-      } catch {
-        // ignore non-JSON error body
-      }
-      const protectedPath =
-        path === "/api/matches" ||
-        path === "/api/yarns" ||
-        path.startsWith("/api/yarns/") ||
-        path === "/api/account";
-      if (response.status === 401 && protectedPath) {
-        handleSessionExpired();
-        throw new ApiError(
-          "Sesja wygasła. Zaloguj się ponownie, aby dokończyć operację.",
-          response.status
-        );
-      }
-      throw new ApiError(
-        message || "Nie udało się połączyć z Motkiem. Spróbuj ponownie.",
-        response.status
-      );
-    }
-
+    const result = await apiClient.request(`${baseUrl}${path}`, options);
+    const payload = isResponseEnvelope(result) ? result.data : result;
+    const response = isResponseEnvelope(result) ? result.response : result?.response;
     if (path === "/api/yarns" || path.startsWith("/api/yarns/")) {
-      yarnVersion = response.headers.get("etag") || yarnVersion;
+      yarnVersion = response?.headers?.get?.("etag") || yarnVersion;
     }
-
     api.lastMatchScope = path === "/api/matches"
-      ? response.headers.get("X-Motek-Match-Scope") || "full"
+      ? response?.headers?.get?.("X-Motek-Match-Scope") || "full"
       : null;
-    if (response.status === 204) return null;
-    try {
-      return await response.json();
-    } catch {
-      throw new RequestError(
-        isWriteRequest
-          ? "Połączenie przerwało się przed potwierdzeniem zapisu."
-          : "Nie udało się odczytać odpowiedzi Motka. Spróbuj ponownie.",
-        "response"
-      );
-    }
+    return payload;
   } finally {
     if (isWriteRequest) pendingWriteCount -= 1;
   }
@@ -457,30 +374,7 @@ function showMessage(container, message, kind = "status", action = null) {
 }
 
 function setStorageMessage(message, kind = "", actions = []) {
-  storageMessage.replaceChildren();
-  storageMessage.dataset.kind = kind;
-  storageMessage.setAttribute("role", kind === "error" ? "alert" : "status");
-  storageMessage.setAttribute("aria-live", kind === "error" ? "assertive" : "polite");
-
-  if (message) {
-    const text = document.createElement("p");
-    text.textContent = message;
-    storageMessage.appendChild(text);
-  }
-
-  if (actions.length) {
-    const actionList = document.createElement("div");
-    actionList.className = "storage-message__actions";
-    actions.forEach(({ label, onClick, primary = false }) => {
-      const button = document.createElement("button");
-      button.className = primary ? "button" : "button button--ghost";
-      button.type = "button";
-      button.textContent = label;
-      button.addEventListener("click", onClick);
-      actionList.appendChild(button);
-    });
-    storageMessage.appendChild(actionList);
-  }
+  MotekDomUtils.setMessage(storageMessage, { text: message, kind, actions });
 }
 
 function isYarnVersionConflict(error) {
@@ -1263,10 +1157,7 @@ document.querySelectorAll("label").forEach((label) => {
   if (field?.id) label.htmlFor = field.id;
 });
 
-document.querySelectorAll("[data-password-reveal]").forEach((button) => {
-  const field = document.getElementById(button.dataset.passwordReveal);
-  bindHoldToReveal(button, field);
-});
+initializePasswordRevealControls(document);
 
 async function loadYarns() {
   if (!isAuthenticated) return [];
@@ -1326,15 +1217,16 @@ async function loadMatches() {
 }
 
 async function loadPatternCatalog({ resume = false, onPage = null } = {}) {
-  return loadPaginatedItems(
-    (offset) => api(`/api/patterns?limit=50&offset=${offset}`),
-    {
-      items: resume ? catalogPatterns : [],
-      offset: resume ? catalogNextOffset : 0,
-      total: resume ? catalogTotal : 0,
-      onPage,
-    }
-  );
+  const result = resume ? await catalogController.loadMore() : await catalogController.refresh();
+  const state = catalogController.getState();
+  const progress = {
+    items: state.items,
+    nextOffset: state.page * 50,
+    total: state.total,
+    complete: !state.hasMore,
+  };
+  onPage?.(progress);
+  return progress;
 }
 
 function formatRatio(value) {
@@ -1405,7 +1297,7 @@ function showPatternInCatalog(patternName) {
   patternTypeFilter.value = "all";
   patternMaterialFilter.value = "all";
   patternSort.value = "recommended";
-  catalogVisibleLimit = 12;
+  catalogDisplayLimit = 12;
   renderPatternCatalog();
   setActiveView("catalog");
 }
@@ -1448,6 +1340,7 @@ function createPatternFacetOption({ value, count, disabled }, getLabel) {
 }
 
 function updatePatternFacetOptions(filters, facetCounts) {
+  const catalogPatterns = catalogController.getState().items;
   const availableTypes = new Set(
     catalogPatterns.map((pattern) => pattern.projectType || "other")
   );
@@ -1507,6 +1400,9 @@ function updatePatternFacetOptions(filters, facetCounts) {
 }
 
 function renderPatternCatalog() {
+  const catalogState = catalogController.getState();
+  const catalogPatterns = catalogState.items;
+  const catalogVisibleLimit = catalogDisplayLimit;
   const filters = readPatternFilters();
   const phrase = filters.phrase.trim();
   const reviewFilter = filters.review;
@@ -1538,11 +1434,14 @@ function renderPatternCatalog() {
     });
   const visiblePatterns = matchingPatterns.slice(0, catalogVisibleLimit);
 
-  const totalCatalog = Math.max(catalogTotal, catalogPatterns.length);
-  patternCatalogSummary.textContent =
-    `Pokazano ${formatNumber(visiblePatterns.length)} z ${formatNumber(matchingPatterns.length)} pasujących wzorów. ` +
-    `Cały katalog: ${formatNumber(totalCatalog)}.` +
-    (catalogComplete ? "" : " Pobieram kolejne wzory...");
+  const totalCatalog = Math.max(Number(catalogState.total) || 0, catalogPatterns.length);
+  patternCatalogSummary.textContent = formatCatalogSummary({
+    visible: visiblePatterns.length,
+    matching: matchingPatterns.length,
+    loaded: catalogPatterns.length,
+    total: totalCatalog,
+    complete: catalogState.hasMore === false,
+  });
   patternCatalog.replaceChildren();
   patternCatalogActions.hidden = matchingPatterns.length === 0;
   loadMorePatternsBtn.hidden = visiblePatterns.length >= matchingPatterns.length;
@@ -1615,10 +1514,14 @@ function hidePatternCatalogNotice() {
 }
 
 function showPartialPatternCatalog(error) {
+  const catalogPatterns = catalogController.getState().items;
+  const details = error && error.message
+    ? ` ${error.message}`
+    : " Katalog jest jeszcze pobierany.";
   patternCatalogNotice.hidden = false;
   showMessage(
     patternCatalogNotice,
-    `Pokazujemy ${formatNumber(catalogPatterns.length)} pobranych wzorów. ${error.message} Nie udało się pobrać reszty katalogu.`,
+    `Pokazujemy ${formatNumber(catalogPatterns.length)} pobranych wzorów.${details} Nie udało się pobrać reszty katalogu.`,
     "warning",
     {
       label: "Dokończ pobieranie",
@@ -1653,19 +1556,11 @@ async function refreshPatternCatalog({ resume = false } = {}) {
     const result = await loadPatternCatalog({
       resume,
       onPage: (progress) => {
-        catalogPatterns = progress.items;
-        catalogNextOffset = progress.nextOffset;
-        catalogTotal = progress.total;
-        catalogComplete = progress.complete;
         renderPatternCatalog();
       },
     });
-    catalogPatterns = result.items;
-    catalogNextOffset = result.nextOffset;
-    catalogTotal = result.total;
-    catalogComplete = result.complete;
     renderPatternCatalog();
-    if (catalogComplete) hidePatternCatalogNotice();
+    if (result.complete) hidePatternCatalogNotice();
     else showPartialPatternCatalog(result.error);
   } finally {
     patternCatalog.removeAttribute("aria-busy");
@@ -1825,9 +1720,13 @@ async function startPasswordRecovery() {
   const hash = new URLSearchParams(window.location.hash.slice(1));
   const accessToken = hash.get("access_token");
   const refreshToken = hash.get("refresh_token");
-  if (!accessToken || !refreshToken || new URLSearchParams(window.location.search).get("recovery") !== "1") {
+  const isRecovery = new URLSearchParams(window.location.search).get("recovery") === "1"
+    || hash.get("type") === "recovery";
+  if (!accessToken || !refreshToken || !isRecovery) {
     return false;
   }
+  // Usuń token z adresu przed pierwszym żądaniem sieciowym.
+  window.history.replaceState({}, document.title, window.location.pathname);
 
   try {
     setAuthMessage("Sprawdzam link odzyskiwania hasła...");
@@ -1867,6 +1766,8 @@ function renderAuthState(payload) {
   inventoryMatchBtn.disabled = !authenticated;
   updateNavigationState();
   if (!authenticated) {
+    idleSessionController.stop();
+    idleSessionWarning.hidden = true;
     onboardingDismissed = false;
     onboarding.hidden = true;
     headerUser.hidden = true;
@@ -1918,6 +1819,8 @@ async function refreshAuthSession() {
     setAuthMessage("Możesz założyć konto lub zalogować się.");
     return;
   }
+
+  idleSessionController.start();
 
   if (preserveDraftAfterLogin) {
     const requiresSave = preservedDraftRequiresSave;
@@ -2043,7 +1946,10 @@ passwordResetForm.addEventListener("submit", async (event) => {
   setAuthBusy(passwordResetForm, true);
   setAuthMessage("Wysyłam instrukcję...");
   try {
-    const body = Object.fromEntries(new FormData(passwordResetForm).entries());
+    const body = buildAuthPayload(Object.fromEntries(new FormData(passwordResetForm).entries()), {
+      captchaEnabled: authCaptchaConfig.enabled,
+      captchaToken: captchaTokens.passwordReset,
+    });
     const payload = await api("/api/auth/password-reset-request", {
       method: "POST",
       body: JSON.stringify(body),
@@ -2092,6 +1998,8 @@ logoutBtn.addEventListener("click", async () => {
   }
 
   logoutBtn.disabled = true;
+  idleSessionController.stop();
+  idleSessionWarning.hidden = true;
   setAuthMessage("Wylogowuję...");
   try {
     await api("/api/auth/logout", { method: "POST", body: "{}" });
@@ -2105,6 +2013,16 @@ logoutBtn.addEventListener("click", async () => {
     setAuthMessage(error.message, "error");
   } finally {
     logoutBtn.disabled = false;
+  }
+});
+
+idleSessionStayBtn.addEventListener("click", async () => {
+  idleSessionStayBtn.disabled = true;
+  try {
+    const refreshed = await idleSessionController.markActivity({ force: true });
+    if (refreshed) idleSessionWarning.hidden = true;
+  } finally {
+    idleSessionStayBtn.disabled = false;
   }
 });
 
@@ -2231,7 +2149,7 @@ refreshStaleMatchesBtn.addEventListener("click", () => {
 });
 
 function resetPatternCatalogView() {
-  catalogVisibleLimit = 12;
+  catalogDisplayLimit = 12;
   renderPatternCatalog();
 }
 
@@ -2251,9 +2169,15 @@ resetCatalogFiltersBtn.addEventListener("click", () => {
   resetPatternCatalogView();
   patternSearch.focus({ preventScroll: true });
 });
-loadMorePatternsBtn.addEventListener("click", () => {
-  catalogVisibleLimit += 12;
-  renderPatternCatalog();
+loadMorePatternsBtn.addEventListener("click", async () => {
+  const catalogState = catalogController.getState();
+  if (catalogDisplayLimit < filterPatterns(catalogState.items, readPatternFilters()).length) {
+    catalogDisplayLimit += 12;
+    renderPatternCatalog();
+    return;
+  }
+  if (!catalogState.hasMore || patternCatalog.hasAttribute("aria-busy")) return;
+  await refreshPatternCatalog({ resume: true });
 });
 backToCatalogFiltersBtn.addEventListener("click", () => {
   document.getElementById("catalogFilters").scrollIntoView({
@@ -2266,13 +2190,13 @@ backToCatalogFiltersBtn.addEventListener("click", () => {
 detectRuntimeMode()
   .then(async () => {
     const recoveryHandled = await startPasswordRecovery();
-    if (recoveryHandled) return;
     await Promise.all([
       initializeCaptcha().catch((error) => setAuthMessage(error.message, "error")),
-      refreshAuthSession(),
-      refreshPatternCatalog().catch(showPatternCatalogError),
+      recoveryHandled ? Promise.resolve() : refreshAuthSession(),
+      recoveryHandled ? Promise.resolve() : refreshPatternCatalog().catch(showPatternCatalogError),
     ]);
   })
   .catch((error) => {
     showMessage(results, error.message, "error");
   });
+/* global MotekDomUtils, createCatalogController */

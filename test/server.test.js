@@ -2,6 +2,7 @@ const { test } = require("node:test");
 const assert = require("node:assert/strict");
 process.env.HOST = "127.0.0.1";
 process.env.PORT = "0";
+process.env.IDLE_SESSION_SECRET = "test-idle-session-secret";
 
 const {
   getRuntimeConfig,
@@ -14,7 +15,27 @@ const {
   validateMatchLimits,
   validateYarn,
   validateYarnStorageCapacity,
+  getIdleTimeoutSeconds,
+  buildIdleActivityCookie,
+  parseIdleActivityCookie,
 } = require("../server");
+
+test("limit bezczynności ma domyślnie 2 godziny i respektuje konfigurację", () => {
+  assert.equal(getIdleTimeoutSeconds({}), 7200);
+  assert.equal(getIdleTimeoutSeconds({ AUTH_IDLE_TIMEOUT_SECONDS: "900" }), 900);
+  assert.throws(
+    () => getIdleTimeoutSeconds({ AUTH_IDLE_TIMEOUT_SECONDS: "0" }),
+    /dodatnią liczbą całkowitą/i,
+  );
+});
+
+test("podpisane ciasteczko aktywności odrzuca zmieniony timestamp", () => {
+  const env = { NODE_ENV: "test", IDLE_SESSION_SECRET: "test-idle-secret" };
+  const cookie = buildIdleActivityCookie(1_700_000_000, env);
+  assert.equal(parseIdleActivityCookie(cookie.split(";")[0].split("=")[1], env, 1_700_000_100), 1_700_000_000);
+  const tampered = cookie.replace("1700000000", "1700000001");
+  assert.equal(parseIdleActivityCookie(tampered.split(";")[0].split("=")[1], env, 1_700_000_100), null);
+});
 test("konfiguracja uruchomieniowa bez zmiennych używa lokalnego portu 3001", () => {
   assert.deepEqual(getRuntimeConfig?.({}), {
     host: "127.0.0.1",
@@ -170,6 +191,29 @@ test("ranking respektuje limity rozmiaru i może użyć kilku motków dla jednej
   assert.equal(impossible.doable, false);
 });
 
+test("endpoint release pozostaje niedostępny bez gotowego Supabase", async () => {
+  const runtime = await main({
+    supabaseConnection: {
+      async verify() { throw new Error("database unavailable"); },
+    },
+    supabaseAuthConfig: {
+      url: "https://project.supabase.co",
+      publishableKey: "sb_publishable_test",
+    },
+    captchaConfig: { enabled: false, provider: null, siteKey: null },
+    readinessIntervalMs: 0,
+  });
+  const baseUrl = `http://${runtime.host}:${runtime.port}`;
+
+  try {
+    const response = await fetch(`${baseUrl}/health/release`);
+    assert.equal(response.status, 503);
+    assert.deepEqual(await response.json(), { status: "not_ready" });
+  } finally {
+    await shutdown("release-not-ready-test");
+  }
+});
+
 test("serwer Motek działa bezpiecznie", async (t) => {
   const supabasePatterns = [
     {
@@ -224,6 +268,11 @@ test("serwer Motek działa bezpiecznie", async (t) => {
     }])
   );
   const syntheticYarns = [];
+  const syntheticYarnVersions = Object.fromEntries(
+    Object.values(syntheticUsers).map((user) => [user.id, 0])
+  );
+  const pendingVersionedRpcs = [];
+  let versionedRpcBatchScheduled = false;
   let nextSyntheticYarnId = 1;
   const recoveryRequests = [];
   const signUpRequests = [];
@@ -243,7 +292,6 @@ test("serwer Motek działa bezpiecznie", async (t) => {
           }
           if (operation === "update") {
             const matches = syntheticYarns.filter((row) => filters.every(([field, value]) => row[field] === value));
-            matches.forEach((row) => Object.assign(row, updateValues));
             insertedRow = matches[0] || null;
             return query;
           }
@@ -277,11 +325,18 @@ test("serwer Motek działa bezpiecznie", async (t) => {
           return query;
         },
         single() {
-          return Promise.resolve(
-            insertedRow
-              ? { data: insertedRow, error: null }
-              : { data: null, error: { code: "PGRST116", message: "No rows found" } }
-          );
+          return new Promise((resolve) => {
+            setImmediate(() => {
+              if (operation === "update" && insertedRow) {
+                Object.assign(insertedRow, updateValues);
+              }
+              resolve(
+                insertedRow
+                  ? { data: insertedRow, error: null }
+                  : { data: null, error: { code: "PGRST116", message: "No rows found" } }
+              );
+            });
+          });
         },
       delete() {
         operation = "delete";
@@ -342,27 +397,74 @@ test("serwer Motek działa bezpiecznie", async (t) => {
         return createSyntheticQuery(table, token);
       },
       rpc(name, args) {
-        assert.equal(name, "insert_yarn_with_limit");
         const userId = syntheticUsers[token]?.id;
-        const userYarns = syntheticYarns.filter((row) => row.user_id === userId);
-        if (userYarns.length >= 500) {
-          return Promise.resolve({
-            data: null,
-            error: { code: "P0001", message: "Magazyn osiągnął limit 500 włóczek na użytkownika." },
-          });
+        if (name === "get_yarn_store_version") {
+          return Promise.resolve({ data: syntheticYarnVersions[userId] ?? 0, error: null });
         }
-        const inserted = {
-          id: nextSyntheticYarnId++,
-          user_id: userId,
-          name: args.p_name,
-          color: args.p_color,
-          materials: args.p_materials,
-          weight_class: args.p_weight_class,
-          length_meters: args.p_length_meters,
-          weight_grams: args.p_weight_grams,
-        };
-        syntheticYarns.push(inserted);
-        return Promise.resolve({ data: [inserted], error: null });
+        assert.ok(["insert_yarn_versioned", "update_yarn_versioned", "delete_yarn_versioned"].includes(name));
+        return new Promise((resolve) => {
+          pendingVersionedRpcs.push({ name, args, userId, observedVersion: syntheticYarnVersions[userId], resolve });
+          if (versionedRpcBatchScheduled) return;
+          versionedRpcBatchScheduled = true;
+          setImmediate(() => {
+            versionedRpcBatchScheduled = false;
+            const batch = pendingVersionedRpcs.splice(0);
+            for (const request of batch) {
+              const { name: rpcName, args: rpcArgs, userId: rpcUserId } = request;
+              if (request.observedVersion !== rpcArgs.p_expected_version || syntheticYarnVersions[rpcUserId] !== request.observedVersion) {
+                request.resolve({ data: null, error: { code: "40001", message: "yarn version conflict" } });
+                continue;
+              }
+              if (rpcName === "update_yarn_versioned") {
+                const row = syntheticYarns.find((candidate) => candidate.id === rpcArgs.p_id && candidate.user_id === rpcUserId);
+                if (!row) {
+                  request.resolve({ data: null, error: { code: "P0002", message: "yarn not found" } });
+                  continue;
+                }
+                Object.assign(row, {
+                  name: rpcArgs.p_name,
+                  color: rpcArgs.p_color,
+                  materials: rpcArgs.p_materials,
+                  weight_class: rpcArgs.p_weight_class,
+                  length_meters: rpcArgs.p_length_meters,
+                  weight_grams: rpcArgs.p_weight_grams,
+                });
+                syntheticYarnVersions[rpcUserId] += 1;
+                request.resolve({ data: { yarn: row, version: syntheticYarnVersions[rpcUserId] }, error: null });
+                continue;
+              }
+              if (rpcName === "delete_yarn_versioned") {
+                const index = syntheticYarns.findIndex((candidate) => candidate.id === rpcArgs.p_id && candidate.user_id === rpcUserId);
+                if (index < 0) {
+                  request.resolve({ data: null, error: { code: "P0002", message: "yarn not found" } });
+                  continue;
+                }
+                const [row] = syntheticYarns.splice(index, 1);
+                syntheticYarnVersions[rpcUserId] += 1;
+                request.resolve({ data: { yarn: row, version: syntheticYarnVersions[rpcUserId] }, error: null });
+                continue;
+              }
+              const userYarns = syntheticYarns.filter((row) => row.user_id === rpcUserId);
+              if (userYarns.length >= 500) {
+                request.resolve({ data: null, error: { code: "P0001", message: "Magazyn osiągnął limit 500 włóczek na użytkownika." } });
+                continue;
+              }
+              const inserted = {
+                id: nextSyntheticYarnId++,
+                user_id: rpcUserId,
+                name: rpcArgs.p_name,
+                color: rpcArgs.p_color,
+                materials: rpcArgs.p_materials,
+                weight_class: rpcArgs.p_weight_class,
+                length_meters: rpcArgs.p_length_meters,
+                weight_grams: rpcArgs.p_weight_grams,
+              };
+              syntheticYarns.push(inserted);
+              syntheticYarnVersions[rpcUserId] += 1;
+              request.resolve({ data: { yarn: inserted, version: syntheticYarnVersions[rpcUserId] }, error: null });
+            }
+          });
+        });
       },
     };
   }
@@ -427,6 +529,14 @@ test("serwer Motek działa bezpiecznie", async (t) => {
       assert.equal(liveResponse.status, 200);
       const readyResponse = await fetch(`${baseUrl}/health/ready`);
       assert.equal(readyResponse.status, 200);
+      const releaseResponse = await fetch(`${baseUrl}/health/release`);
+      assert.equal(releaseResponse.status, 200);
+      assert.deepEqual(await releaseResponse.json(), {
+        status: "ready",
+        version: "2.0.0-alpha.38",
+        commit: "local",
+        environment: "local",
+      });
       const configResponse = await fetch(`${baseUrl}/api/config`);
       assert.deepEqual(await configResponse.json(), {
         captcha: { enabled: true, provider: "turnstile", siteKey: "public-test-key" },
@@ -538,7 +648,7 @@ test("serwer Motek działa bezpiecznie", async (t) => {
       const resetResponse = await fetch(`${baseUrl}/api/auth/password-reset-request`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Origin: baseUrl },
-        body: JSON.stringify({ email: " A@EXAMPLE.COM " }),
+        body: JSON.stringify({ email: " A@EXAMPLE.COM ", captchaToken: "reset-token" }),
       });
       assert.equal(resetResponse.status, 202);
       assert.match(
@@ -547,7 +657,7 @@ test("serwer Motek działa bezpiecznie", async (t) => {
       );
       assert.deepEqual(recoveryRequests[0], {
         email: "a@example.com",
-        options: { redirectTo: `${baseUrl}/?recovery=1` },
+        options: { redirectTo: `${baseUrl}/?recovery=1`, captchaToken: "reset-token" },
       });
 
       const recoveryResponse = await fetch(`${baseUrl}/api/auth/recovery`, {
@@ -563,6 +673,15 @@ test("serwer Motek działa bezpiecznie", async (t) => {
         .getSetCookie()
         .map((cookie) => cookie.split(";", 1)[0])
         .join("; ");
+
+      const activityResponse = await fetch(`${baseUrl}/api/auth/activity`, {
+        method: "POST",
+        headers: { Origin: baseUrl, Cookie: recoveryCookies },
+        body: "{}",
+      });
+      assert.equal(activityResponse.status, 200);
+      assert.deepEqual(await activityResponse.json(), { authenticated: true });
+      assert.match(activityResponse.headers.get("set-cookie"), /motek_idle_activity=/);
 
       const updateResponse = await fetch(`${baseUrl}/api/auth/password`, {
         method: "POST",
@@ -623,6 +742,31 @@ test("serwer Motek działa bezpiecznie", async (t) => {
       assert.deepEqual(deletedUserIds, [syntheticUsers["token-user-a"].id]);
     });
 
+    await t.test("blokuje szóstą błędną próbę potwierdzenia hasła przy usuwaniu konta", async () => {
+      const request = () => fetch(`${baseUrl}/api/account`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          Origin: baseUrl,
+          Cookie: "motek_access_token=token-user-b",
+        },
+        body: JSON.stringify({
+          password: "BledneHaslo1!",
+          confirmation: "USUŃ KONTO",
+        }),
+      });
+
+      for (let attempt = 0; attempt < 5; attempt += 1) {
+        const response = await request();
+        assert.equal(response.status, 400);
+        assert.equal(response.headers.get("retry-after"), null);
+      }
+
+      const blockedResponse = await request();
+      assert.equal(blockedResponse.status, 429);
+      assert.equal(blockedResponse.headers.get("retry-after"), "900");
+    });
+
     await t.test("izoluje syntetyczne dane włóczek między użytkownikami", async () => {
       const userACookies = "motek_access_token=token-user-a";
       const userBCookies = "motek_access_token=token-user-b";
@@ -630,6 +774,7 @@ test("serwer Motek działa bezpiecznie", async (t) => {
       let userAVersion = (await fetch(`${baseUrl}/api/yarns`, {
         headers: { Cookie: userACookies },
       })).headers.get("etag");
+      assert.match(userAVersion, /^"yarn-v\d+"$/);
       const createResponse = await fetch(`${baseUrl}/api/yarns`, {
         method: "POST",
         headers: { ...originHeaders, "Content-Type": "application/json", Cookie: userACookies, "If-Match": userAVersion },
@@ -679,8 +824,38 @@ test("serwer Motek działa bezpiecznie", async (t) => {
       });
       assert.equal(conflictResponse.status, 409);
 
+      const parallelIfMatch = userAVersion;
+      const parallelPatch = () => fetch(`${baseUrl}/api/yarns/${created.id}`, {
+        method: "PATCH",
+        headers: {
+          ...originHeaders,
+          "Content-Type": "application/json",
+          Cookie: userACookies,
+          "If-Match": parallelIfMatch,
+        },
+        body: JSON.stringify({
+          name: "Równoległy zapis",
+          color: "fioletowy",
+          materials: ["wełna"],
+          weightClass: "dk",
+          length: 310,
+          weight: 125,
+        }),
+      });
+      const [firstParallelPatch, secondParallelPatch] = await Promise.all([
+        parallelPatch(),
+        parallelPatch(),
+      ]);
+      assert.deepEqual(
+        [firstParallelPatch.status, secondParallelPatch.status].sort((a, b) => a - b),
+        [200, 409],
+      );
+      userAVersion = firstParallelPatch.status === 200
+        ? firstParallelPatch.headers.get("etag")
+        : secondParallelPatch.headers.get("etag");
+
       const userAList = await fetch(`${baseUrl}/api/yarns`, { headers: { Cookie: userACookies } });
-      assert.deepEqual((await userAList.json()).map((yarn) => yarn.name), ["Test automatyczny — zmieniony"]);
+      assert.deepEqual((await userAList.json()).map((yarn) => yarn.name), ["Równoległy zapis"]);
 
       const userAMatches = await fetch(`${baseUrl}/api/matches`, { headers: { Cookie: userACookies } });
       const matches = await userAMatches.json();
@@ -820,7 +995,6 @@ test("serwer Motek działa bezpiecznie", async (t) => {
               colorMode: "same",
               weightClasses: ["dk"],
               strandCount: null,
-              heldTogetherGroup: null,
               distinctColorGroup: null,
             }],
           },

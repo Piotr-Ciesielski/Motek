@@ -6,7 +6,7 @@ const test = require("node:test");
 const indexHtml = readFileSync(path.join(__dirname, "..", "index.html"), "utf8");
 const stylesCss = readFileSync(path.join(__dirname, "..", "styles.css"), "utf8");
 const appJs = readFileSync(path.join(__dirname, "..", "app.js"), "utf8");
-const serverJs = readFileSync(path.join(__dirname, "..", "server.js"), "utf8");
+const staticFilesJs = readFileSync(path.join(__dirname, "..", "server", "static-files.js"), "utf8");
 
 test("inventory keeps the selected design composition", () => {
   assert.match(indexHtml, /class="inventory-layout"/);
@@ -15,6 +15,16 @@ test("inventory keeps the selected design composition", () => {
   assert.match(indexHtml, /id="inventoryAddYarnBtn"/);
   assert.match(indexHtml, /data-light-src="assets\/color-yarn-cat\.v1\.webp"/);
   assert.match(indexHtml, /data-dark-src="assets\/night-yarn-cat\.v1\.webp"/);
+});
+
+test("main navigation uses text labels without decorative symbols", () => {
+  const navigation = indexHtml.match(/<nav class="app-nav"[\s\S]*?<\/nav>/)?.[0] || "";
+  assert.match(navigation, />Magazyn<\/span>/);
+  assert.match(navigation, />Dopasowanie<\/span>/);
+  assert.match(navigation, />Katalog<\/span>/);
+  assert.match(navigation, />Konto<\/span>/);
+  assert.doesNotMatch(navigation, /aria-hidden="true"/);
+  assert.doesNotMatch(navigation, /[⌂✦▦○]/);
 });
 
 test("auth forms never fall back to GET query strings", () => {
@@ -34,6 +44,14 @@ test("auth forms never fall back to GET query strings", () => {
     indexHtml,
     /<form id="passwordUpdateForm"[^>]*method="post"[^>]*action="\/api\/auth\/password"/,
   );
+});
+
+test("captcha initializes even when the page opens from password recovery", () => {
+  assert.match(
+    appJs,
+    /const recoveryHandled = await startPasswordRecovery\(\);[\s\S]*await Promise\.all\(\[[\s\S]*initializeCaptcha\(\)/,
+  );
+  assert.doesNotMatch(appJs, /const recoveryHandled = await startPasswordRecovery\(\);\s*if \(recoveryHandled\) return;/);
 });
 
 test("inventory and matches artwork have no caption overlays", () => {
@@ -62,7 +80,8 @@ test("mobile inventory orders stats before stock and artwork", () => {
     stylesCss,
     /inventory-layout__content > section:not\(#onboarding\)[\s\S]{0,120}grid-row: 4/,
   );
-  assert.equal((indexHtml.match(/data-turnstile-for=/g) || []).length, 2);
+  assert.equal((indexHtml.match(/data-turnstile-for=/g) || []).length, 3);
+  assert.match(indexHtml, /data-turnstile-for="passwordReset"/);
   assert.match(appJs, /challenges\.cloudflare\.com\/turnstile\/v0\/api\.js\?render=explicit/);
 });
 
@@ -81,10 +100,8 @@ test("theme artwork uses optimized immutable assets", () => {
     (indexHtml.match(/data-dark-src="assets\/night-yarn-cat\.v1\.webp"/g) || []).length,
     2,
   );
-  assert.match(serverJs, /"\.webp": "image\/webp"/);
-  assert.match(serverJs, /public, max-age=31536000, immutable/);
-  assert.match(serverJs, /url\.pathname === "\/assets\/color-yarn-cat\.v1\.webp"/);
-  assert.match(serverJs, /url\.pathname === "\/assets\/night-yarn-cat\.v1\.webp"/);
+  assert.match(staticFilesJs, /"\.webp": "image\/webp"/);
+  assert.match(staticFilesJs, /public, max-age=31536000, immutable/);
 });
 
 test("inventory artwork keeps the prototype crop and focal point", () => {

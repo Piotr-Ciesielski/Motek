@@ -7,12 +7,31 @@
   "scripts": {
     "start": "node --env-file-if-exists=.env server.js",
     "test": "node --test --test-isolation=none",
-    "check": "node --check server.js && node --check material-policy.js && node --check matching-policy.js && node --check client-policy.js && node --check theme-policy.js && node --check app.js && npm test",
+    "check": "node --check server.js && node --check material-policy.js && node --check matching-policy.js && node --check client-policy.js && node --check client/api-client.js && node --check theme-policy.js && node --check app.js && node --check account-deletion-policy.js && node --check account-deletion-service.js && node --check deployment-policy.js && node --check limits.js && node --check observability.js && node --check supabase.js && npm test",
+    "lint": "eslint .",
+    "format:check": "prettier --check eslint.config.js .prettierrc.json package.json .github/workflows/ci.yml",
+    "coverage": "c8 --check-coverage --lines 60 --functions 60 --branches 50 --statements 60 --reporter=text --reporter=lcov npm test",
+    "test:db": "supabase start && supabase db reset --local && supabase test db --local",
     "patterns:check": "node --env-file-if-exists=.env scripts/import-patterns.js",
     "patterns:import": "node --env-file-if-exists=.env scripts/import-patterns.js --execute",
-    "staging:check": "node --test test/staging-config.test.js test/deployment-policy.test.js test/observability.test.js test/proxy-policy.test.js test/readiness.test.js"
+    "staging:check": "node --test test/staging-config.test.js test/deployment-policy.test.js test/observability.test.js test/proxy-policy.test.js test/readiness.test.js",
+    "railway:check": "node --test test/railway-config.test.js",
+    "regression:smoke": "node scripts/run-regression.js smoke",
+    "regression:full": "node scripts/run-regression.js full"
+  },
+  "engines": {
+    "node": "24.x"
   },
   "dependencies": {
     "@supabase/supabase-js": "2.110.8"
+  },
+  "devDependencies": {
+    "@eslint/js": "10.0.1",
+    "c8": "12.0.0",
+    "eslint": "10.8.0",
+    "globals": "17.9.0",
+    "jsdom": "30.0.1",
+    "prettier": "3.9.6",
+    "supabase": "2.111.0"
   }
 }
