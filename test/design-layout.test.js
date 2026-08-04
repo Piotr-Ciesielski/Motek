@@ -116,7 +116,7 @@ test("inventory stats update together with the existing summary", () => {
 test("catalog controller asset has a deployment cache buster", () => {
   assert.match(
     indexHtml,
-    /client\/catalog-controller\.js\?v=2\.0\.0-alpha\.38&rev=[a-f0-9]{7,40}/,
+    /client\/catalog-controller\.js\?v=2\.0\.0-alpha\.39&rev=[a-f0-9]{7,40}/,
   );
 });
 
