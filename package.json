@@ -1,6 +1,6 @@
 {
   "name": "motek",
-  "version": "2.0.0-alpha.38",
+  "version": "2.0.0-alpha.39",
   "private": true,
   "description": "Aplikacja do dopasowywania wzorów dziewiarskich do zapasu włóczek.",
   "main": "server.js",
