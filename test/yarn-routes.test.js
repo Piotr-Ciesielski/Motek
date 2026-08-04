@@ -81,7 +81,7 @@ function createHarness(overrides = {}) {
   return { router: createYarnRouter(dependencies), calls, response, session };
 }
 
-test("yarn router returns inventory with collection ETag", async () => {
+test("yarn router returns inventory with ETag and explicit version header", async () => {
   const { router, calls, response, session } = createHarness();
   const request = { method: "GET", headers: {} };
 
@@ -91,6 +91,7 @@ test("yarn router returns inventory with collection ETag", async () => {
     ["getSupabaseYarns", session],
     ["getSupabaseYarnVersion", session],
     ["setHeader", "ETag", '"yarn-v7"'],
+    ["setHeader", "X-Motek-Yarn-Version", '"yarn-v7"'],
     ["sendJson", 200, [{ id: 1, ...validYarn }]],
   ]);
 });

@@ -14,6 +14,7 @@ const {
   getExistingYarnState,
   getMatchFreshnessState,
   getYarnSaveHint,
+  readYarnVersionHeader,
   withYarnVersionRetry,
   isDeleteConfirmed,
   loadPaginatedItems,
@@ -21,6 +22,15 @@ const {
   shouldRetryRead,
   yarnsHaveSameValues,
 } = require("../client-policy");
+
+test("preferuje jawny nagłówek wersji magazynu nad ETag", () => {
+  const headers = new Map([
+    ["x-motek-yarn-version", '"yarn-v8"'],
+    ["etag", '"yarn-v7"'],
+  ]);
+
+  assert.equal(readYarnVersionHeader(headers), '"yarn-v8"');
+});
 
 test("odświeża wersję przed zapisem i ponawia jednorazowo po HTTP 428", async () => {
   let version = null;

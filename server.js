@@ -759,7 +759,9 @@ async function deleteSupabaseYarn(session, id, expectedVersion) {
 }
 
 async function sendYarnMutationResponse(res, status, mutation) {
-  res.setHeader("ETag", getYarnCollectionVersion(mutation.version));
+  const version = getYarnCollectionVersion(mutation.version);
+  res.setHeader("ETag", version);
+  res.setHeader("X-Motek-Yarn-Version", version);
   return sendJson(res, status, status === 204 ? null : mutation.yarn);
 }
 
