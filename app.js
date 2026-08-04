@@ -1152,6 +1152,17 @@ function collectYarnsFromDom() {
   return [...yarnList.querySelectorAll('.yarn-card[data-saved="true"]')].map(collectYarnFromCard);
 }
 
+yarnList.addEventListener("click", (event) => {
+  const card = event.target.closest(".yarn-card");
+  if (!card || event.target.closest("[data-material-picker]")) {
+    return;
+  }
+
+  card.querySelectorAll("[data-material-picker][open]").forEach((picker) => {
+    picker.open = false;
+  });
+});
+
 document.querySelectorAll("label").forEach((label) => {
   const field = label.querySelector("input, select");
   if (field?.id) label.htmlFor = field.id;
