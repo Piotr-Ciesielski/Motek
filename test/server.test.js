@@ -544,7 +544,7 @@ test("serwer Motek działa bezpiecznie", async (t) => {
       assert.equal(releaseResponse.status, 200);
       assert.deepEqual(await releaseResponse.json(), {
         status: "ready",
-        version: "2.0.0-alpha.38",
+        version: "2.0.0-alpha.39",
         commit: "local",
         environment: "local",
       });
