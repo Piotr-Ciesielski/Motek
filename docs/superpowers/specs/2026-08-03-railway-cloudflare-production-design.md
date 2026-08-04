@@ -4,7 +4,7 @@
 środowiskiem stagingowym, szyfrowanym ruchem, ochroną Cloudflare i pełną
 izolacją danych stagingowych od produkcyjnych.
 
-**Stan docelowy:** Railway uruchamia aplikację w środowiskach `staging` i
+**Stan wdrożony:** Railway uruchamia aplikację w środowiskach `staging` i
 `production`. Domena pozostaje zarejestrowana w Railway, ale jej nameservery są
 delegowane do Cloudflare. Cloudflare zarządza publicznym DNS, przekierowaniami,
 WAF i ochroną brzegu. Każde środowisko korzysta z osobnego projektu Supabase.
@@ -17,7 +17,8 @@ Wdrożenie obejmuje:
 - produkcję pod kanonicznym adresem `https://www.rysia.org`;
 - przekierowanie `https://rysia.org` do `https://www.rysia.org` z zachowaniem
   ścieżki i parametrów zapytania;
-- automatyczne wdrożenia stagingu i produkcji z wybranych gałęzi GitHub;
+- automatyczne wdrożenia stagingu z gałęzi `staging`;
+- ręcznie uruchamiane wdrożenia produkcji z gałęzi `main` (auto-deploy produkcji jest wyłączony);
 - certyfikaty TLS/HTTPS na publicznej krawędzi i połączeniu do Railway;
 - dwa odrębne projekty Supabase;
 - Cloudflare Turnstile dla operacji Auth;
@@ -53,7 +54,7 @@ i API. Nie jest potrzebna osobna usługa frontendowa.
 
 ### Staging
 
-- nazwa środowiska Railway: `staging`;
+- nazwa środowiska Railway: `staging Motek` (gałąź wdrożeniowa: `staging`);
 - domena: `staging.rysia.org`;
 - źródło: stała gałąź `staging`;
 - Supabase: osobny projekt stagingowy;
@@ -65,6 +66,7 @@ i API. Nie jest potrzebna osobna usługa frontendowa.
 - nazwa środowiska Railway: `production`;
 - domena kanoniczna: `www.rysia.org`;
 - źródło: wyłącznie stabilna gałąź `main`;
+- auto-deploy: wyłączony; publikację uruchamia operator po zaakceptowaniu regresji stagingu;
 - Supabase: osobny projekt produkcyjny;
 - jedna replika aplikacji na start.
 
@@ -132,20 +134,23 @@ Nie trafiają do Git, pliku Dockerfile, logów ani publicznego frontendu.
 ## 5. Konfiguracja domeny i Cloudflare
 
 Domena `rysia.org` pozostaje zarejestrowana i odnawiana w Railway. W panelu
-domeny Railway zostaną ustawione niestandardowe nameservery przydzielone przez
-Cloudflare. Nie jest wymagany transfer domeny do innego rejestratora.
+domeny Railway ustawiono niestandardowe nameservery Cloudflare:
+`darwin.ns.cloudflare.com` oraz `ruth.ns.cloudflare.com`. Nie jest wymagany
+transfer domeny do innego rejestratora; propagacja delegacji może trwać do
+czasu odświeżenia rekordów u operatorów DNS.
 
 W Cloudflare powstaną rekordy DNS wymagane przez Railway dla:
 
 - `www.rysia.org` -> produkcyjna usługa Railway;
 - `staging.rysia.org` -> stagingowa usługa Railway;
-- rekordów weryfikacyjnych TXT wskazanych przez Railway.
+- rekordów weryfikacyjnych TXT wskazanych przez Railway (`_railway-verify`,
+  `_railway-verify.www` i `_railway-verify.staging`).
 
 Cloudflare ma obsługiwać proxy dla publicznych rekordów aplikacji. Konfiguracja
 TLS ma używać trybu `Full`, zgodnie z bieżącymi wymaganiami Railway dla domen
-proxowanych przez Cloudflare. W trakcie wykonania wartości rekordów zostaną
-przepisane dokładnie z panelu Railway, a zgodność trybu TLS zostanie ponownie
-sprawdzona w dokumentacji przed zmianą DNS.
+proxowanych przez Cloudflare. Po zakończeniu propagacji należy sprawdzić stan
+certyfikatu i tryb SSL w Cloudflare; do tego czasu nie należy deklarować pełnej
+aktywacji domeny jako zakończonej.
 
 Reguła przekierowania Cloudflare:
 

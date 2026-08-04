@@ -6,7 +6,7 @@
 - ostatnia wersja wydana: `1.0.2`
 - aktualne źródło danych: Supabase
 - lokalny SQLite: usunięty z aplikacji
-- następny zakres: uruchomienie i kontrolowany test przygotowanego stagingu
+- aktualny stan: staging i produkcja działają na Railway, a dokumentacja wdrożeniowa opisuje bieżący przepływ publikacji i regresji
 
 Migracja e-mailowego loginu znajduje się w repozytorium; jej zastosowanie i
 kontrola na zdalnym Supabase są osobnym krokiem operacyjnym.

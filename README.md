@@ -151,6 +151,17 @@ Gotowy stos w `deploy/staging` uruchamia aplikację za reverse proxy i WAF z OWA
 
 Endpointy `/health/live` i `/health/ready` rozdzielają stan procesu od gotowości połączenia z Supabase. Metryki Prometheus pod `/internal/metrics` pozostają dostępne tylko w prywatnej sieci stagingu. Zasady bezpiecznej konfiguracji skupia `deployment-policy.js`, a metryki implementuje `observability.js`. Instrukcja wdrożenia i ręcznych ustawień operatora znajduje się w `deploy/staging/README.md`.
 
+## Wdrożenie Railway i domeny
+
+- staging działa z gałęzi `staging` pod `https://staging.rysia.org` i wdraża się automatycznie po wypchnięciu zmian;
+- produkcja działa z gałęzi `main` pod `https://www.rysia.org`, a auto-deploy jest wyłączony — publikację uruchamia operator ręcznie.
+
+Domena `rysia.org` jest zarejestrowana w Railway, natomiast DNS oraz proxy/WAF obsługuje Cloudflare. Publiczny ruch odbywa się przez HTTPS. Sekrety Supabase, Railway i Turnstile są przechowywane wyłącznie w ustawieniach środowisk.
+
+Po udanym deployu uruchamiana jest regresja: pełny profil na stagingu oraz niedestrukcyjny smoke test na produkcji. Procedurę, ręczny deploy i rollback opisuje [runbook po wdrożeniu](docs/operations/post-deploy-regression.md).
+
+Sesja użytkownika wygasa po 2 godzinach bezczynności (`AUTH_IDLE_TIMEOUT_SECONDS=7200`); aktywność użytkownika odświeża licznik.
+
 ## Dokumentacja i wersja
 
 - [SPEC.md](SPEC.md) — pełniejsza specyfikacja produktu, API i danych;
