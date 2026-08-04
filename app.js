@@ -151,6 +151,8 @@ let inventoryChangedSinceMatch = false;
 let authCaptchaConfig = { enabled: false, provider: null, siteKey: null };
 const captchaTokens = { login: null, register: null, passwordReset: null };
 const captchaWidgetIds = { login: null, register: null, passwordReset: null };
+const captchaRenderPromises = { login: null, register: null, passwordReset: null };
+let turnstileScriptPromise = null;
 const apiClient = createApiClient({
   fetchImpl: window.fetch.bind(window),
   timeoutMs: REQUEST_TIMEOUT_MS,
@@ -179,25 +181,39 @@ const idleSessionController = window.MotekIdleSession.createIdleSessionControlle
 
 function loadTurnstileScript() {
   if (window.turnstile) return Promise.resolve();
-  return new Promise((resolve, reject) => {
+  if (turnstileScriptPromise) return turnstileScriptPromise;
+  turnstileScriptPromise = new Promise((resolve, reject) => {
     const script = document.createElement("script");
     script.src = "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit";
     script.async = true;
     script.defer = true;
     script.onload = resolve;
-    script.onerror = () => reject(new Error("Nie udało się załadować zabezpieczenia formularza."));
+    script.onerror = () => {
+      turnstileScriptPromise = null;
+      reject(new Error("Nie udało się załadować zabezpieczenia formularza."));
+    };
     document.head.appendChild(script);
   });
+  return turnstileScriptPromise;
 }
 
-async function initializeCaptcha() {
-  const config = await api("/api/config");
-  authCaptchaConfig = config.captcha || authCaptchaConfig;
-  if (!authCaptchaConfig.enabled) return;
-  await loadTurnstileScript();
-  ["login", "register", "passwordReset"].forEach((kind) => {
-    const container = document.querySelector(`[data-turnstile-for="${kind}"]`);
-    if (!container) return;
+function authFormKind(form) {
+  return form === registerForm ? "register" : form === passwordResetForm ? "passwordReset" : "login";
+}
+
+async function renderCaptchaForForm(form) {
+  if (!form || !authCaptchaConfig.enabled) return;
+
+  const kind = authFormKind(form);
+  if (captchaWidgetIds[kind] !== null) return;
+  if (captchaRenderPromises[kind]) return captchaRenderPromises[kind];
+
+  captchaRenderPromises[kind] = (async () => {
+    await loadTurnstileScript();
+    const visibleForm = document.querySelector(".auth-form:not([hidden])");
+    if (visibleForm !== form || form.hidden || !form.isConnected) return;
+    const container = form.querySelector(`[data-turnstile-for="${kind}"]`);
+    if (!container || captchaWidgetIds[kind] !== null) return;
     captchaWidgetIds[kind] = window.turnstile.render(container, {
       sitekey: authCaptchaConfig.siteKey,
       theme: "auto",
@@ -205,7 +221,20 @@ async function initializeCaptcha() {
       "expired-callback": () => { captchaTokens[kind] = null; },
       "error-callback": () => { captchaTokens[kind] = null; },
     });
-  });
+  })();
+
+  try {
+    await captchaRenderPromises[kind];
+  } finally {
+    captchaRenderPromises[kind] = null;
+  }
+}
+
+async function initializeCaptcha() {
+  const config = await api("/api/config");
+  authCaptchaConfig = config.captcha || authCaptchaConfig;
+  if (!authCaptchaConfig.enabled) return;
+  await renderCaptchaForForm(document.querySelector(".auth-form:not([hidden])"));
 }
 
 function resetCaptchaForForm(form) {
@@ -1715,6 +1744,7 @@ function showAuthForm(form) {
   loginModeBtn.tabIndex = form === loginForm ? 0 : -1;
   registerModeBtn.tabIndex = form === registerForm ? 0 : -1;
   authPanel.classList.toggle("auth-panel--recovery", form === passwordUpdateForm);
+  renderCaptchaForForm(form).catch((error) => setAuthMessage(error.message, "error"));
 
   const content = new Map([
     [loginForm, ["Zaloguj się do Motka", "Wróć do swojego magazynu i rozpoczętych projektów."]],

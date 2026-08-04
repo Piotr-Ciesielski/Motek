@@ -31,7 +31,7 @@ class RequestError extends Error {
   }
 }
 
-function createApiClient() {
+function createApiClient(captcha = { enabled: false, provider: null, siteKey: null }) {
   return {
     async request(pathname) {
       const url = new URL(pathname);
@@ -43,7 +43,7 @@ function createApiClient() {
             profile: { login: "tester@example.com", email: "tester@example.com" },
           };
         case "/api/config":
-          return { captcha: { enabled: false, provider: null, siteKey: null } };
+          return { captcha };
         case "/api/patterns":
           return { items: [], total: 0, hasMore: false };
         case "/api/yarns":
@@ -63,7 +63,7 @@ function isResponseEnvelope(value) {
   );
 }
 
-async function createAppWindow() {
+async function createAppWindow({ captchaEnabled = false, delayedCaptchaMs = 0 } = {}) {
   const dom = new JSDOM(indexHtml, {
     url: "http://localhost/",
     pretendToBeVisual: true,
@@ -96,7 +96,9 @@ async function createAppWindow() {
   });
 
   window.MotekApiClient = {
-    createApiClient,
+    createApiClient: () => createApiClient(captchaEnabled
+      ? { enabled: true, provider: "turnstile", siteKey: "test-site-key" }
+      : undefined),
     ApiError,
     RequestError,
     isResponseEnvelope,
@@ -115,6 +117,32 @@ async function createAppWindow() {
       };
     },
   };
+  const captchaRenderCalls = [];
+  const installTurnstileMock = () => {
+    window.turnstile = {
+      render(container) {
+        captchaRenderCalls.push(container.dataset.turnstileFor);
+        return captchaRenderCalls.length;
+      },
+      reset() {},
+    };
+  };
+  if (delayedCaptchaMs > 0) {
+    const appendChild = window.document.head.appendChild.bind(window.document.head);
+    window.document.head.appendChild = (node) => {
+      const result = appendChild(node);
+      if (node.src.includes("challenges.cloudflare.com")) {
+        window.setTimeout(() => {
+          installTurnstileMock();
+          node.dispatchEvent(new window.Event("load"));
+        }, delayedCaptchaMs);
+      }
+      return result;
+    };
+  } else {
+    installTurnstileMock();
+  }
+  window.__captchaRenderCalls = captchaRenderCalls;
   context.createCatalogController = createCatalogController;
   context.MotekDomUtils = MotekDomUtils;
 
@@ -165,4 +193,24 @@ test("kliknięcie checkboxu materiału nie zamyka otwartego pickera", async () =
     true,
     "zaznaczenie materiału nie powinno zamykać dropdownu",
   );
+});
+
+test("captcha renderuje się dla widocznego formularza i po przełączeniu", async () => {
+  const window = await createAppWindow({ captchaEnabled: true });
+
+  assert.deepEqual(window.__captchaRenderCalls, ["login"]);
+
+  window.document.getElementById("registerModeBtn").click();
+  await new Promise((resolve) => window.setTimeout(resolve, 0));
+
+  assert.deepEqual(window.__captchaRenderCalls, ["login", "register"]);
+});
+
+test("captcha nie renderuje się w formularzu ukrytym po przełączeniu podczas ładowania", async () => {
+  const window = await createAppWindow({ captchaEnabled: true, delayedCaptchaMs: 50 });
+
+  window.document.getElementById("registerModeBtn").click();
+  await new Promise((resolve) => window.setTimeout(resolve, 80));
+
+  assert.deepEqual(window.__captchaRenderCalls, ["register"]);
 });

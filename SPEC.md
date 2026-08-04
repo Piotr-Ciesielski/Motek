@@ -2,7 +2,7 @@
 
 ## 1. Status projektu
 
-- bieżąca wersja rozwojowa: `2.0.0-alpha.38`
+- bieżąca wersja rozwojowa: `2.0.0-alpha.39`
 - ostatnia wersja wydana: `1.0.2`
 - aktualne źródło danych: Supabase
 - lokalny SQLite: usunięty z aplikacji
