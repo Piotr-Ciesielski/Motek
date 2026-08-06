@@ -189,13 +189,16 @@ użytkownika. Katalog aplikacji może zawierać do 300 wzorów.
 | `GET /api/auth/session` | Sprawdzenie aktywnej sesji |
 | `POST /api/auth/register` | Rejestracja użytkownika |
 | `POST /api/auth/login` | Logowanie |
+| `POST /api/auth/confirmation` | Potwierdzenie adresu e-mail tokenami z fragmentu URL |
 | `POST /api/auth/password-reset-request` | Wysłanie instrukcji odzyskania hasła |
 | `POST /api/auth/recovery` | Ustanowienie sesji z tokenów linku recovery |
 | `POST /api/auth/password` | Ustawienie nowego hasła |
 | `POST /api/auth/logout` | Wylogowanie |
+| `POST /api/auth/activity` | Odświeżenie aktywności bieżącej sesji |
 | `DELETE /api/account` | Bezpowrotne usunięcie konta, profilu i własnych włóczek |
 | `GET /api/yarns` | Pobranie własnego magazynu |
 | `POST /api/yarns` | Dodanie włóczki |
+| `PATCH /api/yarns/:id` | Wersjonowana aktualizacja własnej włóczki (`If-Match`) |
 | `DELETE /api/yarns/:id` | Usunięcie własnej włóczki |
 | `GET /api/patterns` | Pobranie katalogu wzorów |
 | `GET /api/matches` | Pobranie wykonalnych dopasowań |
@@ -309,7 +312,7 @@ Zrealizowano:
   przełączane globalnie w nagłówku i zapamiętywane lokalnie,
 - pionowa grafika włóczek i kota po prawej w Magazynie oraz hero graficzny w Dopasowaniu,
   przełączane razem z motywem,
-- autosave zapisujący różnice per motek przez `POST`, `PATCH` i `DELETE`,
+- jawny zapis zmian włóczki przez `POST`/`PATCH`/`DELETE` z wersją `ETag`/`If-Match`,
 - usunięcie SQLite z aplikacji.
 
 Do wykonania pozostają przede wszystkim:

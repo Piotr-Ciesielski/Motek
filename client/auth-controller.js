@@ -9,7 +9,7 @@
  * Minimalny kontroler przepływu Auth. Nie zna szczegółów widoku — dostaje
  * elementy formularzy oraz klienta API i publikuje aktualny stan sesji.
  */
-function createAuthController(elements = {}, apiClient = {}, onSessionChanged = () => {}) {
+function createAuthController(elements = {}, apiClient = {}, onSessionChanged = () => {}, options = {}) {
   const state = { authenticated: false, user: null, error: null, loading: false };
   const getState = () => Object.assign({}, state);
   const notify = () => {
@@ -36,6 +36,12 @@ function createAuthController(elements = {}, apiClient = {}, onSessionChanged = 
     if (typeof FormData === 'function' && form) return Object.fromEntries(new FormData(form).entries());
     return {};
   };
+
+  const getOptionalPayload = (form, event) => (
+    typeof options.getPayload === 'function'
+      ? options.getPayload(form, event)
+      : readPayload(form, event)
+  );
 
   const submit = async (kind, payload) => {
     const path = kind === 'register' ? '/api/auth/register' : '/api/auth/login';
@@ -71,6 +77,25 @@ function createAuthController(elements = {}, apiClient = {}, onSessionChanged = 
     },
     login: (payload) => submit('login', payload),
     register: (payload) => submit('register', payload),
+    passwordReset: async (payload) => {
+      state.loading = true;
+      state.error = null;
+      try {
+        return await request('/api/auth/password-reset-request', {
+          method: 'POST',
+          body: JSON.stringify(payload || {}),
+        });
+      } catch (error) {
+        state.error = error;
+        notify();
+        throw error;
+      } finally {
+        state.loading = false;
+        if (typeof options.onPasswordResetFinally === 'function') {
+          options.onPasswordResetFinally();
+        }
+      }
+    },
     logout: async () => {
       state.loading = true;
       try {
@@ -92,6 +117,7 @@ function createAuthController(elements = {}, apiClient = {}, onSessionChanged = 
 
   const loginForm = elements.loginForm;
   const registerForm = elements.registerForm;
+  const passwordResetForm = elements.passwordResetForm;
   const logoutButton = elements.logoutButton || elements.logoutBtn;
   if (loginForm?.addEventListener) loginForm.addEventListener('submit', (event) => {
     event.preventDefault();
@@ -100,6 +126,10 @@ function createAuthController(elements = {}, apiClient = {}, onSessionChanged = 
   if (registerForm?.addEventListener) registerForm.addEventListener('submit', (event) => {
     event.preventDefault();
     return controller.register(readPayload(registerForm, event)).catch(() => undefined);
+  });
+  if (passwordResetForm?.addEventListener) passwordResetForm.addEventListener('submit', (event) => {
+    event.preventDefault();
+    return controller.passwordReset(getOptionalPayload(passwordResetForm, event)).catch(() => undefined);
   });
   if (logoutButton?.addEventListener) logoutButton.addEventListener('click', (event) => {
     event?.preventDefault?.();
