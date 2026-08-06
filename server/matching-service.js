@@ -1,5 +1,6 @@
 const { maxMatchSearchNodes } = require("../limits");
 const { ANY_MATERIAL, matchesMaterialRule } = require("../material-policy");
+const { matchVariant } = require("../matching-policy");
 
 class MatchingComplexityError extends RangeError {
   constructor() {
@@ -166,7 +167,25 @@ function selectMatchingYarns(pattern, yarns) {
   return { yarns: eligible, limited: false };
 }
 
+function evaluateMatchingVariants(variants, yarns, matcher = matchVariant) {
+  let limited = false;
+  const matches = [];
+
+  for (const variant of variants) {
+    try {
+      const outcome = matcher(variant, yarns);
+      if (outcome.doable) matches.push({ variant, outcome });
+    } catch (error) {
+      if (!(error instanceof RangeError)) throw error;
+      limited = true;
+    }
+  }
+
+  return { matches, limited };
+}
+
 module.exports = {
+  evaluateMatchingVariants,
   scorePattern,
   selectMatchingYarns,
 };

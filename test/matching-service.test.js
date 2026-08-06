@@ -2,6 +2,7 @@ const { test } = require("node:test");
 const assert = require("node:assert/strict");
 
 const {
+  evaluateMatchingVariants,
   scorePattern,
   selectMatchingYarns,
 } = require("../server/matching-service");
@@ -91,4 +92,26 @@ test("algorytm respektuje limit węzłów wyszukiwania", () => {
     () => scorePattern(tooComplex, manyYarns),
     /Dopasowanie jest zbyt złożone/,
   );
+});
+
+test("przekroczenie budżetu jednego wariantu zachowuje poprawne dopasowania", () => {
+  const validVariant = { id: "m" };
+  const tooComplexVariant = { id: "xl" };
+
+  const result = evaluateMatchingVariants(
+    [validVariant, tooComplexVariant],
+    yarns,
+    (variant) => {
+      if (variant === tooComplexVariant) {
+        throw new RangeError("limit wyszukiwania");
+      }
+      return { doable: true, allocation: [[yarns[0]]], coverage: 100 };
+    },
+  );
+
+  assert.equal(result.limited, true);
+  assert.deepEqual(result.matches, [{
+    variant: validVariant,
+    outcome: { doable: true, allocation: [[yarns[0]]], coverage: 100 },
+  }]);
 });
