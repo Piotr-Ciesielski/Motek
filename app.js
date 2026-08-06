@@ -182,7 +182,9 @@ const idleSessionController = window.MotekIdleSession.createIdleSessionControlle
 });
 
 function applyIdleTimeout(payload) {
-  idleSessionController.setTimeoutMs(payload?.idleTimeoutMs);
+  if (typeof idleSessionController.setTimeoutMs === "function") {
+    idleSessionController.setTimeoutMs(payload?.idleTimeoutMs);
+  }
 }
 
 function loadTurnstileScript() {
