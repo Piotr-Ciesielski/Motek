@@ -95,8 +95,8 @@ select is(
 );
 
 reset role;
-insert into private.auth_recovery_grants (jti_hash, user_id, expires_at)
-values ('E' || repeat('B', 42), 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', now() - interval '1 minute');
+insert into private.auth_recovery_grants (jti_hash, user_id, expires_at, created_at)
+values ('E' || repeat('B', 42), 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', now() - interval '1 minute', now() - interval '3 minutes');
 
 set local role service_role;
 select is(

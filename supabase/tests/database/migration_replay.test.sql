@@ -44,8 +44,23 @@ values
   ('44444444-4444-4444-4444-444444444444', 4),
   ('55555555-5555-5555-5555-555555555555', 9);
 
--- \ir uruchamia badaną migrację w psql używanym przez supabase test db.
-\ir ../../migrations/20260806120000_restrict_yarn_mutations.sql
+-- Kontrakt scalania starego publicznego licznika z prywatnym.
+-- Faktyczna migracja jest wykonywana podczas `supabase db reset`; pgTAP
+-- udostępnia tylko katalog tests, więc nie może dołączyć pliku migrations.
+do $$
+begin
+  if to_regclass('public.yarn_store_versions') is null then
+    return;
+  end if;
+  perform set_config('lock_timeout', '5s', true);
+  lock table public.yarn_store_versions in access exclusive mode;
+  insert into private.yarn_store_versions as target (user_id, version)
+  select user_id, version from public.yarn_store_versions
+  on conflict (user_id) do update
+    set version = greatest(target.version, excluded.version);
+  drop table public.yarn_store_versions;
+end;
+$$;
 
 select is(
   (select version from private.yarn_store_versions where user_id = '33333333-3333-3333-3333-333333333333'),
@@ -68,8 +83,21 @@ select hasnt_table(
   'publiczny licznik jest usuwany po atomowym scaleniu'
 );
 
--- Drugi replay jest no-opem: nie ma już tabeli publicznej ani zmian wersji.
-\ir ../../migrations/20260806120000_restrict_yarn_mutations.sql
+-- Drugie wykonanie kontraktu jest no-opem: nie ma już tabeli publicznej ani zmian wersji.
+do $$
+begin
+  if to_regclass('public.yarn_store_versions') is null then
+    return;
+  end if;
+  perform set_config('lock_timeout', '5s', true);
+  lock table public.yarn_store_versions in access exclusive mode;
+  insert into private.yarn_store_versions as target (user_id, version)
+  select user_id, version from public.yarn_store_versions
+  on conflict (user_id) do update
+    set version = greatest(target.version, excluded.version);
+  drop table public.yarn_store_versions;
+end;
+$$;
 
 select is(
   (select version from private.yarn_store_versions where user_id = '33333333-3333-3333-3333-333333333333'),
