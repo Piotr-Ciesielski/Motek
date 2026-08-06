@@ -16,18 +16,22 @@ grant execute on function public.update_yarn_versioned(bigint, bigint, text, tex
 grant execute on function public.delete_yarn_versioned(bigint, bigint) to authenticated;
 
 -- W starszych środowiskach mógł istnieć publiczny duplikat prywatnego licznika.
--- Usuwamy go tylko po potwierdzeniu, że nie zawiera danych do zachowania.
+-- Przenosimy go atomowo, zachowując najwyższą wersję każdego użytkownika.
 do $$
 begin
   if to_regclass('public.yarn_store_versions') is null then
     return;
   end if;
 
-  if exists (select 1 from public.yarn_store_versions) then
-    raise exception using
-      errcode = 'P0001',
-      message = 'public.yarn_store_versions zawiera dane i wymaga ręcznej migracji przed usunięciem';
-  end if;
+  -- Wycofaj migrację zamiast długo blokować działającą aplikację.
+  perform set_config('lock_timeout', '5s', true);
+  lock table public.yarn_store_versions in access exclusive mode;
+
+  insert into private.yarn_store_versions as target (user_id, version)
+  select user_id, version
+  from public.yarn_store_versions
+  on conflict (user_id) do update
+    set version = greatest(target.version, excluded.version);
 
   drop table public.yarn_store_versions;
 end;

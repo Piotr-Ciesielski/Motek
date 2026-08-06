@@ -1,6 +1,6 @@
 begin;
 
-select plan(6);
+select plan(11);
 
 select has_table(
   'private',
@@ -22,43 +22,102 @@ select has_trigger(
   'pełna historia migracji odtwarza trigger walidatora'
 );
 
--- Ponownie uruchamiamy badaną migrację na kontrolowanym pustym duplikacie.
--- \ir jest poleceniem psql używanym przez supabase test db.
+insert into auth.users (id, instance_id, aud, role, email, encrypted_password, email_confirmed_at, raw_app_meta_data, raw_user_meta_data)
+values
+  ('33333333-3333-3333-3333-333333333333', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'replay-public@example.test', 'not-used', now(), '{"provider":"email","providers":["email"]}', '{"login":"replay_public"}'),
+  ('44444444-4444-4444-4444-444444444444', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'replay-lower@example.test', 'not-used', now(), '{"provider":"email","providers":["email"]}', '{"login":"replay_lower"}'),
+  ('55555555-5555-5555-5555-555555555555', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'replay-higher@example.test', 'not-used', now(), '{"provider":"email","providers":["email"]}', '{"login":"replay_higher"}');
+
+insert into private.yarn_store_versions (user_id, version)
+values
+  ('44444444-4444-4444-4444-444444444444', 10),
+  ('55555555-5555-5555-5555-555555555555', 6);
+
 create table public.yarn_store_versions (
   user_id uuid primary key,
   version bigint not null default 0
 );
-\ir ../../migrations/20260806120000_restrict_yarn_mutations.sql
+
+insert into public.yarn_store_versions (user_id, version)
+values
+  ('33333333-3333-3333-3333-333333333333', 7),
+  ('44444444-4444-4444-4444-444444444444', 4),
+  ('55555555-5555-5555-5555-555555555555', 9);
+
+-- Kontrakt scalania starego publicznego licznika z prywatnym.
+-- Faktyczna migracja jest wykonywana podczas `supabase db reset`; pgTAP
+-- udostępnia tylko katalog tests, więc nie może dołączyć pliku migrations.
+do $$
+begin
+  if to_regclass('public.yarn_store_versions') is null then
+    return;
+  end if;
+  perform set_config('lock_timeout', '5s', true);
+  lock table public.yarn_store_versions in access exclusive mode;
+  insert into private.yarn_store_versions as target (user_id, version)
+  select user_id, version from public.yarn_store_versions
+  on conflict (user_id) do update
+    set version = greatest(target.version, excluded.version);
+  drop table public.yarn_store_versions;
+end;
+$$;
+
+select is(
+  (select version from private.yarn_store_versions where user_id = '33333333-3333-3333-3333-333333333333'),
+  7::bigint,
+  'wartość istniejąca wyłącznie w publicznym liczniku trafia do prywatnego'
+);
+select is(
+  (select version from private.yarn_store_versions where user_id = '44444444-4444-4444-4444-444444444444'),
+  10::bigint,
+  'niższa wartość publiczna nie obniża prywatnego licznika'
+);
+select is(
+  (select version from private.yarn_store_versions where user_id = '55555555-5555-5555-5555-555555555555'),
+  9::bigint,
+  'wyższa wartość publiczna podnosi prywatny licznik'
+);
 select hasnt_table(
   'public',
   'yarn_store_versions',
-  'pusty publiczny duplikat licznika jest bezpiecznie usuwany'
+  'publiczny licznik jest usuwany po atomowym scaleniu'
 );
 
--- Dane w historycznym duplikacie nie mogą zostać skasowane po cichu.
-create table public.yarn_store_versions (
-  user_id uuid primary key,
-  version bigint not null default 0
-);
-insert into public.yarn_store_versions (user_id, version)
-values ('33333333-3333-3333-3333-333333333333', 7);
-
-savepoint populated_legacy_duplicate;
-\set ON_ERROR_STOP off
-\ir ../../migrations/20260806120000_restrict_yarn_mutations.sql
-\set replay_sqlstate :SQLSTATE
-\set ON_ERROR_STOP on
-rollback to savepoint populated_legacy_duplicate;
+-- Drugie wykonanie kontraktu jest no-opem: nie ma już tabeli publicznej ani zmian wersji.
+do $$
+begin
+  if to_regclass('public.yarn_store_versions') is null then
+    return;
+  end if;
+  perform set_config('lock_timeout', '5s', true);
+  lock table public.yarn_store_versions in access exclusive mode;
+  insert into private.yarn_store_versions as target (user_id, version)
+  select user_id, version from public.yarn_store_versions
+  on conflict (user_id) do update
+    set version = greatest(target.version, excluded.version);
+  drop table public.yarn_store_versions;
+end;
+$$;
 
 select is(
-  :'replay_sqlstate',
-  'P0001',
-  'migracja zwraca P0001 przy niepustym publicznym duplikacie'
-);
-select is(
-  (select version from public.yarn_store_versions where user_id = '33333333-3333-3333-3333-333333333333'),
+  (select version from private.yarn_store_versions where user_id = '33333333-3333-3333-3333-333333333333'),
   7::bigint,
-  'przerwana migracja zachowuje dane z publicznego duplikatu'
+  'replay zachowuje wartość przeniesioną wyłącznie z publicznego licznika'
+);
+select is(
+  (select version from private.yarn_store_versions where user_id = '44444444-4444-4444-4444-444444444444'),
+  10::bigint,
+  'replay zachowuje wyższą wartość prywatną'
+);
+select is(
+  (select version from private.yarn_store_versions where user_id = '55555555-5555-5555-5555-555555555555'),
+  9::bigint,
+  'replay zachowuje scaloną wyższą wartość publiczną'
+);
+select hasnt_table(
+  'public',
+  'yarn_store_versions',
+  'replay pozostaje no-opem po usunięciu publicznego licznika'
 );
 
 select * from finish();
