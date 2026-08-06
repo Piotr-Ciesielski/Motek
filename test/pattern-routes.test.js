@@ -2,6 +2,37 @@ const test = require("node:test");
 const assert = require("node:assert/strict");
 
 const { createPatternRouter } = require("../server/pattern-routes");
+const {
+  createRequestRateLimiter,
+  enforceRequestRateLimit,
+  getMatchRateLimitKeys,
+} = require("../server");
+
+test("limiter dopasowań używa adresu połączenia i zwraca Retry-After", () => {
+  let now = 0;
+  const limiter = createRequestRateLimiter({
+    windowMs: 60_000,
+    maxRequests: 1,
+    blockMs: 30_000,
+    now: () => now,
+  });
+  const headers = new Map();
+  const response = { setHeader(name, value) { headers.set(name, value); } };
+  const request = {
+    headers: { "x-forwarded-for": "198.51.100.11" },
+    socket: { remoteAddress: "::ffff:203.0.113.10" },
+  };
+  const keys = getMatchRateLimitKeys(request, { user: { id: "user-1" } });
+
+  assert.deepEqual(keys, ["ip:203.0.113.10", "user:user-1"]);
+  enforceRequestRateLimit(keys, limiter, response);
+  now = 1;
+  assert.throws(
+    () => enforceRequestRateLimit(keys, limiter, response),
+    (error) => error.status === 429,
+  );
+  assert.equal(headers.get("Retry-After"), "30");
+});
 
 test("pattern router returns false for an unsupported route", async () => {
   const router = createPatternRouter({
@@ -17,6 +48,13 @@ test("pattern router returns false for an unsupported route", async () => {
     getSupabaseMatches() {
       throw new Error("dopasowania nie powinny zostać pobrane");
     },
+    enforceRequestRateLimit() {
+      throw new Error("limit nie powinien być sprawdzany");
+    },
+    getMatchRateLimitKeys() {
+      throw new Error("klucz limitu nie powinien być wyliczany");
+    },
+    matchRateLimiter: {},
     parsePatternPage() {
       throw new Error("paginacja nie powinna zostać odczytana");
     },
@@ -51,6 +89,13 @@ test("pattern router serves the catalog with parsed pagination", async () => {
     getSupabaseMatches() {
       throw new Error("dopasowania nie powinny zostać pobrane");
     },
+    enforceRequestRateLimit() {
+      throw new Error("limit nie powinien być sprawdzany");
+    },
+    getMatchRateLimitKeys() {
+      throw new Error("klucz limitu nie powinien być wyliczany");
+    },
+    matchRateLimiter: {},
   });
 
   const handled = await router.handle(
@@ -86,6 +131,14 @@ test("pattern router serves authenticated matches and reports scope", async () =
       calls.push(["getSupabaseMatches", session]);
       return { matches: ["match"], limited: true };
     },
+    getMatchRateLimitKeys(req, session) {
+      calls.push(["getMatchRateLimitKeys", req, session]);
+      return ["ip:127.0.0.1", "user:user-1"];
+    },
+    enforceRequestRateLimit(keys, limiter, res) {
+      calls.push(["enforceRequestRateLimit", keys, limiter, res]);
+    },
+    matchRateLimiter: { name: "match-limiter" },
     getCatalogPatterns() {
       throw new Error("katalog nie powinien zostać pobrany");
     },
@@ -102,6 +155,8 @@ test("pattern router serves authenticated matches and reports scope", async () =
   assert.equal(calls[0][1], request);
   assert.equal(calls[0][2], response);
   assert.deepEqual(calls.slice(1), [
+    ["getMatchRateLimitKeys", request, { user: { id: "user-1" } }],
+    ["enforceRequestRateLimit", ["ip:127.0.0.1", "user:user-1"], { name: "match-limiter" }, response],
     ["getSupabaseMatches", { user: { id: "user-1" } }],
     ["setHeader", "X-Motek-Match-Scope", "subset"],
     ["sendJson", 200, ["match"]],

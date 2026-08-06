@@ -122,6 +122,8 @@ const PROJECT_TYPE_ORDER = [
 let baseUrl = window.location.origin;
 let isAuthenticated = false;
 let pendingWriteCount = 0;
+let yarnRefreshGeneration = 0;
+let yarnRefreshBusyGeneration = 0;
 const catalogController = createCatalogController({
   initialFilters: {},
   load: async ({ page }) => {
@@ -177,9 +179,15 @@ const idleSessionController = window.MotekIdleSession.createIdleSessionControlle
   onExpired: () => {
     idleSessionWarning.hidden = true;
     handleSessionExpired();
-    setAuthMessage("Sesja wygasła z powodu 2 godzin bezczynności. Zaloguj się ponownie.", "error");
+    setAuthMessage("Sesja wygasła z powodu bezczynności. Zaloguj się ponownie.", "error");
   },
 });
+
+function applyIdleTimeout(payload) {
+  if (typeof idleSessionController.setTimeoutMs === "function") {
+    idleSessionController.setTimeoutMs(payload?.idleTimeoutMs);
+  }
+}
 
 function loadTurnstileScript() {
   if (window.turnstile) return Promise.resolve();
@@ -274,6 +282,8 @@ function setActiveView(requestedView, { focus = true } = {}) {
   const target = appViews.find((candidate) => candidate.dataset.view === view);
   if (!target) return;
 
+  const returningFromCatalogToInventory = activeView === "catalog" && view === "inventory";
+  yarnRefreshGeneration += 1;
   activeView = view;
   appViews.forEach((candidate) => {
     candidate.hidden = candidate !== target;
@@ -288,6 +298,12 @@ function setActiveView(requestedView, { focus = true } = {}) {
   if (focus) {
     window.scrollTo({ top: 0, behavior: "smooth" });
     focusViewHeading(target);
+  }
+
+  if (returningFromCatalogToInventory && isAuthenticated && !hasUnsavedYarnChanges()) {
+    refresh().catch((error) => {
+      setStorageMessage(`${error.message} Nie udało się odświeżyć magazynu — spróbuj ponownie za chwilę.`, "error");
+    });
   }
 }
 
@@ -1136,6 +1152,7 @@ function addYarnCard(yarn = {}, { isNew = false } = {}) {
     else saveNewYarn(node);
   });
   node.querySelector(".yarn-edit").addEventListener("click", () => {
+    yarnRefreshGeneration += 1;
     node.dataset.editing = "true";
     setYarnFieldsDisabled(node, false);
     updateYarnSaveButton(node);
@@ -1781,10 +1798,11 @@ async function startPasswordRecovery() {
     window.history.replaceState({}, document.title, window.location.pathname);
     try {
       setAuthMessage("Potwierdzam adres e-mail...");
-      await api("/api/auth/confirmation", {
+      const confirmation = await api("/api/auth/confirmation", {
         method: "POST",
         body: JSON.stringify({ access_token: accessToken, refresh_token: refreshToken }),
       });
+      applyIdleTimeout(confirmation);
       setAuthMessage("Adres e-mail został potwierdzony. Konto jest gotowe do użycia.", "success");
       return false;
     } catch (error) {
@@ -1800,10 +1818,11 @@ async function startPasswordRecovery() {
 
   try {
     setAuthMessage("Sprawdzam link odzyskiwania hasła...");
-    await api("/api/auth/recovery", {
+    const recovery = await api("/api/auth/recovery", {
       method: "POST",
       body: JSON.stringify({ code }),
     });
+    applyIdleTimeout(recovery);
     window.history.replaceState({}, document.title, window.location.pathname);
     authForms.hidden = false;
     setActiveView("account", { focus: false });
@@ -1874,6 +1893,7 @@ async function refreshAuthSession() {
   let payload;
   try {
     payload = await api("/api/auth/session");
+    applyIdleTimeout(payload);
   } catch (error) {
     renderAuthState({ authenticated: false });
     setAuthMessage(error.message, "error");
@@ -1939,6 +1959,7 @@ async function submitAuthForm(form, endpoint, successMessage) {
       method: "POST",
       body: JSON.stringify(body),
     });
+    applyIdleTimeout(payload);
     renderAuthState({
       authenticated: Boolean(payload.user && !payload.requiresEmailConfirmation),
       user: payload.user,
@@ -2029,6 +2050,7 @@ passwordResetForm.addEventListener("submit", async (event) => {
   } catch (error) {
     setAuthMessage(error.message, "error");
   } finally {
+    resetCaptchaForForm(passwordResetForm);
     setAuthBusy(passwordResetForm, false);
   }
 });
@@ -2129,10 +2151,13 @@ deleteAccountForm.addEventListener("submit", async (event) => {
 });
 
 async function refresh() {
+  const refreshGeneration = ++yarnRefreshGeneration;
+  const busyGeneration = ++yarnRefreshBusyGeneration;
   yarnList.setAttribute("aria-busy", "true");
   summary.setAttribute("aria-busy", "true");
   try {
     const yarns = await loadYarns();
+    if (refreshGeneration !== yarnRefreshGeneration) return;
     yarnList.replaceChildren();
     if (yarns.length) {
       yarns.forEach(addYarnCard);
@@ -2143,12 +2168,15 @@ async function refresh() {
     await renderSummary(yarns);
     await renderResults();
   } finally {
-    yarnList.removeAttribute("aria-busy");
-    summary.removeAttribute("aria-busy");
+    if (busyGeneration === yarnRefreshBusyGeneration) {
+      yarnList.removeAttribute("aria-busy");
+      summary.removeAttribute("aria-busy");
+    }
   }
 }
 
 addYarnBtn.addEventListener("click", () => {
+  yarnRefreshGeneration += 1;
   const { card, created } = ensureSingleNewYarnCard(
     yarnList.querySelectorAll(".yarn-card"),
     () => {
