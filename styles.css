@@ -2594,3 +2594,28 @@ body::before {
   #accountView .account-dashboard__section-heading { align-items: flex-start; flex-direction: column; }
   #accountView .account-dashboard__profile, #accountView .account-dashboard__projects, #accountView .account-dashboard__metrics, #accountView .account-dashboard__settings, #accountView .account-dashboard__security { padding: 22px; }
 }
+*/
+
+/* Active account actions kept outside the disabled duplicate reference layer. */
+#accountView .account-dashboard__settings {
+  display: grid;
+  gap: 0;
+}
+
+#accountView .account-dashboard__settings button {
+  display: flex;
+  min-height: 52px;
+  align-items: center;
+  justify-content: space-between;
+  border: 0;
+  border-top: 1px solid var(--border);
+  padding: 0;
+  color: var(--text);
+  background: transparent;
+  font: 700 1rem "Fraunces", serif;
+  text-align: left;
+}
+
+#accountView .account-dashboard__settings button:first-child {
+  border-top: 0;
+}
