@@ -105,7 +105,7 @@ const SECURITY_HEADERS = Object.freeze({
     "style-src 'self' https://fonts.googleapis.com",
     "font-src 'self' https://fonts.gstatic.com",
     "img-src 'self' data:",
-    "connect-src 'self' https://fonts.googleapis.com https://fonts.gstatic.com",
+    "connect-src 'self' https://challenges.cloudflare.com https://fonts.googleapis.com https://fonts.gstatic.com",
     "object-src 'none'",
     "base-uri 'none'",
     "frame-ancestors 'none'",
