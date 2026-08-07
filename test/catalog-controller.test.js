@@ -61,3 +61,29 @@ test('preserves server total while a large catalog still has more pages', async 
   assert.equal(controller.getState().hasMore, true);
   assert.equal(controller.getState().items.length, 1);
 });
+
+test('ponawia nieudaną stronę katalogu bez duplikowania kart i czyści błąd', async () => {
+  const calls = [];
+  let secondPageFailed = false;
+  const controller = createCatalogController({
+    load: async ({ page }) => {
+      calls.push(page);
+      if (page === 1) return { items: [{ id: 1 }, { id: 2 }], total: 4, hasMore: true };
+      if (!secondPageFailed) {
+        secondPageFailed = true;
+        throw new Error('chwilowy błąd strony 2');
+      }
+      return { items: [{ id: 2 }, { id: 3 }], total: 4, hasMore: true };
+    },
+  });
+
+  await controller.refresh();
+  await assert.rejects(controller.loadMore(), /chwilowy błąd strony 2/);
+  assert.match(controller.getState().error.message, /chwilowy błąd strony 2/);
+
+  await controller.loadMore();
+
+  assert.deepEqual(calls, [1, 2, 2]);
+  assert.deepEqual(controller.getState().items, [{ id: 1 }, { id: 2 }, { id: 3 }]);
+  assert.equal(controller.getState().error, null);
+});
