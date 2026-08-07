@@ -7,7 +7,7 @@ produkcyjnego.
 
 - domena: `https://staging.rysia.org`;
 - branch: `staging`;
-- commit: `6719138ebe98853ef6376416a025148cf415b789`;
+- commit: `12555dacb62c35a3abd8659e19af35850220f5a7`;
 - wersja aplikacji: `2.0.0-alpha.39`;
 - środowisko: `staging`;
 - produkcja pozostaje na osobnym branchu `main`.
@@ -21,7 +21,7 @@ Endpoint `/health/release` zwraca `status: ready`, powyższy commit i
   coverage i testy bazy zakończone sukcesem;
 - pgTAP: 4 pliki, 135 testów, `PASS`;
 - regresja po wdrożeniu stagingu: zakończona sukcesem;
-- Railway staging: deployment commitu `6719138e` zakończony sukcesem;
+- Railway staging: deployment commitu `12555dac` zakończony sukcesem;
 - Supabase staging: migracja `revoke_yarns_sequence_acl` zastosowana;
   role `anon` i `authenticated` nie mają `USAGE`, `SELECT` ani `UPDATE` do
   `public.yarns_id_seq`.
