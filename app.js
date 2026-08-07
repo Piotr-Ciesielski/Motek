@@ -51,9 +51,10 @@ const cancelPasswordResetBtn = document.getElementById("cancelPasswordResetBtn")
 const accountView = document.getElementById("accountView");
 const headerUser = document.getElementById("headerUser");
 const themeToggle = document.getElementById("themeToggle");
-const themeToggleLabel = document.getElementById("themeToggleLabel");
 const themeToggleIcon = themeToggle?.querySelector(".theme-toggle__icon");
 const inventoryThemeImage = document.getElementById("inventoryThemeImage");
+const catalogThemeImage = document.getElementById("catalogThemeImage");
+const accountThemeImage = document.getElementById("accountThemeImage");
 const inventoryStats = document.getElementById("inventoryStats");
 const inventoryStatYarns = document.getElementById("inventoryStatYarns");
 const inventoryStatLength = document.getElementById("inventoryStatLength");
@@ -262,7 +263,7 @@ function setActiveView(requestedView, { focus = true } = {}) {
 }
 
 function renderThemeToggle() {
-  if (!themeToggle || !themeToggleLabel) {
+  if (!themeToggle) {
     return;
   }
 
@@ -270,7 +271,6 @@ function renderThemeToggle() {
   const state = getThemeToggleState(currentTheme);
   themeToggle.setAttribute("aria-pressed", String(state.pressed));
   themeToggle.setAttribute("aria-label", state.label);
-  themeToggleLabel.textContent = state.shortLabel;
 
   if (themeToggleIcon) {
     themeToggleIcon.textContent = state.nextTheme === "dark" ? "☾" : "☀";
@@ -284,7 +284,12 @@ function renderThemeToggle() {
       : "Kolorowe włóczki i kot w pracowni",
   };
 
-  for (const image of [inventoryThemeImage, matchesThemeImage]) {
+  for (const image of [
+    inventoryThemeImage,
+    matchesThemeImage,
+    catalogThemeImage,
+    accountThemeImage,
+  ]) {
     if (!image) continue;
     image.src = artwork.src(image);
     image.alt = artwork.alt;

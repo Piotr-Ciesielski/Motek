@@ -39,7 +39,6 @@
         <div class="app-header__actions">
           <button id="themeToggle" class="theme-toggle" type="button" aria-pressed="false" aria-label="Włącz tryb ciemny">
             <span class="theme-toggle__icon" aria-hidden="true">☾</span>
-            <span id="themeToggleLabel">Ciemny</span>
           </button>
           <div id="headerUser" class="header-user" hidden></div>
         </div>
@@ -58,6 +57,15 @@
             Uporządkuj domowy zapas, znajdź pasujący wzór i wróć do tego,
             co najprzyjemniejsze — tworzenia.
           </p>
+          <figure class="auth-visual__artwork">
+            <img
+              id="accountThemeImage"
+              src="assets/color-yarn-cat.v1.webp"
+              data-light-src="assets/color-yarn-cat.v1.webp"
+              data-dark-src="assets/night-yarn-cat.v1.webp"
+              alt="Kolorowe włóczki i kot w pracowni"
+            />
+          </figure>
           <button id="heroAuthBtn" class="hero-cta" type="button">Zacznij w Motku</button>
         </aside>
       <section class="panel auth-panel" aria-labelledby="authTitle">
@@ -321,7 +329,7 @@
       <section id="catalogView" class="app-view" data-view="catalog" aria-labelledby="catalogTitle" hidden>
       <section class="panel catalog-panel">
         <div class="catalog-header">
-          <div>
+          <div class="catalog-header__copy">
             <p class="eyebrow">Biblioteka inspiracji</p>
             <h1 id="catalogTitle">Katalog wzorów</h1>
             <p>
@@ -330,6 +338,15 @@
               jednoznacznie w pliku źródłowym.
             </p>
           </div>
+          <figure class="catalog-header__visual">
+            <img
+              id="catalogThemeImage"
+              src="assets/color-yarn-cat.v1.webp"
+              data-light-src="assets/color-yarn-cat.v1.webp"
+              data-dark-src="assets/night-yarn-cat.v1.webp"
+              alt="Kolorowe włóczki i kot w pracowni"
+            />
+          </figure>
           <div id="catalogFilters" class="catalog-controls">
             <label>
               Szukaj
