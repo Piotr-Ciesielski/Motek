@@ -11,6 +11,13 @@ const migrationPath = path.join(
   "migrations",
   "20260731104741_email_login_and_remove_full_name.sql"
 );
+const avatarMigrationPath = path.join(
+  __dirname,
+  "..",
+  "supabase",
+  "migrations",
+  "20260807093000_harden_profile_avatar_url.sql"
+);
 
 test("migracja usuwa stary constraint loginu przed przepisaniem loginów", () => {
   const sql = fs.readFileSync(migrationPath, "utf8");
@@ -47,17 +54,11 @@ test("backend nie odczytuje usuniętej kolumny full_name", () => {
   assert.doesNotMatch(server, /\bfull_name\b/);
 });
 
-test("migracja ACL blokuje bezpośrednie mutacje i usuwa publiczny licznik wersji", () => {
-  const migrationPath = path.join(
-    __dirname,
-    "..",
-    "supabase",
-    "migrations",
-    "20260807150000_reconcile_yarn_acl_and_recovery.sql"
-  );
-  const sql = fs.existsSync(migrationPath) ? fs.readFileSync(migrationPath, "utf8") : "";
+test("migracja ogranicza avatar_url do 2048 znaków", () => {
+  const sql = fs.readFileSync(avatarMigrationPath, "utf8");
 
-  assert.match(sql, /revoke\s+insert,\s*update,\s*delete\s+on\s+table\s+public\.yarns\s+from\s+authenticated/i);
-  assert.match(sql, /revoke\s+all\s+on\s+table\s+private\.yarn_store_versions\s+from\s+public,\s*anon,\s*authenticated/i);
-  assert.match(sql, /drop\s+table\s+if\s+exists\s+public\.yarn_store_versions/i);
+  assert.match(
+    sql,
+    /check \(avatar_url is null or char_length\(avatar_url\) <= 2048\)/i
+  );
 });

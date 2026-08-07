@@ -12,14 +12,11 @@ const {
   maxYarnsPerUser: MAX_YARNS_PER_USER,
   maxPatternCatalogRecords: MAX_PATTERN_CATALOG_RECORDS,
   maxMatchingVariantsPerPattern: MAX_MATCH_VARIANTS,
-  maxMatchingRoleRequirements: MAX_MATCH_ROLE_REQUIREMENTS,
-  maxMatchingTextLength: MAX_MATCHING_TEXT_LENGTH,
 } = require("./limits");
 const {
   normalizeYarnMaterials,
 } = require("./material-policy");
 const {
-  matchVariant,
   normalizeMatchingDocument,
 } = require("./matching-policy");
 const { ACCOUNT_DELETION_PHRASE, validateAccountDeletionInput } = require("./account-deletion-policy");
@@ -31,6 +28,7 @@ const {
 } = require("./deployment-policy");
 const { createMetricsRegistry } = require("./observability");
 const {
+  evaluateMatchingVariants,
   scorePattern,
   selectMatchingYarns,
 } = require("./server/matching-service");
@@ -54,11 +52,11 @@ const MAX_JSON_BODY_BYTES = 16 * 1024;
 const AUTH_ACCESS_COOKIE = "motek_access_token";
 const AUTH_REFRESH_COOKIE = "motek_refresh_token";
 const AUTH_IDLE_COOKIE = "motek_idle_activity";
-const AUTH_RECOVERY_COOKIE = "motek_recovery_grant";
+const AUTH_RECOVERY_GRANT_COOKIE = "motek_recovery_grant";
 const AUTH_ACCESS_MAX_AGE = 60 * 60;
 const AUTH_REFRESH_MAX_AGE = 60 * 60 * 24 * 30;
 const AUTH_IDLE_TIMEOUT_SECONDS = 2 * 60 * 60;
-const AUTH_RECOVERY_TIMEOUT_SECONDS = 10 * 60;
+const AUTH_RECOVERY_GRANT_MAX_AGE = 10 * 60;
 const AUTH_RATE_LIMIT_WINDOW_MS = 15 * 60 * 1000;
 const AUTH_RATE_LIMIT_MAX_FAILURES = 5;
 const AUTH_RATE_LIMIT_BLOCK_MS = 15 * 60 * 1000;
@@ -69,6 +67,9 @@ const AUTH_REQUEST_BLOCK_MS = 60 * 1000;
 const YARN_WRITE_WINDOW_MS = 60 * 1000;
 const YARN_WRITE_MAX = 600;
 const YARN_WRITE_BLOCK_MS = 60 * 1000;
+const MATCH_REQUEST_WINDOW_MS = 60 * 1000;
+const MATCH_REQUEST_MAX = 30;
+const MATCH_REQUEST_BLOCK_MS = 60 * 1000;
 const HTTP_REQUEST_TIMEOUT_MS = 30 * 1000;
 const HTTP_HEADERS_TIMEOUT_MS = 10 * 1000;
 const HTTP_KEEP_ALIVE_TIMEOUT_MS = 5 * 1000;
@@ -86,15 +87,10 @@ const yarnWriteRateLimiter = createRequestRateLimiter({
   maxRequests: YARN_WRITE_MAX,
   blockMs: YARN_WRITE_BLOCK_MS,
 });
-const patternReadRateLimiter = createRequestRateLimiter({
-  windowMs: 60 * 1000,
-  maxRequests: 60,
-  blockMs: 60 * 1000,
-});
-const matchingRateLimiter = createRequestRateLimiter({
-  windowMs: 60 * 1000,
-  maxRequests: 30,
-  blockMs: 60 * 1000,
+const matchRateLimiter = createRequestRateLimiter({
+  windowMs: MATCH_REQUEST_WINDOW_MS,
+  maxRequests: MATCH_REQUEST_MAX,
+  blockMs: MATCH_REQUEST_BLOCK_MS,
 });
 const MAX_TEXT_LENGTH = {
   name: 100,
@@ -155,9 +151,8 @@ const patternRouter = createPatternRouter({
   getSupabaseMatches,
   parsePatternPage,
   enforceRequestRateLimit,
-  patternReadRateLimiter,
-  matchingRateLimiter,
-  getRequestRateLimitKeys: (req) => [`ip:${getClientAddress(req)}`],
+  getMatchRateLimitKeys,
+  matchRateLimiter,
 });
 
 class ApiError extends Error {
@@ -331,6 +326,10 @@ function getAuthRateLimitKeys(req, email) {
   return [`ip:${getClientAddress(req)}`, `email:${email}`];
 }
 
+function getMatchRateLimitKeys(req, session) {
+  return [`ip:${getClientAddress(req)}`, `user:${session.user.id}`];
+}
+
 function enforceAuthRateLimit(keys, res) {
   const retryAfterMs = Math.max(...keys.map((key) => authRateLimiter.getRetryAfterMs(key)));
   if (retryAfterMs > 0) {
@@ -418,10 +417,73 @@ function getIdleTimeoutSeconds(env = process.env) {
   return value;
 }
 
+function getIdleTimeoutMs(env = process.env) {
+  return getIdleTimeoutSeconds(env) * 1000;
+}
+
 function getIdleSessionSecret(env = process.env) {
   const secret = String(env.IDLE_SESSION_SECRET || env.SUPABASE_SECRET_KEY || "");
   if (!secret) throw new Error("Brak sekretu podpisu sesji bezczynności.");
   return secret;
+}
+
+function getRecoveryGrantSecret(env = process.env) {
+  const secret = String(env.RECOVERY_GRANT_SECRET || env.IDLE_SESSION_SECRET || env.SUPABASE_SECRET_KEY || "");
+  if (!secret) throw new Error("Brak sekretu podpisu grantu odzyskiwania hasła.");
+  return secret;
+}
+
+function signRecoveryGrant(payload, env = process.env) {
+  return crypto.createHmac("sha256", getRecoveryGrantSecret(env))
+    .update(payload)
+    .digest("base64url");
+}
+
+function buildRecoveryGrantCookie(grant, env = process.env) {
+  const payload = Buffer.from(JSON.stringify({
+    user_id: grant.userId,
+    jti: grant.jti,
+    exp: grant.expiresAt,
+  })).toString("base64url");
+  const value = `${payload}.${signRecoveryGrant(payload, env)}`;
+  return buildAuthCookie(AUTH_RECOVERY_GRANT_COOKIE, value, AUTH_RECOVERY_GRANT_MAX_AGE, env);
+}
+
+function parseRecoveryGrantCookie(value, env = process.env, now = Math.floor(Date.now() / 1000)) {
+  if (typeof value !== "string") return null;
+  const [payload, signature] = value.split(".");
+  if (!payload || !signature) return null;
+  const expectedBuffer = Buffer.from(signRecoveryGrant(payload, env));
+  const receivedBuffer = Buffer.from(signature);
+  if (receivedBuffer.length !== expectedBuffer.length || !crypto.timingSafeEqual(receivedBuffer, expectedBuffer)) return null;
+
+  try {
+    const grant = JSON.parse(Buffer.from(payload, "base64url").toString("utf8"));
+    if (
+      typeof grant?.user_id !== "string"
+      || typeof grant?.jti !== "string"
+      || !grant.jti
+      || !Number.isSafeInteger(grant?.exp)
+      || grant.exp <= now
+    ) {
+      return null;
+    }
+    return { userId: grant.user_id, jti: grant.jti, expiresAt: grant.exp };
+  } catch {
+    return null;
+  }
+}
+
+function hashRecoveryGrantJti(jti) {
+  return crypto.createHash("sha256").update(jti).digest("base64url");
+}
+
+function createRecoveryGrant(userId, now = Math.floor(Date.now() / 1000)) {
+  return {
+    userId,
+    jti: crypto.randomUUID(),
+    expiresAt: now + AUTH_RECOVERY_GRANT_MAX_AGE,
+  };
 }
 
 function signIdleActivity(timestamp, env = process.env) {
@@ -469,31 +531,33 @@ function clearAuthCookies(res) {
   appendSetCookie(res, buildAuthCookie(AUTH_ACCESS_COOKIE, "", 0));
   appendSetCookie(res, buildAuthCookie(AUTH_REFRESH_COOKIE, "", 0));
   appendSetCookie(res, buildAuthCookie(AUTH_IDLE_COOKIE, "", 0));
-  appendSetCookie(res, buildAuthCookie(AUTH_RECOVERY_COOKIE, "", 0));
+  appendSetCookie(res, buildAuthCookie(AUTH_RECOVERY_GRANT_COOKIE, "", 0));
 }
 
-function buildRecoveryGrantCookie(userId, timestamp = Math.floor(Date.now() / 1000)) {
-  const payload = `${userId}.${Math.floor(Number(timestamp))}`;
-  const signature = crypto.createHmac("sha256", getIdleSessionSecret())
-    .update(`recovery:${payload}`)
-    .digest("base64url");
-  return buildAuthCookie(AUTH_RECOVERY_COOKIE, `${payload}.${signature}`, AUTH_RECOVERY_TIMEOUT_SECONDS);
+async function storeRecoveryGrant(grant) {
+  if (!supabaseConnection?.client) {
+    throw new ApiError(503, "Odzyskiwanie hasła jest chwilowo niedostępne. Spróbuj ponownie później.");
+  }
+  const { error } = await supabaseConnection.client.rpc("create_auth_recovery_grant", {
+    p_user_id: grant.userId,
+    p_jti_hash: hashRecoveryGrantJti(grant.jti),
+    p_expires_at: new Date(grant.expiresAt * 1000).toISOString(),
+  });
+  if (error) {
+    throw new ApiError(503, "Odzyskiwanie hasła jest chwilowo niedostępne. Spróbuj ponownie później.");
+  }
 }
 
-function parseRecoveryGrantCookie(value, userId, now = Math.floor(Date.now() / 1000)) {
-  if (typeof value !== "string" || typeof userId !== "string") return false;
-  const [rawUserId, rawTimestamp, signature] = value.split(".");
-  const timestamp = Number(rawTimestamp);
-  if (!rawUserId || rawUserId !== userId || !Number.isSafeInteger(timestamp) || !signature) return false;
-  const expected = crypto.createHmac("sha256", getIdleSessionSecret())
-    .update(`recovery:${rawUserId}.${timestamp}`)
-    .digest("base64url");
-  const expectedBuffer = Buffer.from(expected);
-  const receivedBuffer = Buffer.from(signature);
-  return receivedBuffer.length === expectedBuffer.length
-    && crypto.timingSafeEqual(receivedBuffer, expectedBuffer)
-    && now >= timestamp
-    && now - timestamp <= AUTH_RECOVERY_TIMEOUT_SECONDS;
+async function consumeRecoveryGrant(grant) {
+  if (!supabaseConnection?.client) return false;
+  const { data, error } = await supabaseConnection.client.rpc("consume_auth_recovery_grant", {
+    p_user_id: grant.userId,
+    p_jti_hash: hashRecoveryGrantJti(grant.jti),
+  });
+  if (error) {
+    throw new ApiError(503, "Odzyskiwanie hasła jest chwilowo niedostępne. Spróbuj ponownie później.");
+  }
+  return data === true;
 }
 
 function normalizeAuthEmail(value) {
@@ -530,8 +594,8 @@ function validateAuthPassword(value) {
   if (/^\s+$/u.test(value)) {
     throw new ApiError(400, "Hasło nie może składać się wyłącznie ze spacji.");
   }
-  if (!/[a-z]/u.test(value) || !/[A-Z]/u.test(value) || !/\d/u.test(value) || !/[^\p{L}\p{N}\s]/u.test(value)) {
-    throw new ApiError(400, "Hasło musi zawierać małą i wielką literę, cyfrę oraz znak specjalny.");
+  if (!/\p{Ll}/u.test(value) || !/\p{Lu}/u.test(value) || !/\p{Nd}/u.test(value) || !/[^\p{L}\p{N}\s]/u.test(value)) {
+    throw new ApiError(400, "Hasło musi zawierać małą i wielką literę Unicode, cyfrę Unicode oraz znak specjalny.");
   }
   return value;
 }
@@ -559,6 +623,9 @@ function genericAuthError(operation) {
   if (operation === "login") {
     return new ApiError(401, "Nieprawidłowy e-mail lub hasło.");
   }
+  if (operation === "confirmation") {
+    return new ApiError(400, "Link potwierdzający jest nieprawidłowy lub wygasł.");
+  }
   return new ApiError(400, "Nie udało się utworzyć konta. Sprawdź dane i spróbuj ponownie.");
 }
 
@@ -580,7 +647,7 @@ async function getAuthenticatedSession(req, res) {
   const accessToken = cookies[AUTH_ACCESS_COOKIE];
   const refreshToken = cookies[AUTH_REFRESH_COOKIE];
   if (!accessToken && !refreshToken) return null;
-  if (!cookies[AUTH_IDLE_COOKIE] || !parseIdleActivityCookie(cookies[AUTH_IDLE_COOKIE])) {
+  if (!parseIdleActivityCookie(cookies[AUTH_IDLE_COOKIE])) {
     clearAuthCookies(res);
     return null;
   }
@@ -609,14 +676,19 @@ async function getAuthenticatedSession(req, res) {
     supabaseAuthConfig,
     activeAccessToken || undefined
   );
-  const profileResult = await authenticatedClient
-    .from("profiles")
-    .select("id,login,email,avatar_url,status,role,created_at,updated_at,last_login_at")
-    .eq("id", userResult.data.user.id)
-    .maybeSingle();
+  let profileResult;
+  try {
+    profileResult = await authenticatedClient
+      .from("profiles")
+      .select("id,login,email,avatar_url,status,role,created_at,updated_at,last_login_at")
+      .eq("id", userResult.data.user.id)
+      .maybeSingle();
+  } catch {
+    throw new ApiError(503, "Nie udało się teraz zweryfikować konta. Spróbuj ponownie.");
+  }
 
   if (profileResult.error) {
-    throw new ApiError(503, "Usługa profilu jest chwilowo niedostępna.");
+    throw new ApiError(503, "Nie udało się teraz zweryfikować konta. Spróbuj ponownie.");
   }
 
   if (!profileResult.data) {
@@ -816,35 +888,14 @@ async function getSupabaseMatches(session) {
     getCatalogPatterns(),
   ]);
 
-  let remainingVariants = MAX_MATCH_VARIANTS;
+  validateMatchLimits(patterns);
   let limited = false;
-  const boundedPatterns = patterns
-    .map((pattern) => {
-      const requirements = Array.isArray(pattern.matchingRequirements)
-        ? pattern.matchingRequirements.slice(0, Math.max(0, remainingVariants))
-        : [];
-      remainingVariants -= requirements.length;
-      if (requirements.length !== (Array.isArray(pattern.matchingRequirements) ? pattern.matchingRequirements.length : 0)) limited = true;
-      return { ...pattern, matchingRequirements: requirements };
-    })
-    .filter((pattern) => pattern.matchingRequirements.length > 0);
-  const matches = boundedPatterns
+  const matches = patterns
     .filter((pattern) => !pattern.needsReview)
-    .flatMap((pattern) =>
-      pattern.matchingRequirements.flatMap((variant) => {
-        let outcome;
-        try {
-          outcome = matchVariant(variant, yarns);
-        } catch (error) {
-          if (error instanceof RangeError) {
-            throw new ApiError(
-              503,
-              "Dopasowanie jest zbyt złożone. Zmniejsz magazyn lub wybierz prostszy wzór.",
-            );
-          }
-          throw error;
-        }
-        if (!outcome.doable) return [];
+    .flatMap((pattern) => {
+      const result = evaluateMatchingVariants(pattern.matchingRequirements, yarns);
+      limited ||= result.limited;
+      return result.matches.map(({ variant, outcome }) => {
         const allocatedYarns = outcome.allocation.flat();
         const allocation = variant.requirements.map((requirement, index) => ({
           role: requirement.role,
@@ -858,7 +909,7 @@ async function getSupabaseMatches(session) {
             weight: yarn.weight,
           })),
         }));
-        return [{
+        return {
           pattern: {
             ...pattern,
             ...variant,
@@ -880,9 +931,9 @@ async function getSupabaseMatches(session) {
           ),
           matchedYarns: allocatedYarns.length,
           allocation,
-        }];
-      })
-    )
+        };
+      });
+    })
     .filter((item) => item.doable)
     .sort((a, b) => b.total - a.total);
 
@@ -951,6 +1002,7 @@ async function readBody(req) {
   let timeout;
   const timeoutPromise = new Promise((resolve, reject) => {
     timeout = setTimeout(() => {
+      req.destroy();
       reject(new ApiError(408, "Przekroczono czas przesyłania danych."));
     }, HTTP_BODY_TIMEOUT_MS);
   });
@@ -1165,6 +1217,54 @@ async function handleAuthApi(req, res, url) {
     return sendJson(res, 201, {
       user: sanitizeAuthUser(data.user),
       requiresEmailConfirmation: !data.session,
+      idleTimeoutMs: getIdleTimeoutMs(),
+    });
+  }
+
+  if (req.method === "POST" && url.pathname === "/api/auth/confirmation") {
+    const body = await readBody(req);
+    const rateLimitKeys = [`ip:${getClientAddress(req)}`];
+    enforceRequestRateLimit(rateLimitKeys, authRequestRateLimiter, res);
+    enforceAuthRateLimit(rateLimitKeys, res);
+
+    let accessToken;
+    let refreshToken;
+    try {
+      accessToken = normalizeRecoveryToken(body.access_token, "potwierdzający");
+      refreshToken = normalizeRecoveryToken(body.refresh_token, "odświeżający");
+    } catch {
+      recordAuthFailure(rateLimitKeys);
+      throw genericAuthError("confirmation");
+    }
+
+    const client = authClient();
+    let session;
+    let user;
+    try {
+      const { data, error } = await client.auth.setSession({
+        access_token: accessToken,
+        refresh_token: refreshToken,
+      });
+      session = data?.session;
+      if (error || !session?.access_token || !session?.refresh_token) {
+        throw new Error("Nieprawidłowa sesja potwierdzenia.");
+      }
+
+      const userResult = await client.auth.getUser(session.access_token);
+      user = userResult.data?.user;
+      if (userResult.error || !user) {
+        throw new Error("Nieprawidłowy użytkownik potwierdzenia.");
+      }
+    } catch {
+      recordAuthFailure(rateLimitKeys);
+      throw genericAuthError("confirmation");
+    }
+
+    clearAuthFailures(rateLimitKeys);
+    setAuthCookies(res, session);
+    return sendJson(res, 200, {
+      user: sanitizeAuthUser(user),
+      idleTimeoutMs: getIdleTimeoutMs(),
     });
   }
 
@@ -1196,7 +1296,10 @@ async function handleAuthApi(req, res, url) {
 
     setAuthCookies(res, data.session);
     await updateLastLogin(data.user.id);
-    return sendJson(res, 200, { user: sanitizeAuthUser(data.user) });
+    return sendJson(res, 200, {
+      user: sanitizeAuthUser(data.user),
+      idleTimeoutMs: getIdleTimeoutMs(),
+    });
   }
 
   if (req.method === "POST" && url.pathname === "/api/auth/password-reset-request") {
@@ -1227,7 +1330,6 @@ async function handleAuthApi(req, res, url) {
   }
 
   if (req.method === "POST" && url.pathname === "/api/auth/recovery") {
-    enforceRequestRateLimit([`ip:${getClientAddress(req)}`, "recovery"], authRequestRateLimiter, res);
     const body = await readBody(req);
     const code = normalizeRecoveryToken(body.code, "jednorazowy");
     const client = authClient();
@@ -1235,9 +1337,14 @@ async function handleAuthApi(req, res, url) {
     if (error || !data?.user || !data?.session) {
       throw new ApiError(400, "Link odzyskiwania hasła jest nieprawidłowy lub wygasł.");
     }
+    const grant = createRecoveryGrant(data.user.id);
+    await storeRecoveryGrant(grant);
     setAuthCookies(res, data.session);
-    appendSetCookie(res, buildRecoveryGrantCookie(data.user.id));
-    return sendJson(res, 200, { user: sanitizeAuthUser(data.user) });
+    appendSetCookie(res, buildRecoveryGrantCookie(grant));
+    return sendJson(res, 200, {
+      user: sanitizeAuthUser(data.user),
+      idleTimeoutMs: getIdleTimeoutMs(),
+    });
   }
 
   if (req.method === "POST" && url.pathname === "/api/auth/password") {
@@ -1245,9 +1352,13 @@ async function handleAuthApi(req, res, url) {
     const body = await readBody(req);
     const password = validateAuthPassword(body.password);
     const cookies = parseCookies(req.headers.cookie);
+    const recoveryGrant = parseRecoveryGrantCookie(cookies[AUTH_RECOVERY_GRANT_COOKIE]);
+    if (!recoveryGrant || recoveryGrant.userId !== session.user.id) {
+      throw new ApiError(403, "Link odzyskiwania hasła jest nieprawidłowy lub wygasł.");
+    }
     const refreshToken = cookies[AUTH_REFRESH_COOKIE];
-    if (!refreshToken || !parseRecoveryGrantCookie(cookies[AUTH_RECOVERY_COOKIE], session.user.id)) {
-      throw new ApiError(400, "Link odzyskiwania hasła jest nieprawidłowy lub wygasł.");
+    if (!refreshToken) {
+      throw new ApiError(403, "Link odzyskiwania hasła jest nieprawidłowy lub wygasł.");
     }
 
     const client = supabaseAuthClientFactory(supabaseAuthConfig, session.accessToken);
@@ -1256,7 +1367,11 @@ async function handleAuthApi(req, res, url) {
       refresh_token: refreshToken,
     });
     if (sessionError) {
-      throw new ApiError(400, "Link odzyskiwania hasła jest nieprawidłowy lub wygasł.");
+      throw new ApiError(403, "Link odzyskiwania hasła jest nieprawidłowy lub wygasł.");
+    }
+
+    if (!await consumeRecoveryGrant(recoveryGrant)) {
+      throw new ApiError(403, "Link odzyskiwania hasła jest nieprawidłowy lub wygasł.");
     }
 
     const { error } = await client.auth.updateUser({ password });
@@ -1264,7 +1379,19 @@ async function handleAuthApi(req, res, url) {
       throw new ApiError(400, "Nie udało się zmienić hasła. Sprawdź hasło i spróbuj ponownie.");
     }
 
-    clearAuthCookies(res);
+    let globalSignOutFailed = false;
+    try {
+      const signOutResult = await client.auth.signOut({ scope: "global" });
+      globalSignOutFailed = Boolean(signOutResult?.error);
+    } catch {
+      globalSignOutFailed = true;
+    } finally {
+      clearAuthCookies(res);
+    }
+    if (globalSignOutFailed) {
+      throw new ApiError(503, "Hasło zostało zmienione, ale nie udało się unieważnić pozostałych sesji.");
+    }
+
     return sendJson(res, 200, { passwordUpdated: true, authenticated: false });
   }
 
@@ -1278,6 +1405,8 @@ async function handleAuthApi(req, res, url) {
         );
         await client.auth.signOut({ scope: "local" });
       }
+    } catch {
+      console.warn("Nie udało się wylogować sesji po stronie Supabase.");
     } finally {
       clearAuthCookies(res);
     }
@@ -1295,6 +1424,7 @@ async function handleAuthApi(req, res, url) {
       authenticated: Boolean(session),
       user: session ? sanitizeAuthUser(session.user) : null,
       profile: session?.profile || null,
+      idleTimeoutMs: getIdleTimeoutMs(),
     });
   }
 
@@ -1610,6 +1740,7 @@ if (require.main === module) {
 
 module.exports = {
   getClientAddress,
+  getMatchRateLimitKeys,
   getRuntimeConfig,
   main,
   normalizeAuthEmail,
@@ -1626,6 +1757,7 @@ module.exports = {
   createAccountDeletionRateLimiter,
   createAuthRateLimiter,
   createRequestRateLimiter,
+  enforceRequestRateLimit,
   validateMatchLimits,
   shouldUseSecureCookies,
   shutdown,
@@ -1633,8 +1765,6 @@ module.exports = {
   getIdleTimeoutSeconds,
   buildIdleActivityCookie,
   parseIdleActivityCookie,
-  buildRecoveryGrantCookie,
-  parseRecoveryGrantCookie,
   validateAuthPassword,
   normalizeRecoveryToken,
 };

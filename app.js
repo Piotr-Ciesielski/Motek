@@ -122,6 +122,8 @@ const PROJECT_TYPE_ORDER = [
 let baseUrl = window.location.origin;
 let isAuthenticated = false;
 let pendingWriteCount = 0;
+let yarnRefreshGeneration = 0;
+let yarnRefreshBusyGeneration = 0;
 const catalogController = createCatalogController({
   initialFilters: {},
   load: async ({ page }) => {
@@ -153,6 +155,8 @@ let inventoryChangedSinceMatch = false;
 let authCaptchaConfig = { enabled: false, provider: null, siteKey: null };
 const captchaTokens = { login: null, register: null, passwordReset: null };
 const captchaWidgetIds = { login: null, register: null, passwordReset: null };
+const captchaRenderPromises = { login: null, register: null, passwordReset: null };
+let turnstileScriptPromise = null;
 const apiClient = createApiClient({
   fetchImpl: window.fetch.bind(window),
   timeoutMs: REQUEST_TIMEOUT_MS,
@@ -175,31 +179,51 @@ const idleSessionController = window.MotekIdleSession.createIdleSessionControlle
   onExpired: () => {
     idleSessionWarning.hidden = true;
     handleSessionExpired();
-    setAuthMessage("Sesja wygasła z powodu 2 godzin bezczynności. Zaloguj się ponownie.", "error");
+    setAuthMessage("Sesja wygasła z powodu bezczynności. Zaloguj się ponownie.", "error");
   },
 });
 
+function applyIdleTimeout(payload) {
+  if (typeof idleSessionController.setTimeoutMs === "function") {
+    idleSessionController.setTimeoutMs(payload?.idleTimeoutMs);
+  }
+}
+
 function loadTurnstileScript() {
   if (window.turnstile) return Promise.resolve();
-  return new Promise((resolve, reject) => {
+  if (turnstileScriptPromise) return turnstileScriptPromise;
+  turnstileScriptPromise = new Promise((resolve, reject) => {
     const script = document.createElement("script");
     script.src = "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit";
     script.async = true;
     script.defer = true;
     script.onload = resolve;
-    script.onerror = () => reject(new Error("Nie udało się załadować zabezpieczenia formularza."));
+    script.onerror = () => {
+      turnstileScriptPromise = null;
+      reject(new Error("Nie udało się załadować zabezpieczenia formularza."));
+    };
     document.head.appendChild(script);
   });
+  return turnstileScriptPromise;
 }
 
-async function initializeCaptcha() {
-  const config = await api("/api/config");
-  authCaptchaConfig = config.captcha || authCaptchaConfig;
-  if (!authCaptchaConfig.enabled) return;
-  await loadTurnstileScript();
-  ["login", "register", "passwordReset"].forEach((kind) => {
-    const container = document.querySelector(`[data-turnstile-for="${kind}"]`);
-    if (!container) return;
+function authFormKind(form) {
+  return form === registerForm ? "register" : form === passwordResetForm ? "passwordReset" : "login";
+}
+
+async function renderCaptchaForForm(form) {
+  if (!form || !authCaptchaConfig.enabled) return;
+
+  const kind = authFormKind(form);
+  if (captchaWidgetIds[kind] !== null) return;
+  if (captchaRenderPromises[kind]) return captchaRenderPromises[kind];
+
+  captchaRenderPromises[kind] = (async () => {
+    await loadTurnstileScript();
+    const visibleForm = document.querySelector(".auth-form:not([hidden])");
+    if (visibleForm !== form || form.hidden || !form.isConnected) return;
+    const container = form.querySelector(`[data-turnstile-for="${kind}"]`);
+    if (!container || captchaWidgetIds[kind] !== null) return;
     captchaWidgetIds[kind] = window.turnstile.render(container, {
       sitekey: authCaptchaConfig.siteKey,
       theme: "auto",
@@ -207,7 +231,20 @@ async function initializeCaptcha() {
       "expired-callback": () => { captchaTokens[kind] = null; },
       "error-callback": () => { captchaTokens[kind] = null; },
     });
-  });
+  })();
+
+  try {
+    await captchaRenderPromises[kind];
+  } finally {
+    captchaRenderPromises[kind] = null;
+  }
+}
+
+async function initializeCaptcha() {
+  const config = await api("/api/config");
+  authCaptchaConfig = config.captcha || authCaptchaConfig;
+  if (!authCaptchaConfig.enabled) return;
+  await renderCaptchaForForm(document.querySelector(".auth-form:not([hidden])"));
 }
 
 function resetCaptchaForForm(form) {
@@ -245,6 +282,8 @@ function setActiveView(requestedView, { focus = true } = {}) {
   const target = appViews.find((candidate) => candidate.dataset.view === view);
   if (!target) return;
 
+  const returningFromCatalogToInventory = activeView === "catalog" && view === "inventory";
+  yarnRefreshGeneration += 1;
   activeView = view;
   appViews.forEach((candidate) => {
     candidate.hidden = candidate !== target;
@@ -259,6 +298,12 @@ function setActiveView(requestedView, { focus = true } = {}) {
   if (focus) {
     window.scrollTo({ top: 0, behavior: "smooth" });
     focusViewHeading(target);
+  }
+
+  if (returningFromCatalogToInventory && isAuthenticated && !hasUnsavedYarnChanges()) {
+    refresh().catch((error) => {
+      setStorageMessage(`${error.message} Nie udało się odświeżyć magazynu — spróbuj ponownie za chwilę.`, "error");
+    });
   }
 }
 
@@ -1107,6 +1152,7 @@ function addYarnCard(yarn = {}, { isNew = false } = {}) {
     else saveNewYarn(node);
   });
   node.querySelector(".yarn-edit").addEventListener("click", () => {
+    yarnRefreshGeneration += 1;
     node.dataset.editing = "true";
     setYarnFieldsDisabled(node, false);
     updateYarnSaveButton(node);
@@ -1161,6 +1207,17 @@ function addYarnCard(yarn = {}, { isNew = false } = {}) {
 function collectYarnsFromDom() {
   return [...yarnList.querySelectorAll('.yarn-card[data-saved="true"]')].map(collectYarnFromCard);
 }
+
+yarnList.addEventListener("click", (event) => {
+  const card = event.target.closest(".yarn-card");
+  if (!card || event.target.closest("[data-material-picker]")) {
+    return;
+  }
+
+  card.querySelectorAll("[data-material-picker][open]").forEach((picker) => {
+    picker.open = false;
+  });
+});
 
 document.querySelectorAll("label").forEach((label) => {
   const field = label.querySelector("input, select");
@@ -1718,6 +1775,7 @@ function showAuthForm(form) {
   loginModeBtn.tabIndex = form === loginForm ? 0 : -1;
   registerModeBtn.tabIndex = form === registerForm ? 0 : -1;
   authPanel.classList.toggle("auth-panel--recovery", form === passwordUpdateForm);
+  renderCaptchaForForm(form).catch((error) => setAuthMessage(error.message, "error"));
 
   const content = new Map([
     [loginForm, ["Zaloguj się do Motka", "Wróć do swojego magazynu i rozpoczętych projektów."]],
@@ -1740,10 +1798,11 @@ async function startPasswordRecovery() {
     window.history.replaceState({}, document.title, window.location.pathname);
     try {
       setAuthMessage("Potwierdzam adres e-mail...");
-      await api("/api/auth/confirmation", {
+      const confirmation = await api("/api/auth/confirmation", {
         method: "POST",
         body: JSON.stringify({ access_token: accessToken, refresh_token: refreshToken }),
       });
+      applyIdleTimeout(confirmation);
       setAuthMessage("Adres e-mail został potwierdzony. Konto jest gotowe do użycia.", "success");
       return false;
     } catch (error) {
@@ -1759,10 +1818,11 @@ async function startPasswordRecovery() {
 
   try {
     setAuthMessage("Sprawdzam link odzyskiwania hasła...");
-    await api("/api/auth/recovery", {
+    const recovery = await api("/api/auth/recovery", {
       method: "POST",
       body: JSON.stringify({ code }),
     });
+    applyIdleTimeout(recovery);
     window.history.replaceState({}, document.title, window.location.pathname);
     authForms.hidden = false;
     setActiveView("account", { focus: false });
@@ -1833,6 +1893,7 @@ async function refreshAuthSession() {
   let payload;
   try {
     payload = await api("/api/auth/session");
+    applyIdleTimeout(payload);
   } catch (error) {
     renderAuthState({ authenticated: false });
     setAuthMessage(error.message, "error");
@@ -1898,6 +1959,7 @@ async function submitAuthForm(form, endpoint, successMessage) {
       method: "POST",
       body: JSON.stringify(body),
     });
+    applyIdleTimeout(payload);
     renderAuthState({
       authenticated: Boolean(payload.user && !payload.requiresEmailConfirmation),
       user: payload.user,
@@ -1988,6 +2050,7 @@ passwordResetForm.addEventListener("submit", async (event) => {
   } catch (error) {
     setAuthMessage(error.message, "error");
   } finally {
+    resetCaptchaForForm(passwordResetForm);
     setAuthBusy(passwordResetForm, false);
   }
 });
@@ -2088,10 +2151,13 @@ deleteAccountForm.addEventListener("submit", async (event) => {
 });
 
 async function refresh() {
+  const refreshGeneration = ++yarnRefreshGeneration;
+  const busyGeneration = ++yarnRefreshBusyGeneration;
   yarnList.setAttribute("aria-busy", "true");
   summary.setAttribute("aria-busy", "true");
   try {
     const yarns = await loadYarns();
+    if (refreshGeneration !== yarnRefreshGeneration) return;
     yarnList.replaceChildren();
     if (yarns.length) {
       yarns.forEach(addYarnCard);
@@ -2102,12 +2168,15 @@ async function refresh() {
     await renderSummary(yarns);
     await renderResults();
   } finally {
-    yarnList.removeAttribute("aria-busy");
-    summary.removeAttribute("aria-busy");
+    if (busyGeneration === yarnRefreshBusyGeneration) {
+      yarnList.removeAttribute("aria-busy");
+      summary.removeAttribute("aria-busy");
+    }
   }
 }
 
 addYarnBtn.addEventListener("click", () => {
+  yarnRefreshGeneration += 1;
   const { card, created } = ensureSingleNewYarnCard(
     yarnList.querySelectorAll(".yarn-card"),
     () => {

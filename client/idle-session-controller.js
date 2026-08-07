@@ -9,6 +9,8 @@
     timeoutMs = 2 * 60 * 60 * 1000,
     warningMs = 5 * 60 * 1000,
     activityThrottleMs = 60 * 1000,
+    retryDelaysMs = [500, 1500],
+    wait = (delay) => new Promise((resolve) => setTimeoutImpl(resolve, delay)),
     eventTarget = globalScope,
   }) {
     let lastActivityAt = 0;
@@ -37,14 +39,43 @@
     function schedule() {
       clearTimers();
       const elapsed = Math.max(0, now() - lastActivityAt);
-      const warningDelay = Math.max(0, timeoutMs - warningMs - elapsed);
+      const warningRemainingMs = Math.min(warningMs, timeoutMs);
+      const warningDelay = Math.max(0, timeoutMs - warningRemainingMs - elapsed);
       const expiryDelay = Math.max(0, timeoutMs - elapsed);
       warningTimer = setTimeoutImpl(() => {
         if (!started) return;
         warningVisible = true;
-        onWarning({ remainingMs: warningMs });
+        onWarning({ remainingMs: warningRemainingMs });
       }, warningDelay);
       expiryTimer = setTimeoutImpl(expire, expiryDelay);
+    }
+
+    function isAuthenticationFailure(error) {
+      return error?.status === 401 || error?.status === 403;
+    }
+
+    function isTransientFailure(error) {
+      return error?.status === 429
+        || error?.status >= 500
+        || error?.kind === "timeout"
+        || error?.kind === "network";
+    }
+
+    async function touchServer() {
+      for (let attempt = 0; attempt <= retryDelaysMs.length; attempt += 1) {
+        try {
+          await api("/api/auth/activity", { method: "POST", body: "{}" });
+          return true;
+        } catch (error) {
+          if (isAuthenticationFailure(error)) {
+            expire();
+            return false;
+          }
+          if (!isTransientFailure(error) || attempt === retryDelaysMs.length) return false;
+          await wait(retryDelaysMs[attempt]);
+        }
+      }
+      return false;
     }
 
     async function markActivity({ force = false } = {}) {
@@ -55,13 +86,7 @@
       schedule();
       if (!force && timestamp - lastServerTouchAt < activityThrottleMs) return true;
       lastServerTouchAt = timestamp;
-      try {
-        await api("/api/auth/activity", { method: "POST", body: "{}" });
-        return true;
-      } catch {
-        expire();
-        return false;
-      }
+      return touchServer();
     }
 
     function handleActivity() {
@@ -86,10 +111,19 @@
       warningVisible = false;
     }
 
+    function setTimeoutMs(nextTimeoutMs) {
+      const normalizedTimeoutMs = Number(nextTimeoutMs);
+      if (!Number.isFinite(normalizedTimeoutMs) || normalizedTimeoutMs <= 0) return false;
+      timeoutMs = normalizedTimeoutMs;
+      if (started) schedule();
+      return true;
+    }
+
     return {
       start,
       stop,
       markActivity,
+      setTimeoutMs,
       isWarningVisible: () => warningVisible,
       getLastActivityAt: () => lastActivityAt,
     };

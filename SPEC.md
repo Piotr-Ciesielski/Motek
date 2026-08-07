@@ -2,12 +2,12 @@
 
 ## 1. Status projektu
 
-- wersja źródła w głównym checkoutcie: `2.0.0-alpha.38`
-- zweryfikowany staging: `2.0.0-alpha.39`, commit `62d0b84e`
+- bieżąca wersja rozwojowa: `2.0.0-alpha.39`
+- zweryfikowany staging: `2.0.0-alpha.39`, commit `6719138e`
 - ostatnia wersja wydana: `1.0.2`
 - aktualne źródło danych: Supabase
 - lokalny SQLite: usunięty z aplikacji
-- następny zakres: domknięcie U-16, U-17, U-19 oraz pełne uporządkowanie U-22; produkcja pozostaje bez zmian
+- następny zakres: osobne uzgodnienie synchronizacji głównego checkoutu ze stagingiem; produkcja pozostaje bez zmian
 
 Migracja e-mailowego loginu znajduje się w repozytorium; jej zastosowanie i
 kontrola na zdalnym Supabase są osobnym krokiem operacyjnym.
@@ -190,13 +190,16 @@ użytkownika. Katalog aplikacji może zawierać do 300 wzorów.
 | `GET /api/auth/session` | Sprawdzenie aktywnej sesji |
 | `POST /api/auth/register` | Rejestracja użytkownika |
 | `POST /api/auth/login` | Logowanie |
+| `POST /api/auth/confirmation` | Potwierdzenie adresu e-mail tokenami z fragmentu URL |
 | `POST /api/auth/password-reset-request` | Wysłanie instrukcji odzyskania hasła |
 | `POST /api/auth/recovery` | Ustanowienie sesji z tokenów linku recovery |
 | `POST /api/auth/password` | Ustawienie nowego hasła |
 | `POST /api/auth/logout` | Wylogowanie |
+| `POST /api/auth/activity` | Odświeżenie aktywności bieżącej sesji |
 | `DELETE /api/account` | Bezpowrotne usunięcie konta, profilu i własnych włóczek |
 | `GET /api/yarns` | Pobranie własnego magazynu |
 | `POST /api/yarns` | Dodanie włóczki |
+| `PATCH /api/yarns/:id` | Wersjonowana aktualizacja własnej włóczki (`If-Match`) |
 | `DELETE /api/yarns/:id` | Usunięcie własnej włóczki |
 | `GET /api/patterns` | Pobranie katalogu wzorów |
 | `GET /api/matches` | Pobranie wykonalnych dopasowań |
@@ -310,7 +313,7 @@ Zrealizowano:
   przełączane globalnie w nagłówku i zapamiętywane lokalnie,
 - pionowa grafika włóczek i kota po prawej w Magazynie oraz hero graficzny w Dopasowaniu,
   przełączane razem z motywem,
-- autosave zapisujący różnice per motek przez `POST`, `PATCH` i `DELETE`,
+- jawny zapis zmian włóczki przez `POST`/`PATCH`/`DELETE` z wersją `ETag`/`If-Match`,
 - usunięcie SQLite z aplikacji.
 
 Do wykonania pozostają przede wszystkim:
@@ -355,8 +358,3 @@ Grafika w Magazynie zachowuje pionową kompozycję prototypów przez
 `object-fit: cover` i `object-position: right center`; Dopasowanie pozostaje
 szerokim hero. Magazyn i Dopasowanie pokazują same grafiki, bez tekstowych
 nakładek i ramek.
-# Kontrole bezpieczeństwa i ograniczenia planu Free
-
-Backend jest źródłem prawdy dla sesji, recovery, limitów i autoryzacji. Bezpośrednie mutacje tabeli `yarns` są odbierane użytkownikom, a zapis odbywa się przez kontrolowane RPC. Brak funkcji Supabase „Leaked Password Protection” jest znanym ograniczeniem planu Free; nie wykonujemy upgrade'u Pro.
-
-Po każdej zmianie bezpieczeństwa należy uruchomić `npm run lint`, `npm run format:check`, `npm run check`, `npm audit --json` oraz dostępne testy pgTAP. Pełny audyt statusów znajduje się w `AUDYT_SEC.md` i planie `docs/superpowers/plans/2026-08-07-security-hardening-free-plan.md`.

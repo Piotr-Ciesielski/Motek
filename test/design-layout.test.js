@@ -78,6 +78,16 @@ test("light and dark variants define the prototype layout rules", () => {
   assert.match(stylesCss, /object-position: center/);
 });
 
+test("dark hero panel keeps readable text on its dark gradient", () => {
+  assert.match(stylesCss, /--on-hero:\s*#f3eadc/);
+  assert.match(stylesCss, /\.auth-visual\s*\{[\s\S]*?color:\s*var\(--on-hero\)/);
+  assert.match(stylesCss, /\.auth-visual::after\s*\{[\s\S]*?var\(--on-hero\)/);
+  assert.match(stylesCss, /\.auth-visual h1\s*\{[\s\S]*?color:\s*var\(--on-hero\)/);
+  assert.match(stylesCss, /\.auth-visual \.lead\s*\{[\s\S]*?var\(--on-hero\)/);
+  assert.match(stylesCss, /\.hero-cta\s*\{[\s\S]*?color:\s*var\(--on-hero\)/);
+  assert.match(stylesCss, /\.hero-cta\s*\{[\s\S]*?color-mix\(in srgb, var\(--on-hero\)/);
+});
+
 test("mobile inventory orders stats before stock and artwork", () => {
   assert.match(indexHtml, /class="inventory-stock"/);
   assert.match(
@@ -106,7 +116,7 @@ test("inventory stats update together with the existing summary", () => {
 test("catalog controller asset has a deployment cache buster", () => {
   assert.match(
     indexHtml,
-    /client\/catalog-controller\.js\?v=2\.0\.0-alpha\.38&rev=[a-f0-9]{7,40}/,
+    /client\/catalog-controller\.js\?v=2\.0\.0-alpha\.39&rev=[a-f0-9]{7,40}/,
   );
 });
 

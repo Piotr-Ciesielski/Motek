@@ -11,6 +11,8 @@ const {
   createRequestRateLimiter,
   shouldUseSecureCookies,
   validateCookieSecurityConfig,
+  buildIdleActivityCookie,
+  parseIdleActivityCookie,
 } = require("../server");
 
 test("normalizacja Auth trimuje i ujednolica e-mail oraz login jako e-mail", () => {
@@ -28,6 +30,14 @@ test("walidacja hasła wymaga podstawowej różnorodności znaków", () => {
   assert.equal(validateAuthPassword("Hasłó123!"), "Hasłó123!");
   assert.throws(() => validateAuthPassword("password"), /małą i wielką/);
   assert.throws(() => validateAuthPassword("Aa1      "), /wyłącznie ze spacji|znak specjalny/);
+});
+
+test("walidacja hasła akceptuje małe, wielkie litery i cyfry Unicode", () => {
+  assert.equal(validateAuthPassword("Ąą١!Żółw"), "Ąą١!Żółw");
+  assert.throws(
+    () => validateAuthPassword("hasło١!żółw"),
+    /małą i wielką literę Unicode, cyfrę Unicode oraz znak specjalny/,
+  );
 });
 
 test("produkcja wymaga jawnego Secure dla ciasteczek sesji", () => {
@@ -51,6 +61,15 @@ test("Secure jest sterowane konfiguracją transportu", () => {
     buildAuthCookie("motek_access_token", "token", 60, { NODE_ENV: "production", COOKIE_SECURE: "true" }),
     /; HttpOnly; SameSite=Lax; Max-Age=60; Secure$/
   );
+});
+
+test("podpis aktywności odrzuca błędne i wygasłe wartości", () => {
+  const env = { IDLE_SESSION_SECRET: "test-idle-secret", AUTH_IDLE_TIMEOUT_SECONDS: "60" };
+  const valid = buildIdleActivityCookie(1_700_000_000, env).split(";", 1)[0].split("=", 2)[1];
+
+  assert.equal(parseIdleActivityCookie(undefined, env, 1_700_000_001), null);
+  assert.equal(parseIdleActivityCookie(`${valid}invalid`, env, 1_700_000_001), null);
+  assert.equal(parseIdleActivityCookie(valid, env, 1_700_000_061), null);
 });
 
 test("rate limiter blokuje serię nieudanych prób i wygasa po czasie", () => {
