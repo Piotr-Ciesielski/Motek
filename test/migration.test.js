@@ -11,6 +11,13 @@ const migrationPath = path.join(
   "migrations",
   "20260731104741_email_login_and_remove_full_name.sql"
 );
+const avatarMigrationPath = path.join(
+  __dirname,
+  "..",
+  "supabase",
+  "migrations",
+  "20260807093000_harden_profile_avatar_url.sql"
+);
 
 test("migracja usuwa stary constraint loginu przed przepisaniem loginów", () => {
   const sql = fs.readFileSync(migrationPath, "utf8");
@@ -45,4 +52,13 @@ test("backend nie odczytuje usuniętej kolumny full_name", () => {
   const server = fs.readFileSync(serverPath, "utf8");
 
   assert.doesNotMatch(server, /\bfull_name\b/);
+});
+
+test("migracja ogranicza avatar_url do 2048 znaków", () => {
+  const sql = fs.readFileSync(avatarMigrationPath, "utf8");
+
+  assert.match(
+    sql,
+    /check \(avatar_url is null or char_length\(avatar_url\) <= 2048\)/i
+  );
 });
