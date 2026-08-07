@@ -66,7 +66,7 @@ GitHub Actions uruchamiają testy, lint, formatowanie, audyt npm i testy Supabas
 
 Numer wersji jest w pliku [`VERSION`](VERSION) (obecnie `2.0.0-alpha.38`) i musi odpowiadać wersji w `package.json`. CI kontroluje wersję i SHA; numer wydania aktualizuje się świadomie w repozytorium.
 
-Zweryfikowany snapshot stagingu z 2026-08-07 to `2.0.0-alpha.39`, commit `6719138e`. Jest on opisany w [raporcie stanu stagingu](docs/operations/staging-status-2026-08-07.md). Główny checkout może mieć inną wersję rozwojową, dopóki nie zostanie zsynchronizowany z branchem `staging`.
+Zweryfikowany snapshot stagingu z 2026-08-07 to `2.0.0-alpha.39`, commit `12555dac`. Jest on opisany w [raporcie stanu stagingu](docs/operations/staging-status-2026-08-07.md) oraz w [statusie audytu bezpieczeństwa](docs/operations/security-audit-status-2026-08-07.md).
 
 ## Diagnostyka
 

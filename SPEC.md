@@ -3,11 +3,11 @@
 ## 1. Status projektu
 
 - bieżąca wersja rozwojowa: `2.0.0-alpha.39`
-- zweryfikowany staging: `2.0.0-alpha.39`, commit `6719138e`
+- zweryfikowany staging: `2.0.0-alpha.39`, commit `12555dac`
 - ostatnia wersja wydana: `1.0.2`
 - aktualne źródło danych: Supabase
 - lokalny SQLite: usunięty z aplikacji
-- następny zakres: osobne uzgodnienie synchronizacji głównego checkoutu ze stagingiem; produkcja pozostaje bez zmian
+- następny zakres: produkcja wymaga osobnego wdrożenia i regresji; numer wersji pozostaje `2.0.0-alpha.39`
 
 Migracja e-mailowego loginu znajduje się w repozytorium; jej zastosowanie i
 kontrola na zdalnym Supabase są osobnym krokiem operacyjnym.
