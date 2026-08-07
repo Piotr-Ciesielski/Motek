@@ -1,6 +1,6 @@
 begin;
 
-select plan(27);
+select plan(31);
 
 select has_schema('private', 'prywatny schemat grantów recovery istnieje');
 select has_table('private', 'auth_recovery_grants', 'granty recovery są przechowywane poza publicznym schematem');
@@ -52,6 +52,18 @@ select is(
   true,
   'consume zwraca wynik atomowego UPDATE przez FOUND'
 );
+select is(
+  (select position('claimed_at is null' in prosrc) > 0 from pg_proc where oid = 'public.claim_auth_recovery_grant(uuid,text)'::regprocedure),
+  true,
+  'claim rezerwuje wyłącznie nieprzetwarzany grant'
+);
+select is(
+  (select position('set claimed_at = null' in prosrc) > 0 from pg_proc where oid = 'public.release_auth_recovery_grant(uuid,text)'::regprocedure),
+  true,
+  'release zwalnia rezerwację grantu'
+);
+select is(has_function_privilege('authenticated', 'public.claim_auth_recovery_grant(uuid, text)', 'EXECUTE'), false, 'authenticated nie może rezerwować grantów');
+select is(has_function_privilege('service_role', 'public.claim_auth_recovery_grant(uuid, text)', 'EXECUTE'), true, 'service_role może rezerwować granty');
 
 select is(has_function_privilege('public', 'public.create_auth_recovery_grant(uuid,text,timestamptz)', 'EXECUTE'), false, 'PUBLIC nie może tworzyć grantów');
 select is(has_function_privilege('anon', 'public.create_auth_recovery_grant(uuid,text,timestamptz)', 'EXECUTE'), false, 'anon nie może tworzyć grantów');

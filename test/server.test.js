@@ -310,6 +310,7 @@ test("serwer Motek działa bezpiecznie", async (t) => {
   const deletedUserIds = [];
   const signOutScopes = [];
   let updateUserCalls = 0;
+  let updateUserFailure = null;
   let profileResultOverride = null;
   let profileQueryFailure = null;
   let signOutFailure = null;
@@ -501,6 +502,7 @@ test("serwer Motek działa bezpiecznie", async (t) => {
         async updateUser({ password }) {
           assert.equal(password, "NoweHaslo123!");
           updateUserCalls += 1;
+          if (updateUserFailure) return { data: null, error: updateUserFailure };
           return { data: { user: syntheticUsers[token] }, error: null };
         },
       },
@@ -588,11 +590,12 @@ test("serwer Motek działa bezpiecznie", async (t) => {
           recoveryGrants.set(args.p_jti_hash, {
             userId: args.p_user_id,
             expiresAt: args.p_expires_at,
+            claimed: false,
             used: false,
           });
           return Promise.resolve({ data: true, error: null });
         }
-        if (name === "consume_auth_recovery_grant") {
+        if (name === "claim_auth_recovery_grant") {
           if (concurrentConsumeState.enabled) {
             concurrentConsumeState.calls += 1;
             if (concurrentConsumeState.calls === 1) {
@@ -600,7 +603,7 @@ test("serwer Motek działa bezpiecznie", async (t) => {
                 concurrentConsumeState.startedResolve();
                 concurrentConsumeState.release = () => {
                   const grant = recoveryGrants.get(args.p_jti_hash);
-                  if (grant) grant.used = true;
+                  if (grant) grant.claimed = true;
                   resolve({ data: true, error: null });
                 };
               });
@@ -610,6 +613,23 @@ test("serwer Motek działa bezpiecznie", async (t) => {
           const grant = recoveryGrants.get(args.p_jti_hash);
           const usable = grant
             && grant.userId === args.p_user_id
+            && !grant.claimed
+            && !grant.used
+            && Date.parse(grant.expiresAt) > Date.now();
+          if (usable) grant.claimed = true;
+          return Promise.resolve({ data: Boolean(usable), error: null });
+        }
+        if (name === "release_auth_recovery_grant") {
+          const grant = recoveryGrants.get(args.p_jti_hash);
+          const released = grant?.userId === args.p_user_id && grant.claimed && !grant.used;
+          if (released) grant.claimed = false;
+          return Promise.resolve({ data: Boolean(released), error: null });
+        }
+        if (name === "consume_auth_recovery_grant") {
+          const grant = recoveryGrants.get(args.p_jti_hash);
+          const usable = grant
+            && grant.userId === args.p_user_id
+            && grant.claimed
             && !grant.used
             && Date.parse(grant.expiresAt) > Date.now();
           if (usable) grant.used = true;
@@ -1143,6 +1163,31 @@ test("serwer Motek działa bezpiecznie", async (t) => {
         assert.match(response.headers.get("set-cookie"), /motek_recovery_grant=.*Max-Age=0/);
       } finally {
         signOutFailure = null;
+      }
+    });
+
+    await t.test("nie zużywa grantu, gdy zmiana hasła nie powiedzie się", async () => {
+      const recoveryResponse = await fetch(`${baseUrl}/api/auth/recovery`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Origin: baseUrl },
+        body: JSON.stringify({ code: "recovery-code-update-failure" }),
+      });
+      const recoveryCookies = recoveryResponse.headers
+        .getSetCookie()
+        .map((cookie) => cookie.split(";", 1)[0])
+        .join("; ");
+      const grantHash = recoveryGrantCalls.at(-1).p_jti_hash;
+      updateUserFailure = new Error("hasło odrzucone");
+      try {
+        const response = await fetch(`${baseUrl}/api/auth/password`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Origin: baseUrl, Cookie: recoveryCookies },
+          body: JSON.stringify({ password: "NoweHaslo123!" }),
+        });
+        assert.equal(response.status, 400);
+        assert.equal(recoveryGrants.get(grantHash).used, false);
+      } finally {
+        updateUserFailure = null;
       }
     });
 
