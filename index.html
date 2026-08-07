@@ -168,29 +168,25 @@
         <div id="authLoggedIn" class="auth-logged-in" hidden>
           <section id="accountProfileCard" class="account-dashboard__profile" aria-labelledby="accountProfileTitle">
             <p class="eyebrow">Twój profil</p>
-            <h3 id="accountProfileTitle">Piotr Ciesielski</h3>
+            <h3 id="accountProfileTitle">Twoje konto</h3>
             <p id="authProfileSummary"></p>
             <button id="logoutBtn" class="button button--ghost" type="button">Wyloguj się</button>
           </section>
           <section id="accountProjects" class="account-dashboard__projects" aria-labelledby="accountProjectsTitle">
             <div class="account-dashboard__section-heading">
               <h3 id="accountProjectsTitle">Twoje projekty</h3>
-              <button class="button button--ghost" type="button">Nowy projekt <span aria-hidden="true">＋</span></button>
+              <button class="button button--ghost" type="button" data-view-target="matches">Nowy projekt <span aria-hidden="true">＋</span></button>
             </div>
-            <div class="account-project-list">
-              <div class="account-project"><span class="project-swatch project-swatch--coral" aria-hidden="true"></span><div><strong>Sweter jesienny</strong><p>Zapisany · 12 włóczek</p></div><span class="project-status">Zapisany</span></div>
-              <div class="account-project"><span class="project-swatch project-swatch--lavender" aria-hidden="true"></span><div><strong>Koc dla Zosi</strong><p>Zapisany · 7 włóczek</p></div><span class="project-status">Zapisany</span></div>
-              <div class="account-project"><span class="project-swatch project-swatch--blue" aria-hidden="true"></span><div><strong>Czapka weekendowa</strong><p>Zapisany · 6 włóczek</p></div><span class="project-status">Zapisany</span></div>
-            </div>
+            <p class="account-projects-empty">Nie masz jeszcze zapisanych projektów. Dobierz pierwszy wzór do swojego magazynu.</p>
           </section>
           <section id="accountMetrics" class="account-dashboard__metrics" aria-labelledby="accountMetricsTitle">
             <h3 id="accountMetricsTitle">Twój Motek</h3>
-            <div class="account-metrics-grid"><div><strong>25</strong><span>włóczek</span></div><div><strong>8</strong><span>projektów</span></div><div><strong>12</strong><span>dopasowań</span></div></div>
+            <div class="account-metrics-grid"><div><strong id="accountMetricYarns">—</strong><span>włóczek</span></div><div><strong>—</strong><span>projektów</span></div><div><strong>—</strong><span>dopasowań</span></div></div>
           </section>
           <section class="account-dashboard__settings" aria-label="Ustawienia konta">
-            <button type="button">Dane konta <span aria-hidden="true">›</span></button>
-            <button type="button">Powiadomienia <span aria-hidden="true">›</span></button>
-            <button type="button">Preferencje wyglądu <span aria-hidden="true">›</span></button>
+            <button type="button" data-account-action="profile">Dane konta <span aria-hidden="true">›</span></button>
+            <button type="button" data-account-action="notifications">Powiadomienia <span aria-hidden="true">›</span></button>
+            <button type="button" data-account-action="theme">Preferencje wyglądu <span aria-hidden="true">›</span></button>
           </section>
           <form id="deleteAccountForm" class="account-danger-zone account-dashboard__security" method="post" action="/api/account" novalidate>
             <h3 id="deleteAccountTitle">Usuń konto</h3>
@@ -284,7 +280,7 @@
                   <div>
                 <h2>Twój zapas</h2>
                     <p>Zapisane motki są pokazane na półkach. Rozwiń swój zapas, gdy tylko zechcesz.</p>
-                    <p id="inventorySavedStatus" class="inventory-saved-status" role="status">Magazyn zapisany</p>
+                    <p id="inventorySavedStatus" class="inventory-saved-status">Magazyn prywatny</p>
                   </div>
                   <button id="addYarnBtn" class="button button--ghost" type="button">
                     + Dodaj motek
