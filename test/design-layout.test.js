@@ -131,11 +131,11 @@ test("catalog controller asset has a deployment cache buster", () => {
 test("theme artwork uses optimized immutable assets", () => {
   assert.equal(
     (indexHtml.match(/data-light-src="assets\/color-yarn-cat\.v1\.webp"/g) || []).length,
-    2,
+    4,
   );
   assert.equal(
     (indexHtml.match(/data-dark-src="assets\/night-yarn-cat\.v1\.webp"/g) || []).length,
-    2,
+    4,
   );
   assert.match(staticFilesJs, /"\.webp": "image\/webp"/);
   assert.match(staticFilesJs, /public, max-age=31536000, immutable/);
