@@ -66,6 +66,8 @@ GitHub Actions uruchamiają testy, lint, formatowanie, audyt npm i testy Supabas
 
 Numer wersji jest w pliku [`VERSION`](VERSION) (obecnie `2.0.0-alpha.38`) i musi odpowiadać wersji w `package.json`. CI kontroluje wersję i SHA; numer wydania aktualizuje się świadomie w repozytorium.
 
+Zweryfikowany snapshot stagingu z 2026-08-07 to `2.0.0-alpha.39`, commit `6719138e`. Jest on opisany w [raporcie stanu stagingu](docs/operations/staging-status-2026-08-07.md). Główny checkout może mieć inną wersję rozwojową, dopóki nie zostanie zsynchronizowany z branchem `staging`.
+
 ## Diagnostyka
 
 - `/health/live` — proces działa;
@@ -90,4 +92,5 @@ Sesja użytkownika wygasa po 2 godzinach bezczynności (`AUTH_IDLE_TIMEOUT_SECON
 - [Jakość i testy](docs/QUALITY.md)
 - [Katalog wzorów](docs/PATTERN-CATALOG.md)
 - [Runbook Railway/Cloudflare i regresji](docs/operations/post-deploy-regression.md)
+- [Zweryfikowany stan stagingu z 2026-08-07](docs/operations/staging-status-2026-08-07.md)
 - [Historia zmian](CHANGELOG.txt)
