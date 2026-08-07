@@ -399,6 +399,28 @@ body {
   font-size: 1.08rem;
 }
 
+.auth-visual__artwork {
+  position: absolute !important;
+  right: -8%;
+  bottom: -4%;
+  z-index: 0 !important;
+  width: min(58%, 430px);
+  margin: 0;
+  opacity: 0.96;
+  pointer-events: none;
+  transform: rotate(4deg);
+}
+
+.auth-visual__artwork img {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: 420px;
+  object-fit: contain;
+  object-position: right bottom;
+  filter: drop-shadow(0 18px 24px rgb(21 19 52 / 18%));
+}
+
 .hero-cta {
   align-self: flex-start;
   min-height: 44px;
@@ -577,6 +599,15 @@ h1 {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+
   .auth-panel--recovery {
     animation: none;
   }
@@ -719,16 +750,15 @@ h1 {
 .theme-toggle {
   display: inline-flex;
   align-items: center;
-  gap: 7px;
+  justify-content: center;
   min-height: 44px;
+  min-width: 44px;
   border: 1px solid var(--border);
   border-radius: 999px;
-  padding: 8px 12px;
+  padding: 8px;
   color: var(--text);
   background: var(--panel);
   font: inherit;
-  font-size: 0.78rem;
-  font-weight: 750;
   cursor: pointer;
 }
 
@@ -1263,10 +1293,34 @@ input, select {
 
 .catalog-header {
   display: grid;
-  grid-template-columns: 1fr;
-  gap: 28px;
+  grid-template-columns: minmax(0, 1fr) minmax(220px, 0.42fr);
+  gap: 24px 32px;
   align-items: end;
   margin-bottom: 18px;
+}
+
+.catalog-header__copy {
+  min-width: 0;
+}
+
+.catalog-header__visual {
+  min-height: 190px;
+  margin: 0;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background: var(--panel-soft);
+  box-shadow: var(--shadow);
+}
+
+.catalog-header__visual img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  min-height: 190px;
+  padding: 10px;
+  object-fit: contain;
+  object-position: center;
 }
 
 .catalog-header p:not(.eyebrow) {
@@ -1275,6 +1329,7 @@ input, select {
 }
 
 .catalog-controls {
+  grid-column: 1 / -1;
   display: grid;
   grid-template-columns: minmax(200px, 1.35fr) repeat(5, minmax(130px, 0.75fr));
   gap: 12px;
@@ -1518,6 +1573,18 @@ body::before {
     min-height: 390px;
   }
 
+  .catalog-header {
+    grid-template-columns: 1fr;
+  }
+
+  .catalog-header__visual {
+    min-height: 240px;
+  }
+
+  .catalog-header__visual img {
+    min-height: 240px;
+  }
+
   .auth-forms {
     grid-template-columns: 1fr;
   }
@@ -1632,6 +1699,16 @@ body::before {
   .auth-visual {
     min-height: 300px;
     padding: 34px 26px;
+  }
+
+  .auth-visual__artwork {
+    right: -14%;
+    width: 58%;
+    opacity: 0.82;
+  }
+
+  .auth-visual__artwork img {
+    max-height: 260px;
   }
 
   .auth-visual__brand {

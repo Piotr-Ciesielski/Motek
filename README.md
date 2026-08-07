@@ -68,6 +68,11 @@ Numer wersji jest w pliku [`VERSION`](VERSION) (obecnie `2.0.0-alpha.38`) i musi
 
 Zweryfikowany snapshot stagingu z 2026-08-07 to `2.0.0-alpha.39`, commit `12555dac`. Jest on opisany w [raporcie stanu stagingu](docs/operations/staging-status-2026-08-07.md) oraz w [statusie audytu bezpieczeństwa](docs/operations/security-audit-status-2026-08-07.md).
 
+Staging korzysta z krótkotrwałych, podpisanych i jednorazowych grantów recovery.
+Backend atomowo rezerwuje grant przed zmianą hasła, zwalnia rezerwację przy
+błędzie, a po sukcesie zużywa grant i unieważnia pozostałe sesje użytkownika.
+Ochrona przed wyciekłymi hasłami pozostaje niedostępna na Supabase Free.
+
 ## Diagnostyka
 
 - `/health/live` — proces działa;

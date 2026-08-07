@@ -560,6 +560,31 @@ async function consumeRecoveryGrant(grant) {
   return data === true;
 }
 
+async function claimRecoveryGrant(grant) {
+  if (!supabaseConnection?.client) return false;
+  const { data, error } = await supabaseConnection.client.rpc("claim_auth_recovery_grant", {
+    p_user_id: grant.userId,
+    p_jti_hash: hashRecoveryGrantJti(grant.jti),
+  });
+  if (error) {
+    throw new ApiError(503, "Odzyskiwanie hasła jest chwilowo niedostępne. Spróbuj ponownie później.");
+  }
+  return data === true;
+}
+
+async function releaseRecoveryGrant(grant) {
+  if (!supabaseConnection?.client) return false;
+  const { data, error } = await supabaseConnection.client.rpc("release_auth_recovery_grant", {
+    p_user_id: grant.userId,
+    p_jti_hash: hashRecoveryGrantJti(grant.jti),
+  });
+  if (error) {
+    console.warn("Nie udało się zwolnić grantu odzyskiwania hasła.");
+    return false;
+  }
+  return data === true;
+}
+
 function normalizeAuthEmail(value) {
   if (typeof value !== "string") {
     throw new ApiError(400, "Podaj prawidłowy adres e-mail.");
@@ -1370,13 +1395,19 @@ async function handleAuthApi(req, res, url) {
       throw new ApiError(403, "Link odzyskiwania hasła jest nieprawidłowy lub wygasł.");
     }
 
-    if (!await consumeRecoveryGrant(recoveryGrant)) {
+    if (!await claimRecoveryGrant(recoveryGrant)) {
       throw new ApiError(403, "Link odzyskiwania hasła jest nieprawidłowy lub wygasł.");
     }
 
     const { error } = await client.auth.updateUser({ password });
     if (error) {
+      await releaseRecoveryGrant(recoveryGrant);
       throw new ApiError(400, "Nie udało się zmienić hasła. Sprawdź hasło i spróbuj ponownie.");
+    }
+
+    if (!await consumeRecoveryGrant(recoveryGrant)) {
+      await releaseRecoveryGrant(recoveryGrant);
+      throw new ApiError(403, "Link odzyskiwania hasła jest nieprawidłowy lub wygasł.");
     }
 
     let globalSignOutFailed = false;
