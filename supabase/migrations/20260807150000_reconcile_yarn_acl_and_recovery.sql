@@ -4,6 +4,69 @@
 
 create schema if not exists private;
 
+create table if not exists private.auth_recovery_grants (
+  grant_id bigint generated always as identity primary key,
+  user_id uuid not null references auth.users(id) on delete cascade,
+  jti_hash text not null unique,
+  expires_at timestamptz not null,
+  used_at timestamptz,
+  created_at timestamptz not null default timezone('utc', now())
+);
+
+create index if not exists auth_recovery_grants_user_expiry_idx
+  on private.auth_recovery_grants (user_id, expires_at)
+  where used_at is null;
+
+revoke all on table private.auth_recovery_grants from public, anon, authenticated;
+
+create or replace function public.create_auth_recovery_grant()
+returns text
+language plpgsql
+security definer set search_path = ''
+as $$
+declare
+  grant_jti text := extensions.gen_random_uuid()::text;
+begin
+  if (select auth.uid()) is null then
+    raise exception 'authenticated user required';
+  end if;
+
+  insert into private.auth_recovery_grants (user_id, jti_hash, expires_at)
+  values (
+    (select auth.uid()),
+    encode(extensions.digest(grant_jti, 'sha256'), 'hex'),
+    pg_catalog.now() + interval '10 minutes'
+  );
+
+  return grant_jti;
+end;
+$$;
+
+create or replace function public.consume_auth_recovery_grant(grant_jti text)
+returns boolean
+language plpgsql
+security definer set search_path = ''
+as $$
+declare
+  consumed_count integer;
+begin
+  update private.auth_recovery_grants
+  set used_at = pg_catalog.now()
+  where user_id = (select auth.uid())
+    and jti_hash = encode(extensions.digest(grant_jti, 'sha256'), 'hex')
+    and used_at is null
+    and expires_at > pg_catalog.now();
+
+  get diagnostics consumed_count = row_count;
+  return consumed_count = 1;
+end;
+$$;
+
+revoke all on function public.create_auth_recovery_grant() from public, anon, authenticated;
+revoke all on function public.consume_auth_recovery_grant(text) from public, anon, authenticated;
+grant execute on function public.create_auth_recovery_grant() to authenticated;
+grant execute on function public.consume_auth_recovery_grant(text) to authenticated;
+
 create table if not exists private.yarn_store_versions (
   user_id uuid primary key references auth.users(id) on delete cascade,
   version bigint not null default 0 check (version >= 0),

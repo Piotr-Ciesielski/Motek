@@ -98,4 +98,9 @@ Sesja użytkownika wygasa po 2 godzinach bezczynności (`AUTH_IDLE_TIMEOUT_SECON
 
 Audyt restrykcyjny został wykonany z założeniem Supabase Free. Repozytorium zawiera migrację odtwarzającą ACL prywatnego licznika włóczek, wymusza podpisane cookie bezczynności, ogranicza publiczne endpointy i chroni zmianę hasła po przepływie recovery. Ochrona przed wyciekłymi hasłami pozostaje niedostępna na planie Free i nie jest zastępowana płatnym upgrade'em.
 
+Grant recovery jest krótkotrwały, podpisany i jednorazowy: jego hash oraz
+znacznik zużycia są przechowywane w prywatnej tabeli Supabase, a po zmianie
+hasła backend unieważnia pozostałe sesje użytkownika. Migracja recovery nie
+jest wykonywana automatycznie przy starcie aplikacji.
+
 Przed wdrożeniem produkcyjnym należy wykonać migracje na kontrolowanym środowisku, uruchomić testy pgTAP oraz potwierdzić konfigurację proxy i limitów na Railway.

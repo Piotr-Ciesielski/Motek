@@ -40,7 +40,10 @@ test("podpisane ciasteczko aktywności odrzuca zmieniony timestamp", () => {
 
 test("grant odzyskiwania jest związany z użytkownikiem i wygasa", () => {
   const server = require("../server");
-  const cookie = server.buildRecoveryGrantCookie?.("user-1", 1_700_000_000);
+  const cookie = server.buildRecoveryGrantCookie?.("user-1", {
+    jti: "grant-jti-test",
+    timestamp: 1_700_000_000,
+  });
   const value = cookie.split(";")[0].split("=").slice(1).join("=");
   assert.equal(parseRecoveryGrantCookie(value, "user-1", 1_700_000_100), true);
   assert.equal(parseRecoveryGrantCookie(value, "user-2", 1_700_000_100), false);
@@ -286,10 +289,12 @@ test("serwer Motek działa bezpiecznie", async (t) => {
   let nextSyntheticYarnId = 1;
   const recoveryRequests = [];
   const exchangedRecoveryCodes = [];
+  const recoveryGrantRpcs = [];
+  const signOutScopes = [];
   const signUpRequests = [];
   const deletedUserIds = [];
 
-    function createSyntheticQuery(table, token) {
+    function createSyntheticQuery(table, _token) {
       const filters = [];
       let operation = "select";
       let insertedRow = null;
@@ -364,7 +369,9 @@ test("serwer Motek działa bezpiecznie", async (t) => {
           const user = syntheticUsers[accessToken];
           return user ? { data: { user }, error: null } : { data: null, error: new Error("invalid token") };
         },
-        async signOut() {},
+        async signOut(options) {
+          signOutScopes.push(options);
+        },
         async signUp({ email, options }) {
           signUpRequests.push({ email, options });
           return {
@@ -419,6 +426,14 @@ test("serwer Motek działa bezpiecznie", async (t) => {
       },
       rpc(name, args) {
         const userId = syntheticUsers[token]?.id;
+        if (name === "create_auth_recovery_grant") {
+          recoveryGrantRpcs.push({ name, args, userId });
+          return Promise.resolve({ data: "grant-jti-user-a", error: null });
+        }
+        if (name === "consume_auth_recovery_grant") {
+          recoveryGrantRpcs.push({ name, args, userId });
+          return Promise.resolve({ data: true, error: null });
+        }
         if (name === "get_yarn_store_version") {
           return Promise.resolve({ data: syntheticYarnVersions[userId] ?? 0, error: null });
         }
@@ -572,6 +587,10 @@ test("serwer Motek działa bezpiecznie", async (t) => {
       assert.equal(response.status, 200);
       assert.match(response.headers.get("content-security-policy"), /default-src 'self'/);
       assert.match(response.headers.get("content-security-policy"), /challenges\.cloudflare\.com/);
+      assert.match(
+        response.headers.get("content-security-policy"),
+        /connect-src[^;]*https:\/\/challenges\.cloudflare\.com/
+      );
       assert.equal(response.headers.get("x-content-type-options"), "nosniff");
       assert.equal(response.headers.get("x-frame-options"), "DENY");
       assert.equal(response.headers.get("access-control-allow-origin"), null);
@@ -692,6 +711,13 @@ test("serwer Motek działa bezpiecznie", async (t) => {
       });
       assert.equal(recoveryResponse.status, 200);
       assert.deepEqual(exchangedRecoveryCodes, ["recovery-code"]);
+      assert.deepEqual(recoveryGrantRpcs, [
+        {
+          name: "create_auth_recovery_grant",
+          args: {},
+          userId: syntheticUsers["token-user-a"].id,
+        },
+      ]);
       const recoveryCookies = recoveryResponse.headers
         .getSetCookie()
         .map((cookie) => cookie.split(";", 1)[0])
@@ -716,6 +742,12 @@ test("serwer Motek działa bezpiecznie", async (t) => {
         body: JSON.stringify({ password: "NoweHaslo123!" }),
       });
       assert.equal(updateResponse.status, 200);
+      assert.deepEqual(recoveryGrantRpcs.at(-1), {
+        name: "consume_auth_recovery_grant",
+        args: { grant_jti: "grant-jti-user-a" },
+        userId: syntheticUsers["token-user-a"].id,
+      });
+      assert.deepEqual(signOutScopes.at(-1), { scope: "global" });
       assert.deepEqual(await updateResponse.json(), {
         passwordUpdated: true,
         authenticated: false,

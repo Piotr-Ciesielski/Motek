@@ -12,8 +12,6 @@ const {
   maxYarnsPerUser: MAX_YARNS_PER_USER,
   maxPatternCatalogRecords: MAX_PATTERN_CATALOG_RECORDS,
   maxMatchingVariantsPerPattern: MAX_MATCH_VARIANTS,
-  maxMatchingRoleRequirements: MAX_MATCH_ROLE_REQUIREMENTS,
-  maxMatchingTextLength: MAX_MATCHING_TEXT_LENGTH,
 } = require("./limits");
 const {
   normalizeYarnMaterials,
@@ -109,7 +107,7 @@ const SECURITY_HEADERS = Object.freeze({
     "style-src 'self' https://fonts.googleapis.com",
     "font-src 'self' https://fonts.gstatic.com",
     "img-src 'self' data:",
-    "connect-src 'self' https://fonts.googleapis.com https://fonts.gstatic.com",
+    "connect-src 'self' https://challenges.cloudflare.com https://fonts.googleapis.com https://fonts.gstatic.com",
     "object-src 'none'",
     "base-uri 'none'",
     "frame-ancestors 'none'",
@@ -472,8 +470,10 @@ function clearAuthCookies(res) {
   appendSetCookie(res, buildAuthCookie(AUTH_RECOVERY_COOKIE, "", 0));
 }
 
-function buildRecoveryGrantCookie(userId, timestamp = Math.floor(Date.now() / 1000)) {
-  const payload = `${userId}.${Math.floor(Number(timestamp))}`;
+function buildRecoveryGrantCookie(userId, options = {}) {
+  const jti = typeof options.jti === "string" && options.jti ? options.jti : crypto.randomUUID();
+  const timestamp = Math.floor(Number(options.timestamp ?? Date.now() / 1000));
+  const payload = `${userId}.${jti}.${timestamp}`;
   const signature = crypto.createHmac("sha256", getIdleSessionSecret())
     .update(`recovery:${payload}`)
     .digest("base64url");
@@ -482,11 +482,11 @@ function buildRecoveryGrantCookie(userId, timestamp = Math.floor(Date.now() / 10
 
 function parseRecoveryGrantCookie(value, userId, now = Math.floor(Date.now() / 1000)) {
   if (typeof value !== "string" || typeof userId !== "string") return false;
-  const [rawUserId, rawTimestamp, signature] = value.split(".");
+  const [rawUserId, jti, rawTimestamp, signature] = value.split(".");
   const timestamp = Number(rawTimestamp);
-  if (!rawUserId || rawUserId !== userId || !Number.isSafeInteger(timestamp) || !signature) return false;
+  if (!rawUserId || rawUserId !== userId || !jti || !Number.isSafeInteger(timestamp) || !signature) return false;
   const expected = crypto.createHmac("sha256", getIdleSessionSecret())
-    .update(`recovery:${rawUserId}.${timestamp}`)
+    .update(`recovery:${rawUserId}.${jti}.${timestamp}`)
     .digest("base64url");
   const expectedBuffer = Buffer.from(expected);
   const receivedBuffer = Buffer.from(signature);
@@ -494,6 +494,12 @@ function parseRecoveryGrantCookie(value, userId, now = Math.floor(Date.now() / 1
     && crypto.timingSafeEqual(receivedBuffer, expectedBuffer)
     && now >= timestamp
     && now - timestamp <= AUTH_RECOVERY_TIMEOUT_SECONDS;
+}
+
+function getRecoveryGrantJti(value, userId) {
+  if (!parseRecoveryGrantCookie(value, userId)) return null;
+  const [, jti] = value.split(".");
+  return jti || null;
 }
 
 function normalizeAuthEmail(value) {
@@ -1235,8 +1241,16 @@ async function handleAuthApi(req, res, url) {
     if (error || !data?.user || !data?.session) {
       throw new ApiError(400, "Link odzyskiwania hasła jest nieprawidłowy lub wygasł.");
     }
+    const authenticatedClient = supabaseAuthClientFactory(supabaseAuthConfig, data.session.access_token);
+    const { data: grantJti, error: grantError } = await authenticatedClient.rpc(
+      "create_auth_recovery_grant",
+      {}
+    );
+    if (grantError || typeof grantJti !== "string" || !grantJti) {
+      throw new ApiError(503, "Odzyskiwanie hasła jest chwilowo niedostępne. Spróbuj ponownie później.");
+    }
     setAuthCookies(res, data.session);
-    appendSetCookie(res, buildRecoveryGrantCookie(data.user.id));
+    appendSetCookie(res, buildRecoveryGrantCookie(data.user.id, { jti: grantJti }));
     return sendJson(res, 200, { user: sanitizeAuthUser(data.user) });
   }
 
@@ -1246,7 +1260,8 @@ async function handleAuthApi(req, res, url) {
     const password = validateAuthPassword(body.password);
     const cookies = parseCookies(req.headers.cookie);
     const refreshToken = cookies[AUTH_REFRESH_COOKIE];
-    if (!refreshToken || !parseRecoveryGrantCookie(cookies[AUTH_RECOVERY_COOKIE], session.user.id)) {
+    const grantJti = getRecoveryGrantJti(cookies[AUTH_RECOVERY_COOKIE], session.user.id);
+    if (!refreshToken || !grantJti) {
       throw new ApiError(400, "Link odzyskiwania hasła jest nieprawidłowy lub wygasł.");
     }
 
@@ -1264,6 +1279,14 @@ async function handleAuthApi(req, res, url) {
       throw new ApiError(400, "Nie udało się zmienić hasła. Sprawdź hasło i spróbuj ponownie.");
     }
 
+    const { data: grantConsumed, error: grantError } = await client.rpc("consume_auth_recovery_grant", {
+      grant_jti: grantJti,
+    });
+    if (grantError || grantConsumed !== true) {
+      throw new ApiError(503, "Nie udało się potwierdzić jednorazowej zmiany hasła. Spróbuj ponownie później.");
+    }
+
+    await client.auth.signOut({ scope: "global" });
     clearAuthCookies(res);
     return sendJson(res, 200, { passwordUpdated: true, authenticated: false });
   }

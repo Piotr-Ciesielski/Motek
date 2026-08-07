@@ -284,6 +284,11 @@ Wywołania backendu do Supabase Auth są przerywane po 10 sekundach i zwracają
 kontrolowany błąd, jeśli usługa Auth nie odpowiada.
 Przed `updateUser` backend odtwarza pełną sesję recovery z obu tokenów linku;
 brak refresh tokenu lub nieważna sesja kończy się kontrolowanym błędem 400.
+Po wymianie kodu recovery backend tworzy w prywatnym Supabase jednorazowy grant,
+którego cookie zawiera podpisany identyfikator JTI. Po udanym `updateUser` grant
+jest atomowo zużywany, wszystkie pozostałe sesje są unieważniane, a cookies są
+czyszczone. Błąd zużycia grantu nie kasuje dowodu recovery, dzięki czemu można
+bezpiecznie ponowić próbę.
 
 Kontrola danych wzorów bez wykonywania importu:
 
@@ -357,6 +362,6 @@ szerokim hero. Magazyn i Dopasowanie pokazują same grafiki, bez tekstowych
 nakładek i ramek.
 # Kontrole bezpieczeństwa i ograniczenia planu Free
 
-Backend jest źródłem prawdy dla sesji, recovery, limitów i autoryzacji. Bezpośrednie mutacje tabeli `yarns` są odbierane użytkownikom, a zapis odbywa się przez kontrolowane RPC. Brak funkcji Supabase „Leaked Password Protection” jest znanym ograniczeniem planu Free; nie wykonujemy upgrade'u Pro.
+Backend jest źródłem prawdy dla sesji, recovery, limitów i autoryzacji. Bezpośrednie mutacje tabeli `yarns` są odbierane użytkownikom, a zapis odbywa się przez kontrolowane RPC. Obrazy WAF i Prometheusa w stagingu są przypięte digestami SHA-256. Brak funkcji Supabase „Leaked Password Protection” jest znanym ograniczeniem planu Free; nie wykonujemy upgrade'u Pro.
 
-Po każdej zmianie bezpieczeństwa należy uruchomić `npm run lint`, `npm run format:check`, `npm run check`, `npm audit --json` oraz dostępne testy pgTAP. Pełny audyt statusów znajduje się w `AUDYT_SEC.md` i planie `docs/superpowers/plans/2026-08-07-security-hardening-free-plan.md`.
+Po każdej zmianie bezpieczeństwa należy uruchomić `npm run lint`, `npm run format:check`, `npm run check`, `npm audit --json` oraz dostępne testy pgTAP. Aktualny status audytu znajduje się w `docs/operations/security-audit-status-2026-08-07.md`, a plan prac w `docs/superpowers/plans/2026-08-07-security-hardening-free-plan.md`.

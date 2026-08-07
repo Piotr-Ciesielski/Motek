@@ -27,7 +27,7 @@
 - Test: `test/migration.test.js`
 
 - [x] Dodać idempotentne `REVOKE` bezpośrednich mutacji `yarns` i sekwencji oraz ochronę prywatnego licznika.
-- [ ] Dodać test tekstowy migracji i testy pgTAP dla `anon`/`authenticated`.
+- [x] Dodać test tekstowy migracji i testy pgTAP dla `anon`/`authenticated`.
 - [x] Uruchomić testy Node; replay pgTAP oznaczyć jako niewykonany, jeśli brak Docker/Podman.
 
 ### Task 2: Enforce idle-session cookie
@@ -51,9 +51,9 @@
 - Modify: `test/account-deletion-service.test.js` only if shared auth fixtures require it
 
 - [x] Dodać testy RED: zwykła sesja nie zmienia hasła; grant innego użytkownika/wygasły jest odrzucany.
-- [ ] Zużywać grant dopiero po udanym `updateUser`, z bezpieczną obsługą ponowienia.
-- [ ] Po zmianie hasła wyczyścić cookies i unieważnić pozostałe sesje zgodnie z istniejącym kontraktem.
-- [ ] Uruchomić testy Auth.
+- [x] Zużywać grant dopiero po udanym `updateUser`, z bezpieczną obsługą ponowienia.
+- [x] Po zmianie hasła wyczyścić cookies i unieważnić pozostałe sesje zgodnie z istniejącym kontraktem.
+- [x] Uruchomić selektywne testy Auth; pełny harness pozostaje niedeterministyczny.
 
 ### Task 4: Make dependency failures and logout safe
 
@@ -88,9 +88,9 @@
 - Modify: `eslint.config.js`, `.prettierrc.json`, `package.json` only as required by formatter
 
 - [x] Przypiąć `supabase/setup-cli` do pełnego SHA.
-- [ ] Przypiąć obrazy stagingowe do digestów i zachować komentarze z tagami.
+- [x] Przypiąć zewnętrzne obrazy stagingowe do digestów; obraz `app` pozostaje lokalnym buildem.
 - [x] Zastąpić regex testem semantycznym, który zakazuje `ports` dla `app` i wymaga publicznego WAF.
-- [ ] Usunąć sześć ostrzeżeń lint i naprawić formatowanie.
+- [x] Usunąć sześć ostrzeżeń lint i naprawić formatowanie.
 
 ### Task 7: Auth single source and documentation
 

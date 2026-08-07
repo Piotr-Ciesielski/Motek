@@ -88,7 +88,6 @@ const {
   withYarnVersionRetry,
   isDeleteConfirmed,
   initializePasswordRevealControls,
-  loadNextPaginatedPage,
   formatCatalogSummary,
 } = window.MotekClientPolicy;
 const {
@@ -1231,7 +1230,7 @@ async function loadMatches() {
 }
 
 async function loadPatternCatalog({ resume = false, onPage = null } = {}) {
-  const result = resume ? await catalogController.loadMore() : await catalogController.refresh();
+  await (resume ? catalogController.loadMore() : catalogController.refresh());
   const state = catalogController.getState();
   const progress = {
     items: state.items,
@@ -1569,7 +1568,7 @@ async function refreshPatternCatalog({ resume = false } = {}) {
   try {
     const result = await loadPatternCatalog({
       resume,
-      onPage: (progress) => {
+      onPage: () => {
         renderPatternCatalog();
       },
     });
