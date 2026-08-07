@@ -271,7 +271,8 @@ z `/health/release`; produkcja nie otrzymuje sekretów konta QA.
 Lokalnie przygotowano `railway.json`, `deploy/railway/Dockerfile`, endpointy
 gotowości i wydania, runner regresji oraz workflow GitHub Actions. Konfiguracja
 usług zewnętrznych, DNS/WAF/TLS, osobnych Supabase, migracje i wdrożenia nadal
-wymagają operatora według `docs/operations/post-deploy-regression.md`.
+wymagają operatora zgodnie z instrukcją wdrożenia w `deploy/staging/README.md`
+oraz workflow GitHub Actions.
 
 ### 10.1 Odzyskiwanie hasła
 

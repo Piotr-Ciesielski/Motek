@@ -66,7 +66,7 @@ GitHub Actions uruchamiają testy, lint, formatowanie, audyt npm i testy Supabas
 
 Numer wersji jest w pliku [`VERSION`](VERSION) (obecnie `2.0.0-alpha.38`) i musi odpowiadać wersji w `package.json`. CI kontroluje wersję i SHA; numer wydania aktualizuje się świadomie w repozytorium.
 
-Zweryfikowany snapshot stagingu z 2026-08-07 to `2.0.0-alpha.39`, commit `12555dac`. Jest on opisany w [raporcie stanu stagingu](docs/operations/staging-status-2026-08-07.md) oraz w [statusie audytu bezpieczeństwa](docs/operations/security-audit-status-2026-08-07.md).
+Zweryfikowany snapshot stagingu z 2026-08-07 to `2.0.0-alpha.39`, commit `12555dac`. Szczegóły wdrożenia i kontroli środowiska znajdują się w konfiguracji `deploy/` oraz workflow GitHub Actions.
 
 Staging korzysta z krótkotrwałych, podpisanych i jednorazowych grantów recovery.
 Backend atomowo rezerwuje grant przed zmianą hasła, zwalnia rezerwację przy
@@ -92,10 +92,6 @@ Sesja użytkownika wygasa po 2 godzinach bezczynności (`AUTH_IDLE_TIMEOUT_SECON
 
 ## Dokumentacja
 
-- [Architektura](docs/ARCHITECTURE.md)
 - [Specyfikacja](SPEC.md)
-- [Jakość i testy](docs/QUALITY.md)
-- [Katalog wzorów](docs/PATTERN-CATALOG.md)
-- [Runbook Railway/Cloudflare i regresji](docs/operations/post-deploy-regression.md)
-- [Zweryfikowany stan stagingu z 2026-08-07](docs/operations/staging-status-2026-08-07.md)
+- [Konfiguracja stagingu](deploy/staging/README.md)
 - [Historia zmian](CHANGELOG.txt)

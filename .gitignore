@@ -32,6 +32,7 @@ coverage/
 tmp/
 .worktrees/
 .superpowers/
+.cache/
 __pycache__/
 *.py[cod]
 
@@ -40,3 +41,6 @@ docs/
 PROMPTS.md
 AUDYT.md
 AGENTS.md
+audits/
+presentation-work/
+task-3-confirmation-report.md
