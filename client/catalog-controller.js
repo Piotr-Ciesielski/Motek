@@ -58,7 +58,22 @@ function createCatalogController(options) {
         : { items: [], hasMore: false };
       const payload = Array.isArray(result) ? { items: result, hasMore: false } : (result || {});
       const items = Array.isArray(payload.items) ? payload.items : (Array.isArray(payload.data) ? payload.data : []);
-      state.items = replace ? items : state.items.concat(items);
+      if (replace) {
+        state.items = items;
+      } else {
+        const knownIds = new Set(
+          state.items
+            .filter((item) => item && item.id !== undefined && item.id !== null)
+            .map((item) => String(item.id))
+        );
+        state.items = state.items.concat(items.filter((item) => {
+          if (!item || item.id === undefined || item.id === null) return true;
+          const id = String(item.id);
+          if (knownIds.has(id)) return false;
+          knownIds.add(id);
+          return true;
+        }));
+      }
       state.page = page;
       state.total = Number.isFinite(Number(payload.total)) ? Number(payload.total) : state.items.length;
       state.hasMore = payload.hasMore !== undefined ? Boolean(payload.hasMore) : Boolean(payload.nextPage);

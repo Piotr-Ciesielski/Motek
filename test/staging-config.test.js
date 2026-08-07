@@ -57,6 +57,10 @@ test("proxy blokuje publiczne metryki i Prometheus używa sieci wewnętrznej", (
   assert.match(prometheus, /\/internal\/metrics/);
 });
 
-test.todo(
-  "wymaga zweryfikowanych pełnych digestów obrazów stagingowych i SHA supabase/setup-cli, gdy będą dostępne w zaufanym źródle",
-);
+test("CI przypina Supabase CLI do zweryfikowanego pełnego SHA", () => {
+  const workflow = fs.readFileSync(path.join(__dirname, "..", ".github", "workflows", "ci.yml"), "utf8");
+  assert.match(
+    workflow,
+    /uses:\s+supabase\/setup-cli@46f7f98c7f948ad727d22c1e67fab04c223a0520\s+#\s*v3/,
+  );
+});
