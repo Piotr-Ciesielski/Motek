@@ -2143,6 +2143,8 @@ body::before {
   overflow: hidden;
   border-radius: 0 0 28px 28px;
   background: var(--panel);
+  justify-content: flex-start;
+  padding: 74px clamp(34px, 5vw, 72px);
 }
 
 #accountView.is-authenticated .auth-visual::after {
@@ -2173,7 +2175,8 @@ body::before {
 }
 
 #accountView.is-authenticated .auth-visual h1 {
-  padding-top: 92px;
+  padding-top: 0;
+  margin-top: 0;
   font-size: clamp(3.2rem, 7vw, 6rem);
 }
 
