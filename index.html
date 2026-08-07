@@ -49,7 +49,7 @@
 
     <main id="main-content" class="shell" tabindex="-1">
       <section id="accountView" class="app-view account-view" data-view="account" aria-labelledby="authTitle">
-      <section class="auth-layout">
+      <section class="auth-layout" data-design-layout="dashboard">
         <aside class="auth-visual" aria-labelledby="heroTitle">
           <p class="auth-visual__brand">Motek</p>
           <h1 id="heroTitle">Twoja włóczka ma już swój następny projekt</h1>
@@ -68,7 +68,7 @@
           </figure>
           <button id="heroAuthBtn" class="hero-cta" type="button">Zacznij w Motku</button>
         </aside>
-      <section class="panel auth-panel" aria-labelledby="authTitle">
+      <section class="panel auth-panel" data-design-anchor="account-panel" aria-labelledby="authTitle">
         <div class="panel__header">
           <div>
             <p class="eyebrow">Konto</p>
@@ -166,9 +166,13 @@
         </form>
 
         <div id="authLoggedIn" class="auth-logged-in" hidden>
-          <p id="authProfileSummary"></p>
-          <button id="logoutBtn" class="button button--ghost" type="button">Wyloguj się</button>
-          <form id="deleteAccountForm" class="account-danger-zone" method="post" action="/api/account" novalidate>
+          <section class="account-dashboard__profile" aria-labelledby="accountProfileTitle">
+            <p class="eyebrow">Twój profil</p>
+            <h3 id="accountProfileTitle">Twoje konto</h3>
+            <p id="authProfileSummary"></p>
+            <button id="logoutBtn" class="button button--ghost" type="button">Wyloguj się</button>
+          </section>
+          <form id="deleteAccountForm" class="account-danger-zone account-dashboard__security" method="post" action="/api/account" novalidate>
             <h3 id="deleteAccountTitle">Usuń konto</h3>
             <p>Ta operacja trwale usuwa konto i wszystkie zapisane włóczki.</p>
             <div class="auth-field">
@@ -254,7 +258,7 @@
               </div>
             </section>
 
-            <section class="inventory-stock">
+            <section class="inventory-stock" data-design-anchor="shelf-list">
               <article class="panel inventory-panel">
                 <div class="panel__header">
                   <div>
@@ -284,7 +288,7 @@
       </section>
 
       <section id="matchesView" class="app-view" data-view="matches" aria-labelledby="matchesPageTitle" hidden>
-        <div class="matches-hero">
+        <div class="matches-hero" data-design-layout="expert">
           <div class="matches-hero__copy">
             <div class="page-heading">
               <div>
@@ -305,29 +309,47 @@
             />
           </figure>
         </div>
-        <article class="panel matches-panel">
-          <div class="panel__header">
-            <div>
-              <h2 id="matchesTitle">Wyniki dla Twoich włóczek</h2>
-              <p>Po zmianie magazynu uruchom dopasowanie ponownie.</p>
-            </div>
-            <button id="findBtn" class="button" type="button">
-              Dobierz wzór
-            </button>
+        <article class="panel matches-panel" data-design-anchor="expert-results">
+          <div class="matches-expert-grid">
+            <aside class="matches-criteria" aria-labelledby="matchesCriteriaTitle">
+              <p class="eyebrow">Ustawienia projektu</p>
+              <h2 id="matchesCriteriaTitle">Kryteria dopasowania</h2>
+              <p>Wyniki wykorzystują zapisane włóczki i aktualne wymagania wzoru.</p>
+              <fieldset class="matches-criteria__fields">
+                <legend>Rodzaj projektu</legend>
+                <label><input type="radio" name="match-project-type" value="sweater" checked data-match-criterion="project-type" /> Sweter</label>
+                <label><input type="radio" name="match-project-type" value="scarf" data-match-criterion="project-type" /> Szalik</label>
+                <label><input type="radio" name="match-project-type" value="blanket" data-match-criterion="project-type" /> Koc</label>
+              </fieldset>
+              <fieldset class="matches-criteria__fields">
+                <legend>Grubość włóczki</legend>
+                <label><input type="radio" name="match-weight-class" value="dk" checked data-match-criterion="weight-class" /> DK</label>
+                <label><input type="radio" name="match-weight-class" value="worsted" data-match-criterion="weight-class" /> Worsted</label>
+              </fieldset>
+              <button id="findBtn" class="button" type="button">Dobierz wzór</button>
+            </aside>
+            <section class="matches-results" aria-labelledby="matchesTitle">
+              <div class="panel__header">
+                <div>
+                  <h2 id="matchesTitle">Najlepsze dopasowania</h2>
+                  <p>Po zmianie magazynu uruchom dopasowanie ponownie.</p>
+                </div>
+              </div>
+              <div id="summary" class="summary"></div>
+              <div id="matchFreshnessNotice" class="match-freshness" hidden>
+                <span>Wyniki są nieaktualne po zmianie magazynu.</span>
+                <button id="refreshStaleMatchesBtn" class="button button--ghost" type="button">
+                  Oblicz ponownie
+                </button>
+              </div>
+              <div id="results" class="results"></div>
+            </section>
           </div>
-          <div id="summary" class="summary"></div>
-          <div id="matchFreshnessNotice" class="match-freshness" hidden>
-            <span>Wyniki są nieaktualne po zmianie magazynu.</span>
-            <button id="refreshStaleMatchesBtn" class="button button--ghost" type="button">
-              Oblicz ponownie
-            </button>
-          </div>
-          <div id="results" class="results"></div>
         </article>
       </section>
 
       <section id="catalogView" class="app-view" data-view="catalog" aria-labelledby="catalogTitle" hidden>
-      <section class="panel catalog-panel">
+      <section class="panel catalog-panel" data-design-layout="library">
         <div class="catalog-header">
           <div class="catalog-header__copy">
             <p class="eyebrow">Biblioteka inspiracji</p>
@@ -347,7 +369,7 @@
               alt="Kolorowe włóczki i kot w pracowni"
             />
           </figure>
-          <div id="catalogFilters" class="catalog-controls">
+          <div id="catalogFilters" class="catalog-controls" data-design-anchor="filter-layout">
             <label>
               Szukaj
               <input

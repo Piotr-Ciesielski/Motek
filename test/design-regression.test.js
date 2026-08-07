@@ -73,6 +73,83 @@ test("design changes preserve accessible theme control and paired artwork source
   assert.match(appJs, /window\.MotekThemePolicy/);
 });
 
+test("design reference exposes exactly four paired theme artwork hooks", () => {
+  const document = createDocument();
+  const themedImages = [...document.querySelectorAll("[data-light-src][data-dark-src]")];
+
+  assert.equal(themedImages.length, 4);
+  assert.deepEqual(
+    themedImages.map((image) => image.id),
+    ["accountThemeImage", "inventoryThemeImage", "matchesThemeImage", "catalogThemeImage"],
+  );
+  for (const image of themedImages) {
+    assert.ok(image.dataset.lightSrc, `missing light source for ${image.id}`);
+    assert.ok(image.dataset.darkSrc, `missing dark source for ${image.id}`);
+  }
+});
+
+test("design reference preserves the key functional hook in each visual view", () => {
+  const document = createDocument();
+  const viewHooks = {
+    account: ["#accountThemeImage", "#loginForm", "#registerForm"],
+    inventory: ["#inventoryThemeImage", "#inventoryStats", "#inventoryAddYarnBtn"],
+    matches: ["#matchesThemeImage"],
+    catalog: ["#catalogThemeImage", "#catalogFilters", "#patternCatalog"],
+  };
+
+  for (const [viewName, selectors] of Object.entries(viewHooks)) {
+    const view = document.querySelector(`[data-view="${viewName}"]`);
+    assert.ok(view, `missing reference view ${viewName}`);
+    for (const selector of selectors) {
+      assert.ok(view.querySelector(selector), `missing ${selector} in ${viewName}`);
+    }
+  }
+});
+
+test("design reference keeps stable layout anchors for all four visual views", () => {
+  const document = createDocument();
+  const layouts = [
+    ["#inventoryView", ".inventory-layout__visual", ".inventory-stats", '[data-design-anchor="shelf-list"]'],
+    ["#matchesView", ".matches-hero", '[data-design-anchor="expert-results"]'],
+    ["#catalogView", ".catalog-header__visual", '[data-design-anchor="filter-layout"]'],
+    ["#accountView", ".auth-visual", '[data-design-anchor="account-panel"]'],
+  ];
+
+  for (const [view, ...anchors] of layouts) {
+    const root = document.querySelector(view);
+    assert.ok(root, `missing reference view ${view}`);
+
+    for (const anchor of anchors) {
+      assert.ok(root.querySelector(anchor), `missing ${anchor} in ${view}`);
+    }
+  }
+});
+
+test("design reference exposes the editorial structures for matches, catalog and account", () => {
+  const document = createDocument();
+  const requiredStructures = {
+    matches: ["[data-design-layout=expert]", ".matches-criteria", '[data-match-criterion="project-type"]', "#results"],
+    catalog: ["[data-design-layout=library]", "#catalogFilters", "#patternCatalog"],
+    account: ["[data-design-layout=dashboard]", ".account-dashboard__profile", ".account-dashboard__security", "#authForms", "#authLoggedIn"],
+  };
+
+  for (const [viewName, selectors] of Object.entries(requiredStructures)) {
+    const view = document.querySelector(`[data-view="${viewName}"]`);
+    assert.ok(view, `missing view ${viewName}`);
+    for (const selector of selectors) {
+      assert.ok(view.querySelector(selector), `missing ${selector} in ${viewName}`);
+    }
+  }
+});
+
+test("match criteria filter uses normalized requirement weight classes", () => {
+  assert.match(appJs, /function readMatchCriteria\(\)/);
+  assert.match(appJs, /function filterMatchesByCriteria\(matches\)/);
+  assert.match(appJs, /pattern\.matchingRequirements/);
+  assert.match(appJs, /requirement\.weightClasses\.includes\(criteria\.weightClass\)/);
+  assert.doesNotMatch(appJs, /JSON\.stringify\(pattern\)\.toLowerCase\(\)/);
+});
+
 test("design changes preserve hooks used by inventory, catalog and account logic", () => {
   const document = createDocument();
   const requiredIds = [

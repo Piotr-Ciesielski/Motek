@@ -96,23 +96,38 @@ test("dark hero panel keeps readable text on its dark gradient", () => {
   assert.match(stylesCss, /\.hero-cta\s*\{[\s\S]*?color-mix\(in srgb, var\(--on-hero\)/);
 });
 
-test("mobile inventory orders stats before stock and artwork", () => {
+test("inventory uses artwork-led hero, statistics strip and responsive shelf list", () => {
   assert.match(indexHtml, /class="inventory-stock"/);
   assert.match(
-    stylesCss,
-    /grid-template-areas:[\s\S]*"heading visual"[\s\S]*"stats visual"[\s\S]*"stock visual"/,
+    indexHtml,
+    /<div class="inventory-layout">[\s\S]*?<div class="inventory-layout__content">[\s\S]*?class="page-heading inventory-heading"[\s\S]*?<\/div>\s*<figure class="inventory-layout__visual">/,
   );
   assert.match(
     stylesCss,
-    /@media \(max-width: 980px\)[\s\S]*grid-template-areas:[\s\S]*"heading"[\s\S]*"onboarding"[\s\S]*"stats"[\s\S]*"stock"[\s\S]*"visual"/,
+    /#inventoryView \.inventory-layout \{[\s\S]*?grid-template-columns: minmax\(0, 0\.95fr\) minmax\(360px, 0\.85fr\);[\s\S]*?min-height: 360px;/,
   );
-  assert.doesNotMatch(
+  assert.match(
     stylesCss,
-    /inventory-layout__content > section:not\(#onboarding\)[\s\S]{0,120}grid-row: 4/,
+    /#inventoryView \.inventory-stats \{[\s\S]*?grid-template-columns: repeat\(4, minmax\(0, 1fr\)\);[\s\S]*?border-top: 1px solid var\(--border\);/,
+  );
+  assert.match(
+    stylesCss,
+    /#inventoryView \.yarn-list \{[\s\S]*?grid-template-columns: repeat\(2, minmax\(0, 1fr\)\);/,
+  );
+  assert.match(
+    stylesCss,
+    /@media \(max-width: 640px\)[\s\S]*?#inventoryView \.yarn-list \{[\s\S]*?grid-template-columns: 1fr;/,
   );
   assert.equal((indexHtml.match(/data-turnstile-for=/g) || []).length, 3);
   assert.match(indexHtml, /data-turnstile-for="passwordReset"/);
   assert.match(appJs, /challenges\.cloudflare\.com\/turnstile\/v0\/api\.js\?render=explicit/);
+});
+
+test("inventory empty state spans both shelf columns", () => {
+  assert.match(
+    stylesCss,
+    /#inventoryView \.yarn-empty-state \{[\s\S]*?grid-column: 1 \/ -1;/,
+  );
 });
 
 test("inventory stats update together with the existing summary", () => {
@@ -156,11 +171,12 @@ test("inventory artwork keeps the prototype crop and focal point", () => {
   );
 });
 
-test("inventory artwork panel stays within the viewport-sized layout", () => {
+test("inventory artwork forms the fixed-height hero instead of a sticky side panel", () => {
   const visualRule = stylesCss.match(
     /#inventoryView \.inventory-layout__visual \{([\s\S]*?)\n\}/,
   )?.[1] ?? "";
 
-  assert.match(visualRule, /height: min\(820px, calc\(100vh - 120px\)\);/);
-  assert.doesNotMatch(visualRule, /height: 100%;/);
+  assert.match(visualRule, /position: relative;/);
+  assert.match(visualRule, /min-height: 360px;/);
+  assert.doesNotMatch(visualRule, /position: sticky;/);
 });

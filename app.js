@@ -1292,6 +1292,40 @@ async function loadMatches() {
   return api("/api/matches");
 }
 
+function readMatchCriteria() {
+  return {
+    projectType: document.querySelector('[data-match-criterion="project-type"]:checked')?.value || "",
+    weightClass: document.querySelector('[data-match-criterion="weight-class"]:checked')?.value || "",
+  };
+}
+
+function filterMatchesByCriteria(matches) {
+  const criteria = readMatchCriteria();
+  return matches.filter((item) => {
+    const pattern = item?.pattern || {};
+    if (criteria.projectType && pattern.projectType && pattern.projectType !== criteria.projectType) {
+      return false;
+    }
+    if (criteria.weightClass) {
+      const requirements = Array.isArray(pattern.matchingRequirements)
+        ? pattern.matchingRequirements
+        : Array.isArray(pattern.requirements)
+          ? pattern.requirements
+          : [];
+      const requirementsWithWeights = requirements.filter((requirement) =>
+        Array.isArray(requirement?.weightClasses)
+      );
+      if (
+        requirementsWithWeights.length > 0
+        && !requirementsWithWeights.some((requirement) => requirement.weightClasses.includes(criteria.weightClass))
+      ) {
+        return false;
+      }
+    }
+    return true;
+  });
+}
+
 async function loadPatternCatalog({ resume = false, onPage = null } = {}) {
   const result = resume ? await catalogController.loadMore() : await catalogController.refresh();
   const state = catalogController.getState();
@@ -1658,7 +1692,7 @@ async function renderResults() {
 
   showMessage(results, "Pobieram dopasowane wzory...", "loading");
   try {
-    const matches = await loadMatches();
+    const matches = filterMatchesByCriteria(await loadMatches());
     const matchScopeLimited = api.lastMatchScope === "subset";
     results.replaceChildren();
     markMatchesFresh();
