@@ -34,7 +34,7 @@ services:
           memory: 512M
 
   waf:
-    image: owasp/modsecurity-crs:4.28.0-nginx-202607160307
+    image: owasp/modsecurity-crs@sha256:2051ff18b836c1d9bbc5c7754451c1687ea27352e497b89d0c9fc7e657861e07 # 4.28.0-nginx-202607160307
     depends_on:
       app:
         condition: service_healthy
@@ -66,7 +66,7 @@ services:
           memory: 512M
 
   prometheus:
-    image: prom/prometheus:v3.12.0
+    image: prom/prometheus@sha256:69f5241418838263316593f7274a304b095c40bcf22e57272865da91bd60a8ac # v3.12.0
     command:
       - --config.file=/etc/prometheus/prometheus.yml
       - --storage.tsdb.retention.time=15d
