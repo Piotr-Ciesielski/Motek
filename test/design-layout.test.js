@@ -6,6 +6,7 @@ const test = require("node:test");
 const indexHtml = readFileSync(path.join(__dirname, "..", "index.html"), "utf8");
 const stylesCss = readFileSync(path.join(__dirname, "..", "styles.css"), "utf8");
 const appJs = readFileSync(path.join(__dirname, "..", "app.js"), "utf8");
+const serverJs = readFileSync(path.join(__dirname, "..", "server.js"), "utf8");
 const staticFilesJs = readFileSync(path.join(__dirname, "..", "server", "static-files.js"), "utf8");
 
 test("inventory keeps the selected design composition", () => {
@@ -52,6 +53,13 @@ test("captcha initializes even when the page opens from password recovery", () =
     /const recoveryHandled = await startPasswordRecovery\(\);[\s\S]*await Promise\.all\(\[[\s\S]*initializeCaptcha\(\)/,
   );
   assert.doesNotMatch(appJs, /const recoveryHandled = await startPasswordRecovery\(\);\s*if \(recoveryHandled\) return;/);
+});
+
+test("CSP pozwala widgetowi Turnstile komunikować się z Cloudflare", () => {
+  assert.match(
+    serverJs,
+    /connect-src 'self' https:\/\/challenges\.cloudflare\.com https:\/\/fonts\.googleapis\.com/,
+  );
 });
 
 test("password recovery exchanges only a one-time code while signup handles URL tokens", () => {
@@ -123,11 +131,11 @@ test("catalog controller asset has a deployment cache buster", () => {
 test("theme artwork uses optimized immutable assets", () => {
   assert.equal(
     (indexHtml.match(/data-light-src="assets\/color-yarn-cat\.v1\.webp"/g) || []).length,
-    2,
+    4,
   );
   assert.equal(
     (indexHtml.match(/data-dark-src="assets\/night-yarn-cat\.v1\.webp"/g) || []).length,
-    2,
+    4,
   );
   assert.match(staticFilesJs, /"\.webp": "image\/webp"/);
   assert.match(staticFilesJs, /public, max-age=31536000, immutable/);

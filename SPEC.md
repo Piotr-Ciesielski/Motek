@@ -287,6 +287,9 @@ Wywołania backendu do Supabase Auth są przerywane po 10 sekundach i zwracają
 kontrolowany błąd, jeśli usługa Auth nie odpowiada.
 Przed `updateUser` backend odtwarza pełną sesję recovery z obu tokenów linku;
 brak refresh tokenu lub nieważna sesja kończy się kontrolowanym błędem 400.
+Następnie atomowo rezerwuje grant recovery. Rezerwacja jest zwalniana, jeśli
+`updateUser` zwróci błąd; po udanej zmianie grant jest zużywany, cookies są
+czyszczone, a pozostałe sesje użytkownika są globalnie unieważniane.
 
 Kontrola danych wzorów bez wykonywania importu:
 
