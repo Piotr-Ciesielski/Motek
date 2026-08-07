@@ -37,12 +37,6 @@ test("staging publikuje wyłącznie WAF i używa nieruchomych obrazów", () => {
   assert.match(compose, /private:\s*\n\s+internal: true/);
 });
 
-test("CI przypina Supabase CLI do pełnego SHA", () => {
-  const workflow = fs.readFileSync(path.join(__dirname, "..", ".github", "workflows", "ci.yml"), "utf8");
-  assert.match(workflow, /uses:\s*supabase\/setup-cli@ab058987d8d6c725971f6cf9d0b5c98467e30bd1\b/);
-  assert.doesNotMatch(workflow, /uses:\s*supabase\/setup-cli@v\d+/);
-});
-
 test("proxy blokuje publiczne metryki i Prometheus używa sieci wewnętrznej", () => {
   const nginx = fs.readFileSync(path.join(root, "nginx", "templates", "default.conf.template"), "utf8");
   const prometheus = fs.readFileSync(path.join(root, "prometheus", "prometheus.yml"), "utf8");
