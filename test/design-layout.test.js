@@ -180,3 +180,19 @@ test("inventory artwork forms the fixed-height hero instead of a sticky side pan
   assert.match(visualRule, /min-height: 360px;/);
   assert.doesNotMatch(visualRule, /position: sticky;/);
 });
+
+test("reference dashboards expose the editorial content blocks from the approved boards", () => {
+  assert.match(indexHtml, /id="inventorySavedStatus"/);
+  assert.match(indexHtml, /id="accountProjects"/);
+  assert.match(indexHtml, /id="accountMetrics"/);
+  assert.match(indexHtml, /id="accountProfileCard"/);
+});
+
+test("reference fidelity pass defines the shared board proportions and typography", () => {
+  assert.match(stylesCss, /\.reference-board/);
+  assert.match(stylesCss, /font-family:\s*"Fraunces", serif/);
+  assert.match(stylesCss, /#inventoryView \.inventory-layout__visual img[\s\S]*?object-position:\s*right center/);
+  assert.match(stylesCss, /#matchesView \.matches-criteria__fields[\s\S]*?grid-template-columns/);
+  assert.match(stylesCss, /#catalogView \.catalog-header[\s\S]*?min-height:/);
+  assert.match(stylesCss, /#accountView \.account-dashboard/);
+});
