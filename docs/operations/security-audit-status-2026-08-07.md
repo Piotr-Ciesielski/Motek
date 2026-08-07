@@ -1,24 +1,26 @@
 # Status audytu bezpieczeństwa — 2026-08-07
 
-## Stan zweryfikowany na stagingu
+## Zakres
 
-Punkty U-01–U-21 oraz U-23 z `AUDYT_SEC.md` są zaadresowane w kodzie,
-migracjach i testach. Obejmuje to ochronę mutacji bazy, sesje Auth, recovery,
-limity i rate limiting, walidację danych, odporność frontendową oraz
-powtarzalny łańcuch dostaw CI i obrazów stagingu.
+Audyt restrykcyjny wykonano bez upgrade'u Supabase do planu Pro. Nie uruchamiano zdalnych migracji ani wdrożenia produkcyjnego.
 
-U-22 jest zamknięte dokumentacyjnie: README, specyfikacja i raport stagingu
-opisują aktualną wersję, commit i granicę produkcji.
+## Wdrożone lokalnie
 
-Aktualny snapshot:
+- odtwarzalna migracja ACL prywatnego licznika włóczek i odebranie bezpośrednich mutacji `yarns`;
+- wymagane, podpisane cookie aktywności sesji;
+- dodatkowa ochrona endpointu zmiany hasła po przepływie recovery;
+- bezpieczne zachowanie przy awarii profilu, logout i timeout body;
+- limity żądań dla katalogu, dopasowań i recovery oraz ograniczenie kosztu dopasowań;
+- przypięcie `supabase/setup-cli` do pełnego SHA i semantyczny test konfiguracji stagingu.
 
-- branch: `staging`;
-- commit: `12555dacb62c35a3abd8659e19af35850220f5a7`;
-- wersja: `2.0.0-alpha.39`;
-- testy CI: `260/260`;
-- testy zakresu łańcucha dostaw: `11/11`.
+## Ograniczenia i prace otwarte
 
-## Pozostała czynność operacyjna
+- Leaked Password Protection pozostaje niedostępna na Supabase Free.
+- Pełny jednorazowy grant recovery wymaga trwałego magazynu/zużycia po stronie bazy; obecne cookie jest krótkotrwałe i podpisane.
+- Pełne testy pgTAP wymagają lokalnego Postgresa/Dockera.
+- Produkcyjna konfiguracja proxy i migracje wymagają osobnej zgody przed wykonaniem.
+- `client/auth-controller.js` pozostaje niepodłączonym modułem pomocniczym; produkcyjny przepływ nadal obsługuje `app.js`.
 
-Zmiany nie są jeszcze wdrożone na produkcję. Przed publikacją produkcji należy
-wykonać deploy commitu z `main` oraz regresję produkcyjną.
+## Weryfikacja
+
+Przeszły testy migracji, tras wzorców i testy regresji Auth uruchomione selektywnie. Pełny `npm run check` wymaga osobnej diagnostyki, ponieważ istniejący harness testów serwera pozostawia procesy i nie kończy się deterministycznie.

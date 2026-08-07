@@ -6,6 +6,7 @@ const root = path.join(__dirname, "..", "deploy", "staging");
 
 test("staging publikuje wyłącznie WAF i używa nieruchomych obrazów", () => {
   const compose = fs.readFileSync(path.join(root, "compose.yaml"), "utf8");
+  const dashboard = fs.readFileSync(path.join(root, "compose.dashboard.yaml"), "utf8");
   const dockerfile = fs.readFileSync(path.join(root, "Dockerfile"), "utf8");
   assert.match(dockerfile, /node:24\.18\.0-alpine/);
   assert.match(compose, /owasp\/modsecurity-crs@sha256:2051ff18b836c1d9bbc5c7754451c1687ea27352e497b89d0c9fc7e657861e07/);
@@ -23,12 +24,17 @@ test("staging publikuje wyłącznie WAF i używa nieruchomych obrazów", () => {
   assert.match(compose, /app:[\s\S]*networks:[\s\S]*- private[\s\S]*- egress/);
   assert.match(compose, /cpus: "[0-9.]+"/);
   assert.match(compose, /memory: [0-9]+M/);
-});
-
-test("CI przypina Supabase CLI do pełnego SHA", () => {
-  const workflow = fs.readFileSync(path.join(__dirname, "..", ".github", "workflows", "ci.yml"), "utf8");
-  assert.match(workflow, /uses:\s*supabase\/setup-cli@ab058987d8d6c725971f6cf9d0b5c98467e30bd1\b/);
-  assert.doesNotMatch(workflow, /uses:\s*supabase\/setup-cli@v\d+/);
+  assert.doesNotMatch(
+    `${compose}\n${dashboard}`,
+    /^\s*image:\s+\S*:(?:latest|rolling|edge|canary|stable|main|master)\s*$/im,
+  );
+  const serviceBlock = (name) => {
+    const match = compose.match(new RegExp(`\\n  ${name}:[\\s\\S]*?(?=\\n  \\w+:|\\nnetworks:|\\nvolumes:)`));
+    return match ? match[0] : "";
+  };
+  assert.doesNotMatch(serviceBlock("app"), /\n\s+ports:/);
+  assert.doesNotMatch(serviceBlock("prometheus"), /\n\s+ports:/);
+  assert.match(compose, /private:\s*\n\s+internal: true/);
 });
 
 test("proxy blokuje publiczne metryki i Prometheus używa sieci wewnętrznej", () => {
@@ -43,4 +49,12 @@ test("proxy blokuje publiczne metryki i Prometheus używa sieci wewnętrznej", (
   assert.doesNotMatch(nginx, /\$proxy_add_x_forwarded_for/);
   assert.match(prometheus, /app:3000/);
   assert.match(prometheus, /\/internal\/metrics/);
+});
+
+test("CI przypina Supabase CLI do zweryfikowanego pełnego SHA", () => {
+  const workflow = fs.readFileSync(path.join(__dirname, "..", ".github", "workflows", "ci.yml"), "utf8");
+  assert.match(
+    workflow,
+    /uses:\s+supabase\/setup-cli@46f7f98c7f948ad727d22c1e67fab04c223a0520\s+#\s*v3/,
+  );
 });
