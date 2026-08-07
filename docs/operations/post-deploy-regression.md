@@ -2,6 +2,11 @@
 
 Ten runbook prowadzi właściciela Motka od pustych środowisk do decyzji o udostępnieniu produkcji. Repozytorium zawiera konfigurację i testy, ale nie tworzy projektów ani nie zmienia ustawień Railway, Cloudflare, Supabase lub GitHub. Kroki w panelach i pierwsze wdrożenie wykonuje operator.
 
+Aktualny, zweryfikowany snapshot stagingu jest prowadzony osobno w raporcie
+[stanu stagingu z 2026-08-07](staging-status-2026-08-07.md). Runbook opisuje
+zasady i procedury, a raport zawiera konkretny commit oraz wyniki ostatniej
+weryfikacji.
+
 ## 1. Docelowy układ
 
 ```text
