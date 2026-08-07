@@ -96,38 +96,23 @@ test("dark hero panel keeps readable text on its dark gradient", () => {
   assert.match(stylesCss, /\.hero-cta\s*\{[\s\S]*?color-mix\(in srgb, var\(--on-hero\)/);
 });
 
-test("inventory uses artwork-led hero, statistics strip and responsive shelf list", () => {
+test("mobile inventory orders stats before stock and artwork", () => {
   assert.match(indexHtml, /class="inventory-stock"/);
   assert.match(
-    indexHtml,
-    /<div class="inventory-layout">[\s\S]*?<div class="inventory-layout__content">[\s\S]*?class="page-heading inventory-heading"[\s\S]*?<\/div>\s*<figure class="inventory-layout__visual">/,
+    stylesCss,
+    /grid-template-areas:[\s\S]*"heading visual"[\s\S]*"stats visual"[\s\S]*"stock visual"/,
   );
   assert.match(
     stylesCss,
-    /#inventoryView \.inventory-layout \{[\s\S]*?grid-template-columns: minmax\(0, 0\.95fr\) minmax\(360px, 0\.85fr\);[\s\S]*?min-height: 360px;/,
+    /@media \(max-width: 980px\)[\s\S]*grid-template-areas:[\s\S]*"heading"[\s\S]*"onboarding"[\s\S]*"stats"[\s\S]*"stock"[\s\S]*"visual"/,
   );
-  assert.match(
+  assert.doesNotMatch(
     stylesCss,
-    /#inventoryView \.inventory-stats \{[\s\S]*?grid-template-columns: repeat\(4, minmax\(0, 1fr\)\);[\s\S]*?border-top: 1px solid var\(--border\);/,
-  );
-  assert.match(
-    stylesCss,
-    /#inventoryView \.yarn-list \{[\s\S]*?grid-template-columns: repeat\(2, minmax\(0, 1fr\)\);/,
-  );
-  assert.match(
-    stylesCss,
-    /@media \(max-width: 640px\)[\s\S]*?#inventoryView \.yarn-list \{[\s\S]*?grid-template-columns: 1fr;/,
+    /inventory-layout__content > section:not\(#onboarding\)[\s\S]{0,120}grid-row: 4/,
   );
   assert.equal((indexHtml.match(/data-turnstile-for=/g) || []).length, 3);
   assert.match(indexHtml, /data-turnstile-for="passwordReset"/);
   assert.match(appJs, /challenges\.cloudflare\.com\/turnstile\/v0\/api\.js\?render=explicit/);
-});
-
-test("inventory empty state spans both shelf columns", () => {
-  assert.match(
-    stylesCss,
-    /#inventoryView \.yarn-empty-state \{[\s\S]*?grid-column: 1 \/ -1;/,
-  );
 });
 
 test("inventory stats update together with the existing summary", () => {
@@ -171,28 +156,11 @@ test("inventory artwork keeps the prototype crop and focal point", () => {
   );
 });
 
-test("inventory artwork forms the fixed-height hero instead of a sticky side panel", () => {
+test("inventory artwork panel stays within the viewport-sized layout", () => {
   const visualRule = stylesCss.match(
     /#inventoryView \.inventory-layout__visual \{([\s\S]*?)\n\}/,
   )?.[1] ?? "";
 
-  assert.match(visualRule, /position: relative;/);
-  assert.match(visualRule, /min-height: 360px;/);
-  assert.doesNotMatch(visualRule, /position: sticky;/);
-});
-
-test("reference dashboards expose the editorial content blocks from the approved boards", () => {
-  assert.match(indexHtml, /id="inventorySavedStatus"/);
-  assert.match(indexHtml, /id="accountProjects"/);
-  assert.match(indexHtml, /id="accountMetrics"/);
-  assert.match(indexHtml, /id="accountProfileCard"/);
-});
-
-test("reference fidelity pass defines the shared board proportions and typography", () => {
-  assert.match(stylesCss, /\.reference-board/);
-  assert.match(stylesCss, /font-family:\s*"Fraunces", serif/);
-  assert.match(stylesCss, /#inventoryView \.inventory-layout__visual img[\s\S]*?object-position:\s*right center/);
-  assert.match(stylesCss, /#matchesView \.matches-criteria__fields[\s\S]*?grid-template-columns/);
-  assert.match(stylesCss, /#catalogView \.catalog-header[\s\S]*?min-height:/);
-  assert.match(stylesCss, /#accountView \.account-dashboard/);
+  assert.match(visualRule, /height: min\(820px, calc\(100vh - 120px\)\);/);
+  assert.doesNotMatch(visualRule, /height: 100%;/);
 });

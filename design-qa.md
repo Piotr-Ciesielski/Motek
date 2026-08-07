@@ -23,13 +23,3 @@ The local server process owns port 3001, but the endpoint is unavailable to the 
 ## Next verification
 
 Open the staging server in a local browser and check both themes at 1440, 1024, 768 and 390 CSS px. Confirm navigation, theme persistence, image switching, inventory actions, matching states, catalog filters/pagination and auth states against the PNG references in `Designs/`.
-## QA aktualizacji referencji 2026-08-07
-
-- Testy kontraktowe i regresyjne: PASS, 69/69 w pakiecie designerskim i serwerowym.
-- Pełne `npm run check`: PASS, 278/278.
-- `npm run lint`: PASS bez błędów; pozostają cztery istniejące ostrzeżenia `no-unused-vars`.
-- `git diff --check`: PASS.
-- Lokalny render przeglądarkowy: BLOCKED — lokalny backend nie osiąga gotowości bez Supabase, a przeglądarka blokuje adres localhost.
-- Stagingowy render: do wykonania po publikacji.
-
-final result: blocked

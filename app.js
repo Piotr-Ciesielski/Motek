@@ -33,8 +33,6 @@ const authModeSwitch = document.querySelector(".auth-mode-switch");
 const loginModeBtn = document.getElementById("loginModeBtn");
 const registerModeBtn = document.getElementById("registerModeBtn");
 const authProfileSummary = document.getElementById("authProfileSummary");
-const accountMetricYarns = document.getElementById("accountMetricYarns");
-const accountActionButtons = [...document.querySelectorAll("[data-account-action]")];
 const authMessage = document.getElementById("authMessage");
 const deleteAccountForm = document.getElementById("deleteAccountForm");
 const deleteAccountMessage = document.getElementById("deleteAccountMessage");
@@ -62,7 +60,6 @@ const inventoryStatYarns = document.getElementById("inventoryStatYarns");
 const inventoryStatLength = document.getElementById("inventoryStatLength");
 const inventoryStatWeight = document.getElementById("inventoryStatWeight");
 const inventoryStatColors = document.getElementById("inventoryStatColors");
-const inventorySavedStatus = document.getElementById("inventorySavedStatus");
 const matchesThemeImage = document.getElementById("matchesThemeImage");
 const appViews = [...document.querySelectorAll(".app-view")];
 const viewButtons = [...document.querySelectorAll("[data-view-target]")];
@@ -356,23 +353,6 @@ function updateNavigationState() {
 
 viewButtons.forEach((button) => {
   button.addEventListener("click", () => setActiveView(button.dataset.viewTarget));
-});
-
-accountActionButtons.forEach((button) => {
-  button.addEventListener("click", () => {
-    const action = button.dataset.accountAction;
-    if (action === "profile") {
-      authProfileSummary?.focus({ preventScroll: false });
-      return;
-    }
-    if (action === "notifications") {
-      setAuthMessage("Powiadomienia będą dostępne, gdy pojawią się zapisane aktualizacje.", "success");
-      return;
-    }
-    if (action === "theme") {
-      themeToggle?.click();
-    }
-  });
 });
 
 themeToggle?.addEventListener("click", () => {
@@ -1312,40 +1292,6 @@ async function loadMatches() {
   return api("/api/matches");
 }
 
-function readMatchCriteria() {
-  return {
-    projectType: document.querySelector('[data-match-criterion="project-type"]:checked')?.value || "",
-    weightClass: document.querySelector('[data-match-criterion="weight-class"]:checked')?.value || "",
-  };
-}
-
-function filterMatchesByCriteria(matches) {
-  const criteria = readMatchCriteria();
-  return matches.filter((item) => {
-    const pattern = item?.pattern || {};
-    if (criteria.projectType && pattern.projectType && pattern.projectType !== criteria.projectType) {
-      return false;
-    }
-    if (criteria.weightClass) {
-      const requirements = Array.isArray(pattern.matchingRequirements)
-        ? pattern.matchingRequirements
-        : Array.isArray(pattern.requirements)
-          ? pattern.requirements
-          : [];
-      const requirementsWithWeights = requirements.filter((requirement) =>
-        Array.isArray(requirement?.weightClasses)
-      );
-      if (
-        requirementsWithWeights.length > 0
-        && !requirementsWithWeights.some((requirement) => requirement.weightClasses.includes(criteria.weightClass))
-      ) {
-        return false;
-      }
-    }
-    return true;
-  });
-}
-
 async function loadPatternCatalog({ resume = false, onPage = null } = {}) {
   const result = resume ? await catalogController.loadMore() : await catalogController.refresh();
   const state = catalogController.getState();
@@ -1712,7 +1658,7 @@ async function renderResults() {
 
   showMessage(results, "Pobieram dopasowane wzory...", "loading");
   try {
-    const matches = filterMatchesByCriteria(await loadMatches());
+    const matches = await loadMatches();
     const matchScopeLimited = api.lastMatchScope === "subset";
     results.replaceChildren();
     markMatchesFresh();
@@ -1761,8 +1707,6 @@ async function renderResults() {
 async function renderSummary(loadedYarns = null) {
   if (!isAuthenticated) {
     summary.textContent = "Twój prywatny magazyn pojawi się tutaj po zalogowaniu.";
-    if (accountMetricYarns) accountMetricYarns.textContent = "—";
-    inventorySavedStatus?.replaceChildren(document.createTextNode("Magazyn prywatny"));
     inventoryStats?.setAttribute("aria-busy", "false");
     return;
   }
@@ -1778,8 +1722,6 @@ async function renderSummary(loadedYarns = null) {
   inventoryStatLength.textContent = formatNumber(totalLength);
   inventoryStatWeight.textContent = formatNumber(totalWeight);
   inventoryStatColors.textContent = formatNumber(colorCount);
-  if (accountMetricYarns) accountMetricYarns.textContent = formatNumber(yarns.length);
-  inventorySavedStatus?.replaceChildren(document.createTextNode("Magazyn zapisany"));
   inventoryStats?.replaceChildren(
     inventoryStats.querySelector(".inventory-stat--coral"),
     inventoryStats.querySelector(".inventory-stat--lavender"),
