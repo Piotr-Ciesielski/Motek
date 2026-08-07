@@ -1,6 +1,6 @@
 begin;
 
-select plan(31);
+select plan(32);
 
 select has_schema('private', 'prywatny schemat grantów recovery istnieje');
 select has_table('private', 'auth_recovery_grants', 'granty recovery są przechowywane poza publicznym schematem');
@@ -94,6 +94,11 @@ select is(
   public.consume_auth_recovery_grant('bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb', repeat('A', 43)),
   false,
   'grant nie może zostać zużyty przez innego użytkownika'
+);
+select is(
+  public.claim_auth_recovery_grant('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', repeat('A', 43)),
+  true,
+  'właściciel rezerwuje ważny grant przed zużyciem'
 );
 select is(
   public.consume_auth_recovery_grant('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', repeat('A', 43)),
