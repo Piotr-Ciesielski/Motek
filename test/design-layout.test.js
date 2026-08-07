@@ -164,3 +164,13 @@ test("inventory artwork panel stays within the viewport-sized layout", () => {
   assert.match(visualRule, /height: min\(820px, calc\(100vh - 120px\)\);/);
   assert.doesNotMatch(visualRule, /height: 100%;/);
 });
+
+test("catalog and account expose the approved visual dashboard structure", () => {
+  assert.match(indexHtml, /class="catalog-header__visual"/);
+  assert.match(indexHtml, /id="catalogThemeImage"/);
+  assert.match(indexHtml, /id="accountProfileCard"/);
+  assert.match(indexHtml, /id="accountProjects"/);
+  assert.match(indexHtml, /id="accountMetrics"/);
+  assert.match(stylesCss, /#catalogView \.catalog-header__visual/);
+  assert.match(stylesCss, /#accountView \.account-dashboard/);
+});

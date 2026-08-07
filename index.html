@@ -52,10 +52,9 @@
       <section class="auth-layout">
         <aside class="auth-visual" aria-labelledby="heroTitle">
           <p class="auth-visual__brand">Motek</p>
-          <h1 id="heroTitle">Twoja włóczka ma już swój następny projekt</h1>
+          <h1 id="heroTitle">Twoje konto</h1>
           <p class="lead">
-            Uporządkuj domowy zapas, znajdź pasujący wzór i wróć do tego,
-            co najprzyjemniejsze — tworzenia.
+            Zarządzaj profilem, preferencjami i zapisanymi projektami.
           </p>
           <figure class="auth-visual__artwork">
             <img
@@ -166,8 +165,37 @@
         </form>
 
         <div id="authLoggedIn" class="auth-logged-in" hidden>
-          <p id="authProfileSummary"></p>
-          <button id="logoutBtn" class="button button--ghost" type="button">Wyloguj się</button>
+          <div class="account-dashboard">
+            <section id="accountProfileCard" class="account-dashboard__profile" aria-labelledby="accountProfileTitle">
+              <p class="eyebrow">Twój profil</p>
+              <h3 id="accountProfileTitle">Twoje konto</h3>
+              <p id="authProfileSummary"></p>
+              <button id="logoutBtn" class="button button--ghost" type="button">Wyloguj się</button>
+            </section>
+
+            <section id="accountProjects" class="account-dashboard__projects" aria-labelledby="accountProjectsTitle">
+              <div class="account-dashboard__section-heading">
+                <h3 id="accountProjectsTitle">Twoje projekty</h3>
+                <button class="button button--ghost" type="button" data-view-target="matches">Nowy projekt <span aria-hidden="true">＋</span></button>
+              </div>
+              <p class="account-dashboard__empty">Nie masz jeszcze zapisanych projektów. Dobierz pierwszy wzór do swojego magazynu.</p>
+            </section>
+
+            <section id="accountMetrics" class="account-dashboard__metrics" aria-labelledby="accountMetricsTitle">
+              <h3 id="accountMetricsTitle">Twój Motek</h3>
+              <div class="account-metrics-grid">
+                <div><strong id="accountMetricYarns">—</strong><span>włóczek</span></div>
+                <div><strong id="accountMetricProjects">—</strong><span>projektów</span></div>
+                <div><strong id="accountMetricMatches">—</strong><span>dopasowań</span></div>
+              </div>
+            </section>
+
+            <section class="account-dashboard__settings" aria-label="Ustawienia konta">
+              <button type="button" data-account-action="profile">Dane konta <span aria-hidden="true">›</span></button>
+              <button type="button" data-account-action="notifications">Powiadomienia <span aria-hidden="true">›</span></button>
+              <button type="button" data-account-action="theme">Preferencje wyglądu <span aria-hidden="true">›</span></button>
+            </section>
+
           <form id="deleteAccountForm" class="account-danger-zone" method="post" action="/api/account" novalidate>
             <h3 id="deleteAccountTitle">Usuń konto</h3>
             <p>Ta operacja trwale usuwa konto i wszystkie zapisane włóczki.</p>
@@ -190,6 +218,7 @@
             <button class="button button--danger" type="submit">Usuń konto bezpowrotnie</button>
             <p id="deleteAccountMessage" class="auth-message" role="status" aria-live="polite"></p>
           </form>
+          </div>
         </div>
         <div id="idleSessionWarning" class="idle-session-warning" role="alertdialog" aria-live="assertive" hidden>
           <p>Sesja wygaśnie za 5 minut z powodu bezczynności.</p>

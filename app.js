@@ -61,6 +61,10 @@ const inventoryStatLength = document.getElementById("inventoryStatLength");
 const inventoryStatWeight = document.getElementById("inventoryStatWeight");
 const inventoryStatColors = document.getElementById("inventoryStatColors");
 const matchesThemeImage = document.getElementById("matchesThemeImage");
+const accountMetricYarns = document.getElementById("accountMetricYarns");
+const accountMetricProjects = document.getElementById("accountMetricProjects");
+const accountMetricMatches = document.getElementById("accountMetricMatches");
+const accountActionButtons = [...document.querySelectorAll("[data-account-action]")];
 const appViews = [...document.querySelectorAll(".app-view")];
 const viewButtons = [...document.querySelectorAll("[data-view-target]")];
 const inventoryMatchBtn = document.getElementById("inventoryMatchBtn");
@@ -353,6 +357,25 @@ function updateNavigationState() {
 
 viewButtons.forEach((button) => {
   button.addEventListener("click", () => setActiveView(button.dataset.viewTarget));
+});
+
+accountActionButtons.forEach((button) => {
+  button.addEventListener("click", () => {
+    const action = button.dataset.accountAction;
+    if (action === "theme") {
+      themeToggle?.click();
+      return;
+    }
+    if (action === "profile") {
+      authProfileSummary?.scrollIntoView({ behavior: "smooth", block: "center" });
+      return;
+    }
+    if (action === "notifications") {
+      authMessage.textContent = "Powiadomienia są zarządzane w ustawieniach konta.";
+      authMessage.dataset.kind = "info";
+      authMessage.focus({ preventScroll: true });
+    }
+  });
 });
 
 themeToggle?.addEventListener("click", () => {
@@ -1707,6 +1730,9 @@ async function renderResults() {
 async function renderSummary(loadedYarns = null) {
   if (!isAuthenticated) {
     summary.textContent = "Twój prywatny magazyn pojawi się tutaj po zalogowaniu.";
+    accountMetricYarns.textContent = "—";
+    accountMetricProjects.textContent = "—";
+    accountMetricMatches.textContent = "—";
     inventoryStats?.setAttribute("aria-busy", "false");
     return;
   }
@@ -1722,6 +1748,9 @@ async function renderSummary(loadedYarns = null) {
   inventoryStatLength.textContent = formatNumber(totalLength);
   inventoryStatWeight.textContent = formatNumber(totalWeight);
   inventoryStatColors.textContent = formatNumber(colorCount);
+  accountMetricYarns.textContent = formatNumber(yarns.length);
+  accountMetricProjects.textContent = "—";
+  accountMetricMatches.textContent = "—";
   inventoryStats?.replaceChildren(
     inventoryStats.querySelector(".inventory-stat--coral"),
     inventoryStats.querySelector(".inventory-stat--lavender"),
