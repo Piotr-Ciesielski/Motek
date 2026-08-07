@@ -2113,7 +2113,7 @@ body::before {
 
 #catalogView .catalog-controls {
   display: grid;
-  grid-template-columns: minmax(260px, 1.8fr) repeat(4, minmax(130px, 1fr));
+  grid-template-columns: minmax(220px, 1.6fr) repeat(5, minmax(0, 1fr));
   gap: 12px;
   margin-top: 46px;
 }
@@ -2132,6 +2132,9 @@ body::before {
 
 #accountView.is-authenticated .auth-layout {
   display: block;
+  width: 100%;
+  max-width: none;
+  margin: 0;
 }
 
 #accountView.is-authenticated .auth-visual {
@@ -2166,6 +2169,7 @@ body::before {
   position: relative;
   z-index: 1;
   max-width: 650px;
+  color: var(--text);
 }
 
 #accountView.is-authenticated .auth-visual h1 {
@@ -2187,6 +2191,7 @@ body::before {
 
 #accountView.is-authenticated .auth-panel {
   min-height: 0;
+  width: 100%;
   padding: 24px 0 60px;
   background: transparent;
 }
