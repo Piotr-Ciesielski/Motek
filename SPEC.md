@@ -355,3 +355,8 @@ Grafika w Magazynie zachowuje pionową kompozycję prototypów przez
 `object-fit: cover` i `object-position: right center`; Dopasowanie pozostaje
 szerokim hero. Magazyn i Dopasowanie pokazują same grafiki, bez tekstowych
 nakładek i ramek.
+# Kontrole bezpieczeństwa i ograniczenia planu Free
+
+Backend jest źródłem prawdy dla sesji, recovery, limitów i autoryzacji. Bezpośrednie mutacje tabeli `yarns` są odbierane użytkownikom, a zapis odbywa się przez kontrolowane RPC. Brak funkcji Supabase „Leaked Password Protection” jest znanym ograniczeniem planu Free; nie wykonujemy upgrade'u Pro.
+
+Po każdej zmianie bezpieczeństwa należy uruchomić `npm run lint`, `npm run format:check`, `npm run check`, `npm audit --json` oraz dostępne testy pgTAP. Pełny audyt statusów znajduje się w `AUDYT_SEC.md` i planie `docs/superpowers/plans/2026-08-07-security-hardening-free-plan.md`.

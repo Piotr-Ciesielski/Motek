@@ -18,6 +18,7 @@ const {
   getIdleTimeoutSeconds,
   buildIdleActivityCookie,
   parseIdleActivityCookie,
+  parseRecoveryGrantCookie,
 } = require("../server");
 
 test("limit bezczynności ma domyślnie 2 godziny i respektuje konfigurację", () => {
@@ -35,6 +36,15 @@ test("podpisane ciasteczko aktywności odrzuca zmieniony timestamp", () => {
   assert.equal(parseIdleActivityCookie(cookie.split(";")[0].split("=")[1], env, 1_700_000_100), 1_700_000_000);
   const tampered = cookie.replace("1700000000", "1700000001");
   assert.equal(parseIdleActivityCookie(tampered.split(";")[0].split("=")[1], env, 1_700_000_100), null);
+});
+
+test("grant odzyskiwania jest związany z użytkownikiem i wygasa", () => {
+  const server = require("../server");
+  const cookie = server.buildRecoveryGrantCookie?.("user-1", 1_700_000_000);
+  const value = cookie.split(";")[0].split("=").slice(1).join("=");
+  assert.equal(parseRecoveryGrantCookie(value, "user-1", 1_700_000_100), true);
+  assert.equal(parseRecoveryGrantCookie(value, "user-2", 1_700_000_100), false);
+  assert.equal(parseRecoveryGrantCookie(value, "user-1", 1_700_000_601), false);
 });
 test("konfiguracja uruchomieniowa bez zmiennych używa lokalnego portu 3001", () => {
   assert.deepEqual(getRuntimeConfig?.({}), {
@@ -709,6 +719,38 @@ test("serwer Motek działa bezpiecznie", async (t) => {
       assert.deepEqual(await updateResponse.json(), {
         passwordUpdated: true,
         authenticated: false,
+      });
+
+      await t.test("nie odnawia sesji po usunięciu cookie bezczynności", async () => {
+        const tokenCookies = recoveryCookies
+          .split("; ")
+          .filter((cookie) => !cookie.startsWith("motek_idle_activity="))
+          .join("; ");
+        const response = await fetch(`${baseUrl}/api/auth/activity`, {
+          method: "POST",
+          headers: { Origin: baseUrl, Cookie: tokenCookies },
+          body: "{}",
+        });
+        assert.equal(response.status, 401);
+        assert.match(response.headers.get("set-cookie"), /motek_idle_activity=;/);
+      });
+
+      await t.test("nie pozwala zmienić hasła ze zwykłej sesji", async () => {
+        const normalSessionCookies = [
+          "motek_access_token=token-user-a",
+          "motek_refresh_token=refresh-token-user-a",
+          recoveryCookies.split("; ").find((cookie) => cookie.startsWith("motek_idle_activity=")),
+        ].filter(Boolean).join("; ");
+        const response = await fetch(`${baseUrl}/api/auth/password`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Origin: baseUrl,
+            Cookie: normalSessionCookies,
+          },
+          body: JSON.stringify({ password: "NoweHaslo123!" }),
+        });
+        assert.equal(response.status, 401);
       });
     });
 

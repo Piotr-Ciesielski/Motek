@@ -6,6 +6,7 @@ const root = path.join(__dirname, "..", "deploy", "staging");
 
 test("staging publikuje wyłącznie WAF i używa nieruchomych obrazów", () => {
   const compose = fs.readFileSync(path.join(root, "compose.yaml"), "utf8");
+  const dashboard = fs.readFileSync(path.join(root, "compose.dashboard.yaml"), "utf8");
   const dockerfile = fs.readFileSync(path.join(root, "Dockerfile"), "utf8");
   assert.match(dockerfile, /node:24\.18\.0-alpine/);
   assert.match(compose, /owasp\/modsecurity-crs:4\.28\.0-nginx-202607160307/);
@@ -21,6 +22,17 @@ test("staging publikuje wyłącznie WAF i używa nieruchomych obrazów", () => {
   assert.match(compose, /app:[\s\S]*networks:[\s\S]*- private[\s\S]*- egress/);
   assert.match(compose, /cpus: "[0-9.]+"/);
   assert.match(compose, /memory: [0-9]+M/);
+  assert.doesNotMatch(
+    `${compose}\n${dashboard}`,
+    /^\s*image:\s+\S*:(?:latest|rolling|edge|canary|stable|main|master)\s*$/im,
+  );
+  const serviceBlock = (name) => {
+    const match = compose.match(new RegExp(`\\n  ${name}:[\\s\\S]*?(?=\\n  \\w+:|\\nnetworks:|\\nvolumes:)`));
+    return match ? match[0] : "";
+  };
+  assert.doesNotMatch(serviceBlock("app"), /\n\s+ports:/);
+  assert.doesNotMatch(serviceBlock("prometheus"), /\n\s+ports:/);
+  assert.match(compose, /private:\s*\n\s+internal: true/);
 });
 
 test("proxy blokuje publiczne metryki i Prometheus używa sieci wewnętrznej", () => {
@@ -36,3 +48,7 @@ test("proxy blokuje publiczne metryki i Prometheus używa sieci wewnętrznej", (
   assert.match(prometheus, /app:3000/);
   assert.match(prometheus, /\/internal\/metrics/);
 });
+
+test.todo(
+  "wymaga zweryfikowanych pełnych digestów obrazów stagingowych i SHA supabase/setup-cli, gdy będą dostępne w zaufanym źródle",
+);

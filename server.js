@@ -54,9 +54,11 @@ const MAX_JSON_BODY_BYTES = 16 * 1024;
 const AUTH_ACCESS_COOKIE = "motek_access_token";
 const AUTH_REFRESH_COOKIE = "motek_refresh_token";
 const AUTH_IDLE_COOKIE = "motek_idle_activity";
+const AUTH_RECOVERY_COOKIE = "motek_recovery_grant";
 const AUTH_ACCESS_MAX_AGE = 60 * 60;
 const AUTH_REFRESH_MAX_AGE = 60 * 60 * 24 * 30;
 const AUTH_IDLE_TIMEOUT_SECONDS = 2 * 60 * 60;
+const AUTH_RECOVERY_TIMEOUT_SECONDS = 10 * 60;
 const AUTH_RATE_LIMIT_WINDOW_MS = 15 * 60 * 1000;
 const AUTH_RATE_LIMIT_MAX_FAILURES = 5;
 const AUTH_RATE_LIMIT_BLOCK_MS = 15 * 60 * 1000;
@@ -83,6 +85,16 @@ const yarnWriteRateLimiter = createRequestRateLimiter({
   windowMs: YARN_WRITE_WINDOW_MS,
   maxRequests: YARN_WRITE_MAX,
   blockMs: YARN_WRITE_BLOCK_MS,
+});
+const patternReadRateLimiter = createRequestRateLimiter({
+  windowMs: 60 * 1000,
+  maxRequests: 60,
+  blockMs: 60 * 1000,
+});
+const matchingRateLimiter = createRequestRateLimiter({
+  windowMs: 60 * 1000,
+  maxRequests: 30,
+  blockMs: 60 * 1000,
 });
 const MAX_TEXT_LENGTH = {
   name: 100,
@@ -142,6 +154,10 @@ const patternRouter = createPatternRouter({
   getCatalogPatterns,
   getSupabaseMatches,
   parsePatternPage,
+  enforceRequestRateLimit,
+  patternReadRateLimiter,
+  matchingRateLimiter,
+  getRequestRateLimitKeys: (req) => [`ip:${getClientAddress(req)}`],
 });
 
 class ApiError extends Error {
@@ -453,6 +469,31 @@ function clearAuthCookies(res) {
   appendSetCookie(res, buildAuthCookie(AUTH_ACCESS_COOKIE, "", 0));
   appendSetCookie(res, buildAuthCookie(AUTH_REFRESH_COOKIE, "", 0));
   appendSetCookie(res, buildAuthCookie(AUTH_IDLE_COOKIE, "", 0));
+  appendSetCookie(res, buildAuthCookie(AUTH_RECOVERY_COOKIE, "", 0));
+}
+
+function buildRecoveryGrantCookie(userId, timestamp = Math.floor(Date.now() / 1000)) {
+  const payload = `${userId}.${Math.floor(Number(timestamp))}`;
+  const signature = crypto.createHmac("sha256", getIdleSessionSecret())
+    .update(`recovery:${payload}`)
+    .digest("base64url");
+  return buildAuthCookie(AUTH_RECOVERY_COOKIE, `${payload}.${signature}`, AUTH_RECOVERY_TIMEOUT_SECONDS);
+}
+
+function parseRecoveryGrantCookie(value, userId, now = Math.floor(Date.now() / 1000)) {
+  if (typeof value !== "string" || typeof userId !== "string") return false;
+  const [rawUserId, rawTimestamp, signature] = value.split(".");
+  const timestamp = Number(rawTimestamp);
+  if (!rawUserId || rawUserId !== userId || !Number.isSafeInteger(timestamp) || !signature) return false;
+  const expected = crypto.createHmac("sha256", getIdleSessionSecret())
+    .update(`recovery:${rawUserId}.${timestamp}`)
+    .digest("base64url");
+  const expectedBuffer = Buffer.from(expected);
+  const receivedBuffer = Buffer.from(signature);
+  return receivedBuffer.length === expectedBuffer.length
+    && crypto.timingSafeEqual(receivedBuffer, expectedBuffer)
+    && now >= timestamp
+    && now - timestamp <= AUTH_RECOVERY_TIMEOUT_SECONDS;
 }
 
 function normalizeAuthEmail(value) {
@@ -539,7 +580,7 @@ async function getAuthenticatedSession(req, res) {
   const accessToken = cookies[AUTH_ACCESS_COOKIE];
   const refreshToken = cookies[AUTH_REFRESH_COOKIE];
   if (!accessToken && !refreshToken) return null;
-  if (cookies[AUTH_IDLE_COOKIE] && !parseIdleActivityCookie(cookies[AUTH_IDLE_COOKIE])) {
+  if (!cookies[AUTH_IDLE_COOKIE] || !parseIdleActivityCookie(cookies[AUTH_IDLE_COOKIE])) {
     clearAuthCookies(res);
     return null;
   }
@@ -574,7 +615,11 @@ async function getAuthenticatedSession(req, res) {
     .eq("id", userResult.data.user.id)
     .maybeSingle();
 
-  if (profileResult.error || !profileResult.data) {
+  if (profileResult.error) {
+    throw new ApiError(503, "Usługa profilu jest chwilowo niedostępna.");
+  }
+
+  if (!profileResult.data) {
     clearAuthCookies(res);
     return null;
   }
@@ -771,9 +816,19 @@ async function getSupabaseMatches(session) {
     getCatalogPatterns(),
   ]);
 
-  validateMatchLimits(patterns);
+  let remainingVariants = MAX_MATCH_VARIANTS;
   let limited = false;
-  const matches = patterns
+  const boundedPatterns = patterns
+    .map((pattern) => {
+      const requirements = Array.isArray(pattern.matchingRequirements)
+        ? pattern.matchingRequirements.slice(0, Math.max(0, remainingVariants))
+        : [];
+      remainingVariants -= requirements.length;
+      if (requirements.length !== (Array.isArray(pattern.matchingRequirements) ? pattern.matchingRequirements.length : 0)) limited = true;
+      return { ...pattern, matchingRequirements: requirements };
+    })
+    .filter((pattern) => pattern.matchingRequirements.length > 0);
+  const matches = boundedPatterns
     .filter((pattern) => !pattern.needsReview)
     .flatMap((pattern) =>
       pattern.matchingRequirements.flatMap((variant) => {
@@ -896,7 +951,6 @@ async function readBody(req) {
   let timeout;
   const timeoutPromise = new Promise((resolve, reject) => {
     timeout = setTimeout(() => {
-      req.destroy();
       reject(new ApiError(408, "Przekroczono czas przesyłania danych."));
     }, HTTP_BODY_TIMEOUT_MS);
   });
@@ -1173,6 +1227,7 @@ async function handleAuthApi(req, res, url) {
   }
 
   if (req.method === "POST" && url.pathname === "/api/auth/recovery") {
+    enforceRequestRateLimit([`ip:${getClientAddress(req)}`, "recovery"], authRequestRateLimiter, res);
     const body = await readBody(req);
     const code = normalizeRecoveryToken(body.code, "jednorazowy");
     const client = authClient();
@@ -1181,6 +1236,7 @@ async function handleAuthApi(req, res, url) {
       throw new ApiError(400, "Link odzyskiwania hasła jest nieprawidłowy lub wygasł.");
     }
     setAuthCookies(res, data.session);
+    appendSetCookie(res, buildRecoveryGrantCookie(data.user.id));
     return sendJson(res, 200, { user: sanitizeAuthUser(data.user) });
   }
 
@@ -1190,7 +1246,7 @@ async function handleAuthApi(req, res, url) {
     const password = validateAuthPassword(body.password);
     const cookies = parseCookies(req.headers.cookie);
     const refreshToken = cookies[AUTH_REFRESH_COOKIE];
-    if (!refreshToken) {
+    if (!refreshToken || !parseRecoveryGrantCookie(cookies[AUTH_RECOVERY_COOKIE], session.user.id)) {
       throw new ApiError(400, "Link odzyskiwania hasła jest nieprawidłowy lub wygasł.");
     }
 
@@ -1214,14 +1270,17 @@ async function handleAuthApi(req, res, url) {
 
   if (req.method === "POST" && url.pathname === "/api/auth/logout") {
     const cookies = parseCookies(req.headers.cookie);
-    if (supabaseAuthConfig && cookies[AUTH_ACCESS_COOKIE]) {
-      const client = supabaseAuthClientFactory(
-        supabaseAuthConfig,
-        cookies[AUTH_ACCESS_COOKIE]
-      );
-      await client.auth.signOut({ scope: "local" });
+    try {
+      if (supabaseAuthConfig && cookies[AUTH_ACCESS_COOKIE]) {
+        const client = supabaseAuthClientFactory(
+          supabaseAuthConfig,
+          cookies[AUTH_ACCESS_COOKIE]
+        );
+        await client.auth.signOut({ scope: "local" });
+      }
+    } finally {
+      clearAuthCookies(res);
     }
-    clearAuthCookies(res);
     return sendJson(res, 200, { authenticated: false });
   }
 
@@ -1574,6 +1633,8 @@ module.exports = {
   getIdleTimeoutSeconds,
   buildIdleActivityCookie,
   parseIdleActivityCookie,
+  buildRecoveryGrantCookie,
+  parseRecoveryGrantCookie,
   validateAuthPassword,
   normalizeRecoveryToken,
 };

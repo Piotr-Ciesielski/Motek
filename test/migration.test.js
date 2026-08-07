@@ -46,3 +46,18 @@ test("backend nie odczytuje usuniętej kolumny full_name", () => {
 
   assert.doesNotMatch(server, /\bfull_name\b/);
 });
+
+test("migracja ACL blokuje bezpośrednie mutacje i usuwa publiczny licznik wersji", () => {
+  const migrationPath = path.join(
+    __dirname,
+    "..",
+    "supabase",
+    "migrations",
+    "20260807150000_reconcile_yarn_acl_and_recovery.sql"
+  );
+  const sql = fs.existsSync(migrationPath) ? fs.readFileSync(migrationPath, "utf8") : "";
+
+  assert.match(sql, /revoke\s+insert,\s*update,\s*delete\s+on\s+table\s+public\.yarns\s+from\s+authenticated/i);
+  assert.match(sql, /revoke\s+all\s+on\s+table\s+private\.yarn_store_versions\s+from\s+public,\s*anon,\s*authenticated/i);
+  assert.match(sql, /drop\s+table\s+if\s+exists\s+public\.yarn_store_versions/i);
+});

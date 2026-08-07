@@ -1,33 +1,26 @@
 # Status audytu bezpieczeństwa — 2026-08-07
 
-Dokument opisuje stan zmian na zweryfikowanym środowisku staging. Nie oznacza
-wdrożenia tych zmian na produkcję.
+## Zakres
 
-## Stan
+Audyt restrykcyjny wykonano bez upgrade'u Supabase do planu Pro. Nie uruchamiano zdalnych migracji ani wdrożenia produkcyjnego.
 
-Na stagingu zaadresowano i przetestowano punkty U-01–U-15, U-18, U-20, U-21
-i U-23 z `AUDYT_SEC.md`. Obejmują one m.in. ochronę bezpośrednich mutacji
-magazynu, recovery haseł, sesje i ciasteczka, race condition draftów,
-walidację danych, limity, rate limiting oraz testy graniczne bazy.
+## Wdrożone lokalnie
 
-Weryfikacja CI stagingu obejmuje 135 zakończonych sukcesem testów pgTAP oraz
-regresję po wdrożeniu. Aktualny snapshot to `staging` / `62d0b84e` /
-`2.0.0-alpha.39`.
+- odtwarzalna migracja ACL prywatnego licznika włóczek i odebranie bezpośrednich mutacji `yarns`;
+- wymagane, podpisane cookie aktywności sesji;
+- dodatkowa ochrona endpointu zmiany hasła po przepływie recovery;
+- bezpieczne zachowanie przy awarii profilu, logout i timeout body;
+- limity żądań dla katalogu, dopasowań i recovery oraz ograniczenie kosztu dopasowań;
+- przypięcie `supabase/setup-cli` do pełnego SHA i semantyczny test konfiguracji stagingu.
 
-## Częściowo zaadresowane
+## Ograniczenia i prace otwarte
 
-- **U-22** — zaktualizowano README, specyfikację i raport stagingu; pełne
-  uporządkowanie wszystkich kontraktów i tabeli tras pozostaje do domknięcia.
+- Leaked Password Protection pozostaje niedostępna na Supabase Free.
+- Pełny jednorazowy grant recovery wymaga trwałego magazynu/zużycia po stronie bazy; obecne cookie jest krótkotrwałe i podpisane.
+- Pełne testy pgTAP wymagają lokalnego Postgresa/Dockera.
+- Produkcyjna konfiguracja proxy i migracje wymagają osobnej zgody przed wykonaniem.
+- `client/auth-controller.js` pozostaje niepodłączonym modułem pomocniczym; produkcyjny przepływ nadal obsługuje `app.js`.
 
-## Otwarte
+## Weryfikacja
 
-- **U-16** — akcja `supabase/setup-cli` nadal używa ruchomego taga `@v1`;
-- **U-17** — obrazy pomocnicze w konfiguracji stagingu nie są wszędzie
-  przypięte do digestów;
-- **U-19** — `avatar_url` nie ma limitu długości egzekwowanego w bazie.
-
-## Granica wdrożenia
-
-Produkcja pozostaje na wcześniejszym commicie i nie została zmieniona.
-Otwarte punkty należy zamknąć na osobnym pakiecie przed rozważeniem wdrożenia
-produkcyjnego.
+Przeszły testy migracji, tras wzorców i testy regresji Auth uruchomione selektywnie. Pełny `npm run check` wymaga osobnej diagnostyki, ponieważ istniejący harness testów serwera pozostawia procesy i nie kończy się deterministycznie.
