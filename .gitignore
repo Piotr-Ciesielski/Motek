@@ -36,6 +36,7 @@ __pycache__/
 *.py[cod]
 
 Wzory/
+docs/
 PROMPTS.md
 AUDYT.md
 AGENTS.md
