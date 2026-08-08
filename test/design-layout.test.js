@@ -173,6 +173,21 @@ test("inventory artwork fills the hero without an opaque copy panel", () => {
   );
 });
 
+test("inventory hero matches the shared hero height and keeps actions below the title", () => {
+  assert.match(
+    stylesCss,
+    /#inventoryView \.inventory-hero\s*\{[\s\S]*?min-height: clamp\(360px, 36vw, 500px\);/,
+  );
+  assert.match(
+    stylesCss,
+    /#inventoryView \.inventory-heading\s*\{[\s\S]*?min-height: clamp\(360px, 36vw, 500px\);[\s\S]*?flex-direction: column;/,
+  );
+  assert.match(
+    stylesCss,
+    /#inventoryView \.inventory-heading__actions\s*\{[\s\S]*?margin-top: 30px;[\s\S]*?margin-left: 24px;/,
+  );
+});
+
 test("captcha remains available in every auth flow", () => {
   assert.equal((indexHtml.match(/data-turnstile-for=/g) || []).length, 3);
   assert.match(indexHtml, /data-turnstile-for="passwordReset"/);

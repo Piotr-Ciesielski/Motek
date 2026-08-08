@@ -2690,3 +2690,65 @@ body::before {
 #inventoryView .inventory-layout__visual img {
   object-position: 58% center;
 }
+
+/* Inventory hero alignment — mirror the shared Dopasowanie/Katalog rhythm. */
+#inventoryView .inventory-hero {
+  min-height: clamp(360px, 36vw, 500px);
+}
+
+#inventoryView .inventory-heading {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-start;
+  min-height: clamp(360px, 36vw, 500px);
+  max-width: 54%;
+  padding: clamp(36px, 5vw, 76px);
+}
+
+#inventoryView .inventory-heading > div:first-child {
+  max-width: 100%;
+  padding: 0;
+  transform: translate(24px, 28px);
+}
+
+#inventoryView .inventory-heading__actions {
+  display: flex;
+  align-self: flex-start;
+  gap: 12px;
+  max-width: 100%;
+  margin-top: 30px;
+  margin-left: 24px;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 768px) {
+  #inventoryView .inventory-hero {
+    min-height: 0;
+  }
+
+  #inventoryView .inventory-heading {
+    width: 100%;
+    max-width: none;
+    min-height: 340px;
+    padding: 28px 22px;
+  }
+
+  #inventoryView .inventory-heading > div:first-child {
+    max-width: calc(100% - 8px);
+    transform: translate(8px, 10px);
+  }
+
+  #inventoryView .inventory-heading__actions {
+    max-width: calc(100% - 8px);
+    margin-top: 24px;
+    margin-left: 8px;
+  }
+}
+
+@media (max-width: 420px) {
+  #inventoryView .inventory-heading {
+    min-height: 300px;
+    padding: 24px 18px;
+  }
+}
