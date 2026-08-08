@@ -2,6 +2,7 @@
   const api = factory();
   if (typeof module === "object" && module.exports) module.exports = api;
   if (root) root.createCatalogController = api.createCatalogController;
+  if (root) root.createCatalogFilterDisclosure = api.createCatalogFilterDisclosure;
 })(typeof window !== "undefined" ? window : globalThis, () => {
 "use strict";
 
@@ -127,5 +128,31 @@ function createCatalogController(options) {
   return controller;
 }
 
-return { createCatalogController };
+function createCatalogFilterDisclosure({ toggle, panel, mobileQuery }) {
+  const setOpen = (open) => {
+    const nextOpen = Boolean(open);
+    toggle.setAttribute("aria-expanded", String(nextOpen));
+    panel.hidden = !nextOpen;
+  };
+  const syncViewport = () => setOpen(!mobileQuery.matches);
+
+  toggle.addEventListener("click", () => {
+    setOpen(toggle.getAttribute("aria-expanded") !== "true");
+  });
+  panel.addEventListener("keydown", (event) => {
+    if (event.key !== "Escape" || !mobileQuery.matches) return;
+    setOpen(false);
+    toggle.focus();
+  });
+  mobileQuery.addEventListener?.("change", syncViewport);
+  syncViewport();
+
+  return {
+    updateCount(count) {
+      toggle.textContent = `Filtry (${Math.max(0, Number(count) || 0)})`;
+    },
+  };
+}
+
+return { createCatalogController, createCatalogFilterDisclosure };
 });

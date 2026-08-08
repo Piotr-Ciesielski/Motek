@@ -23,6 +23,8 @@ const patternCatalogActions = document.getElementById("patternCatalogActions");
 const loadMorePatternsBtn = document.getElementById("loadMorePatternsBtn");
 const backToCatalogFiltersBtn = document.getElementById("backToCatalogFiltersBtn");
 const resetCatalogFiltersBtn = document.getElementById("resetCatalogFiltersBtn");
+const catalogFiltersToggle = document.getElementById("catalogFiltersToggle");
+const catalogSecondaryFilters = document.getElementById("catalogSecondaryFilters");
 const loginForm = document.getElementById("loginForm");
 const registerForm = document.getElementById("registerForm");
 const authForms = document.getElementById("authForms");
@@ -61,10 +63,6 @@ const inventoryStatLength = document.getElementById("inventoryStatLength");
 const inventoryStatWeight = document.getElementById("inventoryStatWeight");
 const inventoryStatColors = document.getElementById("inventoryStatColors");
 const matchesThemeImage = document.getElementById("matchesThemeImage");
-const accountMetricYarns = document.getElementById("accountMetricYarns");
-const accountMetricProjects = document.getElementById("accountMetricProjects");
-const accountMetricMatches = document.getElementById("accountMetricMatches");
-const accountActionButtons = [...document.querySelectorAll("[data-account-action]")];
 const appViews = [...document.querySelectorAll(".app-view")];
 const viewButtons = [...document.querySelectorAll("[data-view-target]")];
 const inventoryMatchBtn = document.getElementById("inventoryMatchBtn");
@@ -75,6 +73,16 @@ const networkStatus = document.getElementById("networkStatus");
 const { createApiClient, ApiError, RequestError, isResponseEnvelope } = window.MotekApiClient;
 
 const REQUEST_TIMEOUT_MS = 12_000;
+const scrollBehavior = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches
+  ? "auto"
+  : "smooth";
+const catalogFilterDisclosure = typeof window.createCatalogFilterDisclosure === "function"
+  ? window.createCatalogFilterDisclosure({
+    toggle: catalogFiltersToggle,
+    panel: catalogSecondaryFilters,
+    mobileQuery: window.matchMedia("(max-width: 640px)"),
+  })
+  : { updateCount() {} };
 const {
   buildAuthPayload,
   buildPatternFacetCounts,
@@ -301,7 +309,7 @@ function setActiveView(requestedView, { focus = true } = {}) {
   });
 
   if (focus) {
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    window.scrollTo({ top: 0, behavior: scrollBehavior });
     focusViewHeading(target);
   }
 
@@ -359,25 +367,6 @@ viewButtons.forEach((button) => {
   button.addEventListener("click", () => setActiveView(button.dataset.viewTarget));
 });
 
-accountActionButtons.forEach((button) => {
-  button.addEventListener("click", () => {
-    const action = button.dataset.accountAction;
-    if (action === "theme") {
-      themeToggle?.click();
-      return;
-    }
-    if (action === "profile") {
-      authProfileSummary?.scrollIntoView({ behavior: "smooth", block: "center" });
-      return;
-    }
-    if (action === "notifications") {
-      authMessage.textContent = "Powiadomienia są zarządzane w ustawieniach konta.";
-      authMessage.dataset.kind = "info";
-      authMessage.focus({ preventScroll: true });
-    }
-  });
-});
-
 themeToggle?.addEventListener("click", () => {
   const currentTheme = normalizeTheme(document.documentElement.dataset.theme);
   const nextTheme = getThemeToggleState(currentTheme).nextTheme;
@@ -389,9 +378,11 @@ themeToggle?.addEventListener("click", () => {
 renderThemeToggle();
 
 heroAuthBtn.addEventListener("click", () => {
-  authPanel.scrollIntoView({ behavior: "smooth", block: "start" });
+  showAuthForm(registerForm);
+  setAuthMessage("");
+  authPanel.scrollIntoView({ behavior: scrollBehavior, block: "start" });
   window.setTimeout(() => {
-    loginForm.querySelector('input[name="email"]').focus({ preventScroll: true });
+    registerForm.querySelector('input[name="login"]').focus({ preventScroll: true });
   }, 250);
 });
 
@@ -1285,7 +1276,7 @@ function renderYarnEmptyState() {
       return;
     }
     setActiveView("account");
-    loginForm.scrollIntoView({ behavior: "smooth", block: "center" });
+    loginForm.scrollIntoView({ behavior: scrollBehavior, block: "center" });
     loginForm.querySelector('input[name="email"]').focus({ preventScroll: true });
   });
   emptyState.appendChild(action);
@@ -1520,6 +1511,13 @@ function renderPatternCatalog() {
     typeFilter === "all" &&
     materialFilter === "all" &&
     sortMode === "recommended";
+  catalogFilterDisclosure.updateCount([
+    reviewFilter !== "verified",
+    languageFilter !== "all",
+    typeFilter !== "all",
+    materialFilter !== "all",
+    sortMode !== "recommended",
+  ].filter(Boolean).length);
   const matchingPatterns = filterPatterns(catalogPatterns, filters)
     .sort((left, right) => {
       const nameOrder = formatPatternName(left.name).localeCompare(
@@ -1544,9 +1542,27 @@ function renderPatternCatalog() {
   patternCatalog.replaceChildren();
   patternCatalogActions.hidden = matchingPatterns.length === 0;
   loadMorePatternsBtn.hidden = visiblePatterns.length >= matchingPatterns.length;
+  const revealCount = Math.min(12, Math.max(0, matchingPatterns.length - visiblePatterns.length));
+  if (revealCount > 0) {
+    const lastTwo = revealCount % 100;
+    const last = revealCount % 10;
+    const noun = revealCount === 1
+      ? "kolejny wzór"
+      : last >= 2 && last <= 4 && !(lastTwo >= 12 && lastTwo <= 14)
+        ? "kolejne wzory"
+        : "kolejnych wzorów";
+    loadMorePatternsBtn.textContent = `Pokaż ${formatNumber(revealCount)} ${noun}`;
+  }
 
   if (!visiblePatterns.length) {
-    showMessage(patternCatalog, "Nie znaleziono wzorów spełniających te kryteria.");
+    showMessage(
+      patternCatalog,
+      "Nie znaleziono wzorów spełniających te kryteria. Spróbuj poluzować jeden z filtrów.",
+      "status",
+      resetCatalogFiltersBtn.disabled
+        ? null
+        : { label: "Wyczyść filtry", onClick: resetPatternCatalogFilters },
+    );
     return;
   }
 
@@ -1730,9 +1746,6 @@ async function renderResults() {
 async function renderSummary(loadedYarns = null) {
   if (!isAuthenticated) {
     summary.textContent = "Twój prywatny magazyn pojawi się tutaj po zalogowaniu.";
-    accountMetricYarns.textContent = "—";
-    accountMetricProjects.textContent = "—";
-    accountMetricMatches.textContent = "—";
     inventoryStats?.setAttribute("aria-busy", "false");
     return;
   }
@@ -1748,9 +1761,6 @@ async function renderSummary(loadedYarns = null) {
   inventoryStatLength.textContent = formatNumber(totalLength);
   inventoryStatWeight.textContent = formatNumber(totalWeight);
   inventoryStatColors.textContent = formatNumber(colorCount);
-  accountMetricYarns.textContent = formatNumber(yarns.length);
-  accountMetricProjects.textContent = "—";
-  accountMetricMatches.textContent = "—";
   inventoryStats?.replaceChildren(
     inventoryStats.querySelector(".inventory-stat--coral"),
     inventoryStats.querySelector(".inventory-stat--lavender"),
@@ -1861,7 +1871,7 @@ async function startPasswordRecovery() {
     authForms.hidden = false;
     setActiveView("account", { focus: false });
     showAuthForm(passwordUpdateForm);
-    passwordUpdateForm.scrollIntoView({ behavior: "smooth", block: "center" });
+    passwordUpdateForm.scrollIntoView({ behavior: scrollBehavior, block: "center" });
     setAuthMessage("Ustaw nowe hasło.");
     window.setTimeout(() => {
       passwordUpdateForm.querySelector('input[name="password"]').focus({ preventScroll: true });
@@ -2223,7 +2233,7 @@ addYarnBtn.addEventListener("click", () => {
   if (!created) {
     setStorageMessage("Formularz nowego motka jest już otwarty.");
   }
-  card.scrollIntoView({ behavior: "smooth", block: "center" });
+  card.scrollIntoView({ behavior: scrollBehavior, block: "center" });
   card.querySelector('[data-field="name"]').focus();
 });
 
@@ -2266,7 +2276,7 @@ findBtn.addEventListener("click", async () => {
     findBtn.textContent = "Dobieram...";
     showMessage(results, "Pobieram dopasowane wzory...", "loading");
     await refresh();
-    document.getElementById("matchesTitle").scrollIntoView({ behavior: "smooth", block: "start" });
+    document.getElementById("matchesTitle").scrollIntoView({ behavior: scrollBehavior, block: "start" });
   } catch (error) {
     showResultsError(error.message);
   } finally {
@@ -2285,13 +2295,7 @@ function resetPatternCatalogView() {
   renderPatternCatalog();
 }
 
-patternSearch.addEventListener("input", resetPatternCatalogView);
-patternReviewFilter.addEventListener("change", resetPatternCatalogView);
-patternLanguageFilter.addEventListener("change", resetPatternCatalogView);
-patternTypeFilter.addEventListener("change", resetPatternCatalogView);
-patternMaterialFilter.addEventListener("change", resetPatternCatalogView);
-patternSort.addEventListener("change", resetPatternCatalogView);
-resetCatalogFiltersBtn.addEventListener("click", () => {
+function resetPatternCatalogFilters() {
   patternSearch.value = "";
   patternReviewFilter.value = "verified";
   patternLanguageFilter.value = "all";
@@ -2300,7 +2304,15 @@ resetCatalogFiltersBtn.addEventListener("click", () => {
   patternSort.value = "recommended";
   resetPatternCatalogView();
   patternSearch.focus({ preventScroll: true });
-});
+}
+
+patternSearch.addEventListener("input", resetPatternCatalogView);
+patternReviewFilter.addEventListener("change", resetPatternCatalogView);
+patternLanguageFilter.addEventListener("change", resetPatternCatalogView);
+patternTypeFilter.addEventListener("change", resetPatternCatalogView);
+patternMaterialFilter.addEventListener("change", resetPatternCatalogView);
+patternSort.addEventListener("change", resetPatternCatalogView);
+resetCatalogFiltersBtn.addEventListener("click", resetPatternCatalogFilters);
 loadMorePatternsBtn.addEventListener("click", async () => {
   const catalogState = catalogController.getState();
   if (catalogDisplayLimit < filterPatterns(catalogState.items, readPatternFilters()).length) {
@@ -2313,7 +2325,7 @@ loadMorePatternsBtn.addEventListener("click", async () => {
 });
 backToCatalogFiltersBtn.addEventListener("click", () => {
   document.getElementById("catalogFilters").scrollIntoView({
-    behavior: "smooth",
+    behavior: scrollBehavior,
     block: "center",
   });
   patternSearch.focus({ preventScroll: true });
