@@ -18,7 +18,11 @@ const browserScripts = [
   "app.js",
 ].map((file) => fs.readFileSync(path.join(__dirname, "..", file), "utf8"));
 
-function loadApp({ reducedMotion = false } = {}) {
+function loadApp({
+  reducedMotion = false,
+  session = { authenticated: false, user: null },
+  onRequest,
+} = {}) {
   const dom = new JSDOM(indexHtml, {
     url: "http://localhost/",
     runScripts: "outside-only",
@@ -26,22 +30,26 @@ function loadApp({ reducedMotion = false } = {}) {
   });
   const { window } = dom;
   window.matchMedia = () => ({ matches: reducedMotion, addEventListener() {}, removeEventListener() {} });
+  window.scrollTo = () => {};
   window.HTMLElement.prototype.scrollIntoView = function scrollIntoView(options) {
     this.scrollOptions = options;
   };
-  window.fetch = async (input) => {
+  const requests = [];
+  window.fetch = async (input, options = {}) => {
     const pathname = new URL(input, window.location.href).pathname;
-    const payload = pathname === "/api/config"
+    requests.push({ pathname, options });
+    const payload = await onRequest?.({ pathname, options }) ?? (pathname === "/api/config"
       ? { captcha: { enabled: false } }
       : pathname === "/api/auth/session"
-        ? { authenticated: false, user: null }
-        : { items: [], total: 0 };
+        ? session
+        : { items: [], total: 0 });
     return new Response(JSON.stringify(payload), {
       status: 200,
       headers: { "Content-Type": "application/json" },
     });
   };
   browserScripts.forEach((source) => window.eval(source));
+  dom.requests = requests;
   return dom;
 }
 
@@ -152,6 +160,126 @@ test("eksportuje kontroler globalnie w przeglądarce", () => {
   const window = {};
   vm.runInNewContext(source, { window });
   assert.equal(typeof window.createAuthController, "function");
+});
+
+test("niezalogowany przycisk nagłówka otwiera czysty formularz logowania i fokusuje e-mail", async () => {
+  const dom = loadApp();
+  const { document } = dom.window;
+
+  await new Promise((resolve) => dom.window.setTimeout(resolve, 20));
+  const authMessage = document.getElementById("authMessage");
+  authMessage.textContent = "Poprzedni komunikat";
+  const headerAuthAction = document.getElementById("headerAuthAction");
+
+  assert.equal(headerAuthAction.textContent, "Zaloguj");
+  assert.equal(headerAuthAction.getAttribute("aria-label"), "Zaloguj");
+  headerAuthAction.click();
+
+  assert.equal(document.getElementById("accountView").hidden, false);
+  assert.equal(document.getElementById("loginForm").hidden, false);
+  assert.equal(authMessage.textContent, "");
+  assert.equal(document.activeElement.id, "login-email");
+  dom.window.close();
+});
+
+test("zalogowany przycisk nagłówka wylogowuje bez ujawniania e-maila", async (t) => {
+  const email = "jan@example.test";
+  const dom = loadApp({
+    session: {
+      authenticated: true,
+      user: { id: "u1", email },
+      profile: { email },
+    },
+    onRequest: ({ pathname }) => pathname === "/api/auth/logout" ? {} : undefined,
+  });
+  const { document } = dom.window;
+  t.after(() => dom.window.close());
+
+  await new Promise((resolve) => dom.window.setTimeout(resolve, 20));
+  const headerAuthAction = document.getElementById("headerAuthAction");
+
+  assert.equal(headerAuthAction.textContent, "Wyloguj");
+  assert.equal(headerAuthAction.getAttribute("aria-label"), "Wyloguj");
+  assert.equal(headerAuthAction.title, "");
+  assert.doesNotMatch(headerAuthAction.textContent, new RegExp(email));
+  const accountEmailLines = ["authUser", "authProfileSummary"]
+    .map((id) => document.getElementById(id))
+    .filter((node) => !node.hidden && node.textContent.startsWith("Zalogowano jako"))
+    .map((node) => node.textContent);
+  assert.deepEqual(accountEmailLines, [`Zalogowano jako: ${email}`]);
+  assert.equal(accountEmailLines.filter((line) => /^Zalogowano jako (?!:)/.test(line)).length, 0);
+
+  const deleteAccountDisclosure = document.getElementById("deleteAccountDisclosure");
+  deleteAccountDisclosure.open = true;
+  headerAuthAction.click();
+  await new Promise((resolve) => dom.window.setTimeout(resolve, 20));
+
+  assert.ok(dom.requests.some(({ pathname }) => pathname === "/api/auth/logout"));
+  assert.equal(document.getElementById("accountView").hidden, false);
+  assert.equal(document.getElementById("loginForm").hidden, false);
+  assert.equal(deleteAccountDisclosure.open, false);
+});
+
+test("pomyślne logowanie z formularza nadal przenosi do magazynu", async () => {
+  const email = "jan@example.test";
+  let authenticated = false;
+  const dom = loadApp({
+    onRequest: ({ pathname }) => {
+      if (pathname === "/api/auth/login") {
+        authenticated = true;
+        return { user: { id: "u1", email } };
+      }
+      if (pathname === "/api/auth/session") {
+        return authenticated
+          ? { authenticated: true, user: { id: "u1", email }, profile: { email } }
+          : { authenticated: false, user: null };
+      }
+      return undefined;
+    },
+  });
+  const { document } = dom.window;
+
+  await new Promise((resolve) => dom.window.setTimeout(resolve, 20));
+  document.getElementById("login-email").value = email;
+  document.getElementById("login-password").value = "Secret1!";
+  document.getElementById("loginForm").requestSubmit();
+  await new Promise((resolve) => dom.window.setTimeout(resolve, 20));
+
+  assert.equal(document.getElementById("inventoryView").hidden, false);
+  assert.equal(document.getElementById("headerAuthAction").textContent, "Wyloguj");
+  dom.window.close();
+});
+
+test("powrót do Konta po logowaniu nie zachowuje ogólnego komunikatu sukcesu", async (t) => {
+  const email = "jan@example.test";
+  let authenticated = false;
+  const dom = loadApp({
+    onRequest: ({ pathname }) => {
+      if (pathname === "/api/auth/login") {
+        authenticated = true;
+        return { user: { id: "u1", email } };
+      }
+      if (pathname === "/api/auth/session") {
+        return authenticated
+          ? { authenticated: true, user: { id: "u1", email }, profile: { email } }
+          : { authenticated: false, user: null };
+      }
+      return undefined;
+    },
+  });
+  const { document } = dom.window;
+  t.after(() => dom.window.close());
+
+  await new Promise((resolve) => dom.window.setTimeout(resolve, 20));
+  document.getElementById("login-email").value = email;
+  document.getElementById("login-password").value = "Secret1!";
+  document.getElementById("loginForm").requestSubmit();
+  await new Promise((resolve) => dom.window.setTimeout(resolve, 20));
+
+  document.querySelector('[data-view-target="account"]').click();
+
+  assert.equal(document.getElementById("accountView").hidden, false);
+  assert.equal(document.getElementById("authMessage").textContent, "");
 });
 
 test("Zacznij w Motku otwiera rejestrację, przewija panel i fokusuje e-mail", async (t) => {

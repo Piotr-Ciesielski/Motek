@@ -1,8 +1,14 @@
 # QA wierności makiet — 2026-08-08
 
+## Historyczny baseline staging (poprzedni etap)
+
 Branch staging: `staging`
 Commit: `cf60ce65`
 Adres: `https://staging.rysia.org/`
+
+## Lokalny kandydat `auth-header-account-ux`
+
+Zmiany nagłówka i konta są lokalnym kandydatem do wydania. Nie są w tym dokumencie deklarowane jako wdrożone na stagingu ani produkcji; dotyczą ich wyłącznie lokalne sprawdzenia automatyczne poniżej.
 
 ## Macierz wizualna
 
@@ -19,12 +25,13 @@ Makieta Katalogu pokazuje bibliotekę włóczek i fotografie motków, a działaj
 
 ## Sprawdzenia
 
-- `node --test test/design-regression.test.js test/design-layout.test.js` — 28/28.
-- `npm run check` — 289/289.
+- `node --test --test-isolation=none test/auth-controller.test.js test/design-layout.test.js test/design-regression.test.js` — 49/49. Obejmuje nagłówek „Zaloguj”/„Wyloguj”, fokus logowania, brak e-maila w nagłówku oraz zwijane usuwanie konta.
+- `npm run check` — 297/297.
 - `npm run lint` — 0 błędów, 4 wcześniejsze ostrzeżenia.
+- `git diff --check` — bez błędów białych znaków (Git zgłosił tylko istniejące ostrzeżenia normalizacji LF/CRLF w zmienionych plikach).
 - `npm run staging:check` — 15/15.
 - CI staging — test i migracje bazy zakończone powodzeniem.
-- Browser QA: desktop oraz 390×844; `scrollWidth === clientWidth` dla Magazynu, Dopasowania, Katalogu i Konta.
+- Historyczny Browser QA poprzedniego etapu (niepowtarzany dla auth-header-account-ux): desktop oraz 390×844; `scrollWidth === clientWidth` dla Magazynu, Dopasowania, Katalogu i Konta.
 - Parity QA po publikacji: staging i produkcja wskazują `styles.css`, `app.js` oraz `catalog-controller.js` w wersji `2.0.0-alpha.39`; oba środowiska mają aktualne reguły pełnej ekspozycji grafik bez overlayu.
 - `npm run format:check` nadal zgłasza cztery niezmienione pliki konfiguracyjne (`eslint.config.js`, `.prettierrc.json`, `package.json`, `.github/workflows/ci.yml`).
 

@@ -272,6 +272,34 @@ test("account keeps only real authentication and account-management surfaces", (
   assert.doesNotMatch(indexHtml, /data-account-action=/);
 });
 
+test("authenticated header and account disclosure use the compact DOM contract", () => {
+  const document = new JSDOM(indexHtml).window.document;
+  const actions = [...document.querySelectorAll(".app-header__actions > *")];
+
+  assert.deepEqual(actions.map((node) => node.id), ["themeToggle", "headerAuthAction"]);
+  assert.equal(document.getElementById("headerAuthAction")?.getAttribute("type"), "button");
+  assert.equal(document.getElementById("headerAuthAction")?.textContent.trim(), "Zaloguj");
+  assert.equal(document.getElementById("headerUser"), null);
+  assert.match(document.getElementById("authProfileSummary").textContent, /Zalogowano jako:/);
+  assert.equal(document.querySelector("#authLoggedIn > .auth-message"), null);
+
+  const disclosure = document.getElementById("deleteAccountDisclosure");
+  assert.ok(disclosure);
+  assert.equal(disclosure.hasAttribute("open"), false);
+  assert.equal(disclosure?.tagName, "DETAILS");
+  assert.equal(disclosure?.className, "account-danger-disclosure");
+  assert.equal(disclosure?.open, false);
+  const disclosureSummary = disclosure?.querySelector("summary");
+  assert.match(disclosureSummary?.textContent ?? "", /Usuń konto/);
+  assert.match(disclosureSummary?.textContent ?? "", /Tej operacji nie można cofnąć\./);
+  assert.equal(disclosure?.querySelector("#deleteAccountForm")?.id, "deleteAccountForm");
+});
+
+test("compact auth controls expose their required CSS contracts", () => {
+  assert.match(stylesCss, /\.header-auth-action[\s\S]*min-(?:width|height): 44px/);
+  assert.match(stylesCss, /\.account-danger-disclosure/);
+});
+
 test("mobile catalog exposes the filter disclosure and shortens the account hero", () => {
   assert.match(
     stylesCss,

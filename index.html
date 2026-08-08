@@ -40,7 +40,7 @@
           <button id="themeToggle" class="theme-toggle" type="button" aria-pressed="false" aria-label="Włącz tryb ciemny">
             <span class="theme-toggle__icon" aria-hidden="true">☾</span>
           </button>
-          <div id="headerUser" class="header-user" hidden></div>
+          <button id="headerAuthAction" class="header-auth-action" type="button">Zaloguj</button>
         </div>
       </div>
     </header>
@@ -165,30 +165,36 @@
         </form>
 
         <div id="authLoggedIn" class="auth-logged-in" hidden>
-          <p id="authProfileSummary"></p>
+          <p id="authProfileSummary">Zalogowano jako:</p>
           <button id="logoutBtn" class="button button--ghost" type="button">Wyloguj się</button>
-          <form id="deleteAccountForm" class="account-danger-zone" method="post" action="/api/account" novalidate>
-            <h3 id="deleteAccountTitle">Usuń konto</h3>
-            <p>Ta operacja trwale usuwa konto i wszystkie zapisane włóczki.</p>
-            <div class="auth-field">
-              <label for="account-delete-password">Twoje hasło</label>
-              <span class="password-field">
-                <input id="account-delete-password" name="password" type="password" autocomplete="current-password" required aria-describedby="deleteAccountHint deleteAccountMessage" />
-                <button class="password-reveal" type="button"
-                  data-password-reveal="account-delete-password"
-                  aria-controls="account-delete-password" aria-pressed="false"
-                  aria-label="Przytrzymaj, aby pokazać hasło">
-                </button>
-              </span>
-            </div>
-            <label for="account-delete-confirmation">
-              Wpisz: <strong>USUŃ KONTO</strong>
-              <input id="account-delete-confirmation" name="confirmation" autocomplete="off" required aria-describedby="deleteAccountHint deleteAccountMessage" />
-            </label>
-            <p id="deleteAccountHint" class="field-hint">Usunięcie jest natychmiastowe i nie można go cofnąć.</p>
-            <button class="button button--danger" type="submit">Usuń konto bezpowrotnie</button>
-            <p id="deleteAccountMessage" class="auth-message" role="status" aria-live="polite"></p>
-          </form>
+          <details id="deleteAccountDisclosure" class="account-danger-disclosure">
+            <summary>
+              <span class="account-danger-disclosure__title">Usuń konto</span>
+              <span class="account-danger-disclosure__warning">Tej operacji nie można cofnąć.</span>
+            </summary>
+            <form id="deleteAccountForm" class="account-danger-zone" method="post" action="/api/account" novalidate>
+              <h3 id="deleteAccountTitle">Usuń konto</h3>
+              <p>Ta operacja trwale usuwa konto i wszystkie zapisane włóczki.</p>
+              <div class="auth-field">
+                <label for="account-delete-password">Twoje hasło</label>
+                <span class="password-field">
+                  <input id="account-delete-password" name="password" type="password" autocomplete="current-password" required aria-describedby="deleteAccountHint deleteAccountMessage" />
+                  <button class="password-reveal" type="button"
+                    data-password-reveal="account-delete-password"
+                    aria-controls="account-delete-password" aria-pressed="false"
+                    aria-label="Przytrzymaj, aby pokazać hasło">
+                  </button>
+                </span>
+              </div>
+              <label for="account-delete-confirmation">
+                Wpisz: <strong>USUŃ KONTO</strong>
+                <input id="account-delete-confirmation" name="confirmation" autocomplete="off" required aria-describedby="deleteAccountHint deleteAccountMessage" />
+              </label>
+              <p id="deleteAccountHint" class="field-hint">Usunięcie jest natychmiastowe i nie można go cofnąć.</p>
+              <button class="button button--danger" type="submit">Usuń konto bezpowrotnie</button>
+              <p id="deleteAccountMessage" class="auth-message" role="status" aria-live="polite"></p>
+            </form>
+          </details>
         </div>
         <div id="idleSessionWarning" class="idle-session-warning" role="alertdialog" aria-live="assertive" hidden>
           <p>Sesja wygaśnie za 5 minut z powodu bezczynności.</p>

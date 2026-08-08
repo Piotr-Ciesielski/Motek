@@ -44,6 +44,24 @@ test("design changes preserve text-only navigation destinations", () => {
   assert.ok(navigation.every(({ label }) => label.length > 0));
 });
 
+test("design changes preserve the compact authentication header contract", () => {
+  const document = createDocument();
+  const actions = [...document.querySelectorAll(".app-header__actions > *")];
+
+  assert.deepEqual(actions.map((node) => node.id), ["themeToggle", "headerAuthAction"]);
+  assert.equal(document.getElementById("headerUser"), null);
+  assert.equal(document.getElementById("headerAuthAction")?.getAttribute("type"), "button");
+  assert.equal(document.getElementById("headerAuthAction")?.textContent.trim(), "Zaloguj");
+  assert.match(document.getElementById("authProfileSummary").textContent, /Zalogowano jako:/);
+  assert.equal(document.querySelector("#authLoggedIn > .auth-message"), null);
+});
+
+test("authenticated account disclosure remains compact and keyboard-visible", () => {
+  assert.match(stylesCss, /#accountView\.is-authenticated[\s\S]*?\.account-danger-disclosure/);
+  assert.match(stylesCss, /\.account-danger-disclosure summary:focus-visible/);
+  assert.match(stylesCss, /\.account-danger-disclosure\[open\]/);
+});
+
 test("design changes preserve accessible theme control and paired artwork sources", () => {
   const document = createDocument();
   const themeToggle = document.getElementById("themeToggle");

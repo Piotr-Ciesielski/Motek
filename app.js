@@ -37,6 +37,7 @@ const registerModeBtn = document.getElementById("registerModeBtn");
 const authProfileSummary = document.getElementById("authProfileSummary");
 const authMessage = document.getElementById("authMessage");
 const deleteAccountForm = document.getElementById("deleteAccountForm");
+const deleteAccountDisclosure = document.getElementById("deleteAccountDisclosure");
 const deleteAccountMessage = document.getElementById("deleteAccountMessage");
 const authLead = document.getElementById("authLead");
 const authTitle = document.getElementById("authTitle");
@@ -51,7 +52,7 @@ const passwordResetForm = document.getElementById("passwordResetForm");
 const passwordUpdateForm = document.getElementById("passwordUpdateForm");
 const cancelPasswordResetBtn = document.getElementById("cancelPasswordResetBtn");
 const accountView = document.getElementById("accountView");
-const headerUser = document.getElementById("headerUser");
+const headerAuthAction = document.getElementById("headerAuthAction");
 const themeToggle = document.getElementById("themeToggle");
 const themeToggleIcon = themeToggle?.querySelector(".theme-toggle__icon");
 const inventoryThemeImage = document.getElementById("inventoryThemeImage");
@@ -1891,20 +1892,22 @@ function renderAuthState(payload) {
   authForms.hidden = authenticated;
   authModeSwitch.hidden = authenticated;
   authLoggedIn.hidden = !authenticated;
-  authUser.hidden = !authenticated;
+  authUser.hidden = true;
   accountView.classList.toggle("is-authenticated", authenticated);
   addYarnBtn.disabled = !authenticated;
   inventoryAddYarnBtn.disabled = !authenticated;
   findBtn.disabled = !authenticated;
   inventoryMatchBtn.disabled = !authenticated;
   updateNavigationState();
+  headerAuthAction.textContent = authenticated ? "Wyloguj" : "Zaloguj";
+  headerAuthAction.setAttribute("aria-label", authenticated ? "Wyloguj" : "Zaloguj");
+  headerAuthAction.removeAttribute("title");
   if (!authenticated) {
     idleSessionController.stop();
     idleSessionWarning.hidden = true;
+    deleteAccountDisclosure.open = false;
     onboardingDismissed = false;
     onboarding.hidden = true;
-    headerUser.hidden = true;
-    headerUser.textContent = "";
     if (["inventory", "matches"].includes(activeView)) {
       setActiveView("account", { focus: false });
     }
@@ -1912,6 +1915,7 @@ function renderAuthState(payload) {
 
   if (!authenticated) {
     authUser.textContent = "";
+    authUser.removeAttribute("title");
     authProfileSummary.textContent = "";
     deleteAccountForm.reset();
     setDeleteAccountMessage("");
@@ -1921,14 +1925,10 @@ function renderAuthState(payload) {
   }
 
   const profile = payload.profile || {};
-  const login = profile.login || payload.user.metadata?.login || payload.user.email;
-  authUser.textContent = `Zalogowano jako ${login}`;
-  authUser.title = login;
-  headerUser.textContent = login;
-  headerUser.title = login;
-  headerUser.hidden = false;
+  authUser.textContent = "";
+  authUser.removeAttribute("title");
   const profileEmail = profile.email || payload.user.email || "";
-  authProfileSummary.textContent = profileEmail || "Zalogowany użytkownik";
+  authProfileSummary.textContent = profileEmail ? `Zalogowano jako: ${profileEmail}` : "Zalogowano jako:";
   authTitle.textContent = "Twoje konto";
   authLead.textContent = "Profil i bezpieczeństwo Twojego prywatnego magazynu.";
 }
@@ -2014,6 +2014,9 @@ async function submitAuthForm(form, endpoint, successMessage) {
     } else {
       setAuthMessage(successMessage, "success");
       await refreshAuthSession();
+      if (form === loginForm && authMessage.textContent === successMessage) {
+        setAuthMessage("");
+      }
       setActiveView("inventory");
     }
     form.reset();
@@ -2034,6 +2037,17 @@ loginModeBtn.addEventListener("click", () => {
   showAuthForm(loginForm);
   setAuthMessage("");
   loginForm.querySelector('input[name="email"]').focus();
+});
+
+headerAuthAction.addEventListener("click", () => {
+  if (isAuthenticated) {
+    logoutBtn.click();
+    return;
+  }
+  setActiveView("account");
+  showAuthForm(loginForm);
+  setAuthMessage("");
+  loginForm.querySelector('input[name="email"]').focus({ preventScroll: true });
 });
 
 registerModeBtn.addEventListener("click", () => {
