@@ -553,6 +553,9 @@ test("serwer Motek działa bezpiecznie", async (t) => {
     metricsEnabled: true,
   });
   const baseUrl = `http://${runtime.host}:${runtime.port}`;
+  const idleActivityCookie = buildIdleActivityCookie(Math.floor(Date.now() / 1000))
+    .split(";", 1)[0];
+  const syntheticAuthCookies = (token) => `motek_access_token=${token}; ${idleActivityCookie}`;
 
   try {
     await t.test("zgłasza stan zdrowia bez ujawniania szczegółów", async () => {
@@ -688,7 +691,7 @@ test("serwer Motek działa bezpiecznie", async (t) => {
       });
     });
 
-    await t.test("obsługuje żądanie i zmianę hasła bez ujawniania istnienia konta", async () => {
+    await t.test("obsługuje żądanie i zmianę hasła bez ujawniania istnienia konta", async (passwordT) => {
       const resetResponse = await fetch(`${baseUrl}/api/auth/password-reset-request`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Origin: baseUrl },
@@ -753,7 +756,7 @@ test("serwer Motek działa bezpiecznie", async (t) => {
         authenticated: false,
       });
 
-      await t.test("nie odnawia sesji po usunięciu cookie bezczynności", async () => {
+      await passwordT.test("nie odnawia sesji po usunięciu cookie bezczynności", async () => {
         const tokenCookies = recoveryCookies
           .split("; ")
           .filter((cookie) => !cookie.startsWith("motek_idle_activity="))
@@ -767,7 +770,7 @@ test("serwer Motek działa bezpiecznie", async (t) => {
         assert.match(response.headers.get("set-cookie"), /motek_idle_activity=;/);
       });
 
-      await t.test("nie pozwala zmienić hasła ze zwykłej sesji", async () => {
+      await passwordT.test("nie pozwala zmienić hasła ze zwykłej sesji", async () => {
         const normalSessionCookies = [
           "motek_access_token=token-user-a",
           "motek_refresh_token=refresh-token-user-a",
@@ -782,7 +785,7 @@ test("serwer Motek działa bezpiecznie", async (t) => {
           },
           body: JSON.stringify({ password: "NoweHaslo123!" }),
         });
-        assert.equal(response.status, 401);
+        assert.equal(response.status, 400);
       });
     });
 
@@ -792,7 +795,7 @@ test("serwer Motek działa bezpiecznie", async (t) => {
         headers: {
           "Content-Type": "application/json",
           Origin: baseUrl,
-          Cookie: "motek_access_token=token-user-a",
+          Cookie: syntheticAuthCookies("token-user-a"),
         },
         body: JSON.stringify({
           password: "DeleteHaslo1!",
@@ -820,7 +823,7 @@ test("serwer Motek działa bezpiecznie", async (t) => {
         headers: {
           "Content-Type": "application/json",
           Origin: baseUrl,
-          Cookie: "motek_access_token=token-user-a",
+          Cookie: syntheticAuthCookies("token-user-a"),
         },
         body: JSON.stringify({ password: "DeleteHaslo1!", confirmation: "USUN KONTO" }),
       });
@@ -835,7 +838,7 @@ test("serwer Motek działa bezpiecznie", async (t) => {
         headers: {
           "Content-Type": "application/json",
           Origin: baseUrl,
-          Cookie: "motek_access_token=token-user-b",
+          Cookie: syntheticAuthCookies("token-user-b"),
         },
         body: JSON.stringify({
           password: "BledneHaslo1!",
@@ -855,8 +858,8 @@ test("serwer Motek działa bezpiecznie", async (t) => {
     });
 
     await t.test("izoluje syntetyczne dane włóczek między użytkownikami", async () => {
-      const userACookies = "motek_access_token=token-user-a";
-      const userBCookies = "motek_access_token=token-user-b";
+      const userACookies = syntheticAuthCookies("token-user-a");
+      const userBCookies = syntheticAuthCookies("token-user-b");
       const originHeaders = { Origin: baseUrl };
       let userAVersion = (await fetch(`${baseUrl}/api/yarns`, {
         headers: { Cookie: userACookies },
