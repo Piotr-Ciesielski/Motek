@@ -117,3 +117,29 @@ test("light coral actions use dark text and the skip link keeps a fixed contrast
   assert.match(skipLink, /color: #fffdf8;/);
   assert.doesNotMatch(skipLink, /(?:background|color): var\(--(?:text|on-accent)\);/);
 });
+
+test("dark inventory and matches artwork use the subdued account exposure only in dark mode", () => {
+  assert.match(
+    stylesCss,
+    /\[data-theme="dark"\] #inventoryView \.inventory-layout__visual,\s*\[data-theme="dark"\] #matchesView \.matches-hero__visual \{[\s\S]*?background: var\(--hero-gradient\);[\s\S]*?\}/,
+  );
+  assert.match(
+    stylesCss,
+    /\[data-theme="dark"\] #inventoryView \.inventory-layout__visual img,\s*\[data-theme="dark"\] #matchesView \.matches-hero__visual img \{[\s\S]*?opacity: 0\.28;[\s\S]*?\}/,
+  );
+  assert.match(
+    stylesCss,
+    /\[data-theme="dark"\] #inventoryView \.inventory-layout__visual::after,\s*\[data-theme="dark"\] #matchesView \.matches-hero__visual::after \{[\s\S]*?background: none;[\s\S]*?\}/,
+  );
+
+  for (const selector of [
+    "#inventoryView \\.inventory-layout__visual img",
+    "#matchesView \\.matches-hero__visual img",
+  ]) {
+    const baseRules = [...stylesCss.matchAll(new RegExp(`(?:^|\\n)${selector} \\{([\\s\\S]*?)\\n\\}`, "g"))]
+      .map((match) => match[1]);
+    assert.ok(baseRules.some((rule) => /object-fit: cover;/.test(rule)));
+    assert.ok(baseRules.some((rule) => /object-position: 72% center;/.test(rule)));
+    assert.ok(baseRules.every((rule) => !/opacity: 0\.28;/.test(rule)));
+  }
+});

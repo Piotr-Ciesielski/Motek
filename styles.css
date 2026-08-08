@@ -2099,6 +2099,21 @@ body::before {
   background: var(--accent-2);
 }
 
+[data-theme="dark"] #inventoryView .inventory-layout__visual,
+[data-theme="dark"] #matchesView .matches-hero__visual {
+  background: var(--hero-gradient);
+}
+
+[data-theme="dark"] #inventoryView .inventory-layout__visual img,
+[data-theme="dark"] #matchesView .matches-hero__visual img {
+  opacity: 0.28;
+}
+
+[data-theme="dark"] #inventoryView .inventory-layout__visual::after,
+[data-theme="dark"] #matchesView .matches-hero__visual::after {
+  background: none;
+}
+
 @media (max-width: 768px) {
   #inventoryView .inventory-hero,
   #matchesView .matches-hero,
