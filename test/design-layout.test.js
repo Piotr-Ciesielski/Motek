@@ -191,7 +191,7 @@ test("inventory artwork keeps the prototype crop and focal point", () => {
 
 test("inventory artwork panel follows the panoramic hero height", () => {
   const visualRule = stylesCss.match(
-    /#inventoryView \.inventory-layout__visual \{([\s\S]*?)\n\}/,
+    /(?:^|\n)#inventoryView \.inventory-layout__visual \{([\s\S]*?)\n\}/,
   )?.[1] ?? "";
 
   assert.match(visualRule, /height: 100%;/);
