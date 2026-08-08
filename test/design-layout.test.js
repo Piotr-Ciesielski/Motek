@@ -165,7 +165,7 @@ test("hero copy stays focused and uses the Dopasowanie heading type", () => {
 test("inventory artwork fills the hero without an opaque copy panel", () => {
   assert.match(
     stylesCss,
-    /#inventoryView \.inventory-heading,\s*#inventoryView \.inventory-heading > div:first-child\s*\{[\s\S]*?background: transparent;/,
+    /\[data-theme="light"\] #inventoryView \.inventory-heading,[\s\S]*?\[data-theme="dark"\] #inventoryView \.inventory-heading > div:first-child\s*\{[\s\S]*?background: transparent;/,
   );
   assert.match(
     stylesCss,
