@@ -1,5 +1,13 @@
 Motek - log zmian
 
+Wersja 2.0.0-alpha.39 - Żywa pracownia i parity produkcji
+- Ujednolicono ramę wizualną Magazynu, Dopasowania, Katalogu i Konta względem makiet z `Designs/`, bez dodawania fikcyjnych danych domenowych.
+- Usunięto tekstowe nagłówki pomocnicze z hero Magazynu, Dopasowania i Katalogu, zachowując istniejące akcje i logikę widoków.
+- Ujednolicono typografię, pozycjonowanie hero Magazynu i ekspozycję grafik kota w jasnym oraz ciemnym motywie.
+- Obrazy Magazynu i Dopasowania używają tego samego treatmentu co Katalog: pełna opacity, bez dodatkowych pasów i pseudo-overlayu.
+- Dodano testy kontraktów DOM/CSS dla układu, CTA, mobilnego disclosure, kontrastu i reduced-motion.
+- Wydano staging `cf60ce65`, a następnie produkcję z `1991f139`; po wykryciu starego artefaktu produkcję wyrównano przez Railway `redeploy --from-source`.
+
 Wersja 2.0.0-alpha.38 - e-mail jako login konta
 - Formularz rejestracji używa jednego pola `Login (Twój e-mail)` oraz hasła.
 - Adres e-mail jest zapisywany jednocześnie jako e-mail Auth i login profilu.

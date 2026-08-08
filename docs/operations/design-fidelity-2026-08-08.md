@@ -1,7 +1,7 @@
 # QA wierności makiet — 2026-08-08
 
-Branch staging: `agent/motek-design-reference`  
-Commit: `f0c531f`  
+Branch staging: `staging`
+Commit: `cf60ce65`
 Adres: `https://staging.rysia.org/`
 
 ## Macierz wizualna
@@ -20,10 +20,11 @@ Makieta Katalogu pokazuje bibliotekę włóczek i fotografie motków, a działaj
 ## Sprawdzenia
 
 - `node --test test/design-regression.test.js test/design-layout.test.js` — 28/28.
-- `npm run check` — 286/286.
+- `npm run check` — 289/289.
 - `npm run lint` — 0 błędów, 4 wcześniejsze ostrzeżenia.
 - `npm run staging:check` — 15/15.
 - CI staging — test i migracje bazy zakończone powodzeniem.
 - Browser QA: desktop oraz 390×844; `scrollWidth === clientWidth` dla Magazynu, Dopasowania, Katalogu i Konta.
+- Parity QA po publikacji: staging i produkcja wskazują `styles.css`, `app.js` oraz `catalog-controller.js` w wersji `2.0.0-alpha.39`; oba środowiska mają aktualne reguły pełnej ekspozycji grafik bez overlayu.
 - `npm run format:check` nadal zgłasza cztery niezmienione pliki konfiguracyjne (`eslint.config.js`, `.prettierrc.json`, `package.json`, `.github/workflows/ci.yml`).
 

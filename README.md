@@ -64,9 +64,9 @@ Przepływ: PR → CI → `staging` → regresja → `main` → produkcja. Wdroż
 
 GitHub Actions uruchamiają testy, lint, formatowanie, audyt npm i testy Supabase. Po wdrożeniu workflow sprawdza właściwy commit oraz uruchamia regresję.
 
-Numer wersji jest w pliku [`VERSION`](VERSION) (obecnie `2.0.0-alpha.38`) i musi odpowiadać wersji w `package.json`. CI kontroluje wersję i SHA; numer wydania aktualizuje się świadomie w repozytorium.
+Numer wersji jest w pliku [`VERSION`](VERSION) (obecnie `2.0.0-alpha.39`) i musi odpowiadać wersji w `package.json`. CI kontroluje wersję i SHA; numer wydania aktualizuje się świadomie w repozytorium.
 
-Zweryfikowany snapshot stagingu z 2026-08-07 to `2.0.0-alpha.39`, commit `12555dac`. Szczegóły wdrożenia i kontroli środowiska znajdują się w konfiguracji `deploy/` oraz workflow GitHub Actions.
+Zweryfikowany snapshot stagingu z 2026-08-08 to `2.0.0-alpha.39`, commit `cf60ce65`. Produkcja została wydana z commita `1991f139` i po kontroli źródła działa na deploymentcie Railway `7b0b1f56`. Szczegóły kontroli środowisk znajdują się w [`docs/operations/production-release-2026-08-08.md`](docs/operations/production-release-2026-08-08.md).
 
 Staging korzysta z krótkotrwałych, podpisanych i jednorazowych grantów recovery.
 Backend atomowo rezerwuje grant przed zmianą hasła, zwalnia rezerwację przy
@@ -84,9 +84,11 @@ Przy błędzie logowania regresji sprawdź sekrety `MOTEK_QA_EMAIL` i `MOTEK_QA_
 ## Railway i środowiska
 
 - staging działa z gałęzi `staging` pod `https://staging.rysia.org` i wdraża się automatycznie;
-- produkcja działa z gałęzi `main` pod `https://www.rysia.org`, a auto-deploy jest wyłączony — publikację uruchamia operator ręcznie;
+- produkcja działa z gałęzi `main` pod `https://www.rysia.org`, a auto-deploy jest wyłączony — publikację uruchamia operator ręcznie z repozytorium źródłowego Railway;
 - Cloudflare obsługuje DNS, proxy/WAF i HTTPS, a każde środowisko korzysta z osobnego Supabase;
 - po deployu stagingu uruchamia się `regression:full`, a po ręcznym deployu produkcji `regression:smoke`.
+
+Po publikacji porównuj wersje zasobów w HTML obu domen. Jeśli produkcja nadal wskazuje starszy cache-buster mimo zdrowego deploymentu, użyj `railway redeploy --from-source --yes` dla środowiska `production`, a następnie ponów kontrolę publicznego HTML.
 
 Sesja użytkownika wygasa po 2 godzinach bezczynności (`AUTH_IDLE_TIMEOUT_SECONDS=7200`).
 
