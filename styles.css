@@ -2425,3 +2425,254 @@ body::before {
     margin-top: 16px;
   }
 }
+
+/*
+ * Reference fidelity pass — szerokie, spokojne powierzchnie z Designs.
+ * Ten blok jest celowo scoped do czterech widoków, aby nie zmieniać
+ * komponentów formularzy i logiki aplikacji poza ich kompozycją.
+ */
+.shell,
+.app-header__inner {
+  max-width: 1400px;
+}
+
+#inventoryView .inventory-hero,
+#matchesView .matches-hero,
+#catalogView .catalog-hero {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--border) 82%, transparent);
+  border-radius: 16px;
+  box-shadow: none;
+}
+
+#inventoryView .inventory-hero {
+  min-height: clamp(390px, 39vw, 540px);
+  background: var(--panel);
+}
+
+#inventoryView .inventory-heading {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: flex-start;
+  min-height: clamp(390px, 39vw, 540px);
+  max-width: 58%;
+  margin: 0;
+  padding: clamp(36px, 5vw, 76px);
+}
+
+#inventoryView .inventory-heading > div:first-child {
+  max-width: 38rem;
+  padding: 18px 20px 22px;
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--panel) 84%, transparent);
+  backdrop-filter: blur(4px);
+}
+
+#inventoryView .inventory-heading__actions {
+  align-self: flex-start;
+  flex-wrap: wrap;
+}
+
+#inventoryView .inventory-layout__visual {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  border: 0;
+  border-radius: inherit;
+  background: none;
+}
+
+#inventoryView .inventory-layout__visual img {
+  width: 100%;
+  height: 100%;
+  min-height: 100%;
+  object-fit: cover;
+  object-position: 72% center;
+}
+
+#inventoryView .inventory-layout__visual::after,
+#matchesView .matches-hero__visual::after,
+#catalogView .catalog-theme-visual::after {
+  background: none;
+}
+
+#inventoryView .inventory-layout__content {
+  gap: 24px;
+}
+
+#inventoryView .inventory-stats,
+#inventoryView .inventory-panel,
+#matchesView .matches-criteria,
+#matchesView .matches-results,
+#catalogView .catalog-workspace {
+  border-radius: 16px;
+  box-shadow: none;
+}
+
+#matchesView .matches-hero {
+  display: block;
+  min-height: clamp(360px, 36vw, 500px);
+  margin-bottom: 24px;
+  background: var(--panel);
+}
+
+#matchesView .matches-hero__copy {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: flex-start;
+  width: 54%;
+  min-height: clamp(360px, 36vw, 500px);
+  padding: clamp(36px, 5vw, 76px);
+}
+
+#matchesView .matches-hero__copy .page-heading {
+  align-items: flex-start;
+}
+
+#matchesView .matches-hero__visual {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  min-height: 0;
+  border: 0;
+  background: none;
+}
+
+#matchesView .matches-hero__visual img {
+  width: 100%;
+  height: 100%;
+  min-height: 100%;
+  object-fit: cover;
+  object-position: 72% center;
+}
+
+#matchesView .matches-workspace {
+  gap: 24px;
+}
+
+#catalogView .catalog-panel {
+  box-shadow: none;
+}
+
+#catalogView .catalog-hero {
+  display: block;
+  min-height: clamp(360px, 36vw, 500px);
+  background: var(--panel);
+  box-shadow: none;
+}
+
+#catalogView .catalog-hero__copy {
+  position: relative;
+  z-index: 2;
+  width: 54%;
+  min-height: clamp(360px, 36vw, 500px);
+  padding: clamp(36px, 5vw, 76px);
+}
+
+#catalogView .catalog-theme-visual {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  min-height: 0;
+  border: 0;
+  background: none;
+}
+
+#catalogView .catalog-theme-visual img {
+  width: 100%;
+  height: 100%;
+  min-height: 100%;
+  object-fit: cover;
+  object-position: 72% center;
+  opacity: 1;
+}
+
+#accountView.is-authenticated .auth-layout {
+  grid-template-columns: minmax(0, 1.05fr) minmax(420px, 0.95fr);
+  max-width: none;
+  min-height: 560px;
+  margin: 0 0 22px;
+  border-radius: 16px;
+  box-shadow: none;
+}
+
+#accountView.is-authenticated .auth-visual {
+  display: flex;
+  min-height: 560px;
+}
+
+#accountView.is-authenticated .auth-panel {
+  min-height: 560px;
+  border-left: 1px solid var(--border);
+  border-radius: 0;
+}
+
+@media (max-width: 768px) {
+  #inventoryView .inventory-hero,
+  #matchesView .matches-hero,
+  #catalogView .catalog-hero {
+    min-height: 0;
+    border-radius: 14px;
+  }
+
+  #inventoryView .inventory-heading,
+  #matchesView .matches-hero__copy,
+  #catalogView .catalog-hero__copy {
+    width: 100%;
+    max-width: none;
+    min-height: 340px;
+    padding: 28px 22px;
+  }
+
+  #inventoryView .inventory-heading > div:first-child {
+    max-width: 100%;
+  }
+
+  #inventoryView .inventory-layout__visual,
+  #matchesView .matches-hero__visual,
+  #catalogView .catalog-theme-visual {
+    min-height: 340px;
+  }
+
+  #accountView.is-authenticated .auth-layout {
+    grid-template-columns: minmax(0, 1fr);
+    min-height: 0;
+  }
+
+  #accountView.is-authenticated .auth-visual {
+    min-height: 330px;
+  }
+
+  #accountView.is-authenticated .auth-panel {
+    min-height: 0;
+    border-top: 1px solid var(--border);
+    border-left: 0;
+    border-radius: 0 0 14px 14px;
+  }
+}
+
+@media (max-width: 420px) {
+  .shell {
+    padding-right: 14px;
+    padding-left: 14px;
+  }
+
+  #inventoryView .inventory-heading,
+  #matchesView .matches-hero__copy,
+  #catalogView .catalog-hero__copy {
+    min-height: 300px;
+    padding: 24px 18px;
+  }
+
+  #inventoryView .inventory-layout__visual,
+  #matchesView .matches-hero__visual,
+  #catalogView .catalog-theme-visual {
+    min-height: 300px;
+  }
+}
