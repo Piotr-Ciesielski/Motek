@@ -2678,6 +2678,7 @@ body::before {
   text-shadow: 0 2px 18px color-mix(in srgb, var(--bg) 42%, transparent);
 }
 
+#inventoryView .inventory-heading,
 #inventoryView .inventory-heading > div:first-child {
   padding: 0;
   background: transparent;
