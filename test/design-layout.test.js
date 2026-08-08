@@ -2,12 +2,47 @@ const assert = require("node:assert/strict");
 const { readFileSync } = require("node:fs");
 const path = require("node:path");
 const test = require("node:test");
+const { JSDOM } = require("jsdom");
 
 const indexHtml = readFileSync(path.join(__dirname, "..", "index.html"), "utf8");
 const stylesCss = readFileSync(path.join(__dirname, "..", "styles.css"), "utf8");
 const appJs = readFileSync(path.join(__dirname, "..", "app.js"), "utf8");
 const serverJs = readFileSync(path.join(__dirname, "..", "server.js"), "utf8");
 const staticFilesJs = readFileSync(path.join(__dirname, "..", "server", "static-files.js"), "utf8");
+
+test("mobile reading order keeps hero actions and artwork before each workspace", () => {
+  const document = new JSDOM(indexHtml).window.document;
+  const precedes = (first, second) => Boolean(
+    first.compareDocumentPosition(second) & first.DOCUMENT_POSITION_FOLLOWING
+  );
+
+  const inventoryHero = document.querySelector("#inventoryView .inventory-hero");
+  assert.ok(inventoryHero, "inventory hero groups its heading, actions, and artwork");
+  const inventoryHeading = inventoryHero.querySelector(".inventory-heading");
+  const inventoryArtwork = inventoryHero.querySelector(".inventory-layout__visual");
+  const inventoryStats = document.querySelector("#inventoryStats");
+  const inventoryStock = document.querySelector("#inventoryView .inventory-stock");
+
+  assert.ok(inventoryHeading.contains(document.querySelector("#inventoryMatchBtn")));
+  assert.ok(inventoryHeading.contains(document.querySelector("#inventoryAddYarnBtn")));
+  assert.ok(precedes(inventoryHeading, inventoryArtwork));
+  assert.ok(precedes(inventoryArtwork, inventoryStats));
+  assert.ok(precedes(inventoryStats, inventoryStock));
+
+  const matchesHero = document.querySelector("#matchesView .matches-hero");
+  const matchesCopy = matchesHero.querySelector(".matches-hero__copy");
+  const matchesArtwork = matchesHero.querySelector(".matches-hero__visual");
+  const matchesWorkspace = document.querySelector("#matchesView .matches-workspace");
+  assert.ok(matchesWorkspace, "matches view exposes criteria and results as one workspace");
+  const matchesCriteria = matchesWorkspace.querySelector(".matches-criteria");
+  const matchesResults = matchesWorkspace.querySelector(".matches-results");
+
+  assert.ok(matchesCopy.contains(document.querySelector("#backToInventoryBtn")));
+  assert.ok(precedes(matchesCopy, matchesArtwork));
+  assert.ok(precedes(matchesHero, matchesWorkspace));
+  assert.ok(precedes(matchesCriteria, matchesResults));
+  assert.ok(matchesResults.contains(document.querySelector("#results")));
+});
 
 test("inventory keeps the selected design composition", () => {
   assert.match(indexHtml, /class="inventory-layout"/);
@@ -96,20 +131,64 @@ test("dark hero panel keeps readable text on its dark gradient", () => {
   assert.match(stylesCss, /\.hero-cta\s*\{[\s\S]*?color-mix\(in srgb, var\(--on-hero\)/);
 });
 
-test("mobile inventory orders stats before stock and artwork", () => {
-  assert.match(indexHtml, /class="inventory-stock"/);
+test("inventory shelves collapse from two columns to one on mobile", () => {
   assert.match(
     stylesCss,
-    /grid-template-areas:[\s\S]*"heading visual"[\s\S]*"stats visual"[\s\S]*"stock visual"/,
+    /#inventoryView \.yarn-list \{[\s\S]*?grid-template-columns: repeat\(2, minmax\(0, 1fr\)\);/,
   );
   assert.match(
     stylesCss,
-    /@media \(max-width: 980px\)[\s\S]*grid-template-areas:[\s\S]*"heading"[\s\S]*"onboarding"[\s\S]*"stats"[\s\S]*"stock"[\s\S]*"visual"/,
+    /@media \(max-width: 768px\)[\s\S]*?#inventoryView \.yarn-list \{[\s\S]*?grid-template-columns: minmax\(0, 1fr\);/,
   );
+});
+
+test("hero copy stays focused and uses the Dopasowanie heading type", () => {
+  const document = new JSDOM(indexHtml).window.document;
+
+  assert.equal(document.querySelector("#inventoryView .inventory-heading .eyebrow"), null);
+  assert.equal(document.querySelector("#inventoryView .inventory-heading > div:first-child > p:not(.eyebrow)"), null);
+  assert.equal(document.querySelector("#matchesView .matches-hero__copy .eyebrow"), null);
+  assert.equal(document.querySelector("#matchesView .matches-hero__copy .page-heading > div > p:not(.eyebrow)"), null);
+  assert.equal(document.querySelector("#catalogView .catalog-hero__copy .eyebrow"), null);
+  assert.equal(document.querySelector("#catalogView .catalog-hero__copy > p:not(.eyebrow)"), null);
+
   assert.doesNotMatch(
     stylesCss,
-    /inventory-layout__content > section:not\(#onboarding\)[\s\S]{0,120}grid-row: 4/,
+    /\[data-theme="light"\] #inventoryView h1,[\s\S]*?font-family: "Inter", sans-serif;/,
   );
+  assert.match(
+    stylesCss,
+    /#inventoryView \.inventory-heading h1,\s*#matchesView \.matches-hero__copy h1,\s*#catalogView \.catalog-hero__copy h1\s*\{[\s\S]*?font-family: "Fraunces", serif;/,
+  );
+});
+
+test("inventory artwork fills the hero without an opaque copy panel", () => {
+  assert.match(
+    stylesCss,
+    /\[data-theme="light"\] #inventoryView \.inventory-heading,[\s\S]*?\[data-theme="dark"\] #inventoryView \.inventory-heading > div:first-child\s*\{[\s\S]*?background: transparent;/,
+  );
+  assert.match(
+    stylesCss,
+    /#inventoryView \.inventory-layout__visual img\s*\{[\s\S]*?object-position: 58% center;/,
+  );
+});
+
+test("inventory hero matches the shared hero height and keeps actions below the title", () => {
+  assert.match(
+    stylesCss,
+    /#inventoryView \.inventory-hero\s*\{[\s\S]*?min-height: clamp\(360px, 36vw, 500px\);/,
+  );
+  assert.match(
+    stylesCss,
+    /#inventoryView \.inventory-heading\s*\{[\s\S]*?min-height: clamp\(360px, 36vw, 500px\);[\s\S]*?flex-direction: column;/,
+  );
+  assert.match(
+    stylesCss,
+    /#inventoryView \.inventory-heading__actions\s*\{[\s\S]*?margin-top: 30px;[\s\S]*?margin-left: 24px;/,
+  );
+});
+
+test("captcha remains available in every auth flow", () => {
   assert.equal((indexHtml.match(/data-turnstile-for=/g) || []).length, 3);
   assert.match(indexHtml, /data-turnstile-for="passwordReset"/);
   assert.match(appJs, /challenges\.cloudflare\.com\/turnstile\/v0\/api\.js\?render=explicit/);
@@ -148,7 +227,7 @@ test("inventory artwork keeps the prototype crop and focal point", () => {
   );
   assert.match(
     stylesCss,
-    /#inventoryView \.inventory-layout__visual img[\s\S]*?object-position: right center;/,
+    /#inventoryView \.inventory-layout__visual img[\s\S]*?object-position: 72% center;/,
   );
   assert.doesNotMatch(
     stylesCss,
@@ -156,11 +235,50 @@ test("inventory artwork keeps the prototype crop and focal point", () => {
   );
 });
 
-test("inventory artwork panel stays within the viewport-sized layout", () => {
+test("inventory artwork panel follows the panoramic hero height", () => {
   const visualRule = stylesCss.match(
-    /#inventoryView \.inventory-layout__visual \{([\s\S]*?)\n\}/,
+    /(?:^|\n)#inventoryView \.inventory-layout__visual \{([\s\S]*?)\n\}/,
   )?.[1] ?? "";
 
-  assert.match(visualRule, /height: min\(820px, calc\(100vh - 120px\)\);/);
-  assert.doesNotMatch(visualRule, /height: 100%;/);
+  assert.match(visualRule, /height: 100%;/);
+  assert.match(visualRule, /min-height: 330px;/);
+  assert.match(
+    stylesCss,
+    /@media \(max-width: 420px\)[\s\S]*?#inventoryView \.inventory-layout__visual,[\s\S]*?height: 220px;[\s\S]*?min-height: 220px;/,
+  );
+});
+
+test("catalog keeps search first, secondary filters grouped and artwork before results", () => {
+  const document = new JSDOM(indexHtml).window.document;
+  const catalog = document.getElementById("catalogView");
+  const search = catalog.querySelector(".catalog-search");
+  const toggle = document.getElementById("catalogFiltersToggle");
+  const secondary = document.getElementById("catalogSecondaryFilters");
+  const workspace = catalog.querySelector(".catalog-workspace");
+
+  assert.ok(search.compareDocumentPosition(toggle) & search.DOCUMENT_POSITION_FOLLOWING);
+  assert.ok(toggle.compareDocumentPosition(secondary) & toggle.DOCUMENT_POSITION_FOLLOWING);
+  assert.equal(secondary.querySelectorAll("select").length, 5);
+  assert.ok(catalog.querySelector(".catalog-hero").compareDocumentPosition(workspace)
+    & catalog.DOCUMENT_POSITION_FOLLOWING);
+});
+
+test("account keeps only real authentication and account-management surfaces", () => {
+  assert.match(indexHtml, /id="accountThemeImage"/);
+  assert.match(indexHtml, /id="authLoggedIn"/);
+  assert.match(indexHtml, /id="deleteAccountForm"/);
+  assert.doesNotMatch(indexHtml, /id="accountProjects"/);
+  assert.doesNotMatch(indexHtml, /id="accountMetrics"/);
+  assert.doesNotMatch(indexHtml, /data-account-action=/);
+});
+
+test("mobile catalog exposes the filter disclosure and shortens the account hero", () => {
+  assert.match(
+    stylesCss,
+    /@media \(max-width: 640px\)[\s\S]*?#catalogView \.catalog-filters-toggle \{[\s\S]*?display: inline-flex;/,
+  );
+  assert.match(
+    stylesCss,
+    /@media \(max-width: 640px\)[\s\S]*?\.account-view \.auth-visual \{[\s\S]*?min-height: 220px;/,
+  );
 });

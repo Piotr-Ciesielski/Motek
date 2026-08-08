@@ -6,6 +6,7 @@ const { JSDOM } = require("jsdom");
 
 const indexHtml = readFileSync(path.join(__dirname, "..", "index.html"), "utf8");
 const appJs = readFileSync(path.join(__dirname, "..", "app.js"), "utf8");
+const stylesCss = readFileSync(path.join(__dirname, "..", "styles.css"), "utf8");
 
 function createDocument() {
   return new JSDOM(indexHtml).window.document;
@@ -54,7 +55,7 @@ test("design changes preserve accessible theme control and paired artwork source
   assert.match(themeToggle.getAttribute("aria-pressed") || "", /^(true|false)$/);
   assert.ok(themeToggle.querySelector(".theme-toggle__icon"));
   assert.equal(themeToggle.querySelector("#themeToggleLabel"), null);
-  assert.ok(themedImages.length >= 4);
+  assert.equal(themedImages.length, 4);
   assert.deepEqual(
     ["inventoryThemeImage", "matchesThemeImage", "catalogThemeImage", "accountThemeImage"].map((id) => document.getElementById(id)?.id),
     ["inventoryThemeImage", "matchesThemeImage", "catalogThemeImage", "accountThemeImage"],
@@ -93,4 +94,52 @@ test("design changes preserve hooks used by inventory, catalog and account logic
   assert.match(indexHtml, /client\/catalog-controller\.js/);
   assert.match(appJs, /catalogController/);
   assert.match(appJs, /inventoryAddYarnBtn\.addEventListener/);
+});
+
+test("design changes keep the icon control touch-safe and respect reduced motion", () => {
+  assert.match(
+    stylesCss,
+    /\.theme-toggle \{[\s\S]*?min-width: 44px;[\s\S]*?min-height: 44px;/,
+  );
+  assert.match(stylesCss, /@media \(prefers-reduced-motion: reduce\) \{[\s\S]*?\*::before/);
+  assert.match(appJs, /prefers-reduced-motion: reduce/);
+});
+
+test("light coral actions use dark text and the skip link keeps a fixed contrast pair", () => {
+  const lightTheme = stylesCss.match(
+    /:root,\s*\[data-theme="light"\] \{([\s\S]*?)\n\}/,
+  )?.[1] || "";
+  const skipLink = stylesCss.match(/\.skip-link \{([\s\S]*?)\n\}/)?.[1] || "";
+
+  assert.match(lightTheme, /--accent: #e94f4b;/);
+  assert.match(lightTheme, /--on-accent: #151334;/);
+  assert.match(skipLink, /background: #151334;/);
+  assert.match(skipLink, /color: #fffdf8;/);
+  assert.doesNotMatch(skipLink, /(?:background|color): var\(--(?:text|on-accent)\);/);
+});
+
+test("dark inventory and matches artwork use the catalog exposure only in dark mode", () => {
+  assert.match(
+    stylesCss,
+    /\[data-theme="dark"\] #inventoryView \.inventory-layout__visual,\s*\[data-theme="dark"\] #matchesView \.matches-hero__visual \{[\s\S]*?background: none;[\s\S]*?\}/,
+  );
+  assert.match(
+    stylesCss,
+    /\[data-theme="dark"\] #inventoryView \.inventory-layout__visual img,\s*\[data-theme="dark"\] #matchesView \.matches-hero__visual img \{[\s\S]*?opacity: 1;[\s\S]*?\}/,
+  );
+  assert.match(
+    stylesCss,
+    /\[data-theme="dark"\] #inventoryView \.inventory-layout__visual::after,\s*\[data-theme="dark"\] #matchesView \.matches-hero__visual::after \{[\s\S]*?background: none;[\s\S]*?\}/,
+  );
+
+  for (const selector of [
+    "#inventoryView \\.inventory-layout__visual img",
+    "#matchesView \\.matches-hero__visual img",
+  ]) {
+    const baseRules = [...stylesCss.matchAll(new RegExp(`(?:^|\\n)${selector} \\{([\\s\\S]*?)\\n\\}`, "g"))]
+      .map((match) => match[1]);
+    assert.ok(baseRules.some((rule) => /object-fit: cover;/.test(rule)));
+    assert.ok(baseRules.some((rule) => /object-position: 72% center;/.test(rule)));
+    assert.ok(baseRules.every((rule) => !/opacity:/.test(rule)));
+  }
 });

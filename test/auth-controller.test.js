@@ -2,7 +2,48 @@ const test = require("node:test");
 const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const vm = require("node:vm");
+const path = require("node:path");
+const { JSDOM } = require("jsdom");
 const { createAuthController } = require("../client/auth-controller");
+
+const indexHtml = fs.readFileSync(path.join(__dirname, "..", "index.html"), "utf8");
+const browserScripts = [
+  "theme-policy.js",
+  "material-policy.js",
+  "client-policy.js",
+  "client/api-client.js",
+  "client/dom-utils.js",
+  "client/catalog-controller.js",
+  "client/idle-session-controller.js",
+  "app.js",
+].map((file) => fs.readFileSync(path.join(__dirname, "..", file), "utf8"));
+
+function loadApp({ reducedMotion = false } = {}) {
+  const dom = new JSDOM(indexHtml, {
+    url: "http://localhost/",
+    runScripts: "outside-only",
+    pretendToBeVisual: true,
+  });
+  const { window } = dom;
+  window.matchMedia = () => ({ matches: reducedMotion, addEventListener() {}, removeEventListener() {} });
+  window.HTMLElement.prototype.scrollIntoView = function scrollIntoView(options) {
+    this.scrollOptions = options;
+  };
+  window.fetch = async (input) => {
+    const pathname = new URL(input, window.location.href).pathname;
+    const payload = pathname === "/api/config"
+      ? { captcha: { enabled: false } }
+      : pathname === "/api/auth/session"
+        ? { authenticated: false, user: null }
+        : { items: [], total: 0 };
+    return new Response(JSON.stringify(payload), {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    });
+  };
+  browserScripts.forEach((source) => window.eval(source));
+  return dom;
+}
 
 function target() {
   return {
@@ -111,4 +152,23 @@ test("eksportuje kontroler globalnie w przeglądarce", () => {
   const window = {};
   vm.runInNewContext(source, { window });
   assert.equal(typeof window.createAuthController, "function");
+});
+
+test("Zacznij w Motku otwiera rejestrację, przewija panel i fokusuje e-mail", async (t) => {
+  for (const reducedMotion of [false, true]) {
+    await t.test(reducedMotion ? "bez animacji" : "z płynnym przewijaniem", async () => {
+      const dom = loadApp({ reducedMotion });
+      const { document } = dom.window;
+
+      await new Promise((resolve) => dom.window.setTimeout(resolve, 20));
+      document.getElementById("heroAuthBtn").click();
+      await new Promise((resolve) => dom.window.setTimeout(resolve, 275));
+
+      assert.equal(document.getElementById("registerForm").hidden, false);
+      assert.equal(document.getElementById("registerModeBtn").getAttribute("aria-selected"), "true");
+      assert.equal(document.querySelector(".auth-panel").scrollOptions.behavior, reducedMotion ? "auto" : "smooth");
+      assert.equal(document.activeElement, document.getElementById("register-login"));
+      dom.window.close();
+    });
+  }
 });
