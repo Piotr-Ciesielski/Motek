@@ -297,6 +297,9 @@ test("authenticated header and account disclosure use the compact DOM contract",
 
 test("compact auth controls expose their required CSS contracts", () => {
   assert.match(stylesCss, /\.header-auth-action[\s\S]*min-(?:width|height): 44px/);
+  assert.match(stylesCss, /\.header-auth-action[\s\S]*font-size: 0\.9rem/);
+  assert.match(stylesCss, /\.header-auth-action[\s\S]*font-weight: 650/);
+  assert.match(stylesCss, /\.header-auth-action[\s\S]*color: var\(--muted\)/);
   assert.match(stylesCss, /\.account-danger-disclosure/);
 });
 
