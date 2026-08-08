@@ -5,7 +5,49 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
-const { createCatalogController } = require('../client/catalog-controller');
+const { JSDOM } = require('jsdom');
+const { createCatalogController, createCatalogFilterDisclosure } = require('../client/catalog-controller');
+
+const indexHtml = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
+const browserScripts = [
+  'theme-policy.js',
+  'material-policy.js',
+  'client-policy.js',
+  'client/api-client.js',
+  'client/dom-utils.js',
+  'client/catalog-controller.js',
+  'client/idle-session-controller.js',
+  'app.js',
+].map((file) => fs.readFileSync(path.join(__dirname, '..', file), 'utf8'));
+
+function loadApp(patterns = []) {
+  const dom = new JSDOM(indexHtml, {
+    url: 'http://localhost/',
+    runScripts: 'outside-only',
+    pretendToBeVisual: true,
+  });
+  const { window } = dom;
+  window.matchMedia = (query) => ({
+    matches: query.includes('max-width'),
+    addEventListener() {},
+    removeEventListener() {},
+  });
+  window.HTMLElement.prototype.scrollIntoView = () => {};
+  window.fetch = async (input) => {
+    const pathname = new URL(input, window.location.href).pathname;
+    const payload = pathname === '/api/config'
+      ? { captcha: { enabled: false } }
+      : pathname === '/api/auth/session'
+        ? { authenticated: false, user: null }
+        : { items: patterns, total: patterns.length };
+    return new Response(JSON.stringify(payload), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  };
+  browserScripts.forEach((source) => window.eval(source));
+  return dom;
+}
 
 test('catalog controller can load as a browser script without CommonJS module', () => {
   const source = fs.readFileSync(path.join(__dirname, '..', 'client', 'catalog-controller.js'), 'utf8');
@@ -86,4 +128,70 @@ test('ponawia nieudaną stronę katalogu bez duplikowania kart i czyści błąd'
   assert.deepEqual(calls, [1, 2, 2]);
   assert.deepEqual(controller.getState().items, [{ id: 1 }, { id: 2 }, { id: 3 }]);
   assert.equal(controller.getState().error, null);
+});
+
+test('mobilny panel filtrów zachowuje wartości, stan dostępności i zamyka się klawiszem Escape', () => {
+  const dom = new JSDOM(indexHtml, { pretendToBeVisual: true });
+  const { document, KeyboardEvent } = dom.window;
+  const toggle = document.getElementById('catalogFiltersToggle');
+  const panel = document.getElementById('catalogSecondaryFilters');
+  const material = document.getElementById('patternMaterialFilter');
+  const disclosure = createCatalogFilterDisclosure({
+    toggle,
+    panel,
+    mobileQuery: { matches: true, addEventListener() {}, removeEventListener() {} },
+  });
+
+  assert.equal(toggle.getAttribute('aria-controls'), 'catalogSecondaryFilters');
+  assert.equal(toggle.getAttribute('aria-expanded'), 'false');
+  disclosure.updateCount(1);
+  assert.equal(toggle.textContent, 'Filtry (1)');
+  toggle.click();
+  assert.equal(toggle.getAttribute('aria-expanded'), 'true');
+  assert.equal(panel.hidden, false);
+
+  material.append(new dom.window.Option('Wełna', 'wool'));
+  material.value = 'wool';
+  panel.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+
+  assert.equal(toggle.getAttribute('aria-expanded'), 'false');
+  assert.equal(panel.hidden, true);
+  assert.equal(material.value, 'wool');
+  assert.equal(document.activeElement, toggle);
+});
+
+test('pusty wynik pozwala wyczyścić filtry i wrócić do wyszukiwania', async () => {
+  const dom = loadApp();
+  const { document, Event } = dom.window;
+  await new Promise((resolve) => dom.window.setTimeout(resolve, 20));
+
+  const language = document.getElementById('patternLanguageFilter');
+  language.value = 'pl';
+  language.dispatchEvent(new Event('change', { bubbles: true }));
+  const action = [...document.querySelectorAll('#patternCatalog button')]
+    .find((button) => button.textContent === 'Wyczyść filtry');
+
+  assert.ok(action);
+  action.click();
+  assert.equal(language.value, 'all');
+  assert.equal(document.activeElement, document.getElementById('patternSearch'));
+  dom.window.close();
+});
+
+test('przycisk doładowania podaje liczbę kart, które pokaże', async () => {
+  const patterns = Array.from({ length: 15 }, (_, index) => ({
+    id: `p${index}`,
+    name: `Wzór ${String(index).padStart(2, '0')}`,
+    description: 'Opis',
+    projectType: 'other',
+    sourceLanguage: 'pl',
+    needsReview: false,
+    materials: [],
+    yarnRequirements: [],
+  }));
+  const dom = loadApp(patterns);
+  await new Promise((resolve) => dom.window.setTimeout(resolve, 20));
+
+  assert.equal(dom.window.document.getElementById('loadMorePatternsBtn').textContent, 'Pokaż 3 kolejne wzory');
+  dom.window.close();
 });

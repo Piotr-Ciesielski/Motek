@@ -57,16 +57,15 @@
             Uporządkuj domowy zapas, znajdź pasujący wzór i wróć do tego,
             co najprzyjemniejsze — tworzenia.
           </p>
-          <figure class="auth-visual__artwork">
-            <img
-              id="accountThemeImage"
-              src="assets/color-yarn-cat.v1.webp"
-              data-light-src="assets/color-yarn-cat.v1.webp"
-              data-dark-src="assets/night-yarn-cat.v1.webp"
-              alt="Kolorowe włóczki i kot w pracowni"
-            />
-          </figure>
           <button id="heroAuthBtn" class="hero-cta" type="button">Zacznij w Motku</button>
+          <img
+            id="accountThemeImage"
+            class="auth-visual__image"
+            src="assets/color-yarn-cat.v1.webp"
+            data-light-src="assets/color-yarn-cat.v1.webp"
+            data-dark-src="assets/night-yarn-cat.v1.webp"
+            alt="Kolorowe włóczki i kot w pracowni"
+          />
         </aside>
       <section class="panel auth-panel" aria-labelledby="authTitle">
         <div class="panel__header">
@@ -202,7 +201,7 @@
 
       <section id="inventoryView" class="app-view" data-view="inventory" aria-labelledby="inventoryTitle" hidden>
         <div class="inventory-layout">
-          <div class="inventory-layout__content">
+          <section class="inventory-hero">
             <div class="page-heading inventory-heading">
               <div>
                 <p class="eyebrow">Twoja pracownia</p>
@@ -214,6 +213,18 @@
                 <button id="inventoryAddYarnBtn" class="button button--ghost" type="button">＋ Dodaj motek</button>
               </div>
             </div>
+            <figure class="inventory-layout__visual">
+              <img
+                id="inventoryThemeImage"
+                src="assets/color-yarn-cat.v1.webp"
+                data-light-src="assets/color-yarn-cat.v1.webp"
+                data-dark-src="assets/night-yarn-cat.v1.webp"
+                alt="Kolorowe włóczki i kot w pracowni"
+              />
+            </figure>
+          </section>
+
+          <div class="inventory-layout__content">
             <section id="onboarding" class="panel onboarding" aria-labelledby="onboardingTitle" hidden>
               <div class="onboarding__content">
                 <p class="eyebrow">Pierwszy krok</p>
@@ -270,16 +281,6 @@
               </article>
             </section>
           </div>
-
-          <figure class="inventory-layout__visual">
-            <img
-              id="inventoryThemeImage"
-              src="assets/color-yarn-cat.v1.webp"
-              data-light-src="assets/color-yarn-cat.v1.webp"
-              data-dark-src="assets/night-yarn-cat.v1.webp"
-              alt="Kolorowe włóczki i kot w pracowni"
-            />
-          </figure>
         </div>
       </section>
 
@@ -289,8 +290,8 @@
             <div class="page-heading">
               <div>
                 <p class="eyebrow">Pomysły z Twojego zapasu</p>
-                <h1 id="matchesPageTitle">Dopasowanie</h1>
-                <p>Najpierw pokazujemy projekty, które możesz wykonać z zapisanych włóczek.</p>
+                <h1 id="matchesPageTitle">Dopasuj włóczkę</h1>
+                <p>Ustaw kryteria i zobacz pasujące wzory na żywo.</p>
               </div>
               <button id="backToInventoryBtn" class="button button--ghost" type="button">Wróć do magazynu</button>
             </div>
@@ -305,40 +306,46 @@
             />
           </figure>
         </div>
-        <article class="panel matches-panel">
-          <div class="panel__header">
+        <div class="matches-workspace">
+          <aside class="panel matches-criteria" aria-labelledby="matchesCriteriaTitle">
             <div>
-              <h2 id="matchesTitle">Wyniki dla Twoich włóczek</h2>
-              <p>Po zmianie magazynu uruchom dopasowanie ponownie.</p>
+              <p class="eyebrow">Twój zapisany zapas</p>
+              <h2 id="matchesCriteriaTitle">Kryteria dopasowania</h2>
+              <p>Motek porówna długość, grubość i skład Twoich włóczek z wymaganiami wzorów.</p>
             </div>
+            <div id="summary" class="summary"></div>
             <button id="findBtn" class="button" type="button">
               Dobierz wzór
             </button>
-          </div>
-          <div id="summary" class="summary"></div>
-          <div id="matchFreshnessNotice" class="match-freshness" hidden>
-            <span>Wyniki są nieaktualne po zmianie magazynu.</span>
-            <button id="refreshStaleMatchesBtn" class="button button--ghost" type="button">
-              Oblicz ponownie
-            </button>
-          </div>
-          <div id="results" class="results"></div>
-        </article>
+            <div id="matchFreshnessNotice" class="match-freshness" hidden>
+              <span>Wyniki są nieaktualne po zmianie magazynu.</span>
+              <button id="refreshStaleMatchesBtn" class="button button--ghost" type="button">
+                Oblicz ponownie
+              </button>
+            </div>
+          </aside>
+          <article class="panel matches-panel matches-results">
+            <div class="panel__header">
+              <div>
+                <p class="eyebrow">Wzory z katalogu</p>
+                <h2 id="matchesTitle">Najlepsze dopasowania</h2>
+                <p>Po zmianie magazynu uruchom dopasowanie ponownie.</p>
+              </div>
+            </div>
+            <div id="results" class="results"></div>
+          </article>
+        </div>
       </section>
 
       <section id="catalogView" class="app-view" data-view="catalog" aria-labelledby="catalogTitle" hidden>
-      <section class="panel catalog-panel">
-        <div class="catalog-header">
-          <div class="catalog-header__copy">
+      <section class="catalog-panel">
+        <div class="catalog-hero">
+          <div class="catalog-hero__copy">
             <p class="eyebrow">Biblioteka inspiracji</p>
             <h1 id="catalogTitle">Katalog wzorów</h1>
-            <p>
-              Przeglądaj opisane wzory. Informacja
-              „do sprawdzenia” oznacza, że część parametrów nie występowała
-              jednoznacznie w pliku źródłowym.
-            </p>
+            <p>Znajdź wzór, który pasuje do Twojej włóczki i kolejnego projektu.</p>
           </div>
-          <figure class="catalog-header__visual">
+          <figure class="catalog-theme-visual">
             <img
               id="catalogThemeImage"
               src="assets/color-yarn-cat.v1.webp"
@@ -347,8 +354,10 @@
               alt="Kolorowe włóczki i kot w pracowni"
             />
           </figure>
+        </div>
+        <div class="catalog-workspace">
           <div id="catalogFilters" class="catalog-controls">
-            <label>
+            <label class="catalog-search">
               Szukaj
               <input
                 id="patternSearch"
@@ -357,71 +366,68 @@
                 autocomplete="off"
               />
             </label>
-            <label>
-              Status danych
-              <select id="patternReviewFilter">
-                <option value="verified" selected>Zweryfikowane</option>
-                <option value="all">Wszystkie</option>
-                <option value="review">Do sprawdzenia</option>
-              </select>
-            </label>
-            <label>
-              Język
-              <select id="patternLanguageFilter">
-                <option value="all">Wszystkie języki</option>
-                <option value="pl">Polski</option>
-                <option value="en">Angielski</option>
-                <option value="unknown">Nieustalony</option>
-              </select>
-            </label>
-            <label>
-              Typ projektu
-              <select id="patternTypeFilter">
-                <option value="all">Wszystkie typy</option>
-                <option value="socks">Skarpety</option>
-                <option value="sweater">Swetry</option>
-                <option value="cardigan">Kardigany</option>
-                <option value="top">Topy i bluzki</option>
-                <option value="shawl_scarf">Chusty i szale</option>
-                <option value="head_accessory">Czapki, opaski i kominy</option>
-                <option value="gloves">Rękawiczki</option>
-                <option value="vest">Kamizelki</option>
-                <option value="skirt_dress">Spódnice i sukienki</option>
-                <option value="blanket">Koce</option>
-                <option value="other">Inne</option>
-              </select>
-            </label>
-            <label>
-              Materiał
-              <select id="patternMaterialFilter">
-                <option value="all">Wszystkie materiały</option>
-              </select>
-            </label>
-            <label>
-              Sortowanie
-              <select id="patternSort">
-                <option value="recommended">Polecane</option>
-                <option value="name-asc">Nazwa A–Z</option>
-                <option value="name-desc">Nazwa Z–A</option>
-              </select>
-            </label>
+            <button id="catalogFiltersToggle" class="button button--ghost catalog-filters-toggle" type="button" aria-expanded="false" aria-controls="catalogSecondaryFilters">Filtry (0)</button>
+            <div id="catalogSecondaryFilters" class="catalog-secondary-filters" hidden>
+              <label>
+                Status danych
+                <select id="patternReviewFilter">
+                  <option value="verified" selected>Zweryfikowane</option>
+                  <option value="all">Wszystkie</option>
+                  <option value="review">Do sprawdzenia</option>
+                </select>
+              </label>
+              <label>
+                Język
+                <select id="patternLanguageFilter">
+                  <option value="all">Wszystkie języki</option>
+                  <option value="pl">Polski</option>
+                  <option value="en">Angielski</option>
+                  <option value="unknown">Nieustalony</option>
+                </select>
+              </label>
+              <label>
+                Typ projektu
+                <select id="patternTypeFilter">
+                  <option value="all">Wszystkie typy</option>
+                  <option value="socks">Skarpety</option>
+                  <option value="sweater">Swetry</option>
+                  <option value="cardigan">Kardigany</option>
+                  <option value="top">Topy i bluzki</option>
+                  <option value="shawl_scarf">Chusty i szale</option>
+                  <option value="head_accessory">Czapki, opaski i kominy</option>
+                  <option value="gloves">Rękawiczki</option>
+                  <option value="vest">Kamizelki</option>
+                  <option value="skirt_dress">Spódnice i sukienki</option>
+                  <option value="blanket">Koce</option>
+                  <option value="other">Inne</option>
+                </select>
+              </label>
+              <label>
+                Materiał
+                <select id="patternMaterialFilter">
+                  <option value="all">Wszystkie materiały</option>
+                </select>
+              </label>
+              <label>
+                Sortowanie
+                <select id="patternSort">
+                  <option value="recommended">Polecane</option>
+                  <option value="name-asc">Nazwa A–Z</option>
+                  <option value="name-desc">Nazwa Z–A</option>
+                </select>
+              </label>
+            </div>
           </div>
-        </div>
-        <div class="catalog-summary-row">
-          <div id="patternCatalogSummary" class="catalog-summary" aria-live="polite"></div>
-          <button id="resetCatalogFiltersBtn" class="button button--ghost" type="button" disabled>
-            Wyczyść filtry
-          </button>
-        </div>
-        <div id="patternCatalogNotice" class="catalog-notice" hidden></div>
-        <div id="patternCatalog" class="pattern-catalog"></div>
-        <div id="patternCatalogActions" class="catalog-actions" hidden>
-          <button id="loadMorePatternsBtn" class="button" type="button">
-            Wczytaj więcej
-          </button>
-          <button id="backToCatalogFiltersBtn" class="button button--ghost" type="button">
-            Wróć do filtrów
-          </button>
+          <div class="catalog-summary-row">
+            <div id="patternCatalogSummary" class="catalog-summary" aria-live="polite"></div>
+            <button id="resetCatalogFiltersBtn" class="button button--ghost" type="button" disabled>Wyczyść filtry</button>
+          </div>
+          <div id="patternCatalogNotice" class="catalog-notice" hidden></div>
+          <div id="patternCatalog" class="pattern-catalog"></div>
+          <div id="patternCatalogActions" class="catalog-actions" hidden>
+            <button id="loadMorePatternsBtn" class="button" type="button">Pokaż kolejne wzory</button>
+            <button id="backToCatalogFiltersBtn" class="button button--ghost" type="button">Wróć do filtrów</button>
+          </div>
         </div>
       </section>
       </section>
