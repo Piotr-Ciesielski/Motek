@@ -2101,12 +2101,12 @@ body::before {
 
 [data-theme="dark"] #inventoryView .inventory-layout__visual,
 [data-theme="dark"] #matchesView .matches-hero__visual {
-  background: var(--hero-gradient);
+  background: none;
 }
 
 [data-theme="dark"] #inventoryView .inventory-layout__visual img,
 [data-theme="dark"] #matchesView .matches-hero__visual img {
-  opacity: 0.28;
+  opacity: 1;
 }
 
 [data-theme="dark"] #inventoryView .inventory-layout__visual::after,
