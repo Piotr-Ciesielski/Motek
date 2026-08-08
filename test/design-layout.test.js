@@ -142,6 +142,37 @@ test("inventory shelves collapse from two columns to one on mobile", () => {
   );
 });
 
+test("hero copy stays focused and uses the Dopasowanie heading type", () => {
+  const document = new JSDOM(indexHtml).window.document;
+
+  assert.equal(document.querySelector("#inventoryView .inventory-heading .eyebrow"), null);
+  assert.equal(document.querySelector("#inventoryView .inventory-heading > div:first-child > p:not(.eyebrow)"), null);
+  assert.equal(document.querySelector("#matchesView .matches-hero__copy .eyebrow"), null);
+  assert.equal(document.querySelector("#matchesView .matches-hero__copy .page-heading > div > p:not(.eyebrow)"), null);
+  assert.equal(document.querySelector("#catalogView .catalog-hero__copy .eyebrow"), null);
+  assert.equal(document.querySelector("#catalogView .catalog-hero__copy > p:not(.eyebrow)"), null);
+
+  assert.doesNotMatch(
+    stylesCss,
+    /\[data-theme="light"\] #inventoryView h1,[\s\S]*?font-family: "Inter", sans-serif;/,
+  );
+  assert.match(
+    stylesCss,
+    /#inventoryView \.inventory-heading h1,\s*#matchesView \.matches-hero__copy h1,\s*#catalogView \.catalog-hero__copy h1\s*\{[\s\S]*?font-family: "Fraunces", serif;/,
+  );
+});
+
+test("inventory artwork fills the hero without an opaque copy panel", () => {
+  assert.match(
+    stylesCss,
+    /#inventoryView \.inventory-heading > div:first-child\s*\{[\s\S]*?background: transparent;/,
+  );
+  assert.match(
+    stylesCss,
+    /#inventoryView \.inventory-layout__visual img\s*\{[\s\S]*?object-position: 58% center;/,
+  );
+});
+
 test("captcha remains available in every auth flow", () => {
   assert.equal((indexHtml.match(/data-turnstile-for=/g) || []).length, 3);
   assert.match(indexHtml, /data-turnstile-for="passwordReset"/);

@@ -1813,13 +1813,6 @@ body::before {
   background: #e94f4b;
 }
 
-[data-theme="light"] #inventoryView h1,
-[data-theme="light"] #inventoryView h2,
-[data-theme="light"] #matchesView h1,
-[data-theme="light"] #matchesView h2 {
-  font-family: "Inter", sans-serif;
-}
-
 [data-theme="light"] #inventoryView .inventory-heading,
 [data-theme="light"] #inventoryView .inventory-panel,
 [data-theme="light"] #inventoryView .inventory-stat {
@@ -2675,4 +2668,22 @@ body::before {
   #catalogView .catalog-theme-visual {
     min-height: 300px;
   }
+}
+
+/* Hero copy and typography alignment — final overrides after reference surfaces. */
+#inventoryView .inventory-heading h1,
+#matchesView .matches-hero__copy h1,
+#catalogView .catalog-hero__copy h1 {
+  font-family: "Fraunces", serif;
+  text-shadow: 0 2px 18px color-mix(in srgb, var(--bg) 42%, transparent);
+}
+
+#inventoryView .inventory-heading > div:first-child {
+  padding: 0;
+  background: transparent;
+  backdrop-filter: none;
+}
+
+#inventoryView .inventory-layout__visual img {
+  object-position: 58% center;
 }
