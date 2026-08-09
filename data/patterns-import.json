@@ -11,7 +11,7 @@
   "records": [
     {
       "name": "HINTERLAND",
-      "description": "Instrukcja wykonania projektu: sweter, z wzorem wielokolorowym, ażurowymi detalami. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "description": null,
       "project_type": "sweater",
       "materials": [
         "wełna"
@@ -32,11 +32,15 @@
       },
       "source_filename": "--HINTERLAND--.pdf",
       "source_language": "en",
-      "needs_review": false
+      "needs_review": false,
+      "publication_status": "hidden",
+      "content_audit_version": "1.0",
+      "content_audited_at": "2026-08-09T00:00:00Z",
+      "official_source_url": null
     },
     {
       "name": "suncatcher-square-neck-intarsia-tee",
-      "description": "Instrukcja wykonania projektu: top lub bluzkę, z intarsją, ażurowymi detalami. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "description": null,
       "project_type": "top",
       "materials": [
         "bawełna"
@@ -62,11 +66,15 @@
       },
       "source_filename": "1719901849_suncatcher-square-neck-intarsia-tee-us.pdf",
       "source_language": "en",
-      "needs_review": false
+      "needs_review": false,
+      "publication_status": "hidden",
+      "content_audit_version": "1.0",
+      "content_audited_at": "2026-08-09T00:00:00Z",
+      "official_source_url": null
     },
     {
       "name": "rosmarino-eyelet-ankle-socks",
-      "description": "Instrukcja wykonania projektu: skarpetki, z ażurowymi detalami, konstrukcją od góry. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "description": null,
       "project_type": "socks",
       "materials": [
         "wełna",
@@ -94,11 +102,15 @@
       },
       "source_filename": "1720189120_rosmarino-eyelet-ankle-socks-us.pdf",
       "source_language": "en",
-      "needs_review": false
+      "needs_review": false,
+      "publication_status": "hidden",
+      "content_audit_version": "1.0",
+      "content_audited_at": "2026-08-09T00:00:00Z",
+      "official_source_url": null
     },
     {
       "name": "Black Lodge Socks - wzór dziewiarski",
-      "description": "Instrukcja wykonania projektu: skarpetki. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "description": null,
       "project_type": "socks",
       "materials": [
         "jak",
@@ -136,11 +148,15 @@
       },
       "source_filename": "[PL] Black Lodge Socks - wzór dziewiarski.pdf",
       "source_language": "pl",
-      "needs_review": false
+      "needs_review": false,
+      "publication_status": "hidden",
+      "content_audit_version": "1.0",
+      "content_audited_at": "2026-08-09T00:00:00Z",
+      "official_source_url": null
     },
     {
       "name": "White Lodge Socks - wzór dziewiarski",
-      "description": "Instrukcja wykonania projektu: skarpetki, z ażurowymi detalami. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "description": null,
       "project_type": "socks",
       "materials": [
         "wełna",
@@ -184,11 +200,15 @@
       },
       "source_filename": "[PL] White Lodge Socks - wzór dziewiarski.pdf",
       "source_language": "pl",
-      "needs_review": false
+      "needs_review": false,
+      "publication_status": "hidden",
+      "content_audit_version": "1.0",
+      "content_audited_at": "2026-08-09T00:00:00Z",
+      "official_source_url": null
     },
     {
       "name": "Diamond Fade Socks 2025",
-      "description": "Instrukcja wykonania projektu: skarpetki, z ażurowymi detalami. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "description": null,
       "project_type": "socks",
       "materials": [
         "wełna",
@@ -212,11 +232,15 @@
       },
       "source_filename": "[poprawiona wersja] Diamond Fade Socks 2025 PL.pdf",
       "source_language": "pl",
-      "needs_review": false
+      "needs_review": false,
+      "publication_status": "hidden",
+      "content_audit_version": "1.0",
+      "content_audited_at": "2026-08-09T00:00:00Z",
+      "official_source_url": null
     },
     {
       "name": "Teddy Bear Socks - wzór PL (ang skróty)",
-      "description": "Instrukcja wykonania projektu: skarpetki. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "description": null,
       "project_type": "socks",
       "materials": [
         "wełna",
@@ -241,11 +265,15 @@
       },
       "source_filename": "[poprawiona wersja] Teddy Bear Socks - wzór PL (ang skróty).pdf",
       "source_language": "pl",
-      "needs_review": false
+      "needs_review": false,
+      "publication_status": "hidden",
+      "content_audit_version": "1.0",
+      "content_audited_at": "2026-08-09T00:00:00Z",
+      "official_source_url": null
     },
     {
       "name": "Alice in Wonderland July 2013",
-      "description": "Instrukcja wykonania projektu: skarpetki, z ażurowymi detalami, warkoczami. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "description": null,
       "project_type": "socks",
       "materials": [
         "wełna",
@@ -268,11 +296,15 @@
       },
       "source_filename": "Alice_in_Wonderland_July_2013.pdf",
       "source_language": "en",
-      "needs_review": false
+      "needs_review": false,
+      "publication_status": "hidden",
+      "content_audit_version": "1.0",
+      "content_audited_at": "2026-08-09T00:00:00Z",
+      "official_source_url": null
     },
     {
       "name": "ALTA socks (PL) dla Włóczkomaniaczki (poprawione)",
-      "description": "Instrukcja wykonania projektu: skarpetki, z wzorem wielokolorowym, konstrukcją od góry. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "description": null,
       "project_type": "socks",
       "materials": [
         "wełna",
@@ -300,11 +332,15 @@
       },
       "source_filename": "ALTA socks (PL) dla Włóczkomaniaczki (poprawione).pdf",
       "source_language": "pl",
-      "needs_review": false
+      "needs_review": false,
+      "publication_status": "hidden",
+      "content_audit_version": "1.0",
+      "content_audited_at": "2026-08-09T00:00:00Z",
+      "official_source_url": null
     },
     {
       "name": "Autumn s Letter Cardigan by Amina Ali",
-      "description": "Instrukcja wykonania projektu: kardigan, z ażurowymi detalami, warkoczami. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "description": null,
       "project_type": "cardigan",
       "materials": [
         "wełna",
@@ -364,11 +400,15 @@
       },
       "source_filename": "Autumn_s_Letter_Cardigan_by_Amina_Ali.pdf",
       "source_language": "pl",
-      "needs_review": false
+      "needs_review": false,
+      "publication_status": "hidden",
+      "content_audit_version": "1.0",
+      "content_audited_at": "2026-08-09T00:00:00Z",
+      "official_source_url": null
     },
     {
       "name": "b2b-pdf 2106-07abc-eng 1",
-      "description": "Instrukcja wykonania projektu: skarpetki, z konstrukcją raglanową. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "description": null,
       "project_type": "socks",
       "materials": [
         "bawełna"
@@ -394,11 +434,15 @@
       },
       "source_filename": "b2b-pdf_2106-07abc-eng_1_kopia.pdf",
       "source_language": "en",
-      "needs_review": false
+      "needs_review": false,
+      "publication_status": "hidden",
+      "content_audit_version": "1.0",
+      "content_audited_at": "2026-08-09T00:00:00Z",
+      "official_source_url": null
     },
     {
       "name": "BABUSHKA SCARF",
-      "description": "Instrukcja wykonania projektu: chustę lub szal. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "description": null,
       "project_type": "shawl_scarf",
       "materials": [
         "wełna",
@@ -423,11 +467,15 @@
       },
       "source_filename": "BABUSHKA_SCARF.pdf",
       "source_language": "pl",
-      "needs_review": false
+      "needs_review": false,
+      "publication_status": "hidden",
+      "content_audit_version": "1.0",
+      "content_audited_at": "2026-08-09T00:00:00Z",
+      "official_source_url": null
     },
     {
       "name": "bevelled-tank-sleeveless-intarsia-top",
-      "description": "Instrukcja wykonania projektu: top lub bluzkę, z wzorem wielokolorowym, intarsją. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "description": null,
       "project_type": "top",
       "materials": [
         "bawełna"
@@ -453,11 +501,15 @@
       },
       "source_filename": "bevelled-tank-sleeveless-intarsia-top-us.pdf",
       "source_language": "en",
-      "needs_review": false
+      "needs_review": false,
+      "publication_status": "hidden",
+      "content_audit_version": "1.0",
+      "content_audited_at": "2026-08-09T00:00:00Z",
+      "official_source_url": null
     },
     {
       "name": "Big-Big-BuBBles06.23-licnfm",
-      "description": "Instrukcja wykonania projektu: kardigan. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "description": null,
       "project_type": "cardigan",
       "materials": [
         "wełna",
@@ -488,11 +540,15 @@
       },
       "source_filename": "Big-Big-BuBBles06.23-licnfm.pdf",
       "source_language": "pl",
-      "needs_review": false
+      "needs_review": false,
+      "publication_status": "hidden",
+      "content_audit_version": "1.0",
+      "content_audited_at": "2026-08-09T00:00:00Z",
+      "official_source_url": null
     },
     {
       "name": "Blush Basic Socks Listopad 2023 Wydanie pierwsze",
-      "description": "Instrukcja wykonania projektu: skarpetki, z konstrukcją od góry. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "description": null,
       "project_type": "socks",
       "materials": [
         "wełna",
@@ -514,11 +570,15 @@
       },
       "source_filename": "Blush Basic Socks_Listopad 2023_Wydanie pierwsze.pdf",
       "source_language": "pl",
-      "needs_review": false
+      "needs_review": false,
+      "publication_status": "hidden",
+      "content_audit_version": "1.0",
+      "content_audited_at": "2026-08-09T00:00:00Z",
+      "official_source_url": null
     },
     {
       "name": "bluzka saranda tee knitolog",
-      "description": "Instrukcja wykonania projektu: top lub bluzkę. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "description": null,
       "project_type": "top",
       "materials": [
         "bawełna",
@@ -544,11 +604,15 @@
       },
       "source_filename": "bluzka_saranda_tee_knitolog.pdf",
       "source_language": "pl",
-      "needs_review": false
+      "needs_review": false,
+      "publication_status": "hidden",
+      "content_audit_version": "1.0",
+      "content_audited_at": "2026-08-09T00:00:00Z",
+      "official_source_url": null
     },
     {
       "name": "bluzka Skuletant Iwona Eriksson",
-      "description": "Instrukcja wykonania projektu: top lub bluzkę, z ażurowymi detalami, warkoczami. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "description": null,
       "project_type": "top",
       "materials": [
         "jak",
@@ -586,11 +650,15 @@
       },
       "source_filename": "bluzka_Skuletant_Iwona_Eriksson.pdf",
       "source_language": "pl",
-      "needs_review": false
+      "needs_review": false,
+      "publication_status": "hidden",
+      "content_audit_version": "1.0",
+      "content_audited_at": "2026-08-09T00:00:00Z",
+      "official_source_url": null
     },
     {
       "name": "Bone",
-      "description": "Ażurowa kamizelka bez rękawów dostępna w wersji krótkiej lub dłuższej.",
+      "description": null,
       "project_type": "vest",
       "materials": [
         "bawełna"
@@ -616,11 +684,15 @@
       },
       "source_filename": "Bone vest by Rowan.pdf",
       "source_language": "en",
-      "needs_review": false
+      "needs_review": false,
+      "publication_status": "hidden",
+      "content_audit_version": "1.0",
+      "content_audited_at": "2026-08-09T00:00:00Z",
+      "official_source_url": null
     },
     {
       "name": "Bubble",
-      "description": "Kardigan o wyrazistej fakturze tworzonej przez dekoracyjne bąbelki.",
+      "description": null,
       "project_type": "cardigan",
       "materials": [
         "moher",
@@ -649,11 +721,15 @@
       },
       "source_filename": "Bubble by Rowan.pdf",
       "source_language": "en",
-      "needs_review": false
+      "needs_review": false,
+      "publication_status": "hidden",
+      "content_audit_version": "1.0",
+      "content_audited_at": "2026-08-09T00:00:00Z",
+      "official_source_url": null
     },
     {
       "name": "Canada",
-      "description": "Instrukcja wykonania projektu: sweter, z wzorem wielokolorowym, intarsją. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "description": null,
       "project_type": "sweater",
       "materials": [
         "akryl"
@@ -679,11 +755,15 @@
       },
       "source_filename": "Canada .pdf",
       "source_language": "en",
-      "needs_review": false
+      "needs_review": false,
+      "publication_status": "hidden",
+      "content_audit_version": "1.0",
+      "content_audited_at": "2026-08-09T00:00:00Z",
+      "official_source_url": null
     },
     {
       "name": "Capucharpe EN",
-      "description": "Instrukcja wykonania projektu: chustę lub szal, z ażurowymi detalami. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "description": null,
       "project_type": "shawl_scarf",
       "materials": [
         "wełna",
@@ -706,11 +786,15 @@
       },
       "source_filename": "Capucharpe_EN.pdf",
       "source_language": "en",
-      "needs_review": false
+      "needs_review": false,
+      "publication_status": "hidden",
+      "content_audit_version": "1.0",
+      "content_audited_at": "2026-08-09T00:00:00Z",
+      "official_source_url": null
     },
     {
       "name": "Chaussettes PERCY final EN",
-      "description": "Instrukcja wykonania projektu: skarpetki, z wzorem wielokolorowym, ażurowymi detalami. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "description": null,
       "project_type": "socks",
       "materials": [
         "wełna",
@@ -733,11 +817,15 @@
       },
       "source_filename": "Chaussettes_PERCY_final_EN.pdf",
       "source_language": "en",
-      "needs_review": false
+      "needs_review": false,
+      "publication_status": "hidden",
+      "content_audit_version": "1.0",
+      "content_audited_at": "2026-08-09T00:00:00Z",
+      "official_source_url": null
     },
     {
       "name": "Chusta Erin kotek i motek",
-      "description": "Instrukcja wykonania projektu: chustę lub szal, z konstrukcją od góry. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "description": null,
       "project_type": "shawl_scarf",
       "materials": [
         "jak",
@@ -795,11 +883,15 @@
       },
       "source_filename": "Chusta_Erin_kotek_i_motek.pdf",
       "source_language": "pl",
-      "needs_review": false
+      "needs_review": false,
+      "publication_status": "hidden",
+      "content_audit_version": "1.0",
+      "content_audited_at": "2026-08-09T00:00:00Z",
+      "official_source_url": null
     },
     {
       "name": "Cirro",
-      "description": "Sweter wykonywany od góry, z ażurowym karczkiem i modelowaniem krótkimi rzędami.",
+      "description": null,
       "project_type": "sweater",
       "materials": [
         "wełna",
@@ -832,11 +924,15 @@
       },
       "source_filename": "Cirro sweater.pdf",
       "source_language": "en",
-      "needs_review": false
+      "needs_review": false,
+      "publication_status": "hidden",
+      "content_audit_version": "1.0",
+      "content_audited_at": "2026-08-09T00:00:00Z",
+      "official_source_url": null
     },
     {
       "name": "Climb every Mountain socks Final Edit141122",
-      "description": "Instrukcja wykonania projektu: skarpetki, z ażurowymi detalami, warkoczami. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "description": null,
       "project_type": "socks",
       "materials": [
         "wełna",
@@ -883,11 +979,15 @@
       },
       "source_filename": "Climb_every_Mountain_socks_Final_Edit141122.pdf",
       "source_language": "en",
-      "needs_review": false
+      "needs_review": false,
+      "publication_status": "hidden",
+      "content_audit_version": "1.0",
+      "content_audited_at": "2026-08-09T00:00:00Z",
+      "official_source_url": null
     },
     {
       "name": "Cloudberry Sweater",
-      "description": "Instrukcja wykonania projektu: sweter, z ażurowymi detalami. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "description": null,
       "project_type": "sweater",
       "materials": [
         "wełna"
@@ -913,11 +1013,15 @@
       },
       "source_filename": "Cloudberry Sweater ENGLISH.pdf",
       "source_language": "en",
-      "needs_review": false
+      "needs_review": false,
+      "publication_status": "hidden",
+      "content_audit_version": "1.0",
+      "content_audited_at": "2026-08-09T00:00:00Z",
+      "official_source_url": null
     },
     {
       "name": "Clue 1 Color Popportunity Socks",
-      "description": "Instrukcja wykonania projektu: skarpetki, z ażurowymi detalami, warkoczami. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "description": null,
       "project_type": "socks",
       "materials": [
         "wełna",
@@ -948,11 +1052,15 @@
       },
       "source_filename": "Clue_1_Color_Popportunity_Socks.pdf",
       "source_language": "en",
-      "needs_review": false
+      "needs_review": false,
+      "publication_status": "hidden",
+      "content_audit_version": "1.0",
+      "content_audited_at": "2026-08-09T00:00:00Z",
+      "official_source_url": null
     },
     {
       "name": "Cotton",
-      "description": "Koszulka z krótkim rękawem i dekoltem w serek.",
+      "description": null,
       "project_type": "top",
       "materials": [
         "bawełna"
@@ -978,11 +1086,15 @@
       },
       "source_filename": "Cotton t-shirt by Rowan.pdf",
       "source_language": "en",
-      "needs_review": false
+      "needs_review": false,
+      "publication_status": "hidden",
+      "content_audit_version": "1.0",
+      "content_audited_at": "2026-08-09T00:00:00Z",
+      "official_source_url": null
     },
     {
       "name": "Craigh Na Dun Shawl - Anna Kania (2)",
-      "description": "Instrukcja wykonania projektu: chustę lub szal, z warkoczami. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "description": null,
       "project_type": "shawl_scarf",
       "materials": [
         "wełna",
@@ -1042,11 +1154,15 @@
       },
       "source_filename": "Craigh Na Dun Shawl - Anna Kania (2).pdf",
       "source_language": "pl",
-      "needs_review": false
+      "needs_review": false,
+      "publication_status": "hidden",
+      "content_audit_version": "1.0",
+      "content_audited_at": "2026-08-09T00:00:00Z",
+      "official_source_url": null
     },
     {
       "name": "diaphane-top-buttoned-shirt",
-      "description": "Instrukcja wykonania projektu: top lub bluzkę, z intarsją, ażurowymi detalami. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "description": null,
       "project_type": "top",
       "materials": [
         "alpaka"
@@ -1072,11 +1188,15 @@
       },
       "source_filename": "diaphane-top-buttoned-shirt-us.pdf",
       "source_language": "en",
-      "needs_review": false
+      "needs_review": false,
+      "publication_status": "hidden",
+      "content_audit_version": "1.0",
+      "content_audited_at": "2026-08-09T00:00:00Z",
+      "official_source_url": null
     },
     {
       "name": "Fallandenforestsocks",
-      "description": "Instrukcja wykonania projektu: skarpetki, z ażurowymi detalami. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "description": null,
       "project_type": "socks",
       "materials": [
         "wełna",
@@ -1114,11 +1234,15 @@
       },
       "source_filename": "Fallandenforestsocks.pdf",
       "source_language": "en",
-      "needs_review": false
+      "needs_review": false,
+      "publication_status": "hidden",
+      "content_audit_version": "1.0",
+      "content_audited_at": "2026-08-09T00:00:00Z",
+      "official_source_url": null
     },
     {
       "name": "Fiorellino ENG1",
-      "description": "Instrukcja wykonania projektu: sweter, z ażurowymi detalami, konstrukcją raglanową. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "description": null,
       "project_type": "sweater",
       "materials": [
         "wełna",
@@ -1148,11 +1272,15 @@
       },
       "source_filename": "Fiorellino_ENG1.pdf",
       "source_language": "en",
-      "needs_review": false
+      "needs_review": false,
+      "publication_status": "hidden",
+      "content_audit_version": "1.0",
+      "content_audited_at": "2026-08-09T00:00:00Z",
+      "official_source_url": null
     },
     {
       "name": "floreale-top-lace-back-tee",
-      "description": "Instrukcja wykonania projektu: top lub bluzkę, z ażurowymi detalami, warkoczami. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "description": null,
       "project_type": "top",
       "materials": [
         "wełna",
@@ -1183,11 +1311,15 @@
       },
       "source_filename": "floreale-top-lace-back-tee-us.pdf",
       "source_language": "en",
-      "needs_review": false
+      "needs_review": false,
+      "publication_status": "hidden",
+      "content_audit_version": "1.0",
+      "content_audited_at": "2026-08-09T00:00:00Z",
+      "official_source_url": null
     },
     {
       "name": "Forest Light",
-      "description": "Instrukcja wykonania projektu: sweter, z wzorem wielokolorowym, ażurowymi detalami. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "description": null,
       "project_type": "sweater",
       "materials": [
         "wełna"
@@ -1215,11 +1347,15 @@
       },
       "source_filename": "Forest_Light.pdf",
       "source_language": "en",
-      "needs_review": false
+      "needs_review": false,
+      "publication_status": "hidden",
+      "content_audit_version": "1.0",
+      "content_audited_at": "2026-08-09T00:00:00Z",
+      "official_source_url": null
     },
     {
       "name": "Forever Autumn Sock Set Final",
-      "description": "Instrukcja wykonania projektu: skarpetki, z wzorem wielokolorowym, ażurowymi detalami. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "description": null,
       "project_type": "socks",
       "materials": [
         "wełna",
@@ -1258,11 +1394,15 @@
       },
       "source_filename": "Forever_Autumn_Sock_Set_Final_.pdf",
       "source_language": "en",
-      "needs_review": false
+      "needs_review": false,
+      "publication_status": "hidden",
+      "content_audit_version": "1.0",
+      "content_audited_at": "2026-08-09T00:00:00Z",
+      "official_source_url": null
     },
     {
       "name": "Gingerbreads Socks",
-      "description": "Instrukcja wykonania projektu: skarpetki, z wzorem wielokolorowym, konstrukcją od góry. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "description": null,
       "project_type": "socks",
       "materials": [
         "wełna",
@@ -1296,11 +1436,15 @@
       },
       "source_filename": "Gingerbreads Socks PL.pdf",
       "source_language": "pl",
-      "needs_review": false
+      "needs_review": false,
+      "publication_status": "hidden",
+      "content_audit_version": "1.0",
+      "content_audited_at": "2026-08-09T00:00:00Z",
+      "official_source_url": null
     },
     {
       "name": "Grassland Tee",
-      "description": "Bezszwowa koszulka wykonywana od góry, z krótkimi rękawami i ażurowym panelem z przodu.",
+      "description": null,
       "project_type": "top",
       "materials": [
         "wełna",
@@ -1334,11 +1478,15 @@
       },
       "source_filename": "Grassland tee.pdf",
       "source_language": "en",
-      "needs_review": false
+      "needs_review": false,
+      "publication_status": "hidden",
+      "content_audit_version": "1.0",
+      "content_audited_at": "2026-08-09T00:00:00Z",
+      "official_source_url": null
     },
     {
       "name": "Greenbay",
-      "description": "Teksturowany top bez rękawów, z rozcięciami po bokach.",
+      "description": null,
       "project_type": "top",
       "materials": [
         "bawełna"
@@ -1364,11 +1512,15 @@
       },
       "source_filename": "Greenbay top by Rowan.pdf",
       "source_language": "en",
-      "needs_review": false
+      "needs_review": false,
+      "publication_status": "hidden",
+      "content_audit_version": "1.0",
+      "content_audited_at": "2026-08-09T00:00:00Z",
+      "official_source_url": null
     },
     {
       "name": "Handasa Top AminaAliHandmade",
-      "description": "Instrukcja wykonania projektu: top lub bluzkę. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "description": null,
       "project_type": "top",
       "materials": [
         "wełna",
@@ -1424,11 +1576,15 @@
       },
       "source_filename": "Handasa_Top_AminaAliHandmade.pdf",
       "source_language": "pl",
-      "needs_review": false
+      "needs_review": false,
+      "publication_status": "hidden",
+      "content_audit_version": "1.0",
+      "content_audited_at": "2026-08-09T00:00:00Z",
+      "official_source_url": null
     },
     {
       "name": "HAPPY-TRIO-SWEATER-Tkane-na-okraglo-Wzor-na-druty-exxadt",
-      "description": "Instrukcja wykonania projektu: sweter, z konstrukcją od góry. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "description": null,
       "project_type": "sweater",
       "materials": [
         "wełna",
@@ -1451,11 +1607,15 @@
       },
       "source_filename": "HAPPY-TRIO-SWEATER-Tkane-na-okraglo-Wzor-na-druty-exxadt.pdf",
       "source_language": "pl",
-      "needs_review": false
+      "needs_review": false,
+      "publication_status": "hidden",
+      "content_audit_version": "1.0",
+      "content_audited_at": "2026-08-09T00:00:00Z",
+      "official_source_url": null
     },
     {
       "name": "Happy Haunts Socks",
-      "description": "Skarpetki wykonywane od palców, ozdobione wielokolorowym motywem duchów.",
+      "description": null,
       "project_type": "socks",
       "materials": [
         "dowolny materiał"
@@ -1502,11 +1662,15 @@
       },
       "source_filename": "Happy_Haunts_Socks.pdf",
       "source_language": "en",
-      "needs_review": false
+      "needs_review": false,
+      "publication_status": "hidden",
+      "content_audit_version": "1.0",
+      "content_audited_at": "2026-08-09T00:00:00Z",
+      "official_source_url": null
     },
     {
       "name": "Highland Cardi",
-      "description": "Instrukcja wykonania projektu: kardigan, z konstrukcją od góry. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "description": null,
       "project_type": "cardigan",
       "materials": [
         "wełna",
@@ -1533,11 +1697,15 @@
       },
       "source_filename": "Highland Cardi.pdf",
       "source_language": "pl",
-      "needs_review": false
+      "needs_review": false,
+      "publication_status": "hidden",
+      "content_audit_version": "1.0",
+      "content_audited_at": "2026-08-09T00:00:00Z",
+      "official_source_url": null
     },
     {
       "name": "Holly Berry Charity Socks",
-      "description": "Świąteczne skarpetki żakardowe z ostrokrzewem, wykonywane z trzech kolorów włóczki skarpetkowej.",
+      "description": null,
       "project_type": "socks",
       "materials": [
         "dowolny materiał"
@@ -1611,11 +1779,15 @@
       },
       "source_filename": "HollyBerryCharitySocks.pdf",
       "source_language": "en",
-      "needs_review": false
+      "needs_review": false,
+      "publication_status": "hidden",
+      "content_audit_version": "1.0",
+      "content_audited_at": "2026-08-09T00:00:00Z",
+      "official_source_url": null
     },
     {
       "name": "Hot Chocolate with Finishing Sugar",
-      "description": "Trójkolorowe skarpetki inspirowane gorącą czekoladą, z dekoracyjnym wzorem na cholewce i stopie.",
+      "description": null,
       "project_type": "socks",
       "materials": [
         "wełna",
@@ -1643,11 +1815,15 @@
       },
       "source_filename": "Hot_chocolat_finishing_sugar_EN.pdf",
       "source_language": "en",
-      "needs_review": false
+      "needs_review": false,
+      "publication_status": "hidden",
+      "content_audit_version": "1.0",
+      "content_audited_at": "2026-08-09T00:00:00Z",
+      "official_source_url": null
     },
     {
       "name": "Turtle Town Cowl",
-      "description": "Wielokolorowy komin z żółwiowym motywem, przeznaczony do wykonania z włóczki DK.",
+      "description": null,
       "project_type": "head_accessory",
       "materials": [
         "dowolny materiał"
@@ -1683,11 +1859,15 @@
       },
       "source_filename": "Hunt-Hand-Knits_Turtle-Town-Cowl.pdf",
       "source_language": "en",
-      "needs_review": false
+      "needs_review": false,
+      "publication_status": "hidden",
+      "content_audit_version": "1.0",
+      "content_audited_at": "2026-08-09T00:00:00Z",
+      "official_source_url": null
     },
     {
       "name": "I m Batty for Halloween single pattern",
-      "description": "Instrukcja wykonania projektu: skarpetki, z ażurowymi detalami, konstrukcją od góry. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "description": null,
       "project_type": "socks",
       "materials": [
         "wełna"
@@ -1708,11 +1888,15 @@
       },
       "source_filename": "I_m_Batty_for_Halloween_single_pattern.pdf",
       "source_language": "en",
-      "needs_review": false
+      "needs_review": false,
+      "publication_status": "hidden",
+      "content_audit_version": "1.0",
+      "content_audited_at": "2026-08-09T00:00:00Z",
+      "official_source_url": null
     },
     {
       "name": "ingrid-summer-sweater-A4",
-      "description": "Instrukcja wykonania projektu: sweter, z ażurowymi detalami, warkoczami. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "description": null,
       "project_type": "sweater",
       "materials": [
         "bawełna",
@@ -1739,11 +1923,15 @@
       },
       "source_filename": "ingrid-summer-sweater-A4-ENG_kopia.pdf",
       "source_language": "en",
-      "needs_review": false
+      "needs_review": false,
+      "publication_status": "hidden",
+      "content_audit_version": "1.0",
+      "content_audited_at": "2026-08-09T00:00:00Z",
+      "official_source_url": null
     },
     {
       "name": "ingrid-top-A4",
-      "description": "Instrukcja wykonania projektu: top lub bluzkę, z ażurowymi detalami, warkoczami. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "description": null,
       "project_type": "top",
       "materials": [
         "bawełna",
@@ -1770,11 +1958,15 @@
       },
       "source_filename": "ingrid-top-A4-ENG_kopia.pdf",
       "source_language": "en",
-      "needs_review": false
+      "needs_review": false,
+      "publication_status": "hidden",
+      "content_audit_version": "1.0",
+      "content_audited_at": "2026-08-09T00:00:00Z",
+      "official_source_url": null
     },
     {
       "name": "JOAN FEST tee",
-      "description": "Instrukcja wykonania projektu: top lub bluzkę, z ażurowymi detalami, konstrukcją raglanową. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "description": null,
       "project_type": "top",
       "materials": [
         "wełna",
@@ -1851,11 +2043,15 @@
       },
       "source_filename": "JOAN_FEST_tee_PL.pdf",
       "source_language": "pl",
-      "needs_review": false
+      "needs_review": false,
+      "publication_status": "hidden",
+      "content_audit_version": "1.0",
+      "content_audited_at": "2026-08-09T00:00:00Z",
+      "official_source_url": null
     },
     {
       "name": "kardigan Hobbii",
-      "description": "Instrukcja wykonania projektu: kardigan, z konstrukcją raglanową, konstrukcją od góry. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "description": null,
       "project_type": "cardigan",
       "materials": [
         "moher",
@@ -1886,11 +2082,15 @@
       },
       "source_filename": "kardigan Hobbii.pdf",
       "source_language": "pl",
-      "needs_review": false
+      "needs_review": false,
+      "publication_status": "hidden",
+      "content_audit_version": "1.0",
+      "content_audited_at": "2026-08-09T00:00:00Z",
+      "official_source_url": null
     },
     {
       "name": "Na Pole Tee",
-      "description": "Koszulka z krótkim rękawem, okrągłym dekoltem i dekoracyjnym panelem warkoczowym.",
+      "description": null,
       "project_type": "top",
       "materials": [
         "bawełna",
@@ -2216,11 +2416,15 @@
       },
       "source_filename": "Kopia pliku na_pole_wzor.pdf",
       "source_language": "pl",
-      "needs_review": false
+      "needs_review": false,
+      "publication_status": "hidden",
+      "content_audit_version": "1.0",
+      "content_audited_at": "2026-08-09T00:00:00Z",
+      "official_source_url": null
     },
     {
       "name": "Leafstream Socks - wzór PL (ang skróty)",
-      "description": "Instrukcja wykonania projektu: skarpetki, z ażurowymi detalami, warkoczami. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "description": null,
       "project_type": "socks",
       "materials": [
         "alpaka",
@@ -2244,11 +2448,15 @@
       },
       "source_filename": "Leafstream Socks - wzór PL (ang skróty).pdf",
       "source_language": "pl",
-      "needs_review": false
+      "needs_review": false,
+      "publication_status": "hidden",
+      "content_audit_version": "1.0",
+      "content_audited_at": "2026-08-09T00:00:00Z",
+      "official_source_url": null
     },
     {
       "name": "Lento",
-      "description": "Prosty sweter raglanowy wykonywany od góry, z dwiema włóczkami przerabianymi razem.",
+      "description": null,
       "project_type": "sweater",
       "materials": [
         "wełna",
@@ -2281,11 +2489,15 @@
       },
       "source_filename": "Lento.pdf",
       "source_language": "en",
-      "needs_review": false
+      "needs_review": false,
+      "publication_status": "hidden",
+      "content_audit_version": "1.0",
+      "content_audited_at": "2026-08-09T00:00:00Z",
+      "official_source_url": null
     },
     {
       "name": "LinearisSocksSet",
-      "description": "Instrukcja wykonania projektu: skarpetki, z konstrukcją od góry. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "description": null,
       "project_type": "socks",
       "materials": [
         "jak"
@@ -2311,11 +2523,15 @@
       },
       "source_filename": "LinearisSocksSet.pdf",
       "source_language": "pl",
-      "needs_review": false
+      "needs_review": false,
+      "publication_status": "hidden",
+      "content_audit_version": "1.0",
+      "content_audited_at": "2026-08-09T00:00:00Z",
+      "official_source_url": null
     },
     {
       "name": "Lola Cardin gruby",
-      "description": "Instrukcja wykonania projektu: kardigan, z konstrukcją raglanową, konstrukcją od góry. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "description": null,
       "project_type": "cardigan",
       "materials": [
         "wełna",
@@ -2346,11 +2562,15 @@
       },
       "source_filename": "Lola Cardin gruby.pdf",
       "source_language": "pl",
-      "needs_review": false
+      "needs_review": false,
+      "publication_status": "hidden",
+      "content_audit_version": "1.0",
+      "content_audited_at": "2026-08-09T00:00:00Z",
+      "official_source_url": null
     },
     {
       "name": "Lyon Sweater",
-      "description": "Instrukcja wykonania projektu: sweter, z ażurowymi detalami, konstrukcją raglanową. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "description": null,
       "project_type": "sweater",
       "materials": [
         "moher",
@@ -2386,11 +2606,15 @@
       },
       "source_filename": "Lyon_Sweater_ENGLISH.pdf",
       "source_language": "en",
-      "needs_review": false
+      "needs_review": false,
+      "publication_status": "hidden",
+      "content_audit_version": "1.0",
+      "content_audited_at": "2026-08-09T00:00:00Z",
+      "official_source_url": null
     },
     {
       "name": "Made Me Puff Top",
-      "description": "Dopasowany top z odkrytymi ramionami i bardzo bufiastymi, moherowymi rękawami.",
+      "description": null,
       "project_type": "top",
       "materials": [
         "bawełna",
@@ -2425,11 +2649,15 @@
       },
       "source_filename": "MADE_ME_PUFF_TOP_mademeknit.pdf",
       "source_language": "pl",
-      "needs_review": false
+      "needs_review": false,
+      "publication_status": "hidden",
+      "content_audit_version": "1.0",
+      "content_audited_at": "2026-08-09T00:00:00Z",
+      "official_source_url": null
     },
     {
       "name": "Magic Toadstool socks update 2023",
-      "description": "Instrukcja wykonania projektu: skarpetki, z ażurowymi detalami, konstrukcją od góry. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "description": null,
       "project_type": "socks",
       "materials": [
         "wełna",
@@ -2468,11 +2696,15 @@
       },
       "source_filename": "Magic_Toadstool_socks_update_2023.pdf",
       "source_language": "en",
-      "needs_review": false
+      "needs_review": false,
+      "publication_status": "hidden",
+      "content_audit_version": "1.0",
+      "content_audited_at": "2026-08-09T00:00:00Z",
+      "official_source_url": null
     },
     {
       "name": "Mikkeli Sweater Easter",
-      "description": "Instrukcja wykonania projektu: sweter, z ażurowymi detalami. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "description": null,
       "project_type": "sweater",
       "materials": [
         "wełna"
@@ -2498,11 +2730,15 @@
       },
       "source_filename": "Mikkeli Sweater Easter ENGLISH.pdf",
       "source_language": "en",
-      "needs_review": false
+      "needs_review": false,
+      "publication_status": "hidden",
+      "content_audit_version": "1.0",
+      "content_audited_at": "2026-08-09T00:00:00Z",
+      "official_source_url": null
     },
     {
       "name": "Mineral",
-      "description": "Top z krótkim rękawem, teksturowanym wzorem i zaokrąglonym dołem.",
+      "description": null,
       "project_type": "top",
       "materials": [
         "bawełna"
@@ -2528,11 +2764,15 @@
       },
       "source_filename": "Mineral by Rowan.pdf",
       "source_language": "en",
-      "needs_review": false
+      "needs_review": false,
+      "publication_status": "hidden",
+      "content_audit_version": "1.0",
+      "content_audited_at": "2026-08-09T00:00:00Z",
+      "official_source_url": null
     },
     {
       "name": "Mountain Pine socks",
-      "description": "Instrukcja wykonania projektu: skarpetki, z ażurowymi detalami. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "description": null,
       "project_type": "socks",
       "materials": [
         "wełna",
@@ -2579,11 +2819,15 @@
       },
       "source_filename": "Mountain_Pine_socks.pdf",
       "source_language": "en",
-      "needs_review": false
+      "needs_review": false,
+      "publication_status": "hidden",
+      "content_audit_version": "1.0",
+      "content_audited_at": "2026-08-09T00:00:00Z",
+      "official_source_url": null
     },
     {
       "name": "NBIELINKA LinearisHat Kokonki",
-      "description": "Instrukcja wykonania projektu: chustę lub szal. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "description": null,
       "project_type": "shawl_scarf",
       "materials": [
         "wełna",
@@ -2676,11 +2920,15 @@
       },
       "source_filename": "NBIELINKA_LinearisHat_Kokonki.pdf",
       "source_language": "pl",
-      "needs_review": false
+      "needs_review": false,
+      "publication_status": "hidden",
+      "content_audit_version": "1.0",
+      "content_audited_at": "2026-08-09T00:00:00Z",
+      "official_source_url": null
     },
     {
       "name": "Nova Skirt",
-      "description": "Prążkowana spódnica dostępna w wersji krótkiej lub długiej.",
+      "description": null,
       "project_type": "skirt_dress",
       "materials": [
         "wełna"
@@ -2702,11 +2950,15 @@
       },
       "source_filename": "Nova Skirt Sandnes Garn 2311vol2.pdf",
       "source_language": "en",
-      "needs_review": false
+      "needs_review": false,
+      "publication_status": "hidden",
+      "content_audit_version": "1.0",
+      "content_audited_at": "2026-08-09T00:00:00Z",
+      "official_source_url": null
     },
     {
       "name": "Oslo Hat",
-      "description": "Podwójnie składana czapka o klasycznym fasonie, wykonywana dwiema nitkami jednocześnie.",
+      "description": null,
       "project_type": "head_accessory",
       "materials": [
         "wełna",
@@ -2945,11 +3197,15 @@
       },
       "source_filename": "Oslohuen_2.0_ENGELSK.pdf",
       "source_language": "en",
-      "needs_review": false
+      "needs_review": false,
+      "publication_status": "hidden",
+      "content_audit_version": "1.0",
+      "content_audited_at": "2026-08-09T00:00:00Z",
+      "official_source_url": null
     },
     {
       "name": "Pani-Wiosna wzor HeartofCotton",
-      "description": "Instrukcja wykonania projektu: sweter. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "description": null,
       "project_type": "sweater",
       "materials": [
         "bawełna",
@@ -2971,11 +3227,15 @@
       },
       "source_filename": "Pani-Wiosna__wzor_HeartofCotton.pdf",
       "source_language": "pl",
-      "needs_review": false
+      "needs_review": false,
+      "publication_status": "hidden",
+      "content_audit_version": "1.0",
+      "content_audited_at": "2026-08-09T00:00:00Z",
+      "official_source_url": null
     },
     {
       "name": "Pearl",
-      "description": "Top bez rękawów z dekoltem w serek.",
+      "description": null,
       "project_type": "top",
       "materials": [
         "bawełna"
@@ -3001,11 +3261,15 @@
       },
       "source_filename": "Pearl top by Rowan.pdf",
       "source_language": "en",
-      "needs_review": false
+      "needs_review": false,
+      "publication_status": "hidden",
+      "content_audit_version": "1.0",
+      "content_audited_at": "2026-08-09T00:00:00Z",
+      "official_source_url": null
     },
     {
       "name": "Penguono",
-      "description": "Modułowy kardigan z resztek włóczek, projektowany świadomie dla różnych grubości, składów i zestawień kolorów.",
+      "description": null,
       "project_type": "cardigan",
       "materials": [
         "dowolny materiał"
@@ -3030,11 +3294,15 @@
       },
       "source_filename": "penguono_7.pdf",
       "source_language": "en",
-      "needs_review": false
+      "needs_review": false,
+      "publication_status": "hidden",
+      "content_audit_version": "1.0",
+      "content_audited_at": "2026-08-09T00:00:00Z",
+      "official_source_url": null
     },
     {
       "name": "Picot Headband Knitting Pattern - The Obsessed final",
-      "description": "Instrukcja wykonania projektu: czapkę, opaskę lub komin, z ażurowymi detalami. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "description": null,
       "project_type": "head_accessory",
       "materials": [
         "bawełna",
@@ -3062,11 +3330,15 @@
       },
       "source_filename": "Picot_Headband_Knitting_Pattern_-_The_Obsessed_final.pdf",
       "source_language": "en",
-      "needs_review": false
+      "needs_review": false,
+      "publication_status": "hidden",
+      "content_audit_version": "1.0",
+      "content_audited_at": "2026-08-09T00:00:00Z",
+      "official_source_url": null
     },
     {
       "name": "PisankiSocks",
-      "description": "Instrukcja wykonania projektu: skarpetki, z ażurowymi detalami. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "description": null,
       "project_type": "socks",
       "materials": [
         "wełna",
@@ -3100,11 +3372,15 @@
       },
       "source_filename": "PisankiSocks_PL.pdf",
       "source_language": "pl",
-      "needs_review": false
+      "needs_review": false,
+      "publication_status": "hidden",
+      "content_audit_version": "1.0",
+      "content_audited_at": "2026-08-09T00:00:00Z",
+      "official_source_url": null
     },
     {
       "name": "PL I AM THE GIFT WZOR 1.1",
-      "description": "Instrukcja wykonania projektu: czapkę, opaskę lub komin. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "description": null,
       "project_type": "head_accessory",
       "materials": [
         "jedwab",
@@ -3154,11 +3430,15 @@
       },
       "source_filename": "PL_I_AM_THE_GIFT_WZOR_1.1.pdf",
       "source_language": "pl",
-      "needs_review": false
+      "needs_review": false,
+      "publication_status": "hidden",
+      "content_audit_version": "1.0",
+      "content_audited_at": "2026-08-09T00:00:00Z",
+      "official_source_url": null
     },
     {
       "name": "Havfrue Shawl",
-      "description": "Chusta o skalowalnej wielkości, którą można wykonać z dowolnej włóczki w jednej z trzech grubości.",
+      "description": null,
       "project_type": "shawl_scarf",
       "materials": [
         "dowolny materiał"
@@ -3208,11 +3488,15 @@
       },
       "source_filename": "polski_HAVFRUESHAWL.pdf",
       "source_language": "pl",
-      "needs_review": false
+      "needs_review": false,
+      "publication_status": "hidden",
+      "content_audit_version": "1.0",
+      "content_audited_at": "2026-08-09T00:00:00Z",
+      "official_source_url": null
     },
     {
       "name": "POLSKI Venke skirt",
-      "description": "Instrukcja wykonania projektu: spódnicę lub sukienkę. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "description": null,
       "project_type": "skirt_dress",
       "materials": [
         "wełna",
@@ -3234,11 +3518,15 @@
       },
       "source_filename": "POLSKI_Venke_skirt_.pdf",
       "source_language": "pl",
-      "needs_review": false
+      "needs_review": false,
+      "publication_status": "hidden",
+      "content_audit_version": "1.0",
+      "content_audited_at": "2026-08-09T00:00:00Z",
+      "official_source_url": null
     },
     {
       "name": "POLY-SWEATER-kingacrafts",
-      "description": "Instrukcja wykonania projektu: sweter. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "description": null,
       "project_type": "sweater",
       "materials": [
         "moher",
@@ -3272,11 +3560,15 @@
       },
       "source_filename": "POLY-SWEATER-kingacrafts.pdf",
       "source_language": "pl",
-      "needs_review": false
+      "needs_review": false,
+      "publication_status": "hidden",
+      "content_audit_version": "1.0",
+      "content_audited_at": "2026-08-09T00:00:00Z",
+      "official_source_url": null
     },
     {
       "name": "Poppy Tee",
-      "description": "Instrukcja wykonania projektu: top lub bluzkę, z ażurowymi detalami, konstrukcją raglanową. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "description": null,
       "project_type": "top",
       "materials": [
         "wełna",
@@ -3352,11 +3644,15 @@
       },
       "source_filename": "Poppy_Tee_ENGLISH.pdf",
       "source_language": "en",
-      "needs_review": false
+      "needs_review": false,
+      "publication_status": "hidden",
+      "content_audit_version": "1.0",
+      "content_audited_at": "2026-08-09T00:00:00Z",
+      "official_source_url": null
     },
     {
       "name": "Iconic Leaf Sweater",
-      "description": "Sweter z dużym motywem liścia klonowego wykonywanym techniką intarsji.",
+      "description": null,
       "project_type": "sweater",
       "materials": [
         "wełna",
@@ -3383,11 +3679,15 @@
       },
       "source_filename": "Pull_Iconic_Leaf_Sweater_EN.pdf",
       "source_language": "en",
-      "needs_review": false
+      "needs_review": false,
+      "publication_status": "hidden",
+      "content_audit_version": "1.0",
+      "content_audited_at": "2026-08-09T00:00:00Z",
+      "official_source_url": null
     },
     {
       "name": "Queen of Hearts Socks",
-      "description": "Instrukcja wykonania projektu: skarpetki, z konstrukcją od góry. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "description": null,
       "project_type": "socks",
       "materials": [
         "wełna"
@@ -3408,11 +3708,15 @@
       },
       "source_filename": "Queen_of_Hearts_Socks.pdf",
       "source_language": "en",
-      "needs_review": false
+      "needs_review": false,
+      "publication_status": "hidden",
+      "content_audit_version": "1.0",
+      "content_audited_at": "2026-08-09T00:00:00Z",
+      "official_source_url": null
     },
     {
       "name": "Sheep socks 1 1 1",
-      "description": "Instrukcja wykonania projektu: skarpetki, z wzorem wielokolorowym. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "description": null,
       "project_type": "socks",
       "materials": [
         "wełna",
@@ -3440,11 +3744,15 @@
       },
       "source_filename": "Sheep_socks__1___1___1_.pdf",
       "source_language": "en",
-      "needs_review": false
+      "needs_review": false,
+      "publication_status": "hidden",
+      "content_audit_version": "1.0",
+      "content_audited_at": "2026-08-09T00:00:00Z",
+      "official_source_url": null
     },
     {
       "name": "Silk",
-      "description": "Prążkowana sukienka bez rękawów dostępna w wersji krótkiej lub długiej.",
+      "description": null,
       "project_type": "skirt_dress",
       "materials": [
         "bawełna"
@@ -3470,11 +3778,15 @@
       },
       "source_filename": "Silk dress by Rowan.pdf",
       "source_language": "en",
-      "needs_review": false
+      "needs_review": false,
+      "publication_status": "hidden",
+      "content_audit_version": "1.0",
+      "content_audited_at": "2026-08-09T00:00:00Z",
+      "official_source_url": null
     },
     {
       "name": "Skarpetki tuby",
-      "description": "Skarpetki bez klasycznego modelowania stopy, obliczane na podstawie własnej próbki i wymiarów.",
+      "description": null,
       "project_type": "socks",
       "materials": [
         "dowolny materiał"
@@ -3510,11 +3822,15 @@
       },
       "source_filename": "SkarpetkiTuby_Czempik.knitwear.pdf",
       "source_language": "pl",
-      "needs_review": false
+      "needs_review": false,
+      "publication_status": "hidden",
+      "content_audit_version": "1.0",
+      "content_audited_at": "2026-08-09T00:00:00Z",
+      "official_source_url": null
     },
     {
       "name": "Skyward",
-      "description": "Sweter wykonywany od góry, z warkoczowym karczkiem i korpusem przerabianym ściegiem lewym.",
+      "description": null,
       "project_type": "sweater",
       "materials": [
         "wełna"
@@ -3546,11 +3862,15 @@
       },
       "source_filename": "Skyward sweater.pdf",
       "source_language": "en",
-      "needs_review": false
+      "needs_review": false,
+      "publication_status": "hidden",
+      "content_audit_version": "1.0",
+      "content_audited_at": "2026-08-09T00:00:00Z",
+      "official_source_url": null
     },
     {
       "name": "Sophie Scarf PL.Petiteknit",
-      "description": "Instrukcja wykonania projektu: chustę lub szal. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "description": null,
       "project_type": "shawl_scarf",
       "materials": [
         "kaszmir",
@@ -3580,11 +3900,15 @@
       },
       "source_filename": "Sophie_Scarf_PL.Petiteknit.pdf",
       "source_language": "pl",
-      "needs_review": false
+      "needs_review": false,
+      "publication_status": "hidden",
+      "content_audit_version": "1.0",
+      "content_audited_at": "2026-08-09T00:00:00Z",
+      "official_source_url": null
     },
     {
       "name": "The I’m So Basic Sock",
-      "description": "Podstawowy wzór skarpet wykonywanych metodą magic loop, przeznaczony również dla osób uczących się tej konstrukcji.",
+      "description": null,
       "project_type": "socks",
       "materials": [
         "dowolny materiał"
@@ -3620,11 +3944,15 @@
       },
       "source_filename": "SOS_Basic_Sock.pdf",
       "source_language": "en",
-      "needs_review": false
+      "needs_review": false,
+      "publication_status": "hidden",
+      "content_audit_version": "1.0",
+      "content_audited_at": "2026-08-09T00:00:00Z",
+      "official_source_url": null
     },
     {
       "name": "Space Feet Socks PL-lno7ucan",
-      "description": "Instrukcja wykonania projektu: skarpetki, z wzorem wielokolorowym, ażurowymi detalami. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "description": null,
       "project_type": "socks",
       "materials": [
         "jak",
@@ -3660,11 +3988,15 @@
       },
       "source_filename": "Space_Feet_Socks_PL-lno7ucan.pdf",
       "source_language": "pl",
-      "needs_review": false
+      "needs_review": false,
+      "publication_status": "hidden",
+      "content_audit_version": "1.0",
+      "content_audited_at": "2026-08-09T00:00:00Z",
+      "official_source_url": null
     },
     {
       "name": "Spooky sock set final",
-      "description": "Instrukcja wykonania projektu: skarpetki, z wzorem wielokolorowym, ażurowymi detalami. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "description": null,
       "project_type": "socks",
       "materials": [
         "wełna",
@@ -3722,11 +4054,15 @@
       },
       "source_filename": "Spooky_sock_set_final.pdf",
       "source_language": "en",
-      "needs_review": false
+      "needs_review": false,
+      "publication_status": "hidden",
+      "content_audit_version": "1.0",
+      "content_audited_at": "2026-08-09T00:00:00Z",
+      "official_source_url": null
     },
     {
       "name": "Starry Night Hat PL-ljvt8ze9",
-      "description": "Instrukcja wykonania projektu: czapkę, opaskę lub komin, z wzorem wielokolorowym. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "description": null,
       "project_type": "head_accessory",
       "materials": [
         "jak",
@@ -3762,11 +4098,15 @@
       },
       "source_filename": "Starry_Night_Hat_PL-ljvt8ze9.pdf",
       "source_language": "pl",
-      "needs_review": false
+      "needs_review": false,
+      "publication_status": "hidden",
+      "content_audit_version": "1.0",
+      "content_audited_at": "2026-08-09T00:00:00Z",
+      "official_source_url": null
     },
     {
       "name": "Starry Night Mittens PL-lo9p3u7q",
-      "description": "Instrukcja wykonania projektu: rękawiczki, z wzorem wielokolorowym. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "description": null,
       "project_type": "gloves",
       "materials": [
         "wełna",
@@ -3790,11 +4130,15 @@
       },
       "source_filename": "Starry_Night_Mittens_PL-lo9p3u7q.pdf",
       "source_language": "pl",
-      "needs_review": false
+      "needs_review": false,
+      "publication_status": "hidden",
+      "content_audit_version": "1.0",
+      "content_audited_at": "2026-08-09T00:00:00Z",
+      "official_source_url": null
     },
     {
       "name": "Starry Night Socks PL-ljvt91ie",
-      "description": "Instrukcja wykonania projektu: skarpetki, z wzorem wielokolorowym, ażurowymi detalami. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "description": null,
       "project_type": "socks",
       "materials": [
         "jak",
@@ -3836,11 +4180,15 @@
       },
       "source_filename": "Starry_Night_Socks_PL-ljvt91ie.pdf",
       "source_language": "pl",
-      "needs_review": false
+      "needs_review": false,
+      "publication_status": "hidden",
+      "content_audit_version": "1.0",
+      "content_audited_at": "2026-08-09T00:00:00Z",
+      "official_source_url": null
     },
     {
       "name": "Summer",
-      "description": "Prążkowana spódnica wykonywana od góry.",
+      "description": null,
       "project_type": "skirt_dress",
       "materials": [
         "bawełna"
@@ -3866,11 +4214,15 @@
       },
       "source_filename": "Summer by Rowan spódnica.pdf",
       "source_language": "en",
-      "needs_review": false
+      "needs_review": false,
+      "publication_status": "hidden",
+      "content_audit_version": "1.0",
+      "content_audited_at": "2026-08-09T00:00:00Z",
+      "official_source_url": null
     },
     {
       "name": "SWAN TOP",
-      "description": "Instrukcja wykonania projektu: top lub bluzkę, z ażurowymi detalami. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "description": null,
       "project_type": "top",
       "materials": [
         "bawełna",
@@ -3933,11 +4285,15 @@
       },
       "source_filename": "SWAN TOP.pdf",
       "source_language": "pl",
-      "needs_review": false
+      "needs_review": false,
+      "publication_status": "hidden",
+      "content_audit_version": "1.0",
+      "content_audited_at": "2026-08-09T00:00:00Z",
+      "official_source_url": null
     },
     {
       "name": "SWEATERNO9.LIGHT.ENG (2)",
-      "description": "Instrukcja wykonania projektu: sweter, z ażurowymi detalami, konstrukcją raglanową. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "description": null,
       "project_type": "sweater",
       "materials": [
         "wełna",
@@ -3965,11 +4321,15 @@
       },
       "source_filename": "SWEATERNO9.LIGHT.ENG (2).pdf",
       "source_language": "en",
-      "needs_review": false
+      "needs_review": false,
+      "publication_status": "hidden",
+      "content_audit_version": "1.0",
+      "content_audited_at": "2026-08-09T00:00:00Z",
+      "official_source_url": null
     },
     {
       "name": "SweetTreatsSocks NBielińska",
-      "description": "Instrukcja wykonania projektu: skarpetki, z wzorem wielokolorowym, warkoczami. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "description": null,
       "project_type": "socks",
       "materials": [
         "wełna",
@@ -3993,11 +4353,15 @@
       },
       "source_filename": "SweetTreatsSocks_NBielińska.pdf",
       "source_language": "pl",
-      "needs_review": false
+      "needs_review": false,
+      "publication_status": "hidden",
+      "content_audit_version": "1.0",
+      "content_audited_at": "2026-08-09T00:00:00Z",
+      "official_source_url": null
     },
     {
       "name": "Sweter Kikimora Moracraft",
-      "description": "Instrukcja wykonania projektu: sweter. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "description": null,
       "project_type": "sweater",
       "materials": [
         "wełna",
@@ -4022,11 +4386,15 @@
       },
       "source_filename": "Sweter_Kikimora_Moracraft.pdf",
       "source_language": "pl",
-      "needs_review": false
+      "needs_review": false,
+      "publication_status": "hidden",
+      "content_audit_version": "1.0",
+      "content_audited_at": "2026-08-09T00:00:00Z",
+      "official_source_url": null
     },
     {
       "name": "sweterek z golfem Bobbie",
-      "description": "Instrukcja wykonania projektu: sweter, z konstrukcją raglanową, konstrukcją od góry. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "description": null,
       "project_type": "sweater",
       "materials": [
         "wełna",
@@ -4086,11 +4454,15 @@
       },
       "source_filename": "sweterek z golfem Bobbie.pdf",
       "source_language": "pl",
-      "needs_review": false
+      "needs_review": false,
+      "publication_status": "hidden",
+      "content_audit_version": "1.0",
+      "content_audited_at": "2026-08-09T00:00:00Z",
+      "official_source_url": null
     },
     {
       "name": "Szal Queen of Spades Kokonki Pure",
-      "description": "Instrukcja wykonania projektu: chustę lub szal, z ażurowymi detalami. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "description": null,
       "project_type": "shawl_scarf",
       "materials": [
         "wełna"
@@ -4111,11 +4483,15 @@
       },
       "source_filename": "Szal_Queen_of_Spades_Kokonki_Pure.pdf",
       "source_language": "pl",
-      "needs_review": false
+      "needs_review": false,
+      "publication_status": "hidden",
+      "content_audit_version": "1.0",
+      "content_audited_at": "2026-08-09T00:00:00Z",
+      "official_source_url": null
     },
     {
       "name": "TEXTURE VEST hi UK-rm07er",
-      "description": "Instrukcja wykonania projektu: kamizelkę, z ażurowymi detalami. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "description": null,
       "project_type": "vest",
       "materials": [
         "alpaka",
@@ -4167,11 +4543,15 @@
       },
       "source_filename": "TEXTURE_VEST_hi_UK-rm07er.pdf",
       "source_language": "en",
-      "needs_review": false
+      "needs_review": false,
+      "publication_status": "hidden",
+      "content_audit_version": "1.0",
+      "content_audited_at": "2026-08-09T00:00:00Z",
+      "official_source_url": null
     },
     {
       "name": "The truth is out there Final edit",
-      "description": "Instrukcja wykonania projektu: skarpetki, z ażurowymi detalami, konstrukcją od góry. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "description": null,
       "project_type": "socks",
       "materials": [
         "wełna",
@@ -4210,11 +4590,15 @@
       },
       "source_filename": "The_truth_is_out_there_Final_edit.pdf",
       "source_language": "en",
-      "needs_review": false
+      "needs_review": false,
+      "publication_status": "hidden",
+      "content_audit_version": "1.0",
+      "content_audited_at": "2026-08-09T00:00:00Z",
+      "official_source_url": null
     },
     {
       "name": "Tromsø Hoodie",
-      "description": "Puszysta balaklawa wykonywana z dwóch włóczek alpakowych przerabianych razem.",
+      "description": null,
       "project_type": "other",
       "materials": [
         "alpaka",
@@ -4252,11 +4636,15 @@
       },
       "source_filename": "Tromsø Hoodie NORSK.pdf",
       "source_language": "en",
-      "needs_review": false
+      "needs_review": false,
+      "publication_status": "hidden",
+      "content_audit_version": "1.0",
+      "content_audited_at": "2026-08-09T00:00:00Z",
+      "official_source_url": null
     },
     {
       "name": "Tropfen",
-      "description": "Sweter z okrągłym karczkiem i wielokolorowym wzorem, o swobodnym fasonie.",
+      "description": null,
       "project_type": "sweater",
       "materials": [
         "wełna"
@@ -4278,11 +4666,15 @@
       },
       "source_filename": "Tropfen sweater.pdf",
       "source_language": "en",
-      "needs_review": false
+      "needs_review": false,
+      "publication_status": "hidden",
+      "content_audit_version": "1.0",
+      "content_audited_at": "2026-08-09T00:00:00Z",
+      "official_source_url": null
     },
     {
       "name": "UNDER THE SEA SOCKS PL-ljvt9559",
-      "description": "Instrukcja wykonania projektu: skarpetki, z wzorem wielokolorowym, ażurowymi detalami. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "description": null,
       "project_type": "socks",
       "materials": [
         "jak",
@@ -4324,11 +4716,15 @@
       },
       "source_filename": "UNDER_THE_SEA_SOCKS_PL-ljvt9559.pdf",
       "source_language": "pl",
-      "needs_review": false
+      "needs_review": false,
+      "publication_status": "hidden",
+      "content_audit_version": "1.0",
+      "content_audited_at": "2026-08-09T00:00:00Z",
+      "official_source_url": null
     },
     {
       "name": "Urth Yarns skarpetki",
-      "description": "Instrukcja wykonania projektu: skarpetki, z ażurowymi detalami, konstrukcją od góry. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "description": null,
       "project_type": "socks",
       "materials": [
         "wełna",
@@ -4356,11 +4752,15 @@
       },
       "source_filename": "Urth Yarns skarpetki.pdf",
       "source_language": "en",
-      "needs_review": false
+      "needs_review": false,
+      "publication_status": "hidden",
+      "content_audit_version": "1.0",
+      "content_audited_at": "2026-08-09T00:00:00Z",
+      "official_source_url": null
     },
     {
       "name": "Warm-Knit-Klara-wzor-dziewiarski-zulknh",
-      "description": "Instrukcja wykonania projektu: sweter, z ażurowymi detalami, konstrukcją od góry. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "description": null,
       "project_type": "sweater",
       "materials": [
         "jedwab",
@@ -4389,11 +4789,15 @@
       },
       "source_filename": "Warm-Knit-Klara-wzor-dziewiarski-zulknh.pdf",
       "source_language": "pl",
-      "needs_review": false
+      "needs_review": false,
+      "publication_status": "hidden",
+      "content_audit_version": "1.0",
+      "content_audited_at": "2026-08-09T00:00:00Z",
+      "official_source_url": null
     },
     {
       "name": "You Make Me (W)hole Cardigan - opis",
-      "description": "Instrukcja wykonania projektu: kardigan, z ażurowymi detalami. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "description": null,
       "project_type": "cardigan",
       "materials": [
         "wełna",
@@ -4419,11 +4823,15 @@
       },
       "source_filename": "You Make Me (W)hole Cardigan - opis.pdf",
       "source_language": "pl",
-      "needs_review": false
+      "needs_review": false,
+      "publication_status": "hidden",
+      "content_audit_version": "1.0",
+      "content_audited_at": "2026-08-09T00:00:00Z",
+      "official_source_url": null
     },
     {
       "name": "YouthVibeJumper nana.makes.it.all",
-      "description": "Instrukcja wykonania projektu: sweter. Opis przygotowany na podstawie dokumentu źródłowego.",
+      "description": null,
       "project_type": "sweater",
       "materials": [
         "alpaka",
@@ -4453,7 +4861,11 @@
       },
       "source_filename": "YouthVibeJumper_nana.makes.it.all.pdf",
       "source_language": "pl",
-      "needs_review": false
+      "needs_review": false,
+      "publication_status": "hidden",
+      "content_audit_version": "1.0",
+      "content_audited_at": "2026-08-09T00:00:00Z",
+      "official_source_url": null
     },
     {
       "name": "Wzór demo — Leśny kardigan",
@@ -4478,7 +4890,11 @@
       },
       "source_filename": "motek-demo-lesny-kardigan.synthetic.json",
       "source_language": "pl",
-      "needs_review": false
+      "needs_review": false,
+      "publication_status": "hidden",
+      "content_audit_version": "1.0",
+      "content_audited_at": "2026-08-09T00:00:00Z",
+      "official_source_url": null
     },
     {
       "name": "Wzór demo — Bawełniany top",
@@ -4503,7 +4919,11 @@
       },
       "source_filename": "motek-demo-bawelniany-top.synthetic.json",
       "source_language": "pl",
-      "needs_review": false
+      "needs_review": false,
+      "publication_status": "hidden",
+      "content_audit_version": "1.0",
+      "content_audited_at": "2026-08-09T00:00:00Z",
+      "official_source_url": null
     },
     {
       "name": "Wzór demo — Moherowa chusta",
@@ -4528,7 +4948,11 @@
       },
       "source_filename": "motek-demo-moherowa-chusta.synthetic.json",
       "source_language": "pl",
-      "needs_review": false
+      "needs_review": false,
+      "publication_status": "hidden",
+      "content_audit_version": "1.0",
+      "content_audited_at": "2026-08-09T00:00:00Z",
+      "official_source_url": null
     }
   ],
   "audit": [
@@ -4544,33 +4968,12 @@
       "manual_override": false,
       "review_reasons": [],
       "review_notes": [],
-      "reference_sources": [
-        {
-          "yarn_name": "Hobbii Rainbow Cotton 8/4",
-          "source_url": "https://hobbii.com/rainbow-cotton-8-4"
-        }
-      ]
+      "reference_sources": []
     },
     {
       "source_filename": "1720189120_rosmarino-eyelet-ankle-socks-us.pdf",
       "manual_override": false,
       "review_reasons": [],
-      "review_notes": [],
-      "reference_sources": [
-        {
-          "yarn_name": "Hobbii Unicorn Solid",
-          "source_url": "https://hobbii.com/collections/hanks/products/hp-1004439-unicorn-solid"
-        }
-      ]
-    },
-    {
-      "source_filename": "48121b_76193f9fc7a34173bf81ea1ae1c28b28.pdf",
-      "excluded": true,
-      "exclusion_reason": "Poradnik techniczny o konstruowaniu dekoltu V, a nie samodzielny wzór projektu.",
-      "manual_override": false,
-      "review_reasons": [
-        "meters_per_100g_not_found"
-      ],
       "review_notes": [],
       "reference_sources": []
     },
@@ -4579,19 +4982,12 @@
       "manual_override": false,
       "review_reasons": [],
       "review_notes": [],
-      "reference_sources": [
-        {
-          "yarn_name": "Woollala Diamonds",
-          "source_url": "https://woollala.pl/kategoria-produktu/wloczki-recznie-farbowane/fingering/diamonds/"
-        }
-      ]
+      "reference_sources": []
     },
     {
       "source_filename": "[PL] White Lodge Socks - wzór dziewiarski.pdf",
       "manual_override": false,
-      "review_reasons": [
-        "multiple_meter_ratios"
-      ],
+      "review_reasons": [],
       "review_notes": [],
       "reference_sources": []
     },
@@ -4621,42 +5017,21 @@
       "manual_override": false,
       "review_reasons": [],
       "review_notes": [],
-      "reference_sources": [
-        {
-          "yarn_name": "Lankava Sulo",
-          "source_url": "https://www.lankava.fi/en/lankava-sulo-sock-yarn/"
-        }
-      ]
+      "reference_sources": []
     },
     {
       "source_filename": "Autumn_s_Letter_Cardigan_by_Amina_Ali.pdf",
       "manual_override": false,
-      "review_reasons": [
-        "multiple_meter_ratios"
-      ],
+      "review_reasons": [],
       "review_notes": [],
-      "reference_sources": [
-        {
-          "yarn_name": "DROPS Nord",
-          "source_url": "https://www.garnstudio.com/yarn.php?show=drops-nord"
-        },
-        {
-          "yarn_name": "DROPS Kid-Silk",
-          "source_url": "https://www.garnstudio.com/yarn.php?show=drops-kid-silk"
-        }
-      ]
+      "reference_sources": []
     },
     {
       "source_filename": "b2b-pdf_2106-07abc-eng_1_kopia.pdf",
       "manual_override": false,
       "review_reasons": [],
       "review_notes": [],
-      "reference_sources": [
-        {
-          "yarn_name": "Sandnes Garn Mandarin Petit",
-          "source_url": "https://www.sandnes-garn.com/downloadable/download/linkSample/link_id/2460/"
-        }
-      ]
+      "reference_sources": []
     },
     {
       "source_filename": "BABUSHKA_SCARF.pdf",
@@ -4666,54 +5041,18 @@
       "reference_sources": []
     },
     {
-      "source_filename": "Basic Kardigan Kod Dostępu.pdf",
-      "excluded": true,
-      "exclusion_reason": "Kupon z kodem dostępu, a nie treść wzoru.",
-      "manual_override": false,
-      "review_reasons": [
-        "material_not_found",
-        "meters_per_100g_not_found"
-      ],
-      "review_notes": [],
-      "reference_sources": []
-    },
-    {
       "source_filename": "bevelled-tank-sleeveless-intarsia-top-us.pdf",
       "manual_override": false,
       "review_reasons": [],
       "review_notes": [],
-      "reference_sources": [
-        {
-          "yarn_name": "Hobbii Rainbow Deluxe 8/4",
-          "source_url": "https://hobbii.com/products/hp-1004513-rainbow-deluxe-8-4"
-        }
-      ]
-    },
-    {
-      "source_filename": "BIG-BIG-BUBBLES-WZOR-INSTRUKCJA-WYKONANIA06.23-tbto93.pdf",
-      "excluded": true,
-      "exclusion_reason": "Druga wersja tego samego projektu; zachowano pełniejszy dokument z tabelami i schematami rozmiarów.",
-      "manual_override": false,
-      "review_reasons": [],
-      "review_notes": [],
-      "reference_sources": [
-        {
-          "yarn_name": "DROPS Melody",
-          "source_url": "https://www.garnstudio.com/yarn.php?show=drops-melody"
-        }
-      ]
+      "reference_sources": []
     },
     {
       "source_filename": "Big-Big-BuBBles06.23-licnfm.pdf",
       "manual_override": false,
       "review_reasons": [],
       "review_notes": [],
-      "reference_sources": [
-        {
-          "yarn_name": "DROPS Melody",
-          "source_url": "https://www.garnstudio.com/yarn.php?show=drops-melody"
-        }
-      ]
+      "reference_sources": []
     },
     {
       "source_filename": "Blush Basic Socks_Listopad 2023_Wydanie pierwsze.pdf",
@@ -4734,22 +5073,12 @@
       "manual_override": false,
       "review_reasons": [],
       "review_notes": [],
-      "reference_sources": [
-        {
-          "yarn_name": "DROPS Belle",
-          "source_url": "https://www.garnstudio.com/yarn.php?show=drops-belle"
-        }
-      ]
+      "reference_sources": []
     },
     {
       "source_filename": "Bone vest by Rowan.pdf",
       "manual_override": true,
-      "review_reasons": [
-        "requires_ocr",
-        "material_not_found",
-        "meters_per_100g_not_found",
-        "language_unknown"
-      ],
+      "review_reasons": [],
       "review_notes": [
         "PDF podaje nazwę włóczki, masę motka i liczbę motków dla obu długości; skład i nawój uzupełniono z katalogu Rowan."
       ],
@@ -4758,12 +5087,7 @@
     {
       "source_filename": "Bubble by Rowan.pdf",
       "manual_override": true,
-      "review_reasons": [
-        "requires_ocr",
-        "material_not_found",
-        "meters_per_100g_not_found",
-        "language_unknown"
-      ],
+      "review_reasons": [],
       "review_notes": [
         "Włóczka jest przerabiana trzema nitkami jednocześnie.",
         "PDF podaje nazwę włóczki, masę motka i liczbę motków; skład i nawój uzupełniono z katalogu Rowan."
@@ -4775,12 +5099,7 @@
       "manual_override": false,
       "review_reasons": [],
       "review_notes": [],
-      "reference_sources": [
-        {
-          "yarn_name": "Patons Canadiana",
-          "source_url": "https://www.yarnspirations.com/en-ca/products/patons-canadiana-yarn"
-        }
-      ]
+      "reference_sources": []
     },
     {
       "source_filename": "Capucharpe_EN.pdf",
@@ -4799,39 +5118,21 @@
     {
       "source_filename": "Chusta_Erin_kotek_i_motek.pdf",
       "manual_override": false,
-      "review_reasons": [
-        "multiple_meter_ratios"
-      ],
+      "review_reasons": [],
       "review_notes": [],
-      "reference_sources": [
-        {
-          "yarn_name": "DROPS Nepal",
-          "source_url": "https://www.garnstudio.com/yarn.php?show=drops-nepal"
-        },
-        {
-          "yarn_name": "DROPS Soft Tweed",
-          "source_url": "https://www.garnstudio.com/yarn.php?show=drops-soft-tweed"
-        }
-      ]
+      "reference_sources": []
     },
     {
       "source_filename": "Cirro sweater.pdf",
       "manual_override": true,
-      "review_reasons": [
-        "requires_ocr",
-        "material_not_found",
-        "meters_per_100g_not_found",
-        "language_unknown"
-      ],
+      "review_reasons": [],
       "review_notes": [],
       "reference_sources": []
     },
     {
       "source_filename": "Climb_every_Mountain_socks_Final_Edit141122.pdf",
       "manual_override": false,
-      "review_reasons": [
-        "multiple_meter_ratios"
-      ],
+      "review_reasons": [],
       "review_notes": [],
       "reference_sources": []
     },
@@ -4840,31 +5141,19 @@
       "manual_override": false,
       "review_reasons": [],
       "review_notes": [],
-      "reference_sources": [
-        {
-          "yarn_name": "Ístex Léttlopi",
-          "source_url": "https://istex.is/en/vorur/lettlopi/"
-        }
-      ]
+      "reference_sources": []
     },
     {
       "source_filename": "Clue_1_Color_Popportunity_Socks.pdf",
       "manual_override": false,
-      "review_reasons": [
-        "multiple_meter_ratios"
-      ],
+      "review_reasons": [],
       "review_notes": [],
       "reference_sources": []
     },
     {
       "source_filename": "Cotton t-shirt by Rowan.pdf",
       "manual_override": true,
-      "review_reasons": [
-        "requires_ocr",
-        "material_not_found",
-        "meters_per_100g_not_found",
-        "language_unknown"
-      ],
+      "review_reasons": [],
       "review_notes": [
         "PDF podaje nazwę włóczki, masę motka i liczbę motków; skład i nawój uzupełniono z katalogu Rowan."
       ],
@@ -4872,22 +5161,6 @@
     },
     {
       "source_filename": "Craigh Na Dun Shawl - Anna Kania (2).pdf",
-      "manual_override": false,
-      "review_reasons": [
-        "multiple_meter_ratios"
-      ],
-      "review_notes": [],
-      "reference_sources": [
-        {
-          "yarn_name": "Woollala Diamonds",
-          "source_url": "https://woollala.pl/kategoria-produktu/wloczki-recznie-farbowane/fingering/diamonds/"
-        }
-      ]
-    },
-    {
-      "source_filename": "Diamond Fade Socks.pdf",
-      "excluded": true,
-      "exclusion_reason": "Starsza wersja tego samego projektu; zachowano poprawioną wersję z 2025 roku.",
       "manual_override": false,
       "review_reasons": [],
       "review_notes": [],
@@ -4898,19 +5171,12 @@
       "manual_override": false,
       "review_reasons": [],
       "review_notes": [],
-      "reference_sources": [
-        {
-          "yarn_name": "Hobbii Soft Alpaca Lace",
-          "source_url": "https://hobbii.com/products/hp-1004533-soft-alpaca-lace"
-        }
-      ]
+      "reference_sources": []
     },
     {
       "source_filename": "Fallandenforestsocks.pdf",
       "manual_override": false,
-      "review_reasons": [
-        "multiple_meter_ratios"
-      ],
+      "review_reasons": [],
       "review_notes": [],
       "reference_sources": []
     },
@@ -4919,61 +5185,40 @@
       "manual_override": false,
       "review_reasons": [],
       "review_notes": [],
-      "reference_sources": [
-        {
-          "yarn_name": "mYak Fior di Lino",
-          "source_url": "https://myak.it/shop/yarns/fior-di-lino-collection-a-special-collaboration-with-isabell-kraemer/"
-        }
-      ]
+      "reference_sources": []
     },
     {
       "source_filename": "floreale-top-lace-back-tee-us.pdf",
       "manual_override": false,
       "review_reasons": [],
       "review_notes": [],
-      "reference_sources": [
-        {
-          "yarn_name": "Hobbii Rainbow Bamboo",
-          "source_url": "https://hobbii.com/products/hp-1004098-rainbow-bamboo-1004098"
-        }
-      ]
+      "reference_sources": []
     },
     {
       "source_filename": "Forest_Light.pdf",
       "manual_override": false,
-      "review_reasons": [
-        "multiple_meter_ratios"
-      ],
+      "review_reasons": [],
       "review_notes": [],
       "reference_sources": []
     },
     {
       "source_filename": "Forever_Autumn_Sock_Set_Final_.pdf",
       "manual_override": false,
-      "review_reasons": [
-        "multiple_meter_ratios"
-      ],
+      "review_reasons": [],
       "review_notes": [],
       "reference_sources": []
     },
     {
       "source_filename": "Gingerbreads Socks PL.pdf",
       "manual_override": false,
-      "review_reasons": [
-        "multiple_meter_ratios"
-      ],
+      "review_reasons": [],
       "review_notes": [],
       "reference_sources": []
     },
     {
       "source_filename": "Grassland tee.pdf",
       "manual_override": true,
-      "review_reasons": [
-        "requires_ocr",
-        "material_not_found",
-        "meters_per_100g_not_found",
-        "language_unknown"
-      ],
+      "review_reasons": [],
       "review_notes": [
         "Obie włóczki są przerabiane razem."
       ],
@@ -4982,12 +5227,7 @@
     {
       "source_filename": "Greenbay top by Rowan.pdf",
       "manual_override": true,
-      "review_reasons": [
-        "requires_ocr",
-        "material_not_found",
-        "meters_per_100g_not_found",
-        "language_unknown"
-      ],
+      "review_reasons": [],
       "review_notes": [
         "PDF podaje nazwę włóczki, masę motka i liczbę motków; skład i nawój uzupełniono z katalogu Rowan."
       ],
@@ -4995,26 +5235,6 @@
     },
     {
       "source_filename": "Handasa_Top_AminaAliHandmade.pdf",
-      "manual_override": false,
-      "review_reasons": [
-        "multiple_meter_ratios"
-      ],
-      "review_notes": [],
-      "reference_sources": [
-        {
-          "yarn_name": "Sandnes Garn Mandarin Petit",
-          "source_url": "https://www.sandnes-garn.com/downloadable/download/linkSample/link_id/2460/"
-        },
-        {
-          "yarn_name": "DROPS Safran",
-          "source_url": "https://www.garnstudio.com/yarn.php?show=drops-safran"
-        }
-      ]
-    },
-    {
-      "source_filename": "HAPPY-TRIO-SWEATER-Tkane-na-okraglo-Wzor-na-druty-exxadt(1).pdf",
-      "excluded": true,
-      "exclusion_reason": "Bajtowo identyczna kopia wzoru; zachowano plik bez dopisku (1).",
       "manual_override": false,
       "review_reasons": [],
       "review_notes": [],
@@ -5030,12 +5250,7 @@
     {
       "source_filename": "Happy_Haunts_Socks.pdf",
       "manual_override": true,
-      "review_reasons": [
-        "requires_ocr",
-        "material_not_found",
-        "meters_per_100g_not_found",
-        "language_unknown"
-      ],
+      "review_reasons": [],
       "review_notes": [
         "Brak jednego narzuconego składu i nawoju jest cechą wzoru: autor wymaga włóczki fingering i podaje masę dla każdej roli kolorystycznej."
       ],
@@ -5046,20 +5261,12 @@
       "manual_override": false,
       "review_reasons": [],
       "review_notes": [],
-      "reference_sources": [
-        {
-          "yarn_name": "Hobbii Snowstorm",
-          "source_url": "https://hobbii.com/products/hp-1001867-snowstorm"
-        }
-      ]
+      "reference_sources": []
     },
     {
       "source_filename": "HollyBerryCharitySocks.pdf",
       "manual_override": true,
-      "review_reasons": [
-        "material_not_found",
-        "meters_per_100g_not_found"
-      ],
+      "review_reasons": [],
       "review_notes": [
         "PDF podaje 200 yd/50 g oraz rzeczywiste zużycie każdego koloru; nie narzuca składu włókien."
       ],
@@ -5068,9 +5275,7 @@
     {
       "source_filename": "Hot_chocolat_finishing_sugar_EN.pdf",
       "manual_override": true,
-      "review_reasons": [
-        "meters_per_100g_not_found"
-      ],
+      "review_reasons": [],
       "review_notes": [
         "PDF podaje skład 80% merino i 20% nylon; standard motka 115 g/400 m potwierdzają inne opisy projektów wykonanych z L’Essentielle."
       ],
@@ -5079,10 +5284,7 @@
     {
       "source_filename": "Hunt-Hand-Knits_Turtle-Town-Cowl.pdf",
       "manual_override": true,
-      "review_reasons": [
-        "material_not_found",
-        "meters_per_100g_not_found"
-      ],
+      "review_reasons": [],
       "review_notes": [
         "Wzór celowo definiuje grubość i wymagany metraż, ale pozostawia materiał do wyboru."
       ],
@@ -5112,21 +5314,7 @@
     {
       "source_filename": "JOAN_FEST_tee_PL.pdf",
       "manual_override": false,
-      "review_reasons": [
-        "multiple_meter_ratios"
-      ],
-      "review_notes": [],
-      "reference_sources": []
-    },
-    {
-      "source_filename": "Kardigan All Day Long Kod Dostępu.pdf",
-      "excluded": true,
-      "exclusion_reason": "Kupon z kodem dostępu, a nie treść wzoru.",
-      "manual_override": false,
-      "review_reasons": [
-        "material_not_found",
-        "meters_per_100g_not_found"
-      ],
+      "review_reasons": [],
       "review_notes": [],
       "reference_sources": []
     },
@@ -5135,22 +5323,444 @@
       "manual_override": false,
       "review_reasons": [],
       "review_notes": [],
-      "reference_sources": [
-        {
-          "yarn_name": "Hobbii Diablo Multi",
-          "source_url": "https://hobbii.com/product/pattern/download?id=1005509"
-        }
-      ]
+      "reference_sources": []
+    },
+    {
+      "source_filename": "Kopia pliku na_pole_wzor.pdf",
+      "manual_override": true,
+      "review_reasons": [],
+      "review_notes": [
+        "Parametry znajdowały się na graficznej stronie 3 i zostały zweryfikowane wzrokowo."
+      ],
+      "reference_sources": []
+    },
+    {
+      "source_filename": "Leafstream Socks - wzór PL (ang skróty).pdf",
+      "manual_override": false,
+      "review_reasons": [],
+      "review_notes": [],
+      "reference_sources": []
+    },
+    {
+      "source_filename": "Lento.pdf",
+      "manual_override": true,
+      "review_reasons": [],
+      "review_notes": [
+        "Obie włóczki są przerabiane razem."
+      ],
+      "reference_sources": []
+    },
+    {
+      "source_filename": "LinearisSocksSet.pdf",
+      "manual_override": false,
+      "review_reasons": [],
+      "review_notes": [],
+      "reference_sources": []
+    },
+    {
+      "source_filename": "Lola Cardin gruby.pdf",
+      "manual_override": false,
+      "review_reasons": [],
+      "review_notes": [],
+      "reference_sources": []
+    },
+    {
+      "source_filename": "Lyon_Sweater_ENGLISH.pdf",
+      "manual_override": false,
+      "review_reasons": [],
+      "review_notes": [],
+      "reference_sources": []
+    },
+    {
+      "source_filename": "MADE_ME_PUFF_TOP_mademeknit.pdf",
+      "manual_override": true,
+      "review_reasons": [],
+      "review_notes": [
+        "PDF podaje Drops Muskat jako włóczkę główną; skład uzupełniono z katalogu producenta.",
+        "Rękawy wykonuje się moherem o nawoju 210 m/25 g, trzema nitkami jednocześnie."
+      ],
+      "reference_sources": []
+    },
+    {
+      "source_filename": "Magic_Toadstool_socks_update_2023.pdf",
+      "manual_override": false,
+      "review_reasons": [],
+      "review_notes": [],
+      "reference_sources": []
+    },
+    {
+      "source_filename": "Mikkeli Sweater Easter ENGLISH.pdf",
+      "manual_override": false,
+      "review_reasons": [],
+      "review_notes": [],
+      "reference_sources": []
+    },
+    {
+      "source_filename": "Mineral by Rowan.pdf",
+      "manual_override": true,
+      "review_reasons": [],
+      "review_notes": [
+        "PDF podaje nazwę włóczki, masę motka i liczbę motków; skład i nawój uzupełniono z katalogu Rowan."
+      ],
+      "reference_sources": []
+    },
+    {
+      "source_filename": "Mountain_Pine_socks.pdf",
+      "manual_override": false,
+      "review_reasons": [],
+      "review_notes": [],
+      "reference_sources": []
+    },
+    {
+      "source_filename": "NBIELINKA_LinearisHat_Kokonki.pdf",
+      "manual_override": false,
+      "review_reasons": [],
+      "review_notes": [],
+      "reference_sources": []
+    },
+    {
+      "source_filename": "Nova Skirt Sandnes Garn 2311vol2.pdf",
+      "manual_override": true,
+      "review_reasons": [],
+      "review_notes": [],
+      "reference_sources": []
+    },
+    {
+      "source_filename": "Oslohuen_2.0_ENGELSK.pdf",
+      "manual_override": true,
+      "review_reasons": [],
+      "review_notes": [
+        "PDF podaje dwie alternatywy, nawój, całkowitą masę oraz pracę dwiema nitkami; skład uzupełniono z kart producentów."
+      ],
+      "reference_sources": []
+    },
+    {
+      "source_filename": "Pani-Wiosna__wzor_HeartofCotton.pdf",
+      "manual_override": false,
+      "review_reasons": [],
+      "review_notes": [],
+      "reference_sources": []
+    },
+    {
+      "source_filename": "Pearl top by Rowan.pdf",
+      "manual_override": true,
+      "review_reasons": [],
+      "review_notes": [
+        "PDF podaje nazwę włóczki, masę motka i liczbę motków; skład i nawój uzupełniono z katalogu Rowan."
+      ],
+      "reference_sources": []
+    },
+    {
+      "source_filename": "penguono_7.pdf",
+      "manual_override": true,
+      "review_reasons": [],
+      "review_notes": [
+        "Elastyczność materiału i grubości jest podstawowym założeniem konstrukcji, nie brakiem danych."
+      ],
+      "reference_sources": []
+    },
+    {
+      "source_filename": "Picot_Headband_Knitting_Pattern_-_The_Obsessed_final.pdf",
+      "manual_override": false,
+      "review_reasons": [],
+      "review_notes": [],
+      "reference_sources": []
+    },
+    {
+      "source_filename": "PisankiSocks_PL.pdf",
+      "manual_override": false,
+      "review_reasons": [],
+      "review_notes": [],
+      "reference_sources": []
+    },
+    {
+      "source_filename": "PL_I_AM_THE_GIFT_WZOR_1.1.pdf",
+      "manual_override": false,
+      "review_reasons": [],
+      "review_notes": [],
+      "reference_sources": []
+    },
+    {
+      "source_filename": "polski_HAVFRUESHAWL.pdf",
+      "manual_override": true,
+      "review_reasons": [],
+      "review_notes": [
+        "PDF podaje trzy kompletne warianty grubości i masy, pozostawiając skład do wyboru."
+      ],
+      "reference_sources": []
+    },
+    {
+      "source_filename": "POLSKI_Venke_skirt_.pdf",
+      "manual_override": false,
+      "review_reasons": [],
+      "review_notes": [],
+      "reference_sources": []
+    },
+    {
+      "source_filename": "POLY-SWEATER-kingacrafts.pdf",
+      "manual_override": false,
+      "review_reasons": [],
+      "review_notes": [],
+      "reference_sources": []
+    },
+    {
+      "source_filename": "Poppy_Tee_ENGLISH.pdf",
+      "manual_override": false,
+      "review_reasons": [],
+      "review_notes": [],
+      "reference_sources": []
+    },
+    {
+      "source_filename": "Pull_Iconic_Leaf_Sweater_EN.pdf",
+      "manual_override": true,
+      "review_reasons": [],
+      "review_notes": [
+        "PDF podaje skład 90% merino/10% nylon, masę i długość motka oraz liczbę motków dla wersji kolorystycznych."
+      ],
+      "reference_sources": []
+    },
+    {
+      "source_filename": "Queen_of_Hearts_Socks.pdf",
+      "manual_override": false,
+      "review_reasons": [],
+      "review_notes": [],
+      "reference_sources": []
+    },
+    {
+      "source_filename": "Sheep_socks__1___1___1_.pdf",
+      "manual_override": false,
+      "review_reasons": [],
+      "review_notes": [],
+      "reference_sources": []
+    },
+    {
+      "source_filename": "Silk dress by Rowan.pdf",
+      "manual_override": true,
+      "review_reasons": [],
+      "review_notes": [
+        "Nazwa wzoru „Silk” jest nazwą projektu, nie opisem składu.",
+        "PDF podaje Cotton Glacé; skład i nawój uzupełniono z katalogu Rowan."
+      ],
+      "reference_sources": []
+    },
+    {
+      "source_filename": "SkarpetkiTuby_Czempik.knitwear.pdf",
+      "manual_override": true,
+      "review_reasons": [],
+      "review_notes": [
+        "Wzór jest kalkulatorem konstrukcji: masa jest stała, natomiast materiał i grubość wynikają z próbki użytkowniczki."
+      ],
+      "reference_sources": []
+    },
+    {
+      "source_filename": "Skyward sweater.pdf",
+      "manual_override": true,
+      "review_reasons": [],
+      "review_notes": [
+        "Dokument podaje dwie alternatywne włóczki; nie należy używać ich jednocześnie."
+      ],
+      "reference_sources": []
+    },
+    {
+      "source_filename": "Sophie_Scarf_PL.Petiteknit.pdf",
+      "manual_override": false,
+      "review_reasons": [],
+      "review_notes": [],
+      "reference_sources": []
+    },
+    {
+      "source_filename": "SOS_Basic_Sock.pdf",
+      "manual_override": true,
+      "review_reasons": [],
+      "review_notes": [
+        "Wzór świadomie dopuszcza dowolną włóczkę skarpetkową i określa zapotrzebowanie długością, bez narzucania jednego składu ani masy motka."
+      ],
+      "reference_sources": []
+    },
+    {
+      "source_filename": "Space_Feet_Socks_PL-lno7ucan.pdf",
+      "manual_override": false,
+      "review_reasons": [],
+      "review_notes": [],
+      "reference_sources": []
+    },
+    {
+      "source_filename": "Spooky_sock_set_final.pdf",
+      "manual_override": false,
+      "review_reasons": [],
+      "review_notes": [],
+      "reference_sources": []
+    },
+    {
+      "source_filename": "Starry_Night_Hat_PL-ljvt8ze9.pdf",
+      "manual_override": false,
+      "review_reasons": [],
+      "review_notes": [],
+      "reference_sources": []
+    },
+    {
+      "source_filename": "Starry_Night_Mittens_PL-lo9p3u7q.pdf",
+      "manual_override": false,
+      "review_reasons": [],
+      "review_notes": [],
+      "reference_sources": []
+    },
+    {
+      "source_filename": "Starry_Night_Socks_PL-ljvt91ie.pdf",
+      "manual_override": false,
+      "review_reasons": [],
+      "review_notes": [],
+      "reference_sources": []
+    },
+    {
+      "source_filename": "Summer by Rowan spódnica.pdf",
+      "manual_override": true,
+      "review_reasons": [],
+      "review_notes": [
+        "PDF podaje nazwę włóczki, masę motka i liczbę motków; skład i nawój uzupełniono z katalogu Rowan."
+      ],
+      "reference_sources": []
+    },
+    {
+      "source_filename": "SWAN TOP.pdf",
+      "manual_override": false,
+      "review_reasons": [],
+      "review_notes": [],
+      "reference_sources": []
+    },
+    {
+      "source_filename": "SWEATERNO9.LIGHT.ENG (2).pdf",
+      "manual_override": false,
+      "review_reasons": [],
+      "review_notes": [],
+      "reference_sources": []
+    },
+    {
+      "source_filename": "SweetTreatsSocks_NBielińska.pdf",
+      "manual_override": false,
+      "review_reasons": [],
+      "review_notes": [],
+      "reference_sources": []
+    },
+    {
+      "source_filename": "Sweter_Kikimora_Moracraft.pdf",
+      "manual_override": false,
+      "review_reasons": [],
+      "review_notes": [],
+      "reference_sources": []
+    },
+    {
+      "source_filename": "sweterek z golfem Bobbie.pdf",
+      "manual_override": false,
+      "review_reasons": [],
+      "review_notes": [],
+      "reference_sources": []
+    },
+    {
+      "source_filename": "Szal_Queen_of_Spades_Kokonki_Pure.pdf",
+      "manual_override": false,
+      "review_reasons": [],
+      "review_notes": [],
+      "reference_sources": []
+    },
+    {
+      "source_filename": "TEXTURE_VEST_hi_UK-rm07er.pdf",
+      "manual_override": false,
+      "review_reasons": [],
+      "review_notes": [],
+      "reference_sources": []
+    },
+    {
+      "source_filename": "The_truth_is_out_there_Final_edit.pdf",
+      "manual_override": false,
+      "review_reasons": [],
+      "review_notes": [],
+      "reference_sources": []
+    },
+    {
+      "source_filename": "Tromsø Hoodie NORSK.pdf",
+      "manual_override": true,
+      "review_reasons": [],
+      "review_notes": [
+        "PDF podaje masę i nawój obu włóczek; skład materiałowy potwierdzono w katalogu Rauma."
+      ],
+      "reference_sources": []
+    },
+    {
+      "source_filename": "Tropfen sweater.pdf",
+      "manual_override": true,
+      "review_reasons": [],
+      "review_notes": [],
+      "reference_sources": []
+    },
+    {
+      "source_filename": "UNDER_THE_SEA_SOCKS_PL-ljvt9559.pdf",
+      "manual_override": false,
+      "review_reasons": [],
+      "review_notes": [],
+      "reference_sources": []
+    },
+    {
+      "source_filename": "Urth Yarns skarpetki.pdf",
+      "manual_override": false,
+      "review_reasons": [],
+      "review_notes": [],
+      "reference_sources": []
+    },
+    {
+      "source_filename": "Warm-Knit-Klara-wzor-dziewiarski-zulknh.pdf",
+      "manual_override": false,
+      "review_reasons": [],
+      "review_notes": [],
+      "reference_sources": []
+    },
+    {
+      "source_filename": "You Make Me (W)hole Cardigan - opis.pdf",
+      "manual_override": false,
+      "review_reasons": [],
+      "review_notes": [],
+      "reference_sources": []
+    },
+    {
+      "source_filename": "YouthVibeJumper_nana.makes.it.all.pdf",
+      "manual_override": false,
+      "review_reasons": [],
+      "review_notes": [],
+      "reference_sources": []
+    },
+    {
+      "source_filename": "48121b_76193f9fc7a34173bf81ea1ae1c28b28.pdf",
+      "excluded": true,
+      "exclusion_reason": "Poradnik techniczny o konstruowaniu dekoltu V, a nie samodzielny wzór projektu.",
+      "manual_override": false,
+      "review_reasons": [],
+      "review_notes": [],
+      "reference_sources": []
+    },
+    {
+      "source_filename": "Basic Kardigan Kod Dostępu.pdf",
+      "excluded": true,
+      "exclusion_reason": "Kupon z kodem dostępu, a nie treść wzoru.",
+      "manual_override": false,
+      "review_reasons": [],
+      "review_notes": [],
+      "reference_sources": []
+    },
+    {
+      "source_filename": "Kardigan All Day Long Kod Dostępu.pdf",
+      "excluded": true,
+      "exclusion_reason": "Kupon z kodem dostępu, a nie treść wzoru.",
+      "manual_override": false,
+      "review_reasons": [],
+      "review_notes": [],
+      "reference_sources": []
     },
     {
       "source_filename": "Kardigan Simple as That Kod Dostępu.pdf",
       "excluded": true,
       "exclusion_reason": "Kupon z kodem dostępu, a nie treść wzoru.",
       "manual_override": false,
-      "review_reasons": [
-        "material_not_found",
-        "meters_per_100g_not_found"
-      ],
+      "review_reasons": [],
       "review_notes": [],
       "reference_sources": []
     },
@@ -5159,23 +5769,17 @@
       "excluded": true,
       "exclusion_reason": "Kupon z kodem dostępu, a nie treść wzoru.",
       "manual_override": false,
-      "review_reasons": [
-        "material_not_found",
-        "meters_per_100g_not_found"
-      ],
+      "review_reasons": [],
       "review_notes": [],
       "reference_sources": []
     },
     {
-      "source_filename": "Kopia pliku na_pole_wzor.pdf",
-      "manual_override": true,
-      "review_reasons": [
-        "material_not_found",
-        "meters_per_100g_not_found"
-      ],
-      "review_notes": [
-        "Parametry znajdowały się na graficznej stronie 3 i zostały zweryfikowane wzrokowo."
-      ],
+      "source_filename": "HAPPY-TRIO-SWEATER-Tkane-na-okraglo-Wzor-na-druty-exxadt(1).pdf",
+      "excluded": true,
+      "exclusion_reason": "Bajtowo identyczna kopia wzoru; zachowano plik bez dopisku (1).",
+      "manual_override": false,
+      "review_reasons": [],
+      "review_notes": [],
       "reference_sources": []
     },
     {
@@ -5197,462 +5801,6 @@
       "reference_sources": []
     },
     {
-      "source_filename": "Leafstream Socks - wzór PL (ang skróty).pdf",
-      "manual_override": false,
-      "review_reasons": [],
-      "review_notes": [],
-      "reference_sources": []
-    },
-    {
-      "source_filename": "Lento.pdf",
-      "manual_override": true,
-      "review_reasons": [
-        "requires_ocr",
-        "material_not_found",
-        "meters_per_100g_not_found",
-        "language_unknown"
-      ],
-      "review_notes": [
-        "Obie włóczki są przerabiane razem."
-      ],
-      "reference_sources": []
-    },
-    {
-      "source_filename": "LinearisSocksSet.pdf",
-      "manual_override": false,
-      "review_reasons": [],
-      "review_notes": [],
-      "reference_sources": []
-    },
-    {
-      "source_filename": "Lola Cardin gruby.pdf",
-      "manual_override": false,
-      "review_reasons": [],
-      "review_notes": [],
-      "reference_sources": [
-        {
-          "yarn_name": "Hobbii Umami Tweed",
-          "source_url": "https://hobbii.com/"
-        }
-      ]
-    },
-    {
-      "source_filename": "Lyon_Sweater_ENGLISH.pdf",
-      "manual_override": false,
-      "review_reasons": [
-        "multiple_meter_ratios"
-      ],
-      "review_notes": [],
-      "reference_sources": []
-    },
-    {
-      "source_filename": "MADE_ME_PUFF_TOP_mademeknit.pdf",
-      "manual_override": true,
-      "review_reasons": [
-        "requires_ocr",
-        "material_not_found",
-        "meters_per_100g_not_found",
-        "language_unknown"
-      ],
-      "review_notes": [
-        "PDF podaje Drops Muskat jako włóczkę główną; skład uzupełniono z katalogu producenta.",
-        "Rękawy wykonuje się moherem o nawoju 210 m/25 g, trzema nitkami jednocześnie."
-      ],
-      "reference_sources": []
-    },
-    {
-      "source_filename": "Magic_Toadstool_socks_update_2023.pdf",
-      "manual_override": false,
-      "review_reasons": [
-        "multiple_meter_ratios"
-      ],
-      "review_notes": [],
-      "reference_sources": []
-    },
-    {
-      "source_filename": "Mikkeli Sweater Easter ENGLISH.pdf",
-      "manual_override": false,
-      "review_reasons": [],
-      "review_notes": [],
-      "reference_sources": [
-        {
-          "yarn_name": "Ístex Léttlopi",
-          "source_url": "https://istex.is/en/vorur/lettlopi/"
-        }
-      ]
-    },
-    {
-      "source_filename": "Mineral by Rowan.pdf",
-      "manual_override": true,
-      "review_reasons": [
-        "requires_ocr",
-        "material_not_found",
-        "meters_per_100g_not_found",
-        "language_unknown"
-      ],
-      "review_notes": [
-        "PDF podaje nazwę włóczki, masę motka i liczbę motków; skład i nawój uzupełniono z katalogu Rowan."
-      ],
-      "reference_sources": []
-    },
-    {
-      "source_filename": "Mountain_Pine_socks.pdf",
-      "manual_override": false,
-      "review_reasons": [
-        "multiple_meter_ratios"
-      ],
-      "review_notes": [],
-      "reference_sources": []
-    },
-    {
-      "source_filename": "NBIELINKA_LinearisHat_Kokonki.pdf",
-      "manual_override": false,
-      "review_reasons": [
-        "multiple_meter_ratios"
-      ],
-      "review_notes": [],
-      "reference_sources": []
-    },
-    {
-      "source_filename": "Nova Skirt Sandnes Garn 2311vol2.pdf",
-      "manual_override": true,
-      "review_reasons": [
-        "requires_ocr",
-        "material_not_found",
-        "meters_per_100g_not_found",
-        "language_unknown"
-      ],
-      "review_notes": [],
-      "reference_sources": []
-    },
-    {
-      "source_filename": "Oslohuen_2.0_ENGELSK.pdf",
-      "manual_override": true,
-      "review_reasons": [
-        "material_not_found",
-        "meters_per_100g_not_found"
-      ],
-      "review_notes": [
-        "PDF podaje dwie alternatywy, nawój, całkowitą masę oraz pracę dwiema nitkami; skład uzupełniono z kart producentów."
-      ],
-      "reference_sources": []
-    },
-    {
-      "source_filename": "Pani-Wiosna__wzor_HeartofCotton.pdf",
-      "manual_override": false,
-      "review_reasons": [],
-      "review_notes": [],
-      "reference_sources": []
-    },
-    {
-      "source_filename": "Pearl top by Rowan.pdf",
-      "manual_override": true,
-      "review_reasons": [
-        "requires_ocr",
-        "material_not_found",
-        "meters_per_100g_not_found",
-        "language_unknown"
-      ],
-      "review_notes": [
-        "PDF podaje nazwę włóczki, masę motka i liczbę motków; skład i nawój uzupełniono z katalogu Rowan."
-      ],
-      "reference_sources": []
-    },
-    {
-      "source_filename": "penguono_7.pdf",
-      "manual_override": true,
-      "review_reasons": [
-        "material_not_found",
-        "meters_per_100g_not_found"
-      ],
-      "review_notes": [
-        "Elastyczność materiału i grubości jest podstawowym założeniem konstrukcji, nie brakiem danych."
-      ],
-      "reference_sources": []
-    },
-    {
-      "source_filename": "Picot_Headband_Knitting_Pattern_-_The_Obsessed_final.pdf",
-      "manual_override": false,
-      "review_reasons": [],
-      "review_notes": [],
-      "reference_sources": [
-        {
-          "yarn_name": "KnitPicks CotLin",
-          "source_url": "https://www.knitpicks.com/planetarium/p/24465"
-        }
-      ]
-    },
-    {
-      "source_filename": "PisankiSocks_PL.pdf",
-      "manual_override": false,
-      "review_reasons": [
-        "multiple_meter_ratios"
-      ],
-      "review_notes": [],
-      "reference_sources": []
-    },
-    {
-      "source_filename": "PL_I_AM_THE_GIFT_WZOR_1.1.pdf",
-      "manual_override": false,
-      "review_reasons": [
-        "multiple_meter_ratios"
-      ],
-      "review_notes": [],
-      "reference_sources": [
-        {
-          "yarn_name": "DROPS Kid-Silk",
-          "source_url": "https://www.garnstudio.com/yarn.php?show=drops-kid-silk"
-        }
-      ]
-    },
-    {
-      "source_filename": "polski_HAVFRUESHAWL.pdf",
-      "manual_override": true,
-      "review_reasons": [
-        "material_not_found",
-        "meters_per_100g_not_found"
-      ],
-      "review_notes": [
-        "PDF podaje trzy kompletne warianty grubości i masy, pozostawiając skład do wyboru."
-      ],
-      "reference_sources": []
-    },
-    {
-      "source_filename": "POLSKI_Venke_skirt_.pdf",
-      "manual_override": false,
-      "review_reasons": [],
-      "review_notes": [],
-      "reference_sources": []
-    },
-    {
-      "source_filename": "POLY-SWEATER-kingacrafts.pdf",
-      "manual_override": false,
-      "review_reasons": [
-        "multiple_meter_ratios"
-      ],
-      "review_notes": [],
-      "reference_sources": []
-    },
-    {
-      "source_filename": "Poppy_Tee_ENGLISH.pdf",
-      "manual_override": false,
-      "review_reasons": [
-        "multiple_meter_ratios"
-      ],
-      "review_notes": [],
-      "reference_sources": []
-    },
-    {
-      "source_filename": "Pull_Iconic_Leaf_Sweater_EN.pdf",
-      "manual_override": true,
-      "review_reasons": [
-        "meters_per_100g_not_found"
-      ],
-      "review_notes": [
-        "PDF podaje skład 90% merino/10% nylon, masę i długość motka oraz liczbę motków dla wersji kolorystycznych."
-      ],
-      "reference_sources": []
-    },
-    {
-      "source_filename": "Queen_of_Hearts_Socks.pdf",
-      "manual_override": false,
-      "review_reasons": [],
-      "review_notes": [],
-      "reference_sources": []
-    },
-    {
-      "source_filename": "Sheep_socks__1___1___1_.pdf",
-      "manual_override": false,
-      "review_reasons": [],
-      "review_notes": [],
-      "reference_sources": [
-        {
-          "yarn_name": "DROPS Fabel",
-          "source_url": "https://www.garnstudio.com/yarn.php?show=drops-fabel"
-        }
-      ]
-    },
-    {
-      "source_filename": "Silk dress by Rowan.pdf",
-      "manual_override": true,
-      "review_reasons": [
-        "requires_ocr",
-        "material_not_found",
-        "meters_per_100g_not_found",
-        "language_unknown"
-      ],
-      "review_notes": [
-        "Nazwa wzoru „Silk” jest nazwą projektu, nie opisem składu.",
-        "PDF podaje Cotton Glacé; skład i nawój uzupełniono z katalogu Rowan."
-      ],
-      "reference_sources": []
-    },
-    {
-      "source_filename": "SkarpetkiTuby_Czempik.knitwear.pdf",
-      "manual_override": true,
-      "review_reasons": [
-        "meters_per_100g_not_found"
-      ],
-      "review_notes": [
-        "Wzór jest kalkulatorem konstrukcji: masa jest stała, natomiast materiał i grubość wynikają z próbki użytkowniczki."
-      ],
-      "reference_sources": []
-    },
-    {
-      "source_filename": "Skyward sweater.pdf",
-      "manual_override": true,
-      "review_reasons": [
-        "requires_ocr",
-        "material_not_found",
-        "meters_per_100g_not_found",
-        "language_unknown"
-      ],
-      "review_notes": [
-        "Dokument podaje dwie alternatywne włóczki; nie należy używać ich jednocześnie."
-      ],
-      "reference_sources": []
-    },
-    {
-      "source_filename": "Sophie_Scarf_PL.Petiteknit.pdf",
-      "manual_override": false,
-      "review_reasons": [
-        "multiple_meter_ratios"
-      ],
-      "review_notes": [],
-      "reference_sources": []
-    },
-    {
-      "source_filename": "SOS_Basic_Sock.pdf",
-      "manual_override": true,
-      "review_reasons": [
-        "requires_ocr",
-        "material_not_found",
-        "meters_per_100g_not_found",
-        "language_unknown"
-      ],
-      "review_notes": [
-        "Wzór świadomie dopuszcza dowolną włóczkę skarpetkową i określa zapotrzebowanie długością, bez narzucania jednego składu ani masy motka."
-      ],
-      "reference_sources": []
-    },
-    {
-      "source_filename": "Space_Feet_Socks_PL-lno7ucan.pdf",
-      "manual_override": false,
-      "review_reasons": [],
-      "review_notes": [],
-      "reference_sources": [
-        {
-          "yarn_name": "DROPS Fabel",
-          "source_url": "https://www.garnstudio.com/yarn.php?show=drops-fabel"
-        }
-      ]
-    },
-    {
-      "source_filename": "Spooky_sock_set_final.pdf",
-      "manual_override": false,
-      "review_reasons": [
-        "multiple_meter_ratios"
-      ],
-      "review_notes": [],
-      "reference_sources": []
-    },
-    {
-      "source_filename": "Starry_Night_Hat_PL-ljvt8ze9.pdf",
-      "manual_override": false,
-      "review_reasons": [],
-      "review_notes": [],
-      "reference_sources": [
-        {
-          "yarn_name": "DROPS Nepal",
-          "source_url": "https://www.garnstudio.com/yarn.php?show=drops-nepal"
-        }
-      ]
-    },
-    {
-      "source_filename": "Starry_Night_Mittens_PL-lo9p3u7q.pdf",
-      "manual_override": false,
-      "review_reasons": [],
-      "review_notes": [],
-      "reference_sources": []
-    },
-    {
-      "source_filename": "Starry_Night_Socks_PL-ljvt91ie.pdf",
-      "manual_override": false,
-      "review_reasons": [
-        "multiple_meter_ratios"
-      ],
-      "review_notes": [],
-      "reference_sources": [
-        {
-          "yarn_name": "DROPS Fabel",
-          "source_url": "https://www.garnstudio.com/yarn.php?show=drops-fabel"
-        },
-        {
-          "yarn_name": "DROPS Delight",
-          "source_url": "https://www.garnstudio.com/yarn.php?show=drops-delight"
-        }
-      ]
-    },
-    {
-      "source_filename": "Summer by Rowan spódnica.pdf",
-      "manual_override": true,
-      "review_reasons": [
-        "requires_ocr",
-        "material_not_found",
-        "meters_per_100g_not_found",
-        "language_unknown"
-      ],
-      "review_notes": [
-        "PDF podaje nazwę włóczki, masę motka i liczbę motków; skład i nawój uzupełniono z katalogu Rowan."
-      ],
-      "reference_sources": []
-    },
-    {
-      "source_filename": "SWAN TOP.pdf",
-      "manual_override": false,
-      "review_reasons": [
-        "multiple_meter_ratios"
-      ],
-      "review_notes": [],
-      "reference_sources": [
-        {
-          "yarn_name": "We Are Knitters The Pima Cotton",
-          "source_url": "https://love.weareknitters.com/seqwjk/palm-scarf.pdf"
-        },
-        {
-          "yarn_name": "DROPS Paris",
-          "source_url": "https://www.garnstudio.com/yarn.php?show=drops-paris"
-        },
-        {
-          "yarn_name": "Scheepjes Cahlista",
-          "source_url": "https://www.scheepjes.com/en/cahlista-2342/"
-        },
-        {
-          "yarn_name": "Sandnes Garn Mandarin Petit",
-          "source_url": "https://www.sandnes-garn.com/downloadable/download/linkSample/link_id/2460/"
-        }
-      ]
-    },
-    {
-      "source_filename": "SWEATERNO9.LIGHT.ENG (2).pdf",
-      "manual_override": false,
-      "review_reasons": [],
-      "review_notes": [],
-      "reference_sources": [
-        {
-          "yarn_name": "Gepard Pura Lana",
-          "source_url": "https://gepardgarn.com/en-gb/catalog/yarn/pura-lana"
-        }
-      ]
-    },
-    {
-      "source_filename": "SweetTreatsSocks_NBielińska.pdf",
-      "manual_override": false,
-      "review_reasons": [],
-      "review_notes": [],
-      "reference_sources": []
-    },
-    {
       "source_filename": "Sweter_Kikimora_Moracraft(1).pdf",
       "excluded": true,
       "exclusion_reason": "Bajtowo identyczna kopia wzoru; zachowano plik bez dopisku (1).",
@@ -5662,32 +5810,18 @@
       "reference_sources": []
     },
     {
-      "source_filename": "Sweter_Kikimora_Moracraft.pdf",
+      "source_filename": "BIG-BIG-BUBBLES-WZOR-INSTRUKCJA-WYKONANIA06.23-tbto93.pdf",
+      "excluded": true,
+      "exclusion_reason": "Druga wersja tego samego projektu; zachowano pełniejszy dokument z tabelami i schematami rozmiarów.",
       "manual_override": false,
       "review_reasons": [],
       "review_notes": [],
       "reference_sources": []
     },
     {
-      "source_filename": "sweterek z golfem Bobbie.pdf",
-      "manual_override": false,
-      "review_reasons": [
-        "multiple_meter_ratios"
-      ],
-      "review_notes": [],
-      "reference_sources": [
-        {
-          "yarn_name": "Hobbii Friends Wool",
-          "source_url": "https://hobbii.com/friends-wool"
-        },
-        {
-          "yarn_name": "Hobbii Friends Kid Silk",
-          "source_url": "https://hobbii.com/products/hp-1005541-friends-kid-silk"
-        }
-      ]
-    },
-    {
-      "source_filename": "Szal_Queen_of_Spades_Kokonki_Pure.pdf",
+      "source_filename": "Diamond Fade Socks.pdf",
+      "excluded": true,
+      "exclusion_reason": "Starsza wersja tego samego projektu; zachowano poprawioną wersję z 2025 roku.",
       "manual_override": false,
       "review_reasons": [],
       "review_notes": [],
@@ -5703,141 +5837,13 @@
       "reference_sources": []
     },
     {
-      "source_filename": "TEXTURE_VEST_hi_UK-rm07er.pdf",
-      "manual_override": false,
-      "review_reasons": [
-        "multiple_meter_ratios"
-      ],
-      "review_notes": [],
-      "reference_sources": [
-        {
-          "yarn_name": "Isager Alpaca 3",
-          "source_url": "https://isagerstrik.dk/en/product/alpaca-3/"
-        },
-        {
-          "yarn_name": "Isager Spinni",
-          "source_url": "https://isagerstrik.dk/en/product/spinni/"
-        },
-        {
-          "yarn_name": "Isager Tvinni",
-          "source_url": "https://isagerstrik.dk/en/product/tvinni/"
-        }
-      ]
-    },
-    {
-      "source_filename": "The_truth_is_out_there_Final_edit.pdf",
-      "manual_override": false,
-      "review_reasons": [
-        "multiple_meter_ratios"
-      ],
-      "review_notes": [],
-      "reference_sources": []
-    },
-    {
-      "source_filename": "Tromsø Hoodie NORSK.pdf",
-      "manual_override": true,
-      "review_reasons": [
-        "multiple_meter_ratios",
-        "language_unknown"
-      ],
-      "review_notes": [
-        "PDF podaje masę i nawój obu włóczek; skład materiałowy potwierdzono w katalogu Rauma."
-      ],
-      "reference_sources": [
-        {
-          "yarn_name": "Rauma Iris Alpakka",
-          "source_url": "https://www.raumagarn.no/produkt/hefter/produkthefterpt-157-iris-dame"
-        },
-        {
-          "yarn_name": "Rauma Inca Alpakka",
-          "source_url": "https://www.raumagarn.no/produkt/hefter/produkthefter348-inca-herre"
-        }
-      ]
-    },
-    {
-      "source_filename": "Tropfen sweater.pdf",
-      "manual_override": true,
-      "review_reasons": [
-        "requires_ocr",
-        "material_not_found",
-        "meters_per_100g_not_found",
-        "language_unknown"
-      ],
-      "review_notes": [],
-      "reference_sources": []
-    },
-    {
-      "source_filename": "UNDER_THE_SEA_SOCKS_PL-ljvt9559.pdf",
-      "manual_override": false,
-      "review_reasons": [
-        "multiple_meter_ratios"
-      ],
-      "review_notes": [],
-      "reference_sources": [
-        {
-          "yarn_name": "DROPS Fabel",
-          "source_url": "https://www.garnstudio.com/yarn.php?show=drops-fabel"
-        },
-        {
-          "yarn_name": "DROPS Delight",
-          "source_url": "https://www.garnstudio.com/yarn.php?show=drops-delight"
-        }
-      ]
-    },
-    {
-      "source_filename": "Urth Yarns skarpetki.pdf",
-      "manual_override": false,
-      "review_reasons": [],
-      "review_notes": [],
-      "reference_sources": [
-        {
-          "yarn_name": "Urth Uneek Sock",
-          "source_url": "https://urthyarns.com/products/uneek-sock-kit-69"
-        }
-      ]
-    },
-    {
-      "source_filename": "Warm-Knit-Klara-wzor-dziewiarski-zulknh.pdf",
-      "manual_override": false,
-      "review_reasons": [],
-      "review_notes": [],
-      "reference_sources": [
-        {
-          "yarn_name": "DROPS Kid-Silk",
-          "source_url": "https://www.garnstudio.com/yarn.php?show=drops-kid-silk"
-        }
-      ]
-    },
-    {
-      "source_filename": "You Make Me (W)hole Cardigan - opis.pdf",
-      "manual_override": false,
-      "review_reasons": [],
-      "review_notes": [],
-      "reference_sources": []
-    },
-    {
       "source_filename": "You Make Me (W)hole Cardigan - Schematy.pdf",
       "excluded": true,
       "exclusion_reason": "Załącznik ze schematami do wzoru; katalog reprezentuje projekt przez pełny plik opisowy.",
       "manual_override": false,
-      "review_reasons": [
-        "material_not_found",
-        "meters_per_100g_not_found"
-      ],
-      "review_notes": [],
-      "reference_sources": []
-    },
-    {
-      "source_filename": "YouthVibeJumper_nana.makes.it.all.pdf",
-      "manual_override": false,
       "review_reasons": [],
       "review_notes": [],
-      "reference_sources": [
-        {
-          "yarn_name": "DROPS Brushed Alpaca Silk",
-          "source_url": "https://www.garnstudio.com/yarn.php?show=drops-brushed-alpaca-silk"
-        }
-      ]
+      "reference_sources": []
     },
     {
       "source_filename": "motek-demo-lesny-kardigan.synthetic.json",

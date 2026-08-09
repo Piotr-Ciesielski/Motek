@@ -47,6 +47,34 @@ function validateProjectType(value, sourceFilename) {
   }
 }
 
+function validatePatternAuditManifest(records) {
+  for (const record of records) {
+    const source = record.source_filename ?? "<brak nazwy pliku>";
+    if (!record.publication_status) {
+      throw new Error(`Rekord ${source}: brak decyzji audytu.`);
+    }
+    if (record.publication_status === "pending_review") {
+      throw new Error(`Rekord ${source}: pending_review nie może trafić do importu.`);
+    }
+    if (Object.hasOwn(record, "evidence")) {
+      throw new Error(`Rekord ${source}: pole dowodu jest niedozwolone.`);
+    }
+    if (!["hidden", "published"].includes(record.publication_status)) {
+      throw new Error(`Rekord ${source}: nieobsługiwany status publikacji.`);
+    }
+    const sourceKind = record.source_kind ?? (
+      source.endsWith(".synthetic.json") ? "synthetic" : "pdf"
+    );
+    if (record.publication_status === "published" && (
+      sourceKind !== "synthetic" ||
+      !record.content_audit_version ||
+      !record.content_audited_at
+    )) {
+      throw new Error(`Rekord ${source}: published wymaga jawnie potwierdzonych danych syntetycznych.`);
+    }
+  }
+}
+
 function readImportData() {
   const document = JSON.parse(fs.readFileSync(IMPORT_PATH, "utf8"));
 
@@ -63,6 +91,8 @@ function readImportData() {
     validateProjectType(record.project_type, record.source_filename);
     validateMatchingRequirements(record.matching_requirements, record.source_filename);
   }
+
+  validatePatternAuditManifest(document.records);
 
   if (!SOURCE_FILTER) {
     return document.records;
@@ -192,5 +222,6 @@ module.exports = {
   validateImportCapacity,
   validateMatchingRequirements,
   validateProjectType,
+  validatePatternAuditManifest,
   importRecords,
 };
