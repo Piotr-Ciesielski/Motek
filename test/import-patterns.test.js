@@ -16,7 +16,10 @@ test("import wzorów odrzuca wynik powyżej limitu katalogu", () => {
 });
 
 test("import wzorów wysyła cały zatwierdzony zestaw jednym upsertem", async () => {
-  const records = [{ source_filename: "a.pdf" }, { source_filename: "b.pdf" }];
+  const records = [
+    { source_filename: "a.pdf", publication_status: "hidden" },
+    { source_filename: "b.pdf", publication_status: "hidden" },
+  ];
   let calls = 0;
   const client = {
     from(table) {
@@ -61,4 +64,24 @@ test("import dopuszcza ukryty rekord bez dowodów i jawnie opublikowany syntetyc
     { source_filename: "a.pdf", publication_status: "hidden" },
     { source_filename: "demo.synthetic.json", publication_status: "published", source_kind: "synthetic", content_audit_version: "1.0", content_audited_at: "2026-08-09T00:00:00Z" },
   ]));
+});
+
+test("importRecords odrzuca rekord bez audytu przed wywołaniem upsert", async () => {
+  let calls = 0;
+  const client = {
+    from() {
+      return {
+        upsert() {
+          calls += 1;
+          throw new Error("upsert nie powinien zostać wywołany");
+        },
+      };
+    },
+  };
+
+  await assert.rejects(
+    () => importRecords(client, [{ source_filename: "a.pdf" }]),
+    /brak decyzji audytu/
+  );
+  assert.equal(calls, 0);
 });

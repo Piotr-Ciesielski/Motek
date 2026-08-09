@@ -151,6 +151,7 @@ async function inspectTarget(client, records) {
 }
 
 async function importRecords(client, records) {
+  validatePatternAuditManifest(records);
   const { data, error } = await client
     .from("patterns")
     .upsert(records, { onConflict: "source_filename" })
