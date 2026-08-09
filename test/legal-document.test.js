@@ -49,3 +49,36 @@ test("walidator odrzuca niepoprawny kształt sekcji i bloków", () => {
     );
   }
 });
+
+test("walidator wymaga dokładnego zestawu sekcji i metadanych dokumentu", () => {
+  const cases = [
+    ["dowolne identyfikatory sekcji", (document) => {
+      document.sections.forEach((section, index) => { section.id = `sekcja-${index}`; });
+    }],
+    ["błędną datę", (document) => { document.effectiveDate = "09-08-2026"; }],
+    ["błędną ścieżkę", (document) => { document.path = "/prawne"; }],
+    ["błędny rok copyright", (document) => { document.copyrightYear = "2026"; }],
+    ["brak operatora", (document) => { document.operator = {}; }],
+    ["błędny e-mail operatora", (document) => { document.operator.email = "kontakt"; }],
+  ];
+
+  for (const [description, mutate] of cases) {
+    const document = structuredClone(CURRENT_LEGAL_DOCUMENT);
+    mutate(document);
+    assert.throws(() => assertLegalDocumentShape(document), /prawidł|wymaga|operator|ścieżk|rok|sekcj/i, description);
+  }
+});
+
+test("walidator odrzuca HTML w tekstach strukturalnych", () => {
+  const document = structuredClone(CURRENT_LEGAL_DOCUMENT);
+  document.sections[0].blocks[0].text = "<strong>Niebezpieczny HTML</strong>";
+  assert.throws(() => assertLegalDocumentShape(document), /HTML|tekst/i);
+});
+
+test("dokument jest głęboko niemutowalny", () => {
+  try { CURRENT_LEGAL_DOCUMENT.operator.name = "Zmiana"; } catch {}
+  try { CURRENT_LEGAL_DOCUMENT.sections[0].blocks[0].text = "Zmiana"; } catch {}
+  try { CURRENT_LEGAL_DOCUMENT.sections[0].blocks[2].items.push("Zmiana"); } catch {}
+  assert.equal(CURRENT_LEGAL_DOCUMENT.operator.name, "[IMIĘ I NAZWISKO OPERATORA]");
+  assert.equal(CURRENT_LEGAL_DOCUMENT.sections[0].blocks[0].text.startsWith("Motek"), true);
+});

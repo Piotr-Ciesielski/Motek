@@ -66,6 +66,16 @@
     }
   }
 
+  function assertDate(value, label) {
+    if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+      throw new TypeError(`${label} ma nieprawidłowy format.`);
+    }
+    const parsed = new Date(`${value}T00:00:00Z`);
+    if (Number.isNaN(parsed.valueOf()) || parsed.toISOString().slice(0, 10) !== value) {
+      throw new TypeError(`${label} ma nieprawidłową wartość.`);
+    }
+  }
+
   function assertLegalDocumentShape(document) {
     if (!document || typeof document !== "object") throw new TypeError("Dokument ma nieprawidłowy kształt.");
     for (const field of ["termsVersion", "privacyVersion"]) {
@@ -73,12 +83,32 @@
         throw new TypeError(`Nieprawidłowa wersja: ${field}.`);
       }
     }
+    assertDate(document.effectiveDate, "Data wejścia w życie");
+    assertDate(document.revisionDate, "Data rewizji");
+    if (document.path !== "/informacje-prawne") {
+      throw new TypeError("Ścieżka dokumentu jest nieprawidłowa.");
+    }
+    if (!Number.isInteger(document.copyrightYear) || document.copyrightYear < 1900 || document.copyrightYear > 9999) {
+      throw new TypeError("Rok copyright jest nieprawidłowy.");
+    }
+    if (!document.operator || typeof document.operator !== "object") {
+      throw new TypeError("Operator jest nieprawidłowy.");
+    }
+    assertText(document.operator.name, "Nazwa operatora");
+    assertText(document.operator.email, "E-mail operatora");
+    if (document.operator.email !== "[E-MAIL KONTAKTOWY]" && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(document.operator.email)) {
+      throw new TypeError("E-mail operatora ma nieprawidłowy format.");
+    }
     if (!Array.isArray(document.sections) || document.sections.length !== 3) {
       throw new TypeError("Dokument musi mieć trzy sekcje.");
     }
+    const requiredSectionIds = ["regulamin", "prywatnosc", "prawa-autorskie"];
     const ids = new Set();
-    for (const section of document.sections) {
+    for (const [index, section] of document.sections.entries()) {
       assertText(section?.id, "Id sekcji");
+      if (section.id !== requiredSectionIds[index]) {
+        throw new TypeError("Sekcje dokumentu mają nieprawidłowe identyfikatory lub kolejność.");
+      }
       if (ids.has(section.id)) throw new TypeError("Id sekcji muszą być unikalne.");
       ids.add(section.id);
       assertText(section.title, "Tytuł sekcji");
