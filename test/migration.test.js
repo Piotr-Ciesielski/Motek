@@ -79,3 +79,26 @@ test("migracja recovery przechowuje grant i zużywa go atomowo", () => {
   assert.match(sql, /update private\.auth_recovery_grants/i);
   assert.match(sql, /revoke all on table private\.auth_recovery_grants from public, anon, authenticated/i);
 });
+
+test("migracja katalogu dodaje fail-closed publikację wzorów", () => {
+  const migrationFiles = fs
+    .readdirSync(path.join(__dirname, "..", "supabase", "migrations"))
+    .filter((file) => file.endsWith("_add_pattern_publication_audit.sql"));
+
+  assert.equal(migrationFiles.length, 1);
+  const sql = fs.readFileSync(
+    path.join(__dirname, "..", "supabase", "migrations", migrationFiles[0]),
+    "utf8"
+  );
+
+  assert.match(sql, /alter column description drop not null/i);
+  assert.match(sql, /publication_status\s+text\s+not null\s+default\s+'pending_review'/i);
+  assert.match(sql, /content_audit_version\s+text/i);
+  assert.match(sql, /content_audited_at\s+timestamptz/i);
+  assert.match(sql, /official_source_url\s+text/i);
+  assert.match(sql, /publication_status in \('pending_review', 'published', 'hidden'\)/i);
+  assert.match(sql, /patterns_published_audit_check/i);
+  assert.match(sql, /publication_status <> 'published'/i);
+  assert.match(sql, /content_audit_version is not null/i);
+  assert.match(sql, /content_audited_at is not null/i);
+});
