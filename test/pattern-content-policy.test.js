@@ -91,3 +91,14 @@ test("generator rozpoznaje trzy rekordy syntetyczne po nazwie", () => {
   assert.equal(manifest.records.filter((record) => record.source_kind === "synthetic").length, 3);
   assert.equal(manifest.records.filter((record) => record.source_filename.endsWith(".synthetic.json")).every((record) => record.source_kind === "synthetic"), true);
 });
+
+test("odrzuca instruktaż w dowolnym stringu rekordu", () => {
+  assert.throws(() => validatePatternAuditManifest([{ source_filename: "Instrukcja wykonania.pdf" }], { audit_version: "1.0", records: [{ source_filename: "Instrukcja wykonania.pdf", status: "hidden", source_kind: "pdf", audited_at: "2026-08-09T00:00:00Z", fields: [] }] }), /instrukcj/i);
+});
+
+test("odrzuca brakujący lub nieobiektowy manifest kontrolowanym TypeError", () => {
+  for (const manifest of [undefined, null, "manifest"]) {
+    assert.throws(() => validatePatternAuditManifest([], manifest), TypeError);
+  }
+  assert.throws(() => validatePatternAuditManifest(null, {}), TypeError);
+});

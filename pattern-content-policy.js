@@ -41,8 +41,8 @@ function toPublicationFields(entry) {
 }
 
 function validatePatternAuditManifest(records, manifest) {
+  if (!Array.isArray(records) || !manifest || typeof manifest !== "object" || Array.isArray(manifest)) fail("Nieprawidłowe dane audytu");
   manifest = cloneDeep(manifest);
-  if (!Array.isArray(records) || !manifest || typeof manifest !== "object") fail("Nieprawidłowe dane audytu");
   if (typeof manifest.audit_version !== "string" || !/^\d+\.\d+$/.test(manifest.audit_version)) fail("Nieprawidłowy audit_version");
   if (!Array.isArray(manifest.records)) fail("Manifest musi zawierać records");
   if (containsForbidden(manifest)) fail("Manifest zawiera niedozwolone pola dowodowe");
@@ -70,6 +70,7 @@ function validatePatternAuditManifest(records, manifest) {
     seen.add(entry.source_filename);
     if (!PUBLICATION_STATUSES.has(entry.status)) fail(`Nieprawidłowy status dla ${entry.source_filename}`);
     if (typeof entry.source_kind !== "string" || !entry.source_kind) fail("Brak source_kind");
+    if (containsInstructionalText(entry)) fail("rekord zawiera tekst instrukcja wykonania");
     if (typeof entry.audited_at !== "string" || !entry.audited_at || Number.isNaN(Date.parse(entry.audited_at))) fail("Brak lub nieprawidłowe audited_at");
     if (entry.official_source_url !== null && entry.official_source_url !== undefined && typeof entry.official_source_url !== "string") fail("Nieprawidłowe źródło");
     if (!Array.isArray(entry.fields)) fail("fields musi być tablicą");
