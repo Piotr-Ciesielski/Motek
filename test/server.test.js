@@ -349,6 +349,7 @@ test("serwer Motek działa bezpiecznie", async (t) => {
   const syntheticUsers = {
     "token-user-a": { id: "11111111-1111-4111-8111-111111111111", email: "a@example.com" },
     "token-user-b": { id: "22222222-2222-4222-8222-222222222222", email: "b@example.com" },
+    "token-user-stale": { id: "44444444-4444-4444-8444-444444444444", email: "stale@example.com" },
   };
   const syntheticProfiles = Object.fromEntries(
     Object.values(syntheticUsers).map((user) => [user.id, {
@@ -358,6 +359,26 @@ test("serwer Motek działa bezpiecznie", async (t) => {
       status: "active",
     }])
   );
+  const syntheticLegalStates = {
+    [syntheticUsers["token-user-a"].id]: {
+      currentTermsVersion: "1.0",
+      currentPrivacyVersion: "1.0",
+      acceptedVersion: "1.0",
+      acceptanceRequired: false,
+    },
+    [syntheticUsers["token-user-b"].id]: {
+      currentTermsVersion: "1.0",
+      currentPrivacyVersion: "1.0",
+      acceptedVersion: "1.0",
+      acceptanceRequired: false,
+    },
+    [syntheticUsers["token-user-stale"].id]: {
+      currentTermsVersion: "1.0",
+      currentPrivacyVersion: "1.0",
+      acceptedVersion: null,
+      acceptanceRequired: true,
+    },
+  };
   const syntheticYarns = [];
   const syntheticYarnVersions = Object.fromEntries(
     Object.values(syntheticUsers).map((user) => [user.id, 0])
@@ -621,6 +642,30 @@ test("serwer Motek działa bezpiecznie", async (t) => {
           },
         };
       },
+      async rpc(name, args) {
+        if (name === "get_account_access_state") {
+          return { data: syntheticLegalStates[args.p_user_id], error: null };
+        }
+        if (name === "reserve_registration_invitation") {
+          return { data: "invitation-1", error: null };
+        }
+        if (name === "attach_registration_user") {
+          return { data: true, error: null };
+        }
+        if (name === "finalize_invited_registration") {
+          return { data: "2026-08-09T12:00:00.000Z", error: null };
+        }
+        if (name === "release_registration_reservation") {
+          return { data: true, error: null };
+        }
+        if (name === "record_terms_acceptance") {
+          const state = syntheticLegalStates[args.p_user_id];
+          state.acceptedVersion = args.p_terms_version;
+          state.acceptanceRequired = false;
+          return { data: "2026-08-09T12:00:00.000Z", error: null };
+        }
+        throw new Error(`Unexpected service RPC ${name}`);
+      },
     },
   };
   const runtime = await main({
@@ -737,6 +782,10 @@ test("serwer Motek działa bezpiecznie", async (t) => {
           login: " NOWY@EXAMPLE.COM ",
           password: "Haslo123!",
           captchaToken: "register-token",
+          invitationToken: "a".repeat(64),
+          termsAccepted: true,
+          termsVersion: "1.0",
+          privacyNoticeVersion: "1.0",
         }),
       });
       assert.equal(registerResponse.status, 201);
@@ -865,6 +914,75 @@ test("serwer Motek działa bezpiecznie", async (t) => {
         });
         assert.equal(response.status, 400);
       });
+    });
+
+    await t.test("pokazuje stan regulaminu i blokuje starej zgodzie dostęp do danych", async () => {
+      const currentSessionResponse = await fetch(`${baseUrl}/api/auth/session`, {
+        headers: { Cookie: syntheticAuthCookies("token-user-a") },
+      });
+      assert.equal(currentSessionResponse.status, 200);
+      assert.deepEqual((await currentSessionResponse.json()).legal, {
+        currentVersion: "1.0",
+        acceptedVersion: "1.0",
+        acceptanceRequired: false,
+      });
+
+      const staleSessionResponse = await fetch(`${baseUrl}/api/auth/session`, {
+        headers: { Cookie: syntheticAuthCookies("token-user-stale") },
+      });
+      assert.equal(staleSessionResponse.status, 200);
+      assert.deepEqual((await staleSessionResponse.json()).legal, {
+        currentVersion: "1.0",
+        acceptedVersion: null,
+        acceptanceRequired: true,
+      });
+
+      const yarnsResponse = await fetch(`${baseUrl}/api/yarns`, {
+        headers: { Cookie: syntheticAuthCookies("token-user-stale") },
+      });
+      assert.equal(yarnsResponse.status, 403);
+
+      const patternsResponse = await fetch(`${baseUrl}/api/patterns`, {
+        headers: { Cookie: syntheticAuthCookies("token-user-stale") },
+      });
+      assert.equal(patternsResponse.status, 403);
+
+      const staleVersionResponse = await fetch(`${baseUrl}/api/legal/acceptance`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Origin: baseUrl,
+          Cookie: syntheticAuthCookies("token-user-stale"),
+        },
+        body: JSON.stringify({ version: "0.9" }),
+      });
+      assert.equal(staleVersionResponse.status, 409);
+
+      const acceptanceResponse = await fetch(`${baseUrl}/api/legal/acceptance`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Origin: baseUrl,
+          Cookie: syntheticAuthCookies("token-user-stale"),
+        },
+        body: JSON.stringify({ version: "1.0" }),
+      });
+      assert.equal(acceptanceResponse.status, 200);
+      assert.deepEqual(await acceptanceResponse.json(), {
+        acceptedVersion: "1.0",
+        acceptedAt: "2026-08-09T12:00:00.000Z",
+      });
+
+      const staleYarnsAfterAcceptance = await fetch(`${baseUrl}/api/yarns`, {
+        headers: { Cookie: syntheticAuthCookies("token-user-stale") },
+      });
+      assert.equal(staleYarnsAfterAcceptance.status, 200);
+
+      const logoutResponse = await fetch(`${baseUrl}/api/auth/logout`, {
+        method: "POST",
+        headers: { Origin: baseUrl, Cookie: syntheticAuthCookies("token-user-stale") },
+      });
+      assert.equal(logoutResponse.status, 200);
     });
 
     await t.test("usuwa bieżące konto po ponownym haśle i frazie", async () => {
@@ -1116,12 +1234,19 @@ test("serwer Motek działa bezpiecznie", async (t) => {
     });
 
     await t.test("pobiera katalog wzorów z Supabase bez ujawniania sekretów", async () => {
-      const oversizedPageResponse = await fetch(`${baseUrl}/api/patterns?limit=51`);
+      syntheticProfiles[syntheticUsers["token-user-a"].id] = {
+        id: syntheticUsers["token-user-a"].id,
+        login: "uzytkownik_a",
+        email: "a@example.com",
+        status: "active",
+      };
+      const patternHeaders = { Cookie: syntheticAuthCookies("token-user-a") };
+      const oversizedPageResponse = await fetch(`${baseUrl}/api/patterns?limit=51`, { headers: patternHeaders });
       assert.equal(oversizedPageResponse.status, 400);
-      const negativeOffsetResponse = await fetch(`${baseUrl}/api/patterns?offset=-1`);
+      const negativeOffsetResponse = await fetch(`${baseUrl}/api/patterns?offset=-1`, { headers: patternHeaders });
       assert.equal(negativeOffsetResponse.status, 400);
 
-      const response = await fetch(`${baseUrl}/api/patterns`);
+      const response = await fetch(`${baseUrl}/api/patterns`, { headers: patternHeaders });
       assert.equal(response.status, 200);
       const page = await response.json();
       assert.deepEqual(page, {

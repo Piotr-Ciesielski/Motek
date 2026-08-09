@@ -7,6 +7,7 @@ function createPatternRouter(dependencies) {
   const {
     sendJson,
     requireAuthenticatedSession,
+    requireCurrentTermsSession = requireAuthenticatedSession,
     getCatalogPatterns,
     getSupabaseMatches,
     parsePatternPage,
@@ -19,6 +20,7 @@ function createPatternRouter(dependencies) {
   return {
     async handle(req, res, url) {
       if (req.method === "GET" && url.pathname === "/api/patterns") {
+        await requireCurrentTermsSession(req, res);
         if (enforceRequestRateLimit && patternReadRateLimiter && getRequestRateLimitKeys) {
           enforceRequestRateLimit(getRequestRateLimitKeys(req), patternReadRateLimiter, res);
         }
@@ -36,7 +38,7 @@ function createPatternRouter(dependencies) {
         if (enforceRequestRateLimit && matchingRateLimiter && getRequestRateLimitKeys) {
           enforceRequestRateLimit(getRequestRateLimitKeys(req), matchingRateLimiter, res);
         }
-        const session = await requireAuthenticatedSession(req, res);
+        const session = await requireCurrentTermsSession(req, res);
         const result = await getSupabaseMatches(session);
         res.setHeader("X-Motek-Match-Scope", result.limited ? "subset" : "full");
         sendJson(res, 200, result.matches);

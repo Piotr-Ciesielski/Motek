@@ -8,6 +8,9 @@ const {
   createSupabaseConnection,
   readSupabaseAuthConfig,
 } = require("./supabase");
+const { validateRegistrationLegalInput } = require("./registration-policy");
+const { registerInvitedUser } = require("./registration-service");
+const { createLegalAccessService } = require("./legal-access-service");
 const {
   maxYarnsPerUser: MAX_YARNS_PER_USER,
   maxPatternCatalogRecords: MAX_PATTERN_CATALOG_RECORDS,
@@ -44,6 +47,7 @@ let server;
 let supabaseConnection;
 let supabaseAuthConfig;
 let supabaseAuthClientFactory = createSupabaseAuthClient;
+let legalAccessService;
 let captchaConfig = readCaptchaConfig();
 let metricsEnabled = false;
 let metricsRegistry = createMetricsRegistry();
@@ -151,6 +155,7 @@ const staticFileHandler = createStaticFileHandler({
 const patternRouter = createPatternRouter({
   sendJson,
   requireAuthenticatedSession,
+  requireCurrentTermsSession,
   getCatalogPatterns,
   getSupabaseMatches,
   parsePatternPage,
@@ -195,7 +200,7 @@ const yarnRouter = createYarnRouter({
   updateSupabaseYarn,
   deleteSupabaseYarn,
   sendYarnMutationResponse,
-  requireAuthenticatedSession,
+  requireAuthenticatedSession: requireCurrentTermsSession,
   requireCurrentYarnVersion,
   validateYarn,
   readBody,
@@ -637,12 +642,20 @@ async function getAuthenticatedSession(req, res) {
     throw new ApiError(403, "Konto jest zawieszone lub zablokowane.");
   }
 
+  let legal;
+  try {
+    legal = await legalAccessService.getAccountAccessState(userResult.data.user.id);
+  } catch {
+    throw new ApiError(503, "Stan dokumentów prawnych jest chwilowo niedostępny.");
+  }
+
   setIdleActivityCookie(res);
 
   return {
     user: userResult.data.user,
     profile: profileResult.data,
     accessToken: activeAccessToken,
+    legal,
   };
 }
 
@@ -650,6 +663,14 @@ async function requireAuthenticatedSession(req, res) {
   const session = await getAuthenticatedSession(req, res);
   if (!session) {
     throw new ApiError(401, "Zaloguj się, aby zarządzać swoim magazynem włóczek.");
+  }
+  return session;
+}
+
+async function requireCurrentTermsSession(req, res) {
+  const session = await requireAuthenticatedSession(req, res);
+  if (session.legal.acceptanceRequired) {
+    throw new ApiError(403, "Zaakceptuj aktualną wersję dokumentów, aby korzystać z tej funkcji.");
   }
   return session;
 }
@@ -1142,6 +1163,10 @@ function validateYarn(body) {
   };
 }
 
+async function hashInvitationToken(token) {
+  return crypto.createHash("sha256").update(token, "utf8").digest("hex");
+}
+
 async function handleAuthApi(req, res, url) {
   if (req.method === "POST") {
     requireTrustedOrigin(req);
@@ -1151,44 +1176,52 @@ async function handleAuthApi(req, res, url) {
     const body = await readBody(req);
     const email = normalizeAuthLogin(body.login);
     const password = validateAuthPassword(body.password);
+    let legalInput;
+    try {
+      legalInput = validateRegistrationLegalInput(body, CURRENT_LEGAL_DOCUMENT);
+    } catch (error) {
+      throw new ApiError(400, error.message);
+    }
     let captchaToken;
     try {
       captchaToken = normalizeCaptchaToken(body.captchaToken, captchaConfig.enabled);
     } catch (error) {
       throw new ApiError(400, error.message);
     }
-    const login = email;
     const rateLimitKeys = getAuthRateLimitKeys(req, email);
     enforceRequestRateLimit(rateLimitKeys, authRequestRateLimiter, res);
     enforceAuthRateLimit(rateLimitKeys, res);
 
-    const { data, error } = await authClient().auth.signUp({
-      email,
-      password,
-      options: {
-        data: {
-          login,
-        },
+    let registration;
+    try {
+      registration = await registerInvitedUser({
+        email,
+        password,
+        ...legalInput,
+        captchaToken,
         emailRedirectTo: new URL("/?confirmed=1", getExpectedOrigin(req)).toString(),
-        ...(captchaToken ? { captchaToken } : {}),
-      },
-    });
-
-    if (error || !data?.user) {
+      }, {
+        authClient: authClient(),
+        adminClient: supabaseConnection.client,
+        serviceClient: supabaseConnection.client,
+        legalDocument: CURRENT_LEGAL_DOCUMENT,
+        hashInvitationToken,
+      });
+    } catch {
       recordAuthFailure(rateLimitKeys);
       throw genericAuthError("register");
     }
 
     clearAuthFailures(rateLimitKeys);
 
-    if (data.session) {
-      setAuthCookies(res, data.session);
-      await updateLastLogin(data.user.id);
+    if (registration.session) {
+      setAuthCookies(res, registration.session);
+      await updateLastLogin(registration.user.id);
     }
 
     return sendJson(res, 201, {
-      user: sanitizeAuthUser(data.user),
-      requiresEmailConfirmation: !data.session,
+      user: sanitizeAuthUser(registration.user),
+      requiresEmailConfirmation: !registration.session,
     });
   }
 
@@ -1336,6 +1369,7 @@ async function handleAuthApi(req, res, url) {
       authenticated: Boolean(session),
       user: session ? sanitizeAuthUser(session.user) : null,
       profile: session?.profile || null,
+      legal: session?.legal || null,
     });
   }
 
@@ -1400,6 +1434,25 @@ async function handleApi(req, res, url) {
       "Cache-Control": "no-store",
     });
     return res.end();
+  }
+
+  if (req.method === "POST" && url.pathname === "/api/legal/acceptance") {
+    const session = await requireAuthenticatedSession(req, res);
+    const body = await readBody(req);
+    let acceptance;
+    try {
+      acceptance = await legalAccessService.recordTermsAcceptance(
+        session.user.id,
+        body.version,
+        CURRENT_LEGAL_DOCUMENT.privacyVersion,
+      );
+    } catch (error) {
+      if (/aktualną wersję/i.test(error.message)) {
+        throw new ApiError(409, error.message);
+      }
+      throw new ApiError(503, "Nie udało się zapisać akceptacji dokumentów. Spróbuj ponownie później.");
+    }
+    return sendJson(res, 200, acceptance);
   }
 
   if (await yarnRouter.handle(req, res, url)) return;
@@ -1476,6 +1529,10 @@ async function main(options = {}) {
     ? options.supabaseAuthConfig
     : readSupabaseAuthConfig();
   supabaseAuthClientFactory = options.supabaseAuthClientFactory || createSupabaseAuthClient;
+  legalAccessService = createLegalAccessService({
+    legalDocument: CURRENT_LEGAL_DOCUMENT,
+    serviceClient: supabaseConnection?.client,
+  });
   captchaConfig = Object.prototype.hasOwnProperty.call(options, "captchaConfig")
     ? options.captchaConfig
     : readCaptchaConfig();
@@ -1638,6 +1695,7 @@ async function shutdown(signal = "shutdown") {
   supabaseConnection = null;
   supabaseAuthConfig = null;
   supabaseAuthClientFactory = createSupabaseAuthClient;
+  legalAccessService = null;
 
   console.log("Motek został bezpiecznie zatrzymany.");
 }

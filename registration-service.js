@@ -29,7 +29,7 @@ function getDeleteUser(adminClient) {
 }
 
 async function registerInvitedUser(
-  { email, password, invitationToken, termsVersion, privacyVersion, captchaToken },
+  { email, password, invitationToken, termsVersion, privacyVersion, captchaToken, emailRedirectTo },
   { authClient, adminClient, serviceClient, legalDocument, hashInvitationToken },
 ) {
   const normalizedEmail = normalizeEmail(email);
@@ -64,6 +64,7 @@ async function registerInvitedUser(
       options: {
         data: { login: normalizedEmail },
         ...(captchaToken ? { captchaToken } : {}),
+        ...(emailRedirectTo ? { emailRedirectTo } : {}),
       },
     });
     if (signUpResult?.error || !signUpResult?.data?.user?.id) {

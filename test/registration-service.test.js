@@ -10,6 +10,7 @@ const input = {
   termsVersion: "1.0",
   privacyVersion: "1.0",
   captchaToken: "captcha-token",
+  emailRedirectTo: "http://localhost:3001/?confirmed=1",
 };
 
 function createDependencies({ reserveError, finalizeError, deleteError } = {}) {
@@ -83,6 +84,7 @@ test("wykonuje rejestrację w kolejności rezerwacja, Auth, attach, finalizacja"
   assert.deepEqual(dependencies.signUpPayload.options, {
     data: { login: "user@example.com" },
     captchaToken: "captcha-token",
+    emailRedirectTo: "http://localhost:3001/?confirmed=1",
   });
   assert.equal(dependencies.rpcCalls[0].parameters.p_email, "user@example.com");
 });
