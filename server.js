@@ -1008,8 +1008,8 @@ function normalizeMatchingRequirements(value) {
   }
 }
 
-async function getCatalogPatterns({ limit = null, offset = 0 } = {}) {
-  const patternClient = supabaseConnection.client.from("patterns");
+async function getCatalogPatterns({ limit = null, offset = 0 } = {}, connection = supabaseConnection) {
+  const patternClient = connection.client.from("patterns");
   const countQuery = patternClient.select("id", { count: "exact", head: true });
   const { count, error: countError } = await (typeof countQuery.eq === "function"
     ? countQuery.eq("publication_status", "published")
@@ -1022,7 +1022,7 @@ async function getCatalogPatterns({ limit = null, offset = 0 } = {}) {
   validatePatternCatalogSize(count ?? 0);
 
   const effectiveLimit = limit ?? count ?? 0;
-  const dataQuery = supabaseConnection.client
+  const dataQuery = connection.client
     .from("patterns")
     .select(
       "id,name,description,project_type,materials,meters_per_100g,yarn_requirements,matching_requirements,source_language,needs_review,official_source_url"
@@ -1654,6 +1654,7 @@ module.exports = {
   normalizeAuthEmail,
   normalizeAuthLogin,
   normalizeCatalogPattern,
+  getCatalogPatterns,
   normalizeSupabaseYarn,
   scorePattern,
   selectMatchingYarns,

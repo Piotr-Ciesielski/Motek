@@ -8,6 +8,7 @@ const {
   getRuntimeConfig,
   main,
   normalizeCatalogPattern,
+  getCatalogPatterns,
   scorePattern,
   selectMatchingYarns,
   shutdown,
@@ -122,11 +123,52 @@ test("publiczny DTO katalogu nie ujawnia źródeł ani audytu i odrzuca nieszyfr
   assert.equal(httpsPattern.officialSourceUrl, "https://example.com/pattern?ref=motek");
 });
 
-test("zapytania katalogu filtrują published przed count i stroną", () => {
-  const source = require("node:fs").readFileSync(require("node:path").join(__dirname, "..", "server.js"), "utf8");
-  const getCatalog = source.slice(source.indexOf("async function getCatalogPatterns"), source.indexOf("function parsePatternPage"));
-  assert.equal((getCatalog.match(/\.eq\("publication_status", "published"\)/g) || []).length, 2);
-  assert.match(getCatalog, /official_source_url/);
+test("getCatalogPatterns mapuje HTTPS official_source_url i filtruje published", async () => {
+  const calls = [];
+  const result = (value) => {
+    const promise = Promise.resolve(value);
+    promise.eq = (field, expected) => {
+      calls.push(["eq", field, expected]);
+      return promise;
+    };
+    promise.range = (from, to) => {
+      calls.push(["range", from, to]);
+      return promise;
+    };
+    promise.order = (field, options) => {
+      calls.push(["order", field, options]);
+      return promise;
+    };
+    return promise;
+  };
+  const connection = {
+    client: {
+      from(table) {
+        assert.equal(table, "patterns");
+        return {
+          select(fields, options) {
+            calls.push(["select", fields, options]);
+            return result(fields === "id"
+              ? { count: 1, error: null }
+              : {
+                data: [{
+                  id: 1,
+                  name: "Jawny wzór",
+                  description: null,
+                  official_source_url: "https://example.com/pattern?ref=motek",
+                  matching_requirements: { version: 2, variants: [] },
+                }],
+                error: null,
+              });
+          },
+        };
+      },
+    },
+  };
+
+  const page = await getCatalogPatterns({ limit: 10, offset: 0 }, connection);
+  assert.equal(page.items[0].officialSourceUrl, "https://example.com/pattern?ref=motek");
+  assert.equal(calls.filter(([name]) => name === "eq").length, 2);
 });
 
 test("walidacja włóczki zachowuje kilka materiałów", () => {
