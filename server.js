@@ -1025,7 +1025,7 @@ async function getCatalogPatterns({ limit = null, offset = 0 } = {}) {
   const dataQuery = supabaseConnection.client
     .from("patterns")
     .select(
-      "id,name,description,project_type,materials,meters_per_100g,yarn_requirements,matching_requirements,source_language,needs_review"
+      "id,name,description,project_type,materials,meters_per_100g,yarn_requirements,matching_requirements,source_language,needs_review,official_source_url"
     );
   const publishedQuery = typeof dataQuery.eq === "function"
     ? dataQuery.eq("publication_status", "published")

@@ -111,12 +111,22 @@ test("publiczny DTO katalogu nie ujawnia źródeł ani audytu i odrzuca nieszyfr
   assert.equal("source_filename" in pattern, false);
   assert.equal("source_sha256" in pattern, false);
   assert.equal("content_audit_version" in pattern, false);
+
+  const httpsPattern = normalizeCatalogPattern({
+    id: 8,
+    name: "Źródło HTTPS",
+    description: null,
+    official_source_url: "https://example.com/pattern?ref=motek",
+    matching_requirements: { version: 2, variants: [] },
+  });
+  assert.equal(httpsPattern.officialSourceUrl, "https://example.com/pattern?ref=motek");
 });
 
 test("zapytania katalogu filtrują published przed count i stroną", () => {
   const source = require("node:fs").readFileSync(require("node:path").join(__dirname, "..", "server.js"), "utf8");
   const getCatalog = source.slice(source.indexOf("async function getCatalogPatterns"), source.indexOf("function parsePatternPage"));
   assert.equal((getCatalog.match(/\.eq\("publication_status", "published"\)/g) || []).length, 2);
+  assert.match(getCatalog, /official_source_url/);
 });
 
 test("walidacja włóczki zachowuje kilka materiałów", () => {
