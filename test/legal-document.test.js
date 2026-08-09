@@ -76,9 +76,9 @@ test("walidator odrzuca HTML w tekstach strukturalnych", () => {
 });
 
 test("dokument jest głęboko niemutowalny", () => {
-  try { CURRENT_LEGAL_DOCUMENT.operator.name = "Zmiana"; } catch {}
-  try { CURRENT_LEGAL_DOCUMENT.sections[0].blocks[0].text = "Zmiana"; } catch {}
-  try { CURRENT_LEGAL_DOCUMENT.sections[0].blocks[2].items.push("Zmiana"); } catch {}
+  try { CURRENT_LEGAL_DOCUMENT.operator.name = "Zmiana"; } catch (error) { assert.ok(error instanceof TypeError); }
+  try { CURRENT_LEGAL_DOCUMENT.sections[0].blocks[0].text = "Zmiana"; } catch (error) { assert.ok(error instanceof TypeError); }
+  try { CURRENT_LEGAL_DOCUMENT.sections[0].blocks[2].items.push("Zmiana"); } catch (error) { assert.ok(error instanceof TypeError); }
   assert.equal(CURRENT_LEGAL_DOCUMENT.operator.name, "[IMIĘ I NAZWISKO OPERATORA]");
   assert.equal(CURRENT_LEGAL_DOCUMENT.sections[0].blocks[0].text.startsWith("Motek"), true);
 });

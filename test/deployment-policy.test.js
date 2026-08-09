@@ -49,6 +49,32 @@ test("staging wymaga bezpiecznego transportu i Turnstile", () => {
   });
 });
 
+test("staging odrzuca wyłączoną CAPTCHA i dostawcę innego niż Turnstile", () => {
+  const env = {
+    DEPLOYMENT_ENV: "staging",
+    NODE_ENV: "production",
+    APP_ORIGIN: "https://staging.example.test",
+    COOKIE_SECURE: "true",
+    HOST: "0.0.0.0",
+    TRUST_PROXY: "true",
+    CAPTCHA_ENABLED: "true",
+    CAPTCHA_PROVIDER: "turnstile",
+    CAPTCHA_SITE_KEY: "public-site-key",
+    SUPABASE_URL: "https://project.supabase.co",
+    SUPABASE_SECRET_KEY: "secret-key",
+    SUPABASE_PUBLISHABLE_KEY: "publishable-key",
+  };
+
+  assert.throws(
+    () => validateDeploymentConfig({ ...env, CAPTCHA_ENABLED: "false" }),
+    /CAPTCHA_ENABLED/,
+  );
+  assert.throws(
+    () => validateDeploymentConfig({ ...env, CAPTCHA_PROVIDER: "hcaptcha" }),
+    /CAPTCHA_PROVIDER/,
+  );
+});
+
 test("production odrzuca niebezpieczną konfigurację bez ujawniania wartości", () => {
   const secretLikeValue = "do-not-print-this";
   assert.throws(

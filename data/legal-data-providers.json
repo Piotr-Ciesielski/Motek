@@ -1,0 +1,36 @@
+{
+  "version": "1.0",
+  "status": "draft",
+  "providers": {
+    "supabase": {
+      "categories": ["konto", "magazyn", "sesja"],
+      "flows": ["aplikacja -> Supabase"],
+      "location": "do uzupełnienia",
+      "transfer": "do uzupełnienia",
+      "retention": "do uzupełnienia",
+      "status": "unverified",
+      "evidence": [],
+      "verifiedAt": null
+    },
+    "railway": {
+      "categories": ["logi techniczne"],
+      "flows": ["aplikacja -> Railway"],
+      "location": "do uzupełnienia",
+      "transfer": "do uzupełnienia",
+      "retention": "do uzupełnienia",
+      "status": "unverified",
+      "evidence": [],
+      "verifiedAt": null
+    },
+    "cloudflare-turnstile": {
+      "categories": ["dane antybotowe"],
+      "flows": ["przeglądarka -> Cloudflare Turnstile"],
+      "location": "do uzupełnienia",
+      "transfer": "do uzupełnienia",
+      "retention": "do uzupełnienia",
+      "status": "unverified",
+      "evidence": [],
+      "verifiedAt": null
+    }
+  }
+}

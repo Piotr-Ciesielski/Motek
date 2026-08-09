@@ -36,6 +36,8 @@ const { createStaticFileHandler } = require("./server/static-files");
 const { createPatternRouter } = require("./server/pattern-routes");
 const { createYarnRouter } = require("./server/yarn-routes");
 const { readReleaseInfo } = require("./release-info");
+const { CURRENT_LEGAL_DOCUMENT } = require("./legal-document");
+const { validateLegalPublication } = require("./legal-publication-policy");
 
 const rootDir = __dirname;
 let server;
@@ -1443,6 +1445,21 @@ function getRuntimeConfig(env = process.env) {
 async function main(options = {}) {
   shuttingDown = false;
   validateDeploymentConfig();
+  if (String(process.env.DEPLOYMENT_ENV || "local").trim().toLowerCase() === "production") {
+    const providers = JSON.parse(fs.readFileSync(path.join(rootDir, "data", "legal-data-providers.json"), "utf8"));
+    const patternAudit = JSON.parse(fs.readFileSync(path.join(rootDir, "data", "pattern-content-audit.json"), "utf8"));
+    const records = Array.isArray(patternAudit.records) ? patternAudit.records : [];
+    const publication = validateLegalPublication({
+      legalDocument: CURRENT_LEGAL_DOCUMENT,
+      providers: providers.providers,
+      patternAudit: {
+        complete: records.length > 0 && records.every((record) => record.status !== "pending_review"),
+        pending_review: records.filter((record) => record.status === "pending_review").length,
+      },
+      deploymentEnvironment: "production",
+    });
+    if (!publication.ready) throw new Error("Publikacja prawna nie jest gotowa.");
+  }
   validateCookieSecurityConfig();
   validateOriginConfig();
   const releaseInfo = readReleaseInfo(
