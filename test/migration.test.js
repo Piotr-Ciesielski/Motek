@@ -102,3 +102,28 @@ test("migracja katalogu dodaje fail-closed publikację wzorów", () => {
   assert.match(sql, /content_audit_version is not null/i);
   assert.match(sql, /content_audited_at is not null/i);
 });
+
+test("migracja rejestracji zaproszonej chroni prywatne dane i stan profilu", () => {
+  const migrationsDirectory = path.join(__dirname, "..", "supabase", "migrations");
+  const migrationFiles = fs
+    .readdirSync(migrationsDirectory)
+    .filter((file) => file.endsWith("_add_invited_registration_and_legal_acceptance.sql"));
+
+  assert.equal(migrationFiles.length, 1);
+  const sql = fs.readFileSync(path.join(migrationsDirectory, migrationFiles[0]), "utf8");
+
+  assert.match(sql, /create table private\.legal_document_versions/i);
+  assert.match(sql, /create table private\.registration_invitations/i);
+  assert.match(sql, /create table private\.registration_attempts/i);
+  assert.match(sql, /create table private\.terms_acceptances/i);
+  assert.match(sql, /create table private\.privacy_notice_deliveries/i);
+  assert.match(sql, /on delete cascade/i);
+  assert.match(sql, /primary key \(user_id, terms_version\)/i);
+  assert.match(sql, /accepted_at timestamptz not null default now\(\)/i);
+  assert.match(sql, /legal_document_one_current_per_kind/i);
+  assert.match(sql, /registration_invitations.*\(email\)/is);
+  assert.match(sql, /registration_invitations.*\(expires_at\)/is);
+  assert.match(sql, /registration_attempts.*\(auth_user_id\)/is);
+  assert.match(sql, /pending_registration/i);
+  assert.match(sql, /revoke all on all tables in schema private from public, anon, authenticated/i);
+});
