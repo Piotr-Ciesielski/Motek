@@ -117,3 +117,11 @@ test("light coral actions use dark text and the skip link keeps a fixed contrast
   assert.match(skipLink, /color: #fffdf8;/);
   assert.doesNotMatch(skipLink, /(?:background|color): var\(--(?:text|on-accent)\);/);
 });
+
+test("karta katalogu ukrywa pusty opis i bezpiecznie renderuje link HTTPS", () => {
+  assert.match(appJs, /description\?\.trim\(\)/);
+  assert.match(appJs, /officialSourceUrl/);
+  assert.match(appJs, /sourceLink\.textContent\s*=\s*["']Oficjalne źródło["']/);
+  assert.match(appJs, /rel\s*=\s*["']noopener noreferrer["']/);
+  assert.match(appJs, /protocol\s*===\s*["']https:["']/);
+});

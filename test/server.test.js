@@ -93,6 +93,32 @@ test("katalog zachowuje wariant mierzony wyłącznie w gramach", () => {
   assert.equal(pattern.matchingRequirements[0].requirements[0].metersMin, null);
 });
 
+test("publiczny DTO katalogu nie ujawnia źródeł ani audytu i odrzuca nieszyfrowany link", () => {
+  const pattern = normalizeCatalogPattern({
+    id: 7,
+    name: "Jawny wzór",
+    description: null,
+    official_source_url: "http://example.com/source",
+    source_filename: "private.pdf",
+    source_sha256: "secret-hash",
+    content_audit_version: "1.0",
+    content_audited_at: "2026-08-09T00:00:00Z",
+    matching_requirements: { version: 2, variants: [] },
+  });
+
+  assert.equal(pattern.description, null);
+  assert.equal(pattern.officialSourceUrl, null);
+  assert.equal("source_filename" in pattern, false);
+  assert.equal("source_sha256" in pattern, false);
+  assert.equal("content_audit_version" in pattern, false);
+});
+
+test("zapytania katalogu filtrują published przed count i stroną", () => {
+  const source = require("node:fs").readFileSync(require("node:path").join(__dirname, "..", "server.js"), "utf8");
+  const getCatalog = source.slice(source.indexOf("async function getCatalogPatterns"), source.indexOf("function parsePatternPage"));
+  assert.equal((getCatalog.match(/\.eq\("publication_status", "published"\)/g) || []).length, 2);
+});
+
 test("walidacja włóczki zachowuje kilka materiałów", () => {
   const yarn = validateYarn({
     name: "Sock",
@@ -1091,6 +1117,7 @@ test("serwer Motek działa bezpiecznie", async (t) => {
         ],
         sourceLanguage: "pl",
         needsReview: false,
+        officialSourceUrl: null,
         }],
       });
       assert.equal(JSON.stringify(page).includes("sb_secret_"), false);

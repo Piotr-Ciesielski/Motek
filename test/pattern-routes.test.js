@@ -67,6 +67,20 @@ test("pattern router serves the catalog with parsed pagination", async () => {
   assert.equal(handled, true);
 });
 
+test("pattern router passes the public catalog payload unchanged", async () => {
+  const payload = { items: [{ name: "Jawny wzór", description: null }], total: 1 };
+  let sent;
+  const router = createPatternRouter({
+    sendJson(_res, status, body) { sent = [status, body]; },
+    parsePatternPage() { return { limit: 10, offset: 0 }; },
+    getCatalogPatterns() { return payload; },
+    requireAuthenticatedSession() {},
+    getSupabaseMatches() {},
+  });
+  await router.handle({ method: "GET" }, {}, new URL("http://localhost/api/patterns"));
+  assert.deepEqual(sent, [200, payload]);
+});
+
 test("pattern router serves authenticated matches and reports scope", async () => {
   const calls = [];
   const response = {

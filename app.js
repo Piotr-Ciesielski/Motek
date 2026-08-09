@@ -1516,8 +1516,25 @@ function renderPatternCatalog() {
       .setAttribute("aria-label", `Parametry włóczki: ${formatPatternName(pattern.name)}`);
     card.querySelector(".pattern-card__kicker").textContent =
       `${formatProjectType(pattern.projectType)} · ${formatPatternLanguage(pattern.sourceLanguage)}`;
-    card.querySelector(".pattern-card__description").textContent =
-      pattern.description;
+    const description = card.querySelector(".pattern-card__description");
+    description.textContent = pattern.description?.trim() || "";
+    description.hidden = !description.textContent;
+    if (pattern.officialSourceUrl) {
+      try {
+        const sourceUrl = new URL(pattern.officialSourceUrl, window.location.origin);
+        if (sourceUrl.protocol === "https:") {
+          const sourceLink = document.createElement("a");
+          sourceLink.className = "pattern-card__source";
+          sourceLink.textContent = "Oficjalne źródło";
+          sourceLink.href = sourceUrl.href;
+          sourceLink.target = "_blank";
+          sourceLink.rel = "noopener noreferrer";
+          description.after(sourceLink);
+        }
+      } catch {
+        // Nie renderuj nieprawidłowego adresu źródłowego.
+      }
+    }
     card.querySelector(".pattern-card__facts").textContent =
       formatPatternYarnFact(pattern, formatRatio);
 

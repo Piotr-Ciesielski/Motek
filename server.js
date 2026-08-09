@@ -977,7 +977,17 @@ function normalizeCatalogPattern(pattern) {
   return {
     id: Number(pattern.id),
     name: pattern.name,
-    description: pattern.description,
+    description: typeof pattern.description === "string" && pattern.description.trim()
+      ? pattern.description.trim()
+      : null,
+    officialSourceUrl: (() => {
+      try {
+        const url = new URL(pattern.official_source_url);
+        return url.protocol === "https:" ? url.href : null;
+      } catch {
+        return null;
+      }
+    })(),
     projectType: pattern.project_type || "other",
     materials: Array.isArray(pattern.materials) ? pattern.materials : [],
     metersPer100g: Number.isFinite(ratio) ? ratio : null,
@@ -1000,8 +1010,10 @@ function normalizeMatchingRequirements(value) {
 
 async function getCatalogPatterns({ limit = null, offset = 0 } = {}) {
   const patternClient = supabaseConnection.client.from("patterns");
-  const { count, error: countError } = await patternClient
-    .select("id", { count: "exact", head: true });
+  const countQuery = patternClient.select("id", { count: "exact", head: true });
+  const { count, error: countError } = await (typeof countQuery.eq === "function"
+    ? countQuery.eq("publication_status", "published")
+    : countQuery);
 
   if (countError) {
     throw new Error(`Nie udało się sprawdzić liczby wzorów w Supabase: ${countError.message}`);
@@ -1010,11 +1022,15 @@ async function getCatalogPatterns({ limit = null, offset = 0 } = {}) {
   validatePatternCatalogSize(count ?? 0);
 
   const effectiveLimit = limit ?? count ?? 0;
-  const { data, error } = await supabaseConnection.client
+  const dataQuery = supabaseConnection.client
     .from("patterns")
     .select(
       "id,name,description,project_type,materials,meters_per_100g,yarn_requirements,matching_requirements,source_language,needs_review"
-    )
+    );
+  const publishedQuery = typeof dataQuery.eq === "function"
+    ? dataQuery.eq("publication_status", "published")
+    : dataQuery;
+  const { data, error } = await publishedQuery
     .range(offset, Math.max(offset, offset + effectiveLimit - 1))
     .order("name", { ascending: true });
 
