@@ -828,7 +828,7 @@
     {
       "source_filename": "motek-demo-lesny-kardigan.synthetic.json",
       "status": "hidden",
-      "source_kind": "pdf",
+      "source_kind": "synthetic",
       "audited_at": "2026-08-09T00:00:00Z",
       "official_source_url": null,
       "fields": []
@@ -836,7 +836,7 @@
     {
       "source_filename": "motek-demo-bawelniany-top.synthetic.json",
       "status": "hidden",
-      "source_kind": "pdf",
+      "source_kind": "synthetic",
       "audited_at": "2026-08-09T00:00:00Z",
       "official_source_url": null,
       "fields": []
@@ -844,7 +844,7 @@
     {
       "source_filename": "motek-demo-moherowa-chusta.synthetic.json",
       "status": "hidden",
-      "source_kind": "pdf",
+      "source_kind": "synthetic",
       "audited_at": "2026-08-09T00:00:00Z",
       "official_source_url": null,
       "fields": []

@@ -21,6 +21,16 @@ function freezeDeep(value) {
   return value;
 }
 
+function cloneDeep(value) {
+  return JSON.parse(JSON.stringify(value));
+}
+
+function containsInstructionalText(value) {
+  if (typeof value === "string") return /instrukcja\s+wykonania/i.test(value);
+  if (!value || typeof value !== "object") return false;
+  return Object.values(value).some(containsInstructionalText);
+}
+
 function toPublicationFields(entry) {
   return {
     publication_status: entry.status,
@@ -31,6 +41,7 @@ function toPublicationFields(entry) {
 }
 
 function validatePatternAuditManifest(records, manifest) {
+  manifest = cloneDeep(manifest);
   if (!Array.isArray(records) || !manifest || typeof manifest !== "object") fail("Nieprawidłowe dane audytu");
   if (typeof manifest.audit_version !== "string" || !/^\d+\.\d+$/.test(manifest.audit_version)) fail("Nieprawidłowy audit_version");
   if (!Array.isArray(manifest.records)) fail("Manifest musi zawierać records");
@@ -62,14 +73,19 @@ function validatePatternAuditManifest(records, manifest) {
     if (typeof entry.audited_at !== "string" || !entry.audited_at || Number.isNaN(Date.parse(entry.audited_at))) fail("Brak lub nieprawidłowe audited_at");
     if (entry.official_source_url !== null && entry.official_source_url !== undefined && typeof entry.official_source_url !== "string") fail("Nieprawidłowe źródło");
     if (!Array.isArray(entry.fields)) fail("fields musi być tablicą");
-    if (entry.status === "published" && entry.source_kind !== "synthetic" && !entry.official_source_url?.trim()) fail("Publikacja wymaga poprawnego źródła");
+    if (entry.status === "published" && entry.source_kind !== "synthetic") {
+      if (!entry.official_source_url?.trim()) fail("Publikacja wymaga poprawnego źródła");
+      try {
+        if (new URL(entry.official_source_url).protocol !== "https:") fail("Publikacja wymaga źródła https");
+      } catch { fail("Publikacja wymaga źródła https"); }
+    }
     if (entry.status === "published" && entry.source_kind === "synthetic" && entry.fields.length === 0) fail("Publikacja wymaga podstawy pola");
     const fields = entry.fields.map((field) => {
       if (!field || typeof field.name !== "string" || !field.name) fail("Brak nazwy pola");
       if (!ALLOWED_BASES.has(field.basis)) fail(`Brak podstawy pola ${field.name}`);
       if (field.decision !== (entry.status === "published" ? "publish" : "hide")) fail(`Decyzja pola nie odpowiada statusowi ${entry.source_filename}`);
       if (typeof field.source_reference !== "string" || !field.source_reference.trim()) fail(`Brak źródła pola ${field.name}`);
-      if (typeof field.value === "string" && /instrukcja\s+wykonania/i.test(field.value)) fail("pole zawiera tekst instrukcja wykonania");
+      if (containsInstructionalText(field)) fail("pole zawiera tekst instrukcja wykonania");
       if (entry.status === "published" && entry.source_kind === "synthetic" && (field.basis !== "synthetic" || field.source_reference !== "synthetic")) fail("Publikacja syntetyczna wymaga podstawy pola");
       return { ...field };
     });

@@ -19,7 +19,7 @@ const manifest = {
   records: input.records.map((record) => ({
     source_filename: record.source_filename,
     status: "hidden",
-    source_kind: record.synthetic_demo ? "synthetic" : "pdf",
+    source_kind: record.synthetic_demo || record.source_filename.endsWith(".synthetic.json") ? "synthetic" : "pdf",
     audited_at: auditedAt,
     official_source_url: null,
     fields: [],
