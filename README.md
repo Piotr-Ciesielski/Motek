@@ -45,7 +45,16 @@ npm run format:check      # Prettier
 npm run railway:check     # sprawdzenie konfiguracji Railway
 npm run regression:smoke  # szybki test wdrożenia
 npm run regression:full   # pełna regresja stagingu
+npm run invite -- create --email osoba@example.com --expires-at 2030-01-01T00:00:00Z
+npm run invite -- revoke --id <id-zaproszenia>
+npm run invite -- purge
 ```
+
+### Zaproszenia operatora
+
+Narzędzie operatora tworzy zaproszenie, odwołuje je albo uruchamia czyszczenie starych logów bezpieczeństwa. Przy tworzeniu zapisuje w bazie wyłącznie hash tokenu; pełny link jest wypisywany tylko raz i nie jest wysyłany automatycznie e-mailem. Do działania wymagane są `SUPABASE_URL`, `SUPABASE_SECRET_KEY` oraz `APP_ORIGIN` w lokalnym `.env`.
+
+Nie uruchamiaj komendy `create` na środowisku zdalnym bez świadomej decyzji operatora. Surowego tokenu nie da się później odzyskać.
 
 ## Środowiska i wdrożenia
 

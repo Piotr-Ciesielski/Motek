@@ -163,3 +163,23 @@ test("migracja bramki regulaminu chroni prywatne dane i RPC magazynu", () => {
 
   assert.doesNotMatch(sql, /create or replace function public\.insert_yarn_with_limit/i);
 });
+
+test("migracja zaproszeń udostępnia revoke wyłącznie service_role", () => {
+  const migrationPath = path.join(
+    __dirname,
+    "..",
+    "supabase",
+    "migrations",
+    "20260810123000_revoke_registration_invitation.sql",
+  );
+  const sql = fs.readFileSync(migrationPath, "utf8");
+
+  assert.match(sql, /create or replace function public\.revoke_registration_invitation\(\s*p_invitation_id uuid\s*\)/i);
+  assert.match(sql, /security definer\s+set search_path = ''/i);
+  assert.match(sql, /used_at is null[\s\S]*revoked_at is null[\s\S]*reservation_id is null/i);
+  assert.match(sql, /revoke all on function public\.revoke_registration_invitation\(uuid\) from public, anon, authenticated/i);
+  assert.match(sql, /grant execute on function public\.revoke_registration_invitation\(uuid\) to service_role/i);
+  assert.match(sql, /create or replace function public\.create_registration_invitation\(\s*p_email text,\s*p_token_hash text,\s*p_expires_at timestamptz\s*\)/i);
+  assert.match(sql, /revoke all on function public\.create_registration_invitation\(text, text, timestamptz\) from public, anon, authenticated/i);
+  assert.match(sql, /grant execute on function public\.create_registration_invitation\(text, text, timestamptz\) to service_role/i);
+});
