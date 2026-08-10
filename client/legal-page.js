@@ -11,6 +11,9 @@
   }
   if (root) {
     root.MotekLegalPage = api;
+    if (root.document?.querySelector("#legalDocument")) {
+      api.initializeLegalPage();
+    }
   }
 })(typeof globalThis === "object" ? globalThis : null, (legalApi) => {
   function createTextElement(documentRoot, tagName, className, text) {

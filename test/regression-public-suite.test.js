@@ -34,12 +34,12 @@ function validResponses(overrides = {}) {
     '/': textResponse(200, '<title>Motek - dobierz wzór do włóczek</title>', SECURITY_HEADERS),
     '/styles.css': textResponse(200, ':root,\n[data-theme="light"] {\n  --hero-gradient: linear-gradient(145deg, #e94f4b, #a88be8);\n}'),
     '/app.js': textResponse(200, 'window.MotekClientPolicy;'),
+    '/informacje-prawne': textResponse(200, '<main data-legal-document><a href="#regulamin"></a><a href="#prywatnosc"></a><a href="#prawa-autorskie"></a><span>1.0</span></main>', SECURITY_HEADERS),
+    '/informacje-prawne/': textResponse(200, '<main data-legal-document><a href="#regulamin"></a><a href="#prywatnosc"></a><a href="#prawa-autorskie"></a><span>1.0</span></main>', SECURITY_HEADERS),
     '/api/config': jsonResponse(200, {
       captcha: { enabled: true, provider: 'turnstile', siteKey: 'public-site-key' },
     }, SECURITY_HEADERS),
-    '/api/patterns?limit=1&offset=0': jsonResponse(200, {
-      items: [{ id: 1, name: 'Czapka' }], total: 1, limit: 1, offset: 0, hasMore: false,
-    }),
+    '/api/patterns?limit=1&offset=0': jsonResponse(401, { error: 'Wymagane logowanie.' }),
     '/api/yarns': jsonResponse(401, { error: 'Wymagane logowanie.' }),
     '/api/matches': jsonResponse(401, { error: 'Wymagane logowanie.' }),
     'POST /api/yarns': jsonResponse(403, { error: 'Niedozwolone źródło.' }),
@@ -82,6 +82,8 @@ test('sprawdza pełną publiczną regresję w bezpiecznej kolejności', async ()
     `GET ${BASE_URL}/`,
     `GET ${BASE_URL}/styles.css`,
     `GET ${BASE_URL}/app.js`,
+    `GET ${BASE_URL}/informacje-prawne`,
+    `GET ${BASE_URL}/informacje-prawne/`,
     `GET ${BASE_URL}/api/config`,
     `GET ${BASE_URL}/api/patterns?limit=1&offset=0`,
     `GET ${BASE_URL}/api/yarns`,
@@ -90,9 +92,9 @@ test('sprawdza pełną publiczną regresję w bezpiecznej kolejności', async ()
     `GET ${BASE_URL}/internal/metrics`,
     `GET ${APEX_URL}/regression-check?source=post-deploy`,
   ]);
-  assert.equal(calls[10].headers.get('origin'), 'https://regression.invalid');
-  assert.equal(calls[12].redirect, 'manual');
-  assert.equal(calls[12].headers.has('cookie'), false);
+  assert.equal(calls[12].headers.get('origin'), 'https://regression.invalid');
+  assert.equal(calls[14].redirect, 'manual');
+  assert.equal(calls[14].headers.has('cookie'), false);
 });
 
 test('przerywa na niezgodnym SHA bez wykonywania dalszych żądań', async () => {
@@ -155,7 +157,7 @@ test('odrzuca arkusz bez stabilnego tokena wizualnego Motka', async () => {
   );
 });
 
-test('odrzuca nieprawdziwe pole patterns zamiast kontraktowego items', async () => {
+test('odrzuca anonimowy dostęp do katalogu wzorów', async () => {
   const responses = validResponses({
     '/api/patterns?limit=1&offset=0': jsonResponse(200, {
       patterns: [{ id: 1, name: 'Czapka' }], total: 1, limit: 1, offset: 0, hasMore: false,
@@ -163,7 +165,7 @@ test('odrzuca nieprawdziwe pole patterns zamiast kontraktowego items', async () 
   });
   await assert.rejects(
     runPublicRegression({ baseUrl: BASE_URL, expectedSha: SHA, expectedEnvironment: 'production', fetchImpl: controlledFetch(responses) }),
-    /items/i,
+    /api\/patterns.*status 200/i,
   );
 });
 
