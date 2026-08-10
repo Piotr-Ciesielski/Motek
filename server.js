@@ -618,11 +618,11 @@ async function getAuthenticatedSession(req, res) {
     return null;
   }
 
-  const authenticatedClient = supabaseAuthClientFactory(
-    supabaseAuthConfig,
-    activeAccessToken || undefined
-  );
-  const profileResult = await authenticatedClient
+  const profileClient = supabaseConnection?.client;
+  if (!profileClient) {
+    throw new ApiError(503, "Usługa profilu jest chwilowo niedostępna.");
+  }
+  const profileResult = await profileClient
     .from("profiles")
     .select("id,login,email,avatar_url,status,role,created_at,updated_at,last_login_at")
     .eq("id", userResult.data.user.id)

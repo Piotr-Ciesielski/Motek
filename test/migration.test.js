@@ -127,3 +127,39 @@ test("migracja rejestracji zaproszonej chroni prywatne dane i stan profilu", () 
   assert.match(sql, /pending_registration/i);
   assert.match(sql, /revoke all on all tables in schema private from public, anon, authenticated/i);
 });
+
+test("migracja bramki regulaminu chroni prywatne dane i RPC magazynu", () => {
+  const migrationsDirectory = path.join(__dirname, "..", "supabase", "migrations");
+  const migrationFiles = fs
+    .readdirSync(migrationsDirectory)
+    .filter((file) => file.endsWith("_enforce_current_terms_for_private_data.sql"));
+
+  assert.equal(migrationFiles.length, 1);
+  const sql = fs.readFileSync(path.join(migrationsDirectory, migrationFiles[0]), "utf8");
+
+  assert.match(sql, /create or replace function public\.has_current_terms_acceptance\(\)/i);
+  assert.match(sql, /security definer\s+set search_path = ''/i);
+  assert.match(sql, /revoke all on function public\.has_current_terms_acceptance\(\) from public, anon, authenticated/i);
+  assert.match(sql, /grant execute on function public\.has_current_terms_acceptance\(\) to authenticated/i);
+  assert.match(sql, /profiles_select_own[\s\S]*has_current_terms_acceptance\(\)/i);
+  assert.match(sql, /yarns_delete_own[\s\S]*has_current_terms_acceptance\(\)/i);
+  assert.match(sql, /drop function if exists public\.insert_yarn_with_limit/i);
+
+  for (const rpcName of [
+    "get_yarn_store_version",
+    "insert_yarn_versioned",
+    "update_yarn_versioned",
+    "delete_yarn_versioned",
+  ]) {
+    const definition = sql.match(
+      new RegExp(`create or replace function public\\.${rpcName}[\\s\\S]*?\\n\\$\\$;`, "i")
+    )?.[0];
+
+    assert.ok(definition, `${rpcName} jest zdefiniowana w migracji`);
+    assert.match(definition, /private\.yarn_store_versions/i);
+    assert.match(definition, /has_current_terms_acceptance\(\)/i);
+    assert.match(definition, /42501/i);
+  }
+
+  assert.doesNotMatch(sql, /create or replace function public\.insert_yarn_with_limit/i);
+});

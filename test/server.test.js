@@ -392,6 +392,7 @@ test("serwer Motek działa bezpiecznie", async (t) => {
   const signOutScopes = [];
   const signUpRequests = [];
   const deletedUserIds = [];
+  const serviceProfileReads = [];
 
     function createSyntheticQuery(table, _token) {
       const filters = [];
@@ -615,6 +616,10 @@ test("serwer Motek działa bezpiecznie", async (t) => {
         },
       },
       from(table) {
+        if (table === "profiles") {
+          serviceProfileReads.push(true);
+          return createSyntheticQuery(table, "service-role");
+        }
         assert.equal(table, "patterns");
         return {
           select(columns, options) {
@@ -936,6 +941,7 @@ test("serwer Motek działa bezpiecznie", async (t) => {
         acceptedVersion: null,
         acceptanceRequired: true,
       });
+      assert.equal(serviceProfileReads.length >= 1, true, "profil stara zgoda jest czytany zaufanym klientem");
 
       const yarnsResponse = await fetch(`${baseUrl}/api/yarns`, {
         headers: { Cookie: syntheticAuthCookies("token-user-stale") },

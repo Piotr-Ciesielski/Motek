@@ -1,6 +1,6 @@
 begin;
 
-select plan(34);
+select plan(43);
 
 select has_schema('private', 'Prywatny schemat liczników istnieje');
 select has_table('private', 'yarn_store_versions', 'Licznik wersji magazynu istnieje');
@@ -29,6 +29,16 @@ select is((select array_to_string(proconfig, ',') like '%search_path=""%' from p
 select is((select array_to_string(proconfig, ',') like '%search_path=""%' from pg_proc where oid = 'public.insert_yarn_versioned(bigint,text,text,text[],text,integer,integer)'::regprocedure), true, 'RPC insert ma pusty search_path');
 select is((select array_to_string(proconfig, ',') like '%search_path=""%' from pg_proc where oid = 'public.update_yarn_versioned(bigint,bigint,text,text,text[],text,integer,integer)'::regprocedure), true, 'RPC update ma pusty search_path');
 select is((select array_to_string(proconfig, ',') like '%search_path=""%' from pg_proc where oid = 'public.delete_yarn_versioned(bigint,bigint)'::regprocedure), true, 'RPC delete ma pusty search_path');
+
+select is((select position('private.yarn_store_versions' in prosrc) > 0 from pg_proc where oid = 'public.get_yarn_store_version()'::regprocedure), true, 'RPC get korzysta z prywatnego licznika wersji');
+select is((select position('private.yarn_store_versions' in prosrc) > 0 from pg_proc where oid = 'public.insert_yarn_versioned(bigint,text,text,text[],text,integer,integer)'::regprocedure), true, 'RPC insert korzysta z prywatnego licznika wersji');
+select is((select position('private.yarn_store_versions' in prosrc) > 0 from pg_proc where oid = 'public.update_yarn_versioned(bigint,bigint,text,text,text[],text,integer,integer)'::regprocedure), true, 'RPC update korzysta z prywatnego licznika wersji');
+select is((select position('private.yarn_store_versions' in prosrc) > 0 from pg_proc where oid = 'public.delete_yarn_versioned(bigint,bigint)'::regprocedure), true, 'RPC delete korzysta z prywatnego licznika wersji');
+select is((select position('public.has_current_terms_acceptance()' in prosrc) > 0 from pg_proc where oid = 'public.get_yarn_store_version()'::regprocedure), true, 'RPC get sprawdza aktualną akceptację');
+select is((select position('public.has_current_terms_acceptance()' in prosrc) > 0 from pg_proc where oid = 'public.insert_yarn_versioned(bigint,text,text,text[],text,integer,integer)'::regprocedure), true, 'RPC insert sprawdza aktualną akceptację');
+select is((select position('42501' in prosrc) > 0 from pg_proc where oid = 'public.delete_yarn_versioned(bigint,bigint)'::regprocedure), true, 'RPC delete zwraca 42501 przy braku aktualnej akceptacji');
+select is(to_regprocedure('public.insert_yarn_with_limit(text,text,text,text,integer,integer)') is null, true, 'Stary RPC insert z pojedynczym materiałem jest usunięty');
+select is(to_regprocedure('public.insert_yarn_with_limit(text,text,text[],text,integer,integer)') is null, true, 'Stary RPC insert z tablicą materiałów jest usunięty');
 
 select is(has_function_privilege('authenticated', 'public.get_yarn_store_version()', 'EXECUTE'), true, 'authenticated może wykonać RPC get');
 select is(has_function_privilege('authenticated', 'public.insert_yarn_versioned(bigint,text,text,text[],text,integer,integer)', 'EXECUTE'), true, 'authenticated może wykonać RPC insert');
