@@ -8,6 +8,8 @@
 
 **Tech Stack:** HTML5, CSS3, vanilla JavaScript UMD/CommonJS, JSDOM, Node.js 24 `node:test`, istniejący serwer statyczny Motka.
 
+> **Stan po sesji 2026-08-10:** Zadania 1–6 są ukończone i zapisane w commitach do `de912f1` (opublikowany na GitHub). Następny punkt wznowienia to Task 7: dokumentacja i pełna weryfikacja końcowa.
+
 ## Global Constraints
 
 - Ten plan wykonuje się po planie gotowości prawnej i planie zaproszeń/akceptacji.
@@ -23,7 +25,7 @@
 
 ---
 
-### Task 1: Bezpieczny renderer dokumentu prawnego
+### Task 1: Bezpieczny renderer dokumentu prawnego — ✅ GOTOWE
 
 **Files:**
 - Create: `client/legal-page.js`
@@ -95,7 +97,7 @@ git add client/legal-page.js test/legal-page.test.js package.json
 git commit -m "feat: render legal document safely"
 ```
 
-### Task 2: Publiczna strona i trasa statyczna
+### Task 2: Publiczna strona i trasa statyczna — ✅ GOTOWE
 
 **Files:**
 - Create: `informacje-prawne.html`
@@ -150,7 +152,7 @@ git add informacje-prawne.html server.js test/static-files.test.js scripts/regre
 git commit -m "feat: serve public legal information page"
 ```
 
-### Task 3: Linki, rejestracja i nota copyright
+### Task 3: Linki, rejestracja i nota copyright — ✅ GOTOWE
 
 **Files:**
 - Modify: `index.html`
@@ -207,7 +209,7 @@ git add index.html app.js test/design-layout.test.js test/auth.test.js
 git commit -m "ui: add legal consent and copyright links"
 ```
 
-### Task 4: Kontroler ponownej akceptacji
+### Task 4: Kontroler ponownej akceptacji — ✅ GOTOWE
 
 **Files:**
 - Create: `client/legal-acceptance-controller.js`
@@ -272,7 +274,7 @@ git add client/legal-acceptance-controller.js test/legal-acceptance-controller.t
 git commit -m "ui: add current terms acceptance gate"
 ```
 
-### Task 5: Integracja stanu sesji i blokada widoków
+### Task 5: Integracja stanu sesji i blokada widoków — ✅ GOTOWE
 
 **Files:**
 - Modify: `app.js`
@@ -325,7 +327,7 @@ git add app.js client-policy.js test/client-policy.test.js test/design-regressio
 git commit -m "ui: block stale legal sessions safely"
 ```
 
-### Task 6: Styl, mobile, druk i dostępność
+### Task 6: Styl, mobile, druk i dostępność — ✅ GOTOWE
 
 **Files:**
 - Modify: `styles.css`
@@ -381,7 +383,7 @@ git add styles.css test/legal-layout.test.js test/design-layout.test.js
 git commit -m "ui: style legal information for screen and print"
 ```
 
-### Task 7: Dokumentacja i pełna weryfikacja
+### Task 7: Dokumentacja i pełna weryfikacja — ⏳ NASTĘPNY PUNKT
 
 **Files:**
 - Modify: `README.md`
