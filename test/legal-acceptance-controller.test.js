@@ -117,3 +117,21 @@ test("po sukcesie ukrywa błąd i wywołuje onAccepted", async () => {
   assert.equal(fixture.message.textContent, "");
   fixture.dom.window.close();
 });
+
+test("nie ukrywa gate, gdy odświeżenie sesji po zapisie się nie uda", async () => {
+  const fixture = createFixture();
+  const controller = createLegalAcceptanceController({
+    ...fixture,
+    request: async () => ({}),
+    legalDocument: CURRENT_LEGAL_DOCUMENT,
+    onAccepted: async () => { throw new Error("Sesja jest chwilowo niedostępna."); },
+  });
+  controller.setSessionLegalState({ acceptanceRequired: true, acceptedVersion: null });
+  fixture.form.elements.termsAccepted.checked = true;
+
+  await controller.submit({ preventDefault() {} });
+
+  assert.equal(fixture.gate.hidden, false);
+  assert.equal(fixture.message.textContent, "Sesja jest chwilowo niedostępna.");
+  fixture.dom.window.close();
+});

@@ -276,6 +276,18 @@
     };
   }
 
+  function resolveRequestedView({
+    requested = "account",
+    authenticated = false,
+    acceptanceRequired = false,
+  } = {}) {
+    const protectedViews = new Set(["inventory", "matches", "catalog"]);
+    if (protectedViews.has(requested) && (!authenticated || acceptanceRequired)) {
+      return "account";
+    }
+    return requested;
+  }
+
   function buildRegistrationAuthPayload(
     values = {},
     { captchaEnabled = false, captchaToken = null, legalDocument } = {},
@@ -508,6 +520,7 @@
     initializePasswordRevealControls,
     buildAuthPayload,
     buildRegistrationAuthPayload,
+    resolveRequestedView,
     buildPatternFacetCounts,
     buildPatternFacetOptions,
     ensureSingleNewYarnCard,

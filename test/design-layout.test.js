@@ -84,7 +84,7 @@ test("auth forms never fall back to GET query strings", () => {
 test("captcha initializes even when the page opens from password recovery", () => {
   assert.match(
     appJs,
-    /const recoveryHandled = await startPasswordRecovery\(\);[\s\S]*await Promise\.all\(\[[\s\S]*initializeCaptcha\(\)/,
+    /const recoveryHandled = await startPasswordRecovery\(\);[\s\S]*await initializeCaptcha\([\s\S]*const session = await refreshAuthSession\(\)/,
   );
   assert.doesNotMatch(appJs, /const recoveryHandled = await startPasswordRecovery\(\);\s*if \(recoveryHandled\) return;/);
 });

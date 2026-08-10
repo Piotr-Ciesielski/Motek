@@ -96,6 +96,19 @@ test("design changes preserve hooks used by inventory, catalog and account logic
   assert.match(appJs, /inventoryAddYarnBtn\.addEventListener/);
 });
 
+test("design exposes the legal acceptance gate without adding a fifth view", () => {
+  const document = createDocument();
+  const gate = document.getElementById("legalAcceptanceGate");
+
+  assert.ok(gate);
+  assert.equal(gate.hidden, true);
+  assert.ok(gate.querySelector("#legalAcceptanceForm"));
+  assert.ok(gate.querySelector("#legalAcceptanceMessage"));
+  assert.match(indexHtml, /client\/legal-acceptance-controller\.js/);
+  assert.match(appJs, /acceptanceRequired/);
+  assert.match(appJs, /resolveRequestedView/);
+});
+
 test("design changes keep the icon control touch-safe and respect reduced motion", () => {
   assert.match(
     stylesCss,

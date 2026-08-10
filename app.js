@@ -36,6 +36,10 @@ const loginModeBtn = document.getElementById("loginModeBtn");
 const registerModeBtn = document.getElementById("registerModeBtn");
 const authProfileSummary = document.getElementById("authProfileSummary");
 const authMessage = document.getElementById("authMessage");
+const legalAcceptanceForm = document.getElementById("legalAcceptanceForm");
+const legalAcceptanceGate = document.getElementById("legalAcceptanceGate");
+const legalAcceptanceMessage = document.getElementById("legalAcceptanceMessage");
+const legalAcceptanceVersion = document.getElementById("legalAcceptanceVersion");
 const deleteAccountForm = document.getElementById("deleteAccountForm");
 const deleteAccountMessage = document.getElementById("deleteAccountMessage");
 const authLead = document.getElementById("authLead");
@@ -86,6 +90,7 @@ const catalogFilterDisclosure = createCatalogFilterDisclosure({
 const {
   buildAuthPayload,
   buildRegistrationAuthPayload,
+  resolveRequestedView,
   buildPatternFacetCounts,
   buildPatternFacetOptions,
   ensureSingleNewYarnCard,
@@ -150,10 +155,14 @@ const PROJECT_TYPE_ORDER = [
 
 let baseUrl = window.location.origin;
 let isAuthenticated = false;
+let requiresLegalAcceptance = false;
 let pendingWriteCount = 0;
 const catalogController = createCatalogController({
   initialFilters: {},
   load: async ({ page }) => {
+    if (!canAccessPrivateData()) {
+      return { items: [], hasMore: false, total: 0 };
+    }
     const offset = Math.max(0, (page - 1) * 50);
     const payload = await api(`/api/patterns?limit=50&offset=${offset}`);
     const items = Array.isArray(payload) ? payload : (payload.items || payload.data || []);
@@ -182,6 +191,11 @@ let inventoryChangedSinceMatch = false;
 let authCaptchaConfig = { enabled: false, provider: null, siteKey: null };
 const captchaTokens = { login: null, register: null, passwordReset: null };
 const captchaWidgetIds = { login: null, register: null, passwordReset: null };
+
+function canAccessPrivateData() {
+  return isAuthenticated && !requiresLegalAcceptance;
+}
+
 const apiClient = createApiClient({
   fetchImpl: window.fetch.bind(window),
   timeoutMs: REQUEST_TIMEOUT_MS,
@@ -267,10 +281,11 @@ function focusViewHeading(target) {
 }
 
 function setActiveView(requestedView, { focus = true } = {}) {
-  const protectedViews = new Set(["inventory", "matches"]);
-  const view = !isAuthenticated && protectedViews.has(requestedView)
-    ? "account"
-    : requestedView;
+  const view = resolveRequestedView({
+    requested: requestedView,
+    authenticated: isAuthenticated,
+    acceptanceRequired: requiresLegalAcceptance,
+  });
   const target = appViews.find((candidate) => candidate.dataset.view === view);
   if (!target) return;
 
@@ -324,8 +339,8 @@ function updateNavigationState() {
   viewButtons.forEach((button) => {
     const protectedView =
       button.classList.contains("app-nav__button") &&
-      ["inventory", "matches"].includes(button.dataset.viewTarget);
-    button.disabled = protectedView && !isAuthenticated;
+      ["inventory", "matches", "catalog"].includes(button.dataset.viewTarget);
+    button.disabled = protectedView && (!isAuthenticated || requiresLegalAcceptance);
   });
 }
 
@@ -382,6 +397,18 @@ async function api(path, options = {}) {
     if (isWriteRequest) pendingWriteCount -= 1;
   }
 }
+
+const legalAcceptanceController = createLegalAcceptanceController({
+  form: legalAcceptanceForm,
+  gate: legalAcceptanceGate,
+  message: legalAcceptanceMessage,
+  versionOutput: legalAcceptanceVersion,
+  request: (path, options) => api(path, options),
+  legalDocument: CURRENT_LEGAL_DOCUMENT,
+  onAccepted: async () => {
+    await refreshAuthSession();
+  },
+});
 
 function showMessage(container, message, kind = "status", action = null) {
   const element = document.createElement("div");
@@ -1200,7 +1227,7 @@ document.querySelectorAll("label").forEach((label) => {
 initializePasswordRevealControls(document);
 
 async function loadYarns() {
-  if (!isAuthenticated) return [];
+  if (!canAccessPrivateData()) return [];
   return api("/api/yarns");
 }
 
@@ -1256,7 +1283,7 @@ async function deleteYarn(id) {
 }
 
 async function loadMatches() {
-  if (!isAuthenticated) return [];
+  if (!canAccessPrivateData()) return [];
   return api("/api/matches");
 }
 
@@ -1632,6 +1659,7 @@ function showPatternCatalogError(error) {
 }
 
 async function refreshPatternCatalog({ resume = false } = {}) {
+  if (!canAccessPrivateData()) return;
   if (resume) {
     patternCatalogNotice.hidden = false;
     showMessage(patternCatalogNotice, "Dokańczam pobieranie katalogu...", "loading");
@@ -1856,6 +1884,10 @@ async function startPasswordRecovery() {
 function renderAuthState(payload) {
   const authenticated = Boolean(payload?.authenticated && payload.user);
   isAuthenticated = authenticated;
+  const legalState = authenticated
+    ? (payload.legal || { currentVersion: CURRENT_LEGAL_DOCUMENT.termsVersion, acceptedVersion: null, acceptanceRequired: true })
+    : { currentVersion: CURRENT_LEGAL_DOCUMENT.termsVersion, acceptedVersion: CURRENT_LEGAL_DOCUMENT.termsVersion, acceptanceRequired: false };
+  requiresLegalAcceptance = authenticated && legalAcceptanceController.setSessionLegalState(legalState);
   authForms.hidden = authenticated;
   authModeSwitch.hidden = authenticated;
   authLoggedIn.hidden = !authenticated;
@@ -1871,6 +1903,9 @@ function renderAuthState(payload) {
     idleSessionWarning.hidden = true;
     onboardingDismissed = false;
     onboarding.hidden = true;
+    patternCatalog.replaceChildren();
+    patternCatalogSummary.textContent = "";
+    results.replaceChildren();
     headerUser.hidden = true;
     headerUser.textContent = "";
     if (["inventory", "matches"].includes(activeView)) {
@@ -1898,7 +1933,17 @@ function renderAuthState(payload) {
   const profileEmail = profile.email || payload.user.email || "";
   authProfileSummary.textContent = profileEmail || "Zalogowany użytkownik";
   authTitle.textContent = "Twoje konto";
-  authLead.textContent = "Profil i bezpieczeństwo Twojego prywatnego magazynu.";
+  authLead.textContent = requiresLegalAcceptance
+    ? "Potwierdź aktualny regulamin, aby wrócić do prywatnego magazynu."
+    : "Profil i bezpieczeństwo Twojego prywatnego magazynu.";
+  if (requiresLegalAcceptance) {
+    yarnList.replaceChildren();
+    summary.textContent = "Prywatny magazyn będzie dostępny po akceptacji aktualnych dokumentów.";
+    patternCatalog.replaceChildren();
+    patternCatalogSummary.textContent = "";
+    results.replaceChildren();
+    setActiveView("account", { focus: false });
+  }
 }
 
 async function refreshAuthSession() {
@@ -1908,7 +1953,7 @@ async function refreshAuthSession() {
   } catch (error) {
     renderAuthState({ authenticated: false });
     setAuthMessage(error.message, "error");
-    return;
+    return null;
   }
 
   renderAuthState(payload);
@@ -1918,10 +1963,15 @@ async function refreshAuthSession() {
   }
   if (!payload.authenticated) {
     setAuthMessage("Możesz założyć konto lub zalogować się.");
-    return;
+    return payload;
   }
 
   idleSessionController.start();
+
+  if (requiresLegalAcceptance) {
+    setActiveView("account", { focus: false });
+    return payload;
+  }
 
   if (preserveDraftAfterLogin) {
     const requiresSave = preservedDraftRequiresSave;
@@ -1954,6 +2004,7 @@ async function refreshAuthSession() {
       `${error.message} Nie udało się odświeżyć dopasowania. Spróbuj ponownie.`
     );
   }
+  return payload;
 }
 
 async function submitAuthForm(form, endpoint, successMessage) {
@@ -2170,6 +2221,7 @@ deleteAccountForm.addEventListener("submit", async (event) => {
 });
 
 async function refresh() {
+  if (!canAccessPrivateData()) return;
   yarnList.setAttribute("aria-busy", "true");
   summary.setAttribute("aria-busy", "true");
   try {
@@ -2303,13 +2355,14 @@ backToCatalogFiltersBtn.addEventListener("click", () => {
 detectRuntimeMode()
   .then(async () => {
     const recoveryHandled = await startPasswordRecovery();
-    await Promise.all([
-      initializeCaptcha().catch((error) => setAuthMessage(error.message, "error")),
-      recoveryHandled ? Promise.resolve() : refreshAuthSession(),
-      recoveryHandled ? Promise.resolve() : refreshPatternCatalog().catch(showPatternCatalogError),
-    ]);
+    await initializeCaptcha().catch((error) => setAuthMessage(error.message, "error"));
+    if (recoveryHandled) return;
+    const session = await refreshAuthSession();
+    if (session?.authenticated && canAccessPrivateData()) {
+      await refreshPatternCatalog().catch(showPatternCatalogError);
+    }
   })
   .catch((error) => {
     showMessage(results, error.message, "error");
   });
-/* global MotekDomUtils, createCatalogController, createCatalogFilterDisclosure */
+/* global MotekDomUtils, createCatalogController, createCatalogFilterDisclosure, createLegalAcceptanceController */

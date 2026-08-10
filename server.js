@@ -139,6 +139,7 @@ const staticFileHandler = createStaticFileHandler({
     "/informacje-prawne/": "informacje-prawne.html",
     "/legal-document.js": "legal-document.js",
     "/client/legal-page.js": "client/legal-page.js",
+    "/client/legal-acceptance-controller.js": "client/legal-acceptance-controller.js",
     "/styles.css": "styles.css",
     "/app.js": "app.js",
     "/client-policy.js": "client-policy.js",

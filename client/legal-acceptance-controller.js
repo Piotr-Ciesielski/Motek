@@ -66,10 +66,10 @@
           method: "POST",
           body: JSON.stringify({ version: legalDocument.termsVersion }),
         });
+        await onAccepted?.();
         gate.hidden = true;
         acceptanceRequired = false;
         setMessage("");
-        await onAccepted?.();
         return true;
       } catch (error) {
         setMessage(error?.message || "Nie udało się zapisać akceptacji.");

@@ -11,6 +11,7 @@ const browserScripts = [
   "theme-policy.js",
   "material-policy.js",
   "legal-document.js",
+  "client/legal-acceptance-controller.js",
   "client-policy.js",
   "client/api-client.js",
   "client/dom-utils.js",
@@ -19,7 +20,7 @@ const browserScripts = [
   "app.js",
 ].map((file) => fs.readFileSync(path.join(__dirname, "..", file), "utf8"));
 
-function loadApp({ reducedMotion = false } = {}) {
+function loadApp({ reducedMotion = false, session = { authenticated: false, user: null } } = {}) {
   const dom = new JSDOM(indexHtml, {
     url: "http://localhost/",
     runScripts: "outside-only",
@@ -30,12 +31,14 @@ function loadApp({ reducedMotion = false } = {}) {
   window.HTMLElement.prototype.scrollIntoView = function scrollIntoView(options) {
     this.scrollOptions = options;
   };
+  const calls = [];
   window.fetch = async (input) => {
     const pathname = new URL(input, window.location.href).pathname;
+    calls.push(pathname);
     const payload = pathname === "/api/config"
       ? { captcha: { enabled: false } }
       : pathname === "/api/auth/session"
-        ? { authenticated: false, user: null }
+        ? session
         : { items: [], total: 0 };
     return new Response(JSON.stringify(payload), {
       status: 200,
@@ -43,6 +46,7 @@ function loadApp({ reducedMotion = false } = {}) {
     });
   };
   browserScripts.forEach((source) => window.eval(source));
+  dom.fetchCalls = calls;
   return dom;
 }
 
@@ -171,5 +175,30 @@ test("Zacznij w Motku otwiera rejestrację, przewija panel i fokusuje e-mail", a
       assert.equal(document.activeElement, document.getElementById("register-login"));
       dom.window.close();
     });
+  }
+});
+
+test("stara akceptacja blokuje prywatne żądania i zostawia wyjście z konta", async () => {
+  const dom = loadApp({
+    session: {
+      authenticated: true,
+      user: { id: "stale-user", email: "stale@example.test" },
+      legal: { currentVersion: "1.0", acceptedVersion: "0.9", acceptanceRequired: true },
+    },
+  });
+  try {
+    await new Promise((resolve) => dom.window.setTimeout(resolve, 30));
+
+    const document = dom.window.document;
+    assert.equal(document.getElementById("legalAcceptanceGate").hidden, false);
+    assert.equal(document.getElementById("inventoryView").hidden, true);
+    assert.equal(document.getElementById("catalogView").hidden, true);
+    assert.equal(document.getElementById("logoutBtn").disabled, false);
+    assert.equal(document.querySelector('.app-nav [data-view-target="inventory"]').disabled, true);
+    assert.equal(document.querySelector('.app-nav [data-view-target="matches"]').disabled, true);
+    assert.equal(document.querySelector('.app-nav [data-view-target="catalog"]').disabled, true);
+    assert.equal(dom.fetchCalls.some((path) => /\/api\/(yarns|matches|patterns)/.test(path)), false);
+  } finally {
+    dom.window.close();
   }
 });
