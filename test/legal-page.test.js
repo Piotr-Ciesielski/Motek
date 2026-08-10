@@ -51,3 +51,34 @@ test("initializeLegalPage renderuje przekazany dokument i nie korzysta ze stanu 
 
   assert.equal(documentRoot.querySelectorAll(".legal-section").length, 3);
 });
+
+test("publiczna strona podpina przycisk zmiany motywu", () => {
+  const dom = new JSDOM(
+    '<html data-theme="light"><body><button id="themeToggle" type="button"></button>' +
+      '<main id="legalDocument"><nav id="legalToc"></nav><article id="legalArticle"></article></main></body></html>',
+  );
+  const documentRoot = dom.window.document;
+  const themePolicy = {
+    THEMES: { LIGHT: "light", DARK: "dark" },
+    normalizeTheme: (value) => value === "dark" ? "dark" : "light",
+    getNextTheme: (value) => value === "dark" ? "light" : "dark",
+    getThemeToggleState: (value) => ({
+      label: value === "dark" ? "Włącz tryb jasny" : "Włącz tryb ciemny",
+      pressed: value === "dark",
+    }),
+    applyTheme: (value, targetDocument) => {
+      targetDocument.documentElement.dataset.theme = value;
+      return value;
+    },
+    saveTheme: (value) => value,
+  };
+
+  initializeLegalPage({ documentRoot, legalDocument: CURRENT_LEGAL_DOCUMENT, themePolicy });
+
+  const toggle = documentRoot.querySelector("#themeToggle");
+  assert.equal(toggle.getAttribute("aria-label"), "Włącz tryb ciemny");
+  toggle.click();
+  assert.equal(documentRoot.documentElement.dataset.theme, "dark");
+  assert.equal(toggle.getAttribute("aria-label"), "Włącz tryb jasny");
+  assert.equal(toggle.getAttribute("aria-pressed"), "true");
+});

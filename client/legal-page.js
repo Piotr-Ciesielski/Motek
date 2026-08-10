@@ -4,7 +4,7 @@
     legalApi = require("../legal-document");
   }
 
-  const api = factory(legalApi);
+  const api = factory(legalApi, root);
 
   if (typeof module === "object" && module.exports) {
     module.exports = api;
@@ -15,7 +15,7 @@
       api.initializeLegalPage();
     }
   }
-})(typeof globalThis === "object" ? globalThis : null, (legalApi) => {
+})(typeof globalThis === "object" ? globalThis : null, (legalApi, root) => {
   function createTextElement(documentRoot, tagName, className, text) {
     const element = documentRoot.createElement(tagName);
     if (className) element.className = className;
@@ -103,11 +103,36 @@
     return article;
   }
 
+  function bindThemeToggle(documentRoot, themePolicy) {
+    const toggle = documentRoot?.querySelector("#themeToggle");
+    if (!toggle || !themePolicy?.normalizeTheme || !themePolicy?.getNextTheme) return;
+
+    let currentTheme = themePolicy.normalizeTheme(documentRoot.documentElement?.dataset.theme);
+
+    function updateToggle(theme) {
+      currentTheme = themePolicy.applyTheme(theme, documentRoot);
+      const state = themePolicy.getThemeToggleState(currentTheme);
+      toggle.setAttribute("aria-label", state.label);
+      toggle.setAttribute("aria-pressed", String(state.pressed));
+    }
+
+    toggle.dataset.motekThemeBound = "true";
+    updateToggle(currentTheme);
+    toggle.addEventListener("click", () => {
+      const nextTheme = themePolicy.getNextTheme(currentTheme);
+      const savedTheme = themePolicy.saveTheme ? themePolicy.saveTheme(nextTheme) : nextTheme;
+      updateToggle(savedTheme);
+    });
+  }
+
   function initializeLegalPage({
     documentRoot = typeof document === "object" ? document : null,
     legalDocument = legalApi.CURRENT_LEGAL_DOCUMENT,
+    themePolicy = root?.MotekThemePolicy,
   } = {}) {
-    return renderLegalDocument(documentRoot, legalDocument);
+    const article = renderLegalDocument(documentRoot, legalDocument);
+    bindThemeToggle(documentRoot, themePolicy);
+    return article;
   }
 
   return { initializeLegalPage, renderLegalDocument };
