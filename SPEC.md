@@ -28,7 +28,9 @@ prywatnym magazynie użytkownika.
 
 Użytkownik może:
 
-- założyć konto i zalogować się,
+- ukończyć rejestrację wyłącznie na podstawie jednorazowego zaproszenia,
+- zaakceptować aktualną wersję regulaminu i otrzymać osobno informację o prywatności,
+- zalogować się i korzystać z konta,
 - prowadzić prywatny magazyn motków,
 - przeglądać katalog wzorów,
 - wyszukiwać wzory i łączyć filtry statusu, języka, typu projektu oraz materiału,
@@ -43,16 +45,19 @@ główną funkcją jest świadome wykorzystanie posiadanego zapasu włóczek.
 
 ## 3. Aktualny przepływ użytkownika
 
-1. Użytkownik zakłada konto albo się loguje.
-2. Dodaje motki, podając nazwę, kolor, jeden lub kilka materiałów, klasę
+1. Operator tworzy jednorazowe zaproszenie dla znormalizowanego adresu e-mail.
+2. Użytkownik rejestruje konto z linku zaproszenia i akceptuje aktualny regulamin.
+3. Użytkownik dodaje motki, podając nazwę, kolor, jeden lub kilka materiałów, klasę
    grubości, długość i wagę.
-3. Aplikacja zapisuje magazyn prywatnie w Supabase.
-4. Użytkownik przegląda katalog wzorów.
-5. Uruchamia dopasowanie.
-6. Backend zwraca tylko potwierdzone warianty, które spełniają wymagania.
+4. Aplikacja zapisuje magazyn prywatnie w Supabase.
+5. Użytkownik przegląda katalog wzorów.
+6. Uruchamia dopasowanie.
+7. Backend zwraca tylko potwierdzone warianty, które spełniają wymagania.
 
 Niepełne dane wzoru są widoczne w katalogu, ale nie są używane jako
 potwierdzone rekomendacje. System nie zgaduje brakujących metrów ani gramów.
+Konto bez aktualnej akceptacji zachowuje dostęp do sesji, wylogowania i usunięcia
+konta, ale nie może czytać ani zmieniać prywatnego magazynu.
 
 ## 4. Architektura
 
@@ -108,6 +113,12 @@ nie ma lokalnego trybu SQLite ani fallbacku do pliku lokalnego.
 - właściciel nowej włóczki wynika z uwierzytelnionej sesji, nie z formularza,
 - dane wejściowe mają limity długości i wartości,
 - logowanie i rejestracja ograniczają serię nieudanych prób per adres klienta i e-mail,
+- zaproszenia są jednorazowe, wygasające i odwoływalne, a baza przechowuje wyłącznie
+  SHA-256 tokenu,
+- aktualna akceptacja regulaminu jest wersjonowana i egzekwowana przez backend, RLS
+  oraz uprzywilejowane RPC,
+- usunięcie konta kaskadowo usuwa profil, akceptacje i dane prywatne, ale zachowuje
+  zużyte zaproszenie oraz ograniczony log rejestracyjny bez identyfikatora użytkownika,
 - odpowiedzi API nie zawierają sekretów ani tokenów,
 - `.env` i lokalny folder `Wzory` nie trafiają do Git.
 
@@ -151,6 +162,21 @@ Rekord zawiera między innymi:
 dodatkowe, kontrastowe lub alternatywne. `matching_requirements` w wersji 2
 zawiera potwierdzone zużycie, rozmiary, warianty włóczek, role, reguły kolorów
 i liczbę nitek używane przez ranking.
+
+### 6.4 Rejestracja na zaproszenie i akceptacja dokumentów prawnych
+
+Rejestracja wymaga ważnego zaproszenia przypisanego do znormalizowanego adresu
+e-mail. System przechowuje w Supabase wyłącznie skrót tokenu zaproszenia;
+rezerwacja i finalizacja tworzą próbę rejestracji, a finalizacja oznacza
+zaproszenie jako zużyte i zapisuje akceptację aktualnego regulaminu oraz
+przekazanie informacji o prywatności.
+
+Sesja bez aktualnej akceptacji regulaminu pozostaje uwierzytelniona, ale dostęp
+do prywatnego profilu, magazynu włóczek i operacji zależnych od tych danych jest
+zablokowany do czasu zaakceptowania bieżącej wersji. Publiczny katalog wzorów
+pozostaje dostępny. Wyjątkiem są `POST /api/auth/logout` i
+`DELETE /api/account`: użytkownik może zawsze zakończyć sesję albo usunąć konto;
+usunięcie wymaga aktywnej sesji, poprawnego hasła i frazy `USUŃ KONTO`.
 
 ## 7. Zasada dopasowania
 

@@ -1,6 +1,6 @@
 begin;
 
-select plan(76);
+select plan(81);
 
 select has_schema('private', 'Prywatny schemat danych rejestracji istnieje');
 select has_table('private', 'legal_document_versions', 'Wersje dokumentów prawnych istnieją');
@@ -266,6 +266,34 @@ select is(
   'Purge usuwa stare zaproszenia'
 );
 drop table purge_result;
+
+set local role postgres;
+delete from auth.users where id = '00000000-0000-0000-0000-000000000001';
+select is(
+  (select count(*) from public.profiles where id = '00000000-0000-0000-0000-000000000001'),
+  0::bigint,
+  'Usunięcie auth.users usuwa profil'
+);
+select is(
+  (select count(*) from private.terms_acceptances where user_id = '00000000-0000-0000-0000-000000000001'),
+  0::bigint,
+  'Usunięcie auth.users usuwa akceptacje regulaminu'
+);
+select is(
+  (select count(*) from private.privacy_notice_deliveries where user_id = '00000000-0000-0000-0000-000000000001'),
+  0::bigint,
+  'Usunięcie auth.users usuwa przekazania prywatności'
+);
+select is(
+  (select used_at is not null and used_by is null from private.registration_invitations where id = '00000000-0000-0000-0000-000000000001'),
+  true,
+  'Usunięcie użytkownika nie przywraca zużytego zaproszenia'
+);
+select is(
+  (select auth_user_id is null from private.registration_attempts where reservation_id = '00000000-0000-0000-0000-000000000101'),
+  true,
+  'Usunięcie użytkownika anonimizuje próbę rejestracji'
+);
 
 select * from finish();
 rollback;

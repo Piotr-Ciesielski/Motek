@@ -1,5 +1,12 @@
 Motek - log zmian
 
+Następny pakiet - rejestracja na zaproszenie i dostęp prawny
+- Rejestracja wymaga jednorazowego, wygasającego zaproszenia przypisanego do e-maila.
+- Zapis zaproszenia przechowuje wyłącznie hash SHA-256, a link operatora jest wypisywany tylko raz.
+- Aktualna akceptacja regulaminu jest wersjonowana i blokuje prywatny magazyn przez backend, RLS i RPC.
+- Konto bez aktualnej zgody nadal może się wylogować albo zostać usunięte.
+- Usunięcie konta kaskadowo usuwa profil, akceptacje i dane prywatne, zachowując zużyte zaproszenie jako ograniczony ślad bezpieczeństwa.
+
 Wersja 2.0.0-alpha.38 - e-mail jako login konta
 - Formularz rejestracji używa jednego pola `Login (Twój e-mail)` oraz hasła.
 - Adres e-mail jest zapisywany jednocześnie jako e-mail Auth i login profilu.

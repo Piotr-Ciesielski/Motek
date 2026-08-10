@@ -43,6 +43,42 @@ test("weryfikuje hasło dla bieżącego użytkownika przed usunięciem", async (
   assert.deepEqual(deletedUserIds, [session.user.id]);
 });
 
+test("pozwala usunąć konto bez aktualnej akceptacji prawnej", async () => {
+  const staleSession = {
+    user: session.user,
+    legal: {
+      currentVersion: "2.0",
+      acceptedVersion: "1.0",
+      acceptanceRequired: true,
+    },
+  };
+  let deletedUserId = null;
+
+  await deleteSupabaseAccount({
+    session: staleSession,
+    password: "BezpieczneHaslo1!",
+    authClient: {
+      auth: {
+        async signInWithPassword() {
+          return { data: { user: session.user }, error: null };
+        },
+      },
+    },
+    adminClient: {
+      auth: {
+        admin: {
+          async deleteUser(userId) {
+            deletedUserId = userId;
+            return { data: { user: session.user }, error: null };
+          },
+        },
+      },
+    },
+  });
+
+  assert.equal(deletedUserId, session.user.id);
+});
+
 test("nie usuwa użytkownika po błędnym haśle", async () => {
   let deleteCalls = 0;
 

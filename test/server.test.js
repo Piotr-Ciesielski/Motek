@@ -490,10 +490,13 @@ test("serwer Motek działa bezpiecznie", async (t) => {
         },
         async signInWithPassword({ email, password }) {
           if (
-            email === syntheticUsers["token-user-a"].email &&
-            password === "DeleteHaslo1!"
+            (email === syntheticUsers["token-user-a"].email && password === "DeleteHaslo1!") ||
+            (email === syntheticUsers["token-user-stale"].email && password === "DeleteStale1!")
           ) {
-            return { data: { user: syntheticUsers["token-user-a"] }, error: null };
+            const user = email === syntheticUsers["token-user-stale"].email
+              ? syntheticUsers["token-user-stale"]
+              : syntheticUsers["token-user-a"];
+            return { data: { user }, error: null };
           }
           return { data: null, error: new Error("invalid credentials") };
         },
@@ -1032,6 +1035,25 @@ test("serwer Motek działa bezpiecznie", async (t) => {
       assert.equal(wrongPhrase.status, 400);
       assert.match((await wrongPhrase.json()).error, /USUŃ KONTO/);
       assert.deepEqual(deletedUserIds, [syntheticUsers["token-user-a"].id]);
+    });
+
+    await t.test("pozwala usunąć konto bez aktualnej zgody", async () => {
+      const response = await fetch(`${baseUrl}/api/account`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          Origin: baseUrl,
+          Cookie: syntheticAuthCookies("token-user-stale"),
+        },
+        body: JSON.stringify({
+          password: "DeleteStale1!",
+          confirmation: "USUŃ KONTO",
+        }),
+      });
+
+      assert.equal(response.status, 204);
+      assert.equal(await response.text(), "");
+      assert.equal(deletedUserIds.at(-1), syntheticUsers["token-user-stale"].id);
     });
 
     await t.test("blokuje szóstą błędną próbę potwierdzenia hasła przy usuwaniu konta", async () => {
