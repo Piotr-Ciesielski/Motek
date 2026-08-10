@@ -12,6 +12,7 @@ const indexHtml = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf
 const browserScripts = [
   'theme-policy.js',
   'material-policy.js',
+  'legal-document.js',
   'client-policy.js',
   'client/api-client.js',
   'client/dom-utils.js',

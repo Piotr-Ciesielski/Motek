@@ -124,6 +124,24 @@ test("inventory shelves collapse from two columns to one on mobile", () => {
   );
 });
 
+test("rejestracja wymaga regulaminu, wersji dokumentu i tokenu zaproszenia", () => {
+  const document = new JSDOM(indexHtml).window.document;
+  const checkbox = document.querySelector('#registerForm [name="termsAccepted"]');
+
+  assert.ok(checkbox, "formularz rejestracji ma checkbox regulaminu");
+  assert.equal(checkbox.required, true);
+  assert.equal(checkbox.checked, false);
+  assert.ok(document.querySelector('#registerForm [name="invitationToken"]'));
+  assert.ok(document.querySelector('#registerForm [name="termsVersion"]'));
+  assert.ok(document.querySelector('#registerForm [name="privacyNoticeVersion"]'));
+  assert.ok(document.querySelector('#copyrightNotice'));
+  assert.equal(document.querySelectorAll('a[href^="/informacje-prawne"]').length >= 3, true);
+  assert.match(indexHtml, /legal-document\.js/);
+  assert.match(appJs, /formatCopyrightNotice/);
+  assert.match(appJs, /copyrightNotice\.textContent/);
+  assert.doesNotMatch(indexHtml.toLocaleLowerCase("pl-PL"), /wyrażam zgodę na przetwarzanie/);
+});
+
 test("captcha remains available in every auth flow", () => {
   assert.equal((indexHtml.match(/data-turnstile-for=/g) || []).length, 3);
   assert.match(indexHtml, /data-turnstile-for="passwordReset"/);

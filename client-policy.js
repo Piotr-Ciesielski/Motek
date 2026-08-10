@@ -276,6 +276,33 @@
     };
   }
 
+  function buildRegistrationAuthPayload(
+    values = {},
+    { captchaEnabled = false, captchaToken = null, legalDocument } = {},
+  ) {
+    if (!legalDocument || typeof legalDocument !== "object") {
+      throw new Error("Brak bieżącej wersji dokumentu prawnego.");
+    }
+    if (values.termsAccepted !== true) {
+      throw new Error("Zaakceptuj regulamin, aby utworzyć konto.");
+    }
+    if (
+      values.termsVersion !== legalDocument.termsVersion
+      || values.privacyNoticeVersion !== legalDocument.privacyVersion
+    ) {
+      throw new Error("Odśwież stronę, aby użyć bieżącej wersji dokumentu prawnego.");
+    }
+    const payload = buildAuthPayload({
+      login: values.login,
+      password: values.password,
+      invitationToken: values.invitationToken,
+      termsAccepted: true,
+      termsVersion: legalDocument.termsVersion,
+      privacyNoticeVersion: legalDocument.privacyVersion,
+    }, { captchaEnabled, captchaToken });
+    return payload;
+  }
+
   function readYarnVersionHeader(headers) {
     return headers?.get?.("X-Motek-Yarn-Version")
       || headers?.get?.("x-motek-yarn-version")
@@ -480,6 +507,7 @@
     bindHoldToReveal,
     initializePasswordRevealControls,
     buildAuthPayload,
+    buildRegistrationAuthPayload,
     buildPatternFacetCounts,
     buildPatternFacetOptions,
     ensureSingleNewYarnCard,

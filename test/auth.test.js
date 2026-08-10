@@ -1,6 +1,9 @@
 const { test } = require("node:test");
 const assert = require("node:assert/strict");
 
+const { buildRegistrationAuthPayload } = require("../client-policy");
+const { CURRENT_LEGAL_DOCUMENT } = require("../legal-document");
+
 const {
   normalizeAuthEmail,
   normalizeAuthLogin,
@@ -12,6 +15,47 @@ const {
   shouldUseSecureCookies,
   validateCookieSecurityConfig,
 } = require("../server");
+
+test("payload rejestracji przekazuje boolean akceptacji i bieżące wersje prawa", () => {
+  const payload = buildRegistrationAuthPayload(
+    {
+      login: "jan@example.com",
+      password: "Haslo123!",
+      invitationToken: "invite-token",
+      termsAccepted: true,
+      termsVersion: CURRENT_LEGAL_DOCUMENT.termsVersion,
+      privacyNoticeVersion: CURRENT_LEGAL_DOCUMENT.privacyVersion,
+    },
+    { legalDocument: CURRENT_LEGAL_DOCUMENT },
+  );
+
+  assert.deepEqual(payload, {
+    login: "jan@example.com",
+    password: "Haslo123!",
+    invitationToken: "invite-token",
+    termsAccepted: true,
+    termsVersion: CURRENT_LEGAL_DOCUMENT.termsVersion,
+    privacyNoticeVersion: CURRENT_LEGAL_DOCUMENT.privacyVersion,
+  });
+  assert.equal(typeof payload.termsAccepted, "boolean");
+});
+
+test("payload rejestracji odrzuca nieaktualną wersję dokumentu", () => {
+  assert.throws(
+    () => buildRegistrationAuthPayload(
+      {
+        login: "jan@example.com",
+        password: "Haslo123!",
+        invitationToken: "invite-token",
+        termsAccepted: true,
+        termsVersion: "0.9",
+        privacyNoticeVersion: CURRENT_LEGAL_DOCUMENT.privacyVersion,
+      },
+      { legalDocument: CURRENT_LEGAL_DOCUMENT },
+    ),
+    /Odśwież stronę|wersj/i,
+  );
+});
 
 test("normalizacja Auth trimuje i ujednolica e-mail oraz login jako e-mail", () => {
   assert.equal(normalizeAuthEmail("  JAN+test@Domena.pl  "), "jan+test@domena.pl");

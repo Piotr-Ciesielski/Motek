@@ -70,7 +70,9 @@ const inventoryAddYarnBtn = document.getElementById("inventoryAddYarnBtn");
 const backToInventoryBtn = document.getElementById("backToInventoryBtn");
 const heroAuthBtn = document.getElementById("heroAuthBtn");
 const networkStatus = document.getElementById("networkStatus");
+const copyrightNotice = document.getElementById("copyrightNotice");
 const { createApiClient, ApiError, RequestError, isResponseEnvelope } = window.MotekApiClient;
+const { CURRENT_LEGAL_DOCUMENT, formatCopyrightNotice } = window.MotekLegalDocument;
 
 const REQUEST_TIMEOUT_MS = 12_000;
 const scrollBehavior = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches
@@ -83,6 +85,7 @@ const catalogFilterDisclosure = createCatalogFilterDisclosure({
 });
 const {
   buildAuthPayload,
+  buildRegistrationAuthPayload,
   buildPatternFacetCounts,
   buildPatternFacetOptions,
   ensureSingleNewYarnCard,
@@ -101,6 +104,22 @@ const {
   initializePasswordRevealControls,
   formatCatalogSummary,
 } = window.MotekClientPolicy;
+
+function initializeLegalRegistrationFields() {
+  const termsVersion = registerForm.elements.termsVersion;
+  const privacyNoticeVersion = registerForm.elements.privacyNoticeVersion;
+  const invitationToken = registerForm.elements.invitationToken;
+  if (termsVersion) termsVersion.value = CURRENT_LEGAL_DOCUMENT.termsVersion;
+  if (privacyNoticeVersion) privacyNoticeVersion.value = CURRENT_LEGAL_DOCUMENT.privacyVersion;
+  if (invitationToken) {
+    invitationToken.value = new URLSearchParams(window.location.search).get("invitation") || "";
+  }
+  if (copyrightNotice) {
+    copyrightNotice.textContent = formatCopyrightNotice(CURRENT_LEGAL_DOCUMENT);
+  }
+}
+
+initializeLegalRegistrationFields();
 const {
   MATERIALS,
   formatYarnMaterials,
@@ -1943,10 +1962,20 @@ async function submitAuthForm(form, endpoint, successMessage) {
   try {
     const formData = new FormData(form);
     const kind = form === registerForm ? "register" : "login";
-    const body = buildAuthPayload(Object.fromEntries(formData.entries()), {
-      captchaEnabled: authCaptchaConfig.enabled,
-      captchaToken: captchaTokens[kind],
-    });
+    const formValues = Object.fromEntries(formData.entries());
+    const body = kind === "register"
+      ? buildRegistrationAuthPayload({
+        ...formValues,
+        termsAccepted: registerForm.elements.termsAccepted.checked,
+      }, {
+        captchaEnabled: authCaptchaConfig.enabled,
+        captchaToken: captchaTokens[kind],
+        legalDocument: CURRENT_LEGAL_DOCUMENT,
+      })
+      : buildAuthPayload(formValues, {
+        captchaEnabled: authCaptchaConfig.enabled,
+        captchaToken: captchaTokens[kind],
+      });
     const payload = await api(endpoint, {
       method: "POST",
       body: JSON.stringify(body),
