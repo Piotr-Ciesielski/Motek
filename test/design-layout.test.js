@@ -142,6 +142,20 @@ test("rejestracja wymaga regulaminu, wersji dokumentu i tokenu zaproszenia", () 
   assert.doesNotMatch(indexHtml.toLocaleLowerCase("pl-PL"), /wyrażam zgodę na przetwarzanie/);
 });
 
+test("konto zawiera ukryty gate aktualnej akceptacji z drogą wyjścia", () => {
+  const document = new JSDOM(indexHtml).window.document;
+  const gate = document.getElementById("legalAcceptanceGate");
+
+  assert.ok(gate);
+  assert.equal(gate.hidden, true);
+  assert.equal(gate.querySelector('[name="termsAccepted"]').required, true);
+  assert.ok(gate.querySelector("#legalAcceptanceVersion"));
+  assert.ok(gate.querySelector('[role="status"]'));
+  assert.equal(gate.querySelector('a[href="#logoutBtn"]').textContent, "Wyloguj się");
+  assert.equal(gate.querySelector('a[href="#deleteAccountForm"]').textContent, "usuń konto");
+  assert.equal(document.querySelectorAll("[data-view]").length, 4);
+});
+
 test("captcha remains available in every auth flow", () => {
   assert.equal((indexHtml.match(/data-turnstile-for=/g) || []).length, 3);
   assert.match(indexHtml, /data-turnstile-for="passwordReset"/);

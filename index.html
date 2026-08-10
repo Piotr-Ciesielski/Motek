@@ -180,6 +180,22 @@
         <div id="authLoggedIn" class="auth-logged-in" hidden>
           <p id="authProfileSummary"></p>
           <p class="field-hint"><a href="/informacje-prawne#regulamin">Przeczytaj regulamin, prywatność i prawa autorskie.</a></p>
+          <section id="legalAcceptanceGate" class="legal-acceptance-gate" hidden aria-labelledby="legalAcceptanceTitle">
+            <h3 id="legalAcceptanceTitle">Potwierdź aktualny regulamin</h3>
+            <p>Przed dalszym korzystaniem z prywatnych funkcji przeczytaj aktualne informacje prawne.</p>
+            <p>Wersja regulaminu: <output id="legalAcceptanceVersion"></output></p>
+            <form id="legalAcceptanceForm" class="legal-consent" method="post" action="/api/legal/acceptance">
+              <label class="legal-consent__checkbox" for="legal-acceptance-terms">
+                <input id="legal-acceptance-terms" name="termsAccepted" type="checkbox" required aria-describedby="legalAcceptanceMessage" />
+                <span>Akceptuję <a href="/informacje-prawne#regulamin">Regulamin korzystania z Motka</a>.</span>
+              </label>
+              <button class="button" type="submit">Akceptuję aktualny regulamin</button>
+              <p id="legalAcceptanceMessage" class="auth-message" role="status" aria-live="polite"></p>
+            </form>
+            <p class="field-hint">
+              <a href="#logoutBtn">Wyloguj się</a> lub <a href="#deleteAccountForm">usuń konto</a>, jeśli nie chcesz zaakceptować zmian.
+            </p>
+          </section>
           <button id="logoutBtn" class="button button--ghost" type="button">Wyloguj się</button>
           <form id="deleteAccountForm" class="account-danger-zone" method="post" action="/api/account" novalidate>
             <h3 id="deleteAccountTitle">Usuń konto</h3>
@@ -583,6 +599,7 @@
 
     <script src="material-policy.js?v=2.0.0-alpha.38"></script>
     <script src="legal-document.js"></script>
+    <script src="client/legal-acceptance-controller.js"></script>
     <script src="client-policy.js?v=2.0.0-alpha.38"></script>
     <script src="client/api-client.js"></script>
     <script src="client/dom-utils.js"></script>
