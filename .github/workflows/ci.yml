@@ -30,6 +30,9 @@ jobs:
       - name: Sprawdź podatności zależności
         run: npm audit --omit=dev --audit-level=moderate
 
+      - name: Sprawdź politykę publikacji prawnej
+        run: node --test test/legal-publication-policy.test.js test/legal-readiness.test.js
+
       - name: Sprawdź jakość kodu (ESLint)
         run: npm run lint
 

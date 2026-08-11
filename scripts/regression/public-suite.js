@@ -43,6 +43,19 @@ async function requireStaticMarker(session, path, marker) {
   return response;
 }
 
+async function requireLegalPage(session, path) {
+  const response = await session.request(path);
+  requireCondition(response.status === 200, `${path} returned status ${response.status}`);
+  requireSecurityHeaders(response, path);
+  const body = await response.text();
+  requireCondition(/data-legal-document/i.test(body), `${path} is missing its legal document marker`);
+  for (const anchor of ['#regulamin', '#prywatnosc', '#prawa-autorskie']) {
+    requireCondition(body.includes(`href="${anchor}"`), `${path} is missing legal anchor ${anchor}`);
+  }
+  requireCondition(/termsVersion|Regulamin/i.test(body), `${path} is missing the legal document version marker`);
+  return response;
+}
+
 async function runPublicRegression({ baseUrl, expectedSha, expectedEnvironment, fetchImpl, apexUrl }) {
   requireCondition(SHA_PATTERN.test(String(expectedSha || '')), 'Expected release SHA must contain 40 lowercase hexadecimal characters');
   requireCondition(Boolean(expectedEnvironment), 'Expected release environment is required');
@@ -67,6 +80,8 @@ async function runPublicRegression({ baseUrl, expectedSha, expectedEnvironment, 
   requireSecurityHeaders(page, '/');
   await requireStaticMarker(session, '/styles.css', /--hero-gradient\s*:/);
   await requireStaticMarker(session, '/app.js', /MotekClientPolicy/);
+  await requireLegalPage(session, '/informacje-prawne');
+  await requireLegalPage(session, '/informacje-prawne/');
 
   const config = await requireJson(session, '/api/config');
   requireSecurityHeaders(config.response, '/api/config');
@@ -75,11 +90,7 @@ async function runPublicRegression({ baseUrl, expectedSha, expectedEnvironment, 
   requireCondition(typeof config.body.captcha.siteKey === 'string' && config.body.captcha.siteKey.trim(), '/api/config CAPTCHA siteKey is empty');
   requireCondition(!containsSecretField(config.body), '/api/config contains a secret field');
 
-  const catalog = await requireJson(session, '/api/patterns?limit=1&offset=0');
-  requireCondition(Array.isArray(catalog.body?.items) && catalog.body.items.length >= 1, '/api/patterns items returned no patterns');
-  requireCondition(catalog.body.limit === 1 && catalog.body.offset === 0, '/api/patterns returned invalid pagination');
-  requireCondition(Number.isInteger(catalog.body.total) && catalog.body.total >= catalog.body.items.length, '/api/patterns returned invalid total');
-  requireCondition(typeof catalog.body.hasMore === 'boolean', '/api/patterns returned invalid hasMore');
+  await requireJson(session, '/api/patterns?limit=1&offset=0', 401);
 
   await requireJson(session, '/api/yarns', 401);
   await requireJson(session, '/api/matches', 401);

@@ -8,6 +8,9 @@ const {
   createSupabaseConnection,
   readSupabaseAuthConfig,
 } = require("./supabase");
+const { validateRegistrationLegalInput } = require("./registration-policy");
+const { registerInvitedUser } = require("./registration-service");
+const { createLegalAccessService } = require("./legal-access-service");
 const {
   maxYarnsPerUser: MAX_YARNS_PER_USER,
   maxPatternCatalogRecords: MAX_PATTERN_CATALOG_RECORDS,
@@ -36,12 +39,15 @@ const { createStaticFileHandler } = require("./server/static-files");
 const { createPatternRouter } = require("./server/pattern-routes");
 const { createYarnRouter } = require("./server/yarn-routes");
 const { readReleaseInfo } = require("./release-info");
+const { CURRENT_LEGAL_DOCUMENT } = require("./legal-document");
+const { validateLegalPublication } = require("./legal-publication-policy");
 
 const rootDir = __dirname;
 let server;
 let supabaseConnection;
 let supabaseAuthConfig;
 let supabaseAuthClientFactory = createSupabaseAuthClient;
+let legalAccessService;
 let captchaConfig = readCaptchaConfig();
 let metricsEnabled = false;
 let metricsRegistry = createMetricsRegistry();
@@ -127,6 +133,11 @@ const staticFileHandler = createStaticFileHandler({
   files: {
     "/": "index.html",
     "/index.html": "index.html",
+    "/informacje-prawne": "informacje-prawne.html",
+    "/informacje-prawne/": "informacje-prawne.html",
+    "/legal-document.js": "legal-document.js",
+    "/client/legal-page.js": "client/legal-page.js",
+    "/client/legal-acceptance-controller.js": "client/legal-acceptance-controller.js",
     "/styles.css": "styles.css",
     "/app.js": "app.js",
     "/client-policy.js": "client-policy.js",
@@ -147,6 +158,7 @@ const staticFileHandler = createStaticFileHandler({
 const patternRouter = createPatternRouter({
   sendJson,
   requireAuthenticatedSession,
+  requireCurrentTermsSession,
   getCatalogPatterns,
   getSupabaseMatches,
   parsePatternPage,
@@ -190,7 +202,7 @@ const yarnRouter = createYarnRouter({
   updateSupabaseYarn,
   deleteSupabaseYarn,
   sendYarnMutationResponse,
-  requireAuthenticatedSession,
+  requireAuthenticatedSession: requireCurrentTermsSession,
   requireCurrentYarnVersion,
   validateYarn,
   readBody,
@@ -726,12 +738,20 @@ async function getAuthenticatedSession(req, res) {
     throw new ApiError(403, "Konto jest zawieszone lub zablokowane.");
   }
 
+  let legal;
+  try {
+    legal = await legalAccessService.getAccountAccessState(userResult.data.user.id);
+  } catch {
+    throw new ApiError(503, "Stan dokumentów prawnych jest chwilowo niedostępny.");
+  }
+
   setIdleActivityCookie(res);
 
   return {
     user: userResult.data.user,
     profile: profileResult.data,
     accessToken: activeAccessToken,
+    legal,
   };
 }
 
@@ -739,6 +759,14 @@ async function requireAuthenticatedSession(req, res) {
   const session = await getAuthenticatedSession(req, res);
   if (!session) {
     throw new ApiError(401, "Zaloguj się, aby zarządzać swoim magazynem włóczek.");
+  }
+  return session;
+}
+
+async function requireCurrentTermsSession(req, res) {
+  const session = await requireAuthenticatedSession(req, res);
+  if (session.legal.acceptanceRequired) {
+    throw new ApiError(403, "Zaakceptuj aktualną wersję dokumentów, aby korzystać z tej funkcji.");
   }
   return session;
 }
@@ -1048,7 +1076,17 @@ function normalizeCatalogPattern(pattern) {
   return {
     id: Number(pattern.id),
     name: pattern.name,
-    description: pattern.description,
+    description: typeof pattern.description === "string" && pattern.description.trim()
+      ? pattern.description.trim()
+      : null,
+    officialSourceUrl: (() => {
+      try {
+        const url = new URL(pattern.official_source_url);
+        return url.protocol === "https:" ? url.href : null;
+      } catch {
+        return null;
+      }
+    })(),
     projectType: pattern.project_type || "other",
     materials: Array.isArray(pattern.materials) ? pattern.materials : [],
     metersPer100g: Number.isFinite(ratio) ? ratio : null,
@@ -1069,10 +1107,12 @@ function normalizeMatchingRequirements(value) {
   }
 }
 
-async function getCatalogPatterns({ limit = null, offset = 0 } = {}) {
-  const patternClient = supabaseConnection.client.from("patterns");
-  const { count, error: countError } = await patternClient
-    .select("id", { count: "exact", head: true });
+async function getCatalogPatterns({ limit = null, offset = 0 } = {}, connection = supabaseConnection) {
+  const patternClient = connection.client.from("patterns");
+  const countQuery = patternClient.select("id", { count: "exact", head: true });
+  const { count, error: countError } = await (typeof countQuery.eq === "function"
+    ? countQuery.eq("publication_status", "published")
+    : countQuery);
 
   if (countError) {
     throw new Error(`Nie udało się sprawdzić liczby wzorów w Supabase: ${countError.message}`);
@@ -1081,11 +1121,15 @@ async function getCatalogPatterns({ limit = null, offset = 0 } = {}) {
   validatePatternCatalogSize(count ?? 0);
 
   const effectiveLimit = limit ?? count ?? 0;
-  const { data, error } = await supabaseConnection.client
+  const dataQuery = connection.client
     .from("patterns")
     .select(
-      "id,name,description,project_type,materials,meters_per_100g,yarn_requirements,matching_requirements,source_language,needs_review"
-    )
+      "id,name,description,project_type,materials,meters_per_100g,yarn_requirements,matching_requirements,source_language,needs_review,official_source_url"
+    );
+  const publishedQuery = typeof dataQuery.eq === "function"
+    ? dataQuery.eq("publication_status", "published")
+    : dataQuery;
+  const { data, error } = await publishedQuery
     .range(offset, Math.max(offset, offset + effectiveLimit - 1))
     .order("name", { ascending: true });
 
@@ -1195,6 +1239,10 @@ function validateYarn(body) {
   };
 }
 
+async function hashInvitationToken(token) {
+  return crypto.createHash("sha256").update(token, "utf8").digest("hex");
+}
+
 async function handleAuthApi(req, res, url) {
   if (req.method === "POST") {
     requireTrustedOrigin(req);
@@ -1204,44 +1252,52 @@ async function handleAuthApi(req, res, url) {
     const body = await readBody(req);
     const email = normalizeAuthLogin(body.login);
     const password = validateAuthPassword(body.password);
+    let legalInput;
+    try {
+      legalInput = validateRegistrationLegalInput(body, CURRENT_LEGAL_DOCUMENT);
+    } catch (error) {
+      throw new ApiError(400, error.message);
+    }
     let captchaToken;
     try {
       captchaToken = normalizeCaptchaToken(body.captchaToken, captchaConfig.enabled);
     } catch (error) {
       throw new ApiError(400, error.message);
     }
-    const login = email;
     const rateLimitKeys = getAuthRateLimitKeys(req, email);
     enforceRequestRateLimit(rateLimitKeys, authRequestRateLimiter, res);
     enforceAuthRateLimit(rateLimitKeys, res);
 
-    const { data, error } = await authClient().auth.signUp({
-      email,
-      password,
-      options: {
-        data: {
-          login,
-        },
+    let registration;
+    try {
+      registration = await registerInvitedUser({
+        email,
+        password,
+        ...legalInput,
+        captchaToken,
         emailRedirectTo: new URL("/?confirmed=1", getExpectedOrigin(req)).toString(),
-        ...(captchaToken ? { captchaToken } : {}),
-      },
-    });
-
-    if (error || !data?.user) {
+      }, {
+        authClient: authClient(),
+        adminClient: supabaseConnection.client,
+        serviceClient: supabaseConnection.client,
+        legalDocument: CURRENT_LEGAL_DOCUMENT,
+        hashInvitationToken,
+      });
+    } catch {
       recordAuthFailure(rateLimitKeys);
       throw genericAuthError("register");
     }
 
     clearAuthFailures(rateLimitKeys);
 
-    if (data.session) {
-      setAuthCookies(res, data.session);
-      await updateLastLogin(data.user.id);
+    if (registration.session) {
+      setAuthCookies(res, registration.session);
+      await updateLastLogin(registration.user.id);
     }
 
     return sendJson(res, 201, {
-      user: sanitizeAuthUser(data.user),
-      requiresEmailConfirmation: !data.session,
+      user: sanitizeAuthUser(registration.user),
+      requiresEmailConfirmation: !registration.session,
       idleTimeoutMs: getIdleTimeoutMs(),
     });
   }
@@ -1422,7 +1478,6 @@ async function handleAuthApi(req, res, url) {
     if (globalSignOutFailed) {
       throw new ApiError(503, "Hasło zostało zmienione, ale nie udało się unieważnić pozostałych sesji.");
     }
-
     return sendJson(res, 200, { passwordUpdated: true, authenticated: false });
   }
 
@@ -1456,6 +1511,7 @@ async function handleAuthApi(req, res, url) {
       user: session ? sanitizeAuthUser(session.user) : null,
       profile: session?.profile || null,
       idleTimeoutMs: getIdleTimeoutMs(),
+      legal: session?.legal || null,
     });
   }
 
@@ -1522,6 +1578,25 @@ async function handleApi(req, res, url) {
     return res.end();
   }
 
+  if (req.method === "POST" && url.pathname === "/api/legal/acceptance") {
+    const session = await requireAuthenticatedSession(req, res);
+    const body = await readBody(req);
+    let acceptance;
+    try {
+      acceptance = await legalAccessService.recordTermsAcceptance(
+        session.user.id,
+        body.version,
+        CURRENT_LEGAL_DOCUMENT.privacyVersion,
+      );
+    } catch (error) {
+      if (/aktualną wersję/i.test(error.message)) {
+        throw new ApiError(409, error.message);
+      }
+      throw new ApiError(503, "Nie udało się zapisać akceptacji dokumentów. Spróbuj ponownie później.");
+    }
+    return sendJson(res, 200, acceptance);
+  }
+
   if (await yarnRouter.handle(req, res, url)) return;
 
   if (await patternRouter.handle(req, res, url)) return;
@@ -1565,6 +1640,21 @@ function getRuntimeConfig(env = process.env) {
 async function main(options = {}) {
   shuttingDown = false;
   validateDeploymentConfig();
+  if (String(process.env.DEPLOYMENT_ENV || "local").trim().toLowerCase() === "production") {
+    const providers = JSON.parse(fs.readFileSync(path.join(rootDir, "data", "legal-data-providers.json"), "utf8"));
+    const patternAudit = JSON.parse(fs.readFileSync(path.join(rootDir, "data", "pattern-content-audit.json"), "utf8"));
+    const records = Array.isArray(patternAudit.records) ? patternAudit.records : [];
+    const publication = validateLegalPublication({
+      legalDocument: CURRENT_LEGAL_DOCUMENT,
+      providers: providers.providers,
+      patternAudit: {
+        complete: records.length > 0 && records.every((record) => record.status !== "pending_review"),
+        pending_review: records.filter((record) => record.status === "pending_review").length,
+      },
+      deploymentEnvironment: "production",
+    });
+    if (!publication.ready) throw new Error("Publikacja prawna nie jest gotowa.");
+  }
   validateCookieSecurityConfig();
   validateOriginConfig();
   const releaseInfo = readReleaseInfo(
@@ -1581,6 +1671,10 @@ async function main(options = {}) {
     ? options.supabaseAuthConfig
     : readSupabaseAuthConfig();
   supabaseAuthClientFactory = options.supabaseAuthClientFactory || createSupabaseAuthClient;
+  legalAccessService = createLegalAccessService({
+    legalDocument: CURRENT_LEGAL_DOCUMENT,
+    serviceClient: supabaseConnection?.client,
+  });
   captchaConfig = Object.prototype.hasOwnProperty.call(options, "captchaConfig")
     ? options.captchaConfig
     : readCaptchaConfig();
@@ -1743,6 +1837,7 @@ async function shutdown(signal = "shutdown") {
   supabaseConnection = null;
   supabaseAuthConfig = null;
   supabaseAuthClientFactory = createSupabaseAuthClient;
+  legalAccessService = null;
 
   console.log("Motek został bezpiecznie zatrzymany.");
 }
@@ -1777,6 +1872,7 @@ module.exports = {
   normalizeAuthEmail,
   normalizeAuthLogin,
   normalizeCatalogPattern,
+  getCatalogPatterns,
   normalizeSupabaseYarn,
   scorePattern,
   selectMatchingYarns,

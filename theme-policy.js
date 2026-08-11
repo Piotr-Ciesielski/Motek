@@ -83,6 +83,26 @@
     return normalizedTheme;
   }
 
+  function bindThemeToggle(documentLike) {
+    const toggle = documentLike?.querySelector?.("#themeToggle");
+    if (!toggle || toggle.dataset.motekThemeBound === "true") return;
+
+    let currentTheme = readStoredTheme();
+
+    function updateToggle(theme) {
+      currentTheme = applyTheme(theme, documentLike);
+      const state = getThemeToggleState(currentTheme);
+      toggle.setAttribute("aria-label", state.label);
+      toggle.setAttribute("aria-pressed", String(state.pressed));
+    }
+
+    toggle.dataset.motekThemeBound = "true";
+    updateToggle(currentTheme);
+    toggle.addEventListener("click", () => {
+      updateToggle(saveTheme(getNextTheme(currentTheme)));
+    });
+  }
+
   const api = {
     DEFAULT_THEME,
     THEMES,
@@ -93,6 +113,7 @@
     getNextTheme,
     getThemeToggleState,
     applyTheme,
+    bindThemeToggle,
   };
 
   if (typeof module !== "undefined" && module.exports) {
@@ -102,5 +123,15 @@
   if (globalObject) {
     globalObject.MotekThemePolicy = api;
     applyTheme(readStoredTheme());
+    const bindLegalToggle = () => {
+      if (globalObject.document?.querySelector("#legalDocument")) {
+        bindThemeToggle(globalObject.document);
+      }
+    };
+    if (globalObject.document?.readyState === "loading") {
+      globalObject.document.addEventListener("DOMContentLoaded", bindLegalToggle, { once: true });
+    } else {
+      bindLegalToggle();
+    }
   }
 })(typeof window !== "undefined" ? window : null);

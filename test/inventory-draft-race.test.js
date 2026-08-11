@@ -69,7 +69,12 @@ test("opóźniony GET /api/yarns nie usuwa nowego draftu rozpoczętego po odświ
       request: async (url) => {
         const pathname = new URL(url).pathname;
         if (pathname === "/api/auth/session") {
-          return { authenticated: true, user: { email: "test@motek.test" }, profile: {} };
+          return {
+            authenticated: true,
+            user: { email: "test@motek.test" },
+            profile: {},
+            legal: { currentVersion: "1.0", acceptedVersion: "1.0", acceptanceRequired: false },
+          };
         }
         if (pathname === "/api/yarns") {
           yarnRequestStarted = true;
@@ -90,6 +95,8 @@ test("opóźniony GET /api/yarns nie usuwa nowego draftu rozpoczętego po odświ
     getYarnSaveHint: () => ({ visible: true, disabled: false, message: "" }),
     getMatchFreshnessState: () => ({ stale: false, message: "" }),
     buildAuthPayload: () => ({}),
+    resolveRequestedView: ({ requested, authenticated, acceptanceRequired }) =>
+      authenticated && !acceptanceRequired ? (requested || "inventory") : "account",
     buildPatternFacetCounts: () => ({}),
     buildPatternFacetOptions: () => [],
     filterPatterns: () => [],
@@ -115,6 +122,8 @@ test("opóźniony GET /api/yarns nie usuwa nowego draftu rozpoczętego po odświ
     createIdleSessionController: () => ({ start() {}, stop() {}, markActivity: async () => false }),
   };
 
+  loadBrowserScript(context, "legal-document.js");
+  loadBrowserScript(context, "client/legal-acceptance-controller.js");
   loadBrowserScript(context, "app.js");
   await waitFor(() => yarnRequestStarted);
 
@@ -170,7 +179,12 @@ test("powrót do magazynu odświeża dane po unieważnieniu poprzedniego GET", a
       request: async (url) => {
         const pathname = new URL(url).pathname;
         if (pathname === "/api/auth/session") {
-          return { authenticated: true, user: { email: "test@motek.test" }, profile: {} };
+          return {
+            authenticated: true,
+            user: { email: "test@motek.test" },
+            profile: {},
+            legal: { currentVersion: "1.0", acceptedVersion: "1.0", acceptanceRequired: false },
+          };
         }
         if (pathname === "/api/yarns") {
           const request = deferred();
@@ -192,6 +206,8 @@ test("powrót do magazynu odświeża dane po unieważnieniu poprzedniego GET", a
     getYarnSaveHint: () => ({ visible: true, disabled: false, message: "" }),
     getMatchFreshnessState: () => ({ stale: false, message: "" }),
     buildAuthPayload: () => ({}),
+    resolveRequestedView: ({ requested, authenticated, acceptanceRequired }) =>
+      authenticated && !acceptanceRequired ? (requested || "inventory") : "account",
     buildPatternFacetCounts: () => ({}),
     buildPatternFacetOptions: () => [],
     filterPatterns: () => [],
@@ -217,6 +233,8 @@ test("powrót do magazynu odświeża dane po unieważnieniu poprzedniego GET", a
     createIdleSessionController: () => ({ start() {}, stop() {}, markActivity: async () => false }),
   };
 
+  loadBrowserScript(context, "legal-document.js");
+  loadBrowserScript(context, "client/legal-acceptance-controller.js");
   loadBrowserScript(context, "app.js");
   await waitFor(() => yarnRequests.length === 1);
 

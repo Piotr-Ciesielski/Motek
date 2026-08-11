@@ -509,8 +509,6 @@ def create_candidate(
         }
     )
     source_language = detect_language(text, pdf_path.name)
-    evidence = extract_evidence(text)
-
     review_reasons = []
     if needs_ocr:
         review_reasons.append("requires_ocr")
@@ -527,7 +525,7 @@ def create_candidate(
 
     candidate = {
         "name": title,
-        "description": infer_description(title, text),
+        "description": None,
         "project_type": infer_project_type(title, text)[0],
         "materials": materials,
         "meters_per_100g": (
@@ -558,7 +556,6 @@ def create_candidate(
             }
             for reference in matched_references
         ],
-        "evidence": evidence,
         "page_count": page_count,
         "text_char_count": len(text),
         "text_path": str(text_path.relative_to(PROJECT_DIR)),

@@ -7,6 +7,7 @@ function createPatternRouter(dependencies) {
   const {
     sendJson,
     requireAuthenticatedSession,
+    requireCurrentTermsSession = requireAuthenticatedSession,
     getCatalogPatterns,
     getSupabaseMatches,
     parsePatternPage,
@@ -18,6 +19,7 @@ function createPatternRouter(dependencies) {
   return {
     async handle(req, res, url) {
       if (req.method === "GET" && url.pathname === "/api/patterns") {
+        await requireCurrentTermsSession(req, res);
         const page = typeof parsePatternPage === "function"
           ? parsePatternPage(url)
           : undefined;
@@ -29,7 +31,7 @@ function createPatternRouter(dependencies) {
       }
 
       if (req.method === "GET" && url.pathname === "/api/matches") {
-        const session = await requireAuthenticatedSession(req, res);
+        const session = await requireCurrentTermsSession(req, res);
         enforceRequestRateLimit(
           getMatchRateLimitKeys(req, session),
           matchRateLimiter,

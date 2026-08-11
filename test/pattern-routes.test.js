@@ -39,7 +39,7 @@ test("pattern router returns false for an unsupported route", async () => {
     sendJson() {
       throw new Error("sendJson nie powinien zostać wywołany");
     },
-    requireAuthenticatedSession() {
+    requireCurrentTermsSession() {
       throw new Error("sesja nie powinna być wymagana");
     },
     getCatalogPatterns() {
@@ -83,8 +83,8 @@ test("pattern router serves the catalog with parsed pagination", async () => {
       calls.push(["getCatalogPatterns", page]);
       return { items: ["pattern"], total: 21, ...page };
     },
-    requireAuthenticatedSession() {
-      throw new Error("sesja nie powinna być wymagana");
+    requireCurrentTermsSession() {
+      return { user: { id: "user-1" } };
     },
     getSupabaseMatches() {
       throw new Error("dopasowania nie powinny zostać pobrane");
@@ -112,6 +112,20 @@ test("pattern router serves the catalog with parsed pagination", async () => {
   assert.equal(handled, true);
 });
 
+test("pattern router passes the public catalog payload unchanged", async () => {
+  const payload = { items: [{ name: "Jawny wzór", description: null }], total: 1 };
+  let sent;
+  const router = createPatternRouter({
+    sendJson(_res, status, body) { sent = [status, body]; },
+    parsePatternPage() { return { limit: 10, offset: 0 }; },
+    getCatalogPatterns() { return payload; },
+    requireCurrentTermsSession() {},
+    getSupabaseMatches() {},
+  });
+  await router.handle({ method: "GET" }, {}, new URL("http://localhost/api/patterns"));
+  assert.deepEqual(sent, [200, payload]);
+});
+
 test("pattern router serves authenticated matches and reports scope", async () => {
   const calls = [];
   const response = {
@@ -123,8 +137,8 @@ test("pattern router serves authenticated matches and reports scope", async () =
     sendJson(_res, status, payload) {
       calls.push(["sendJson", status, payload]);
     },
-    requireAuthenticatedSession(req, res) {
-      calls.push(["requireAuthenticatedSession", req, res]);
+    requireCurrentTermsSession(req, res) {
+      calls.push(["requireCurrentTermsSession", req, res]);
       return { user: { id: "user-1" } };
     },
     getSupabaseMatches(session) {
@@ -151,7 +165,7 @@ test("pattern router serves authenticated matches and reports scope", async () =
     new URL("http://localhost/api/matches"),
   );
 
-  assert.equal(calls[0][0], "requireAuthenticatedSession");
+  assert.equal(calls[0][0], "requireCurrentTermsSession");
   assert.equal(calls[0][1], request);
   assert.equal(calls[0][2], response);
   assert.deepEqual(calls.slice(1), [

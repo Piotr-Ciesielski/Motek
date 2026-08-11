@@ -277,6 +277,14 @@ test("serwer Motek działa bezpiecznie", async (t) => {
       status: "active",
     }])
   );
+  const syntheticLegalStates = Object.fromEntries(
+    Object.values(syntheticUsers).map((user) => [user.id, {
+      currentTermsVersion: "1.0",
+      currentPrivacyVersion: "1.0",
+      acceptedVersion: "1.0",
+      acceptanceRequired: false,
+    }])
+  );
   const syntheticYarns = [];
   const syntheticYarnVersions = Object.fromEntries(
     Object.values(syntheticUsers).map((user) => [user.id, 0])
@@ -339,7 +347,7 @@ test("serwer Motek działa bezpiecznie", async (t) => {
     return `motek_recovery_grant=${encodeURIComponent(buildRecoveryGrantCookieValue({ userId, jti, exp }))}`;
   }
 
-    function createSyntheticQuery(table, token) {
+    function createSyntheticQuery(table, _token) {
       const filters = [];
       let operation = "select";
       let insertedRow = null;
@@ -585,6 +593,29 @@ test("serwer Motek działa bezpiecznie", async (t) => {
     verify: async () => {},
     client: {
       rpc(name, args) {
+        if (name === "get_account_access_state") {
+          return Promise.resolve({ data: syntheticLegalStates[args.p_user_id], error: null });
+        }
+        if (name === "reserve_registration_invitation") {
+          return Promise.resolve({ data: "invitation-1", error: null });
+        }
+        if (name === "attach_registration_user") {
+          return Promise.resolve({ data: true, error: null });
+        }
+        if (name === "finalize_invited_registration") {
+          return Promise.resolve({ data: "2026-08-09T12:00:00.000Z", error: null });
+        }
+        if (name === "release_registration_reservation") {
+          return Promise.resolve({ data: true, error: null });
+        }
+        if (name === "record_terms_acceptance") {
+          const state = syntheticLegalStates[args.p_user_id];
+          if (state) {
+            state.acceptedVersion = args.p_terms_version;
+            state.acceptanceRequired = false;
+          }
+          return Promise.resolve({ data: "2026-08-09T12:00:00.000Z", error: null });
+        }
         if (name === "create_auth_recovery_grant") {
           recoveryGrantCalls.push(args);
           recoveryGrants.set(args.p_jti_hash, {
@@ -880,6 +911,10 @@ test("serwer Motek działa bezpiecznie", async (t) => {
           login: " NOWY@EXAMPLE.COM ",
           password: "Haslo123!",
           captchaToken: "register-token",
+          invitationToken: "a".repeat(64),
+          termsAccepted: true,
+          termsVersion: "1.0",
+          privacyNoticeVersion: "1.0",
         }),
       });
       assert.equal(registerResponse.status, 201);
@@ -933,6 +968,10 @@ test("serwer Motek działa bezpiecznie", async (t) => {
           login: "potwierdzenie@example.com",
           password: "Haslo123!",
           captchaToken: "register-confirmation-token",
+          invitationToken: "b".repeat(64),
+          termsAccepted: true,
+          termsVersion: "1.0",
+          privacyNoticeVersion: "1.0",
         }),
       });
       assert.equal(registerResponse.status, 201);
@@ -1481,12 +1520,19 @@ test("serwer Motek działa bezpiecznie", async (t) => {
     });
 
     await t.test("pobiera katalog wzorów z Supabase bez ujawniania sekretów", async () => {
-      const oversizedPageResponse = await fetch(`${baseUrl}/api/patterns?limit=51`);
+      syntheticProfiles[syntheticUsers["token-user-a"].id] = {
+        id: syntheticUsers["token-user-a"].id,
+        login: "uzytkownik_a",
+        email: "a@example.com",
+        status: "active",
+      };
+      const patternHeaders = { Cookie: sessionCookies("token-user-a") };
+      const oversizedPageResponse = await fetch(`${baseUrl}/api/patterns?limit=51`, { headers: patternHeaders });
       assert.equal(oversizedPageResponse.status, 400);
-      const negativeOffsetResponse = await fetch(`${baseUrl}/api/patterns?offset=-1`);
+      const negativeOffsetResponse = await fetch(`${baseUrl}/api/patterns?offset=-1`, { headers: patternHeaders });
       assert.equal(negativeOffsetResponse.status, 400);
 
-      const response = await fetch(`${baseUrl}/api/patterns`);
+      const response = await fetch(`${baseUrl}/api/patterns`, { headers: patternHeaders });
       assert.equal(response.status, 200);
       const page = await response.json();
       assert.deepEqual(page, {
@@ -1534,6 +1580,7 @@ test("serwer Motek działa bezpiecznie", async (t) => {
         ],
         sourceLanguage: "pl",
         needsReview: false,
+        officialSourceUrl: null,
         }],
       });
       assert.equal(JSON.stringify(page).includes("sb_secret_"), false);

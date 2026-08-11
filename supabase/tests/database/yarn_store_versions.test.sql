@@ -72,6 +72,9 @@ values
   ('11111111-1111-1111-1111-111111111111', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'yarn-owner@example.test', 'not-used', now(), '{"provider":"email","providers":["email"]}', '{"login":"yarn_owner"}'),
   ('22222222-2222-2222-2222-222222222222', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'yarn-other@example.test', 'not-used', now(), '{"provider":"email","providers":["email"]}', '{"login":"yarn_other"}');
 
+insert into private.terms_acceptances (user_id, terms_version)
+values ('11111111-1111-1111-1111-111111111111', '1.0');
+
 insert into public.yarns (user_id, name, color, material, materials, weight_class, length_meters, weight_grams)
 values ('22222222-2222-2222-2222-222222222222', 'Cudza włóczka', 'granat', 'wełna', array['wełna'], 'dk', 100, 50);
 select set_config('test.other_yarn_id', (select id::text from public.yarns where user_id = '22222222-2222-2222-2222-222222222222'), true);

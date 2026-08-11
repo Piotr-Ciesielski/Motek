@@ -36,6 +36,10 @@ const loginModeBtn = document.getElementById("loginModeBtn");
 const registerModeBtn = document.getElementById("registerModeBtn");
 const authProfileSummary = document.getElementById("authProfileSummary");
 const authMessage = document.getElementById("authMessage");
+const legalAcceptanceForm = document.getElementById("legalAcceptanceForm");
+const legalAcceptanceGate = document.getElementById("legalAcceptanceGate");
+const legalAcceptanceMessage = document.getElementById("legalAcceptanceMessage");
+const legalAcceptanceVersion = document.getElementById("legalAcceptanceVersion");
 const deleteAccountForm = document.getElementById("deleteAccountForm");
 const deleteAccountDisclosure = document.getElementById("deleteAccountDisclosure");
 const deleteAccountMessage = document.getElementById("deleteAccountMessage");
@@ -71,7 +75,19 @@ const inventoryAddYarnBtn = document.getElementById("inventoryAddYarnBtn");
 const backToInventoryBtn = document.getElementById("backToInventoryBtn");
 const heroAuthBtn = document.getElementById("heroAuthBtn");
 const networkStatus = document.getElementById("networkStatus");
+const copyrightNotice = document.getElementById("copyrightNotice");
 const { createApiClient, ApiError, RequestError, isResponseEnvelope } = window.MotekApiClient;
+const legalDocumentApi = window.MotekLegalDocument || {
+  CURRENT_LEGAL_DOCUMENT: Object.freeze({
+    termsVersion: "1.0",
+    privacyVersion: "1.0",
+    copyrightYear: new Date().getFullYear(),
+  }),
+  formatCopyrightNotice: () => "",
+};
+const { CURRENT_LEGAL_DOCUMENT, formatCopyrightNotice } = legalDocumentApi;
+const createLegalAcceptanceController = window.createLegalAcceptanceController
+  || (() => ({ setSessionLegalState: () => false }));
 
 const REQUEST_TIMEOUT_MS = 12_000;
 const scrollBehavior = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches
@@ -86,6 +102,8 @@ const catalogFilterDisclosure = typeof window.createCatalogFilterDisclosure === 
   : { updateCount() {} };
 const {
   buildAuthPayload,
+  buildRegistrationAuthPayload,
+  resolveRequestedView,
   buildPatternFacetCounts,
   buildPatternFacetOptions,
   ensureSingleNewYarnCard,
@@ -102,9 +120,24 @@ const {
   withYarnVersionRetry,
   isDeleteConfirmed,
   initializePasswordRevealControls,
-  loadNextPaginatedPage,
   formatCatalogSummary,
 } = window.MotekClientPolicy;
+
+function initializeLegalRegistrationFields() {
+  const termsVersion = registerForm.elements.termsVersion;
+  const privacyNoticeVersion = registerForm.elements.privacyNoticeVersion;
+  const invitationToken = registerForm.elements.invitationToken;
+  if (termsVersion) termsVersion.value = CURRENT_LEGAL_DOCUMENT.termsVersion;
+  if (privacyNoticeVersion) privacyNoticeVersion.value = CURRENT_LEGAL_DOCUMENT.privacyVersion;
+  if (invitationToken) {
+    invitationToken.value = new URLSearchParams(window.location.search).get("invitation") || "";
+  }
+  if (copyrightNotice) {
+    copyrightNotice.textContent = formatCopyrightNotice(CURRENT_LEGAL_DOCUMENT);
+  }
+}
+
+initializeLegalRegistrationFields();
 const {
   MATERIALS,
   formatYarnMaterials,
@@ -135,12 +168,16 @@ const PROJECT_TYPE_ORDER = [
 
 let baseUrl = window.location.origin;
 let isAuthenticated = false;
+let requiresLegalAcceptance = false;
 let pendingWriteCount = 0;
 let yarnRefreshGeneration = 0;
 let yarnRefreshBusyGeneration = 0;
 const catalogController = createCatalogController({
   initialFilters: {},
   load: async ({ page }) => {
+    if (!canAccessPrivateData()) {
+      return { items: [], hasMore: false, total: 0 };
+    }
     const offset = Math.max(0, (page - 1) * 50);
     const payload = await api(`/api/patterns?limit=50&offset=${offset}`);
     const items = Array.isArray(payload) ? payload : (payload.items || payload.data || []);
@@ -171,6 +208,10 @@ const captchaTokens = { login: null, register: null, passwordReset: null };
 const captchaWidgetIds = { login: null, register: null, passwordReset: null };
 const captchaRenderPromises = { login: null, register: null, passwordReset: null };
 let turnstileScriptPromise = null;
+
+function canAccessPrivateData() {
+  return isAuthenticated && !requiresLegalAcceptance;
+}
 const apiClient = createApiClient({
   fetchImpl: window.fetch.bind(window),
   timeoutMs: REQUEST_TIMEOUT_MS,
@@ -289,10 +330,11 @@ function focusViewHeading(target) {
 }
 
 function setActiveView(requestedView, { focus = true } = {}) {
-  const protectedViews = new Set(["inventory", "matches"]);
-  const view = !isAuthenticated && protectedViews.has(requestedView)
-    ? "account"
-    : requestedView;
+  const view = resolveRequestedView({
+    requested: requestedView,
+    authenticated: isAuthenticated,
+    acceptanceRequired: requiresLegalAcceptance,
+  });
   const target = appViews.find((candidate) => candidate.dataset.view === view);
   if (!target) return;
 
@@ -359,8 +401,8 @@ function updateNavigationState() {
   viewButtons.forEach((button) => {
     const protectedView =
       button.classList.contains("app-nav__button") &&
-      ["inventory", "matches"].includes(button.dataset.viewTarget);
-    button.disabled = protectedView && !isAuthenticated;
+      ["inventory", "matches", "catalog"].includes(button.dataset.viewTarget);
+    button.disabled = protectedView && (!isAuthenticated || requiresLegalAcceptance);
   });
 }
 
@@ -417,6 +459,18 @@ async function api(path, options = {}) {
     if (isWriteRequest) pendingWriteCount -= 1;
   }
 }
+
+const legalAcceptanceController = createLegalAcceptanceController({
+  form: legalAcceptanceForm,
+  gate: legalAcceptanceGate,
+  message: legalAcceptanceMessage,
+  versionOutput: legalAcceptanceVersion,
+  request: (path, options) => api(path, options),
+  legalDocument: CURRENT_LEGAL_DOCUMENT,
+  onAccepted: async () => {
+    await refreshAuthSession();
+  },
+});
 
 function showMessage(container, message, kind = "status", action = null) {
   const element = document.createElement("div");
@@ -1247,7 +1301,7 @@ document.querySelectorAll("label").forEach((label) => {
 initializePasswordRevealControls(document);
 
 async function loadYarns() {
-  if (!isAuthenticated) return [];
+  if (!canAccessPrivateData()) return [];
   return api("/api/yarns");
 }
 
@@ -1303,12 +1357,12 @@ async function deleteYarn(id) {
 }
 
 async function loadMatches() {
-  if (!isAuthenticated) return [];
+  if (!canAccessPrivateData()) return [];
   return api("/api/matches");
 }
 
 async function loadPatternCatalog({ resume = false, onPage = null } = {}) {
-  const result = resume ? await catalogController.loadMore() : await catalogController.refresh();
+  await (resume ? catalogController.loadMore() : catalogController.refresh());
   const state = catalogController.getState();
   const progress = {
     items: state.items,
@@ -1582,8 +1636,25 @@ function renderPatternCatalog() {
       .setAttribute("aria-label", `Parametry włóczki: ${formatPatternName(pattern.name)}`);
     card.querySelector(".pattern-card__kicker").textContent =
       `${formatProjectType(pattern.projectType)} · ${formatPatternLanguage(pattern.sourceLanguage)}`;
-    card.querySelector(".pattern-card__description").textContent =
-      pattern.description;
+    const description = card.querySelector(".pattern-card__description");
+    description.textContent = pattern.description?.trim() || "";
+    description.hidden = !description.textContent;
+    if (pattern.officialSourceUrl) {
+      try {
+        const sourceUrl = new URL(pattern.officialSourceUrl, window.location.origin);
+        if (sourceUrl.protocol === "https:") {
+          const sourceLink = document.createElement("a");
+          sourceLink.className = "pattern-card__source";
+          sourceLink.textContent = "Oficjalne źródło";
+          sourceLink.href = sourceUrl.href;
+          sourceLink.target = "_blank";
+          sourceLink.rel = "noopener noreferrer";
+          description.after(sourceLink);
+        }
+      } catch {
+        // Nie renderuj nieprawidłowego adresu źródłowego.
+      }
+    }
     card.querySelector(".pattern-card__facts").textContent =
       formatPatternYarnFact(pattern, formatRatio);
 
@@ -1662,6 +1733,7 @@ function showPatternCatalogError(error) {
 }
 
 async function refreshPatternCatalog({ resume = false } = {}) {
+  if (!canAccessPrivateData()) return;
   if (resume) {
     patternCatalogNotice.hidden = false;
     showMessage(patternCatalogNotice, "Dokańczam pobieranie katalogu...", "loading");
@@ -1671,7 +1743,7 @@ async function refreshPatternCatalog({ resume = false } = {}) {
   try {
     const result = await loadPatternCatalog({
       resume,
-      onPage: (progress) => {
+      onPage: () => {
         renderPatternCatalog();
       },
     });
@@ -1889,6 +1961,10 @@ async function startPasswordRecovery() {
 function renderAuthState(payload) {
   const authenticated = Boolean(payload?.authenticated && payload.user);
   isAuthenticated = authenticated;
+  const legalState = authenticated
+    ? (payload.legal || { currentVersion: CURRENT_LEGAL_DOCUMENT.termsVersion, acceptedVersion: null, acceptanceRequired: true })
+    : { currentVersion: CURRENT_LEGAL_DOCUMENT.termsVersion, acceptedVersion: CURRENT_LEGAL_DOCUMENT.termsVersion, acceptanceRequired: false };
+  requiresLegalAcceptance = authenticated && legalAcceptanceController.setSessionLegalState(legalState);
   authForms.hidden = authenticated;
   authModeSwitch.hidden = authenticated;
   authLoggedIn.hidden = !authenticated;
@@ -1908,6 +1984,9 @@ function renderAuthState(payload) {
     deleteAccountDisclosure.open = false;
     onboardingDismissed = false;
     onboarding.hidden = true;
+    patternCatalog.replaceChildren();
+    patternCatalogSummary.textContent = "";
+    results.replaceChildren();
     if (["inventory", "matches"].includes(activeView)) {
       setActiveView("account", { focus: false });
     }
@@ -1930,7 +2009,17 @@ function renderAuthState(payload) {
   const profileEmail = profile.email || payload.user.email || "";
   authProfileSummary.textContent = profileEmail ? `Zalogowano jako: ${profileEmail}` : "Zalogowano jako:";
   authTitle.textContent = "Twoje konto";
-  authLead.textContent = "Profil i bezpieczeństwo Twojego prywatnego magazynu.";
+  authLead.textContent = requiresLegalAcceptance
+    ? "Potwierdź aktualny regulamin, aby wrócić do prywatnego magazynu."
+    : "Profil i bezpieczeństwo Twojego prywatnego magazynu.";
+  if (requiresLegalAcceptance) {
+    yarnList.replaceChildren();
+    summary.textContent = "Prywatny magazyn będzie dostępny po akceptacji aktualnych dokumentów.";
+    patternCatalog.replaceChildren();
+    patternCatalogSummary.textContent = "";
+    results.replaceChildren();
+    setActiveView("account", { focus: false });
+  }
 }
 
 async function refreshAuthSession() {
@@ -1941,7 +2030,7 @@ async function refreshAuthSession() {
   } catch (error) {
     renderAuthState({ authenticated: false });
     setAuthMessage(error.message, "error");
-    return;
+    return null;
   }
 
   renderAuthState(payload);
@@ -1951,10 +2040,15 @@ async function refreshAuthSession() {
   }
   if (!payload.authenticated) {
     setAuthMessage("Możesz założyć konto lub zalogować się.");
-    return;
+    return payload;
   }
 
   idleSessionController.start();
+
+  if (requiresLegalAcceptance) {
+    setActiveView("account", { focus: false });
+    return payload;
+  }
 
   if (preserveDraftAfterLogin) {
     const requiresSave = preservedDraftRequiresSave;
@@ -1987,6 +2081,7 @@ async function refreshAuthSession() {
       `${error.message} Nie udało się odświeżyć dopasowania. Spróbuj ponownie.`
     );
   }
+  return payload;
 }
 
 async function submitAuthForm(form, endpoint, successMessage) {
@@ -1995,10 +2090,20 @@ async function submitAuthForm(form, endpoint, successMessage) {
   try {
     const formData = new FormData(form);
     const kind = form === registerForm ? "register" : "login";
-    const body = buildAuthPayload(Object.fromEntries(formData.entries()), {
-      captchaEnabled: authCaptchaConfig.enabled,
-      captchaToken: captchaTokens[kind],
-    });
+    const formValues = Object.fromEntries(formData.entries());
+    const body = kind === "register"
+      ? buildRegistrationAuthPayload({
+        ...formValues,
+        termsAccepted: registerForm.elements.termsAccepted.checked,
+      }, {
+        captchaEnabled: authCaptchaConfig.enabled,
+        captchaToken: captchaTokens[kind],
+        legalDocument: CURRENT_LEGAL_DOCUMENT,
+      })
+      : buildAuthPayload(formValues, {
+        captchaEnabled: authCaptchaConfig.enabled,
+        captchaToken: captchaTokens[kind],
+      });
     const payload = await api(endpoint, {
       method: "POST",
       body: JSON.stringify(body),
@@ -2209,6 +2314,7 @@ deleteAccountForm.addEventListener("submit", async (event) => {
 });
 
 async function refresh() {
+  if (!canAccessPrivateData()) return;
   const refreshGeneration = ++yarnRefreshGeneration;
   const busyGeneration = ++yarnRefreshBusyGeneration;
   yarnList.setAttribute("aria-busy", "true");
@@ -2348,11 +2454,12 @@ backToCatalogFiltersBtn.addEventListener("click", () => {
 detectRuntimeMode()
   .then(async () => {
     const recoveryHandled = await startPasswordRecovery();
-    await Promise.all([
-      initializeCaptcha().catch((error) => setAuthMessage(error.message, "error")),
-      recoveryHandled ? Promise.resolve() : refreshAuthSession(),
-      recoveryHandled ? Promise.resolve() : refreshPatternCatalog().catch(showPatternCatalogError),
-    ]);
+    await initializeCaptcha().catch((error) => setAuthMessage(error.message, "error"));
+    if (recoveryHandled) return;
+    const session = await refreshAuthSession();
+    if (session?.authenticated && canAccessPrivateData()) {
+      await refreshPatternCatalog().catch(showPatternCatalogError);
+    }
   })
   .catch((error) => {
     showMessage(results, error.message, "error");

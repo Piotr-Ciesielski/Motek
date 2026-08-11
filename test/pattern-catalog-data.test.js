@@ -109,3 +109,16 @@ test("materiały dopasowania pochodzą ze wspólnej listy", () => {
   );
   assert.equal(matchingMaterials.every((material) => allowed.has(material)), true);
 });
+
+test("import katalogu publikuje wyłącznie neutralne metadane audytu", () => {
+  records.forEach((record) => {
+    assert.equal(Object.hasOwn(record, "evidence"), false);
+    assert.equal(Object.hasOwn(record, "page_count"), false);
+    assert.equal(Object.hasOwn(record, "text_path"), false);
+    assert.doesNotMatch(record.description ?? "", /Instrukcja wykonania/i);
+    assert.ok(["pending_review", "published", "hidden"].includes(record.publication_status));
+    assert.equal(record.content_audit_version, "1.0");
+    assert.equal(record.content_audited_at, "2026-08-09T00:00:00Z");
+    assert.equal(Object.hasOwn(record, "official_source_url"), true);
+  });
+});

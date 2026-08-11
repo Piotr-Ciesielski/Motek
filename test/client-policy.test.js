@@ -20,8 +20,35 @@ const {
   loadPaginatedItems,
   loadNextPaginatedPage,
   shouldRetryRead,
+  resolveRequestedView,
   yarnsHaveSameValues,
 } = require("../client-policy");
+
+test("stara akceptacja kieruje chronione widoki do Konta", () => {
+  assert.equal(resolveRequestedView({
+    requested: "catalog",
+    authenticated: true,
+    acceptanceRequired: true,
+  }), "account");
+  assert.equal(resolveRequestedView({
+    requested: "inventory",
+    authenticated: true,
+    acceptanceRequired: true,
+  }), "account");
+  assert.equal(resolveRequestedView({
+    requested: "account",
+    authenticated: true,
+    acceptanceRequired: true,
+  }), "account");
+});
+
+test("anonimowy użytkownik nie omija logowania przez katalog", () => {
+  assert.equal(resolveRequestedView({
+    requested: "catalog",
+    authenticated: false,
+    acceptanceRequired: false,
+  }), "account");
+});
 
 test("preferuje jawny nagłówek wersji magazynu nad ETag", () => {
   const headers = new Map([

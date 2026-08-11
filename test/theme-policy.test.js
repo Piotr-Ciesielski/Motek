@@ -2,6 +2,7 @@ const test = require("node:test");
 const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const path = require("node:path");
+const { JSDOM } = require("jsdom");
 const {
   DEFAULT_THEME,
   THEME_STORAGE_KEY,
@@ -11,6 +12,7 @@ const {
   getNextTheme,
   getThemeToggleState,
   applyTheme,
+  bindThemeToggle,
 } = require("../theme-policy");
 
 test("motyw domyślny jest jasny, a nieznana wartość wraca do jasnego", () => {
@@ -72,6 +74,34 @@ test("applyTheme ustawia data-theme i color-scheme na dokumencie", () => {
   assert.equal(applyTheme("dark", documentLike), "dark");
   assert.equal(documentLike.documentElement.dataset.theme, "dark");
   assert.equal(documentLike.documentElement.style.colorScheme, "dark");
+});
+
+test("bindThemeToggle aktualizuje motyw i stan przycisku", () => {
+  const dom = new JSDOM('<html><body><button id="themeToggle"></button></body></html>');
+  const values = new Map();
+  const storage = {
+    getItem(key) {
+      return values.get(key) ?? null;
+    },
+    setItem(key, value) {
+      values.set(key, value);
+    },
+  };
+
+  const documentLike = dom.window.document;
+  const toggle = documentLike.querySelector("#themeToggle");
+  const originalStorage = globalThis.window;
+  globalThis.window = { localStorage: storage };
+  try {
+    bindThemeToggle(documentLike);
+  } finally {
+    globalThis.window = originalStorage;
+  }
+
+  assert.equal(toggle.getAttribute("aria-label"), "Włącz tryb ciemny");
+  toggle.click();
+  assert.equal(documentLike.documentElement.dataset.theme, "dark");
+  assert.equal(toggle.getAttribute("aria-pressed"), "true");
 });
 
 test("arkusz zawiera tokeny obu zatwierdzonych palet", () => {

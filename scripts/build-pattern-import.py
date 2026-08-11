@@ -9,6 +9,7 @@ CANDIDATES_PATH = PROJECT_DIR / "tmp" / "pdfs" / "pattern-candidates.json"
 OVERRIDES_PATH = PROJECT_DIR / "data" / "pattern-manual-overrides.json"
 EXCLUSIONS_PATH = PROJECT_DIR / "data" / "pattern-catalog-exclusions.json"
 DEMO_PATH = PROJECT_DIR / "data" / "pattern-demo.json"
+AUDIT_PATH = PROJECT_DIR / "data" / "pattern-content-audit.json"
 OUTPUT_PATH = PROJECT_DIR / "data" / "patterns-import.json"
 
 DATABASE_FIELDS = (
@@ -22,6 +23,10 @@ DATABASE_FIELDS = (
     "source_filename",
     "source_language",
     "needs_review",
+    "publication_status",
+    "content_audit_version",
+    "content_audited_at",
+    "official_source_url",
 )
 
 ALLOWED_LANGUAGES = {"pl", "en", "mixed", "unknown"}
@@ -162,8 +167,8 @@ def resolve_project_type(candidate: dict, override: dict) -> str:
     final_name = override.get("name", candidate.get("name", ""))
     final_description = override.get(
         "description",
-        candidate.get("description", ""),
-    )
+        candidate.get("description") or "",
+    ) or ""
     return infer_project_type(final_name, final_description)[0]
 
 
@@ -176,9 +181,10 @@ def validate_record(record: dict) -> list[str]:
     elif len(record["name"].strip()) > 200:
         errors.append(f"{source}: nazwa przekracza 200 znaków")
 
-    if not isinstance(record.get("description"), str) or not record["description"].strip():
-        errors.append(f"{source}: brak opisu")
-    elif len(record["description"].strip()) > 1000:
+    description = record.get("description")
+    if description is not None and (
+        not isinstance(description, str) or len(description.strip()) > 1000
+    ):
         errors.append(f"{source}: opis przekracza 1000 znaków")
 
     if record.get("project_type") not in ALLOWED_PROJECT_TYPES:
@@ -205,6 +211,13 @@ def validate_record(record: dict) -> list[str]:
 
     if not isinstance(record.get("needs_review"), bool):
         errors.append(f"{source}: needs_review musi mieć wartość true albo false")
+
+    if record.get("publication_status") not in {"pending_review", "published", "hidden"}:
+        errors.append(f"{source}: nieobsługiwany status publikacji")
+    if record.get("publication_status") == "published" and (
+        not record.get("content_audit_version") or not record.get("content_audited_at")
+    ):
+        errors.append(f"{source}: published wymaga metadanych audytu")
 
     requirements_are_complete = bool(requirements) and all(
         isinstance(requirement, dict)
@@ -238,9 +251,19 @@ def main() -> None:
     overrides = load_json(OVERRIDES_PATH)
     exclusions = load_json(EXCLUSIONS_PATH)["exclusions"]
     demo_document = load_json(DEMO_PATH)
+    audit_document = load_json(AUDIT_PATH)
+    audit_records = audit_document["records"]
+    audit_by_filename = {item["source_filename"]: item for item in audit_records}
     candidates = candidate_document["candidates"]
     demo_records = demo_document["records"]
     candidate_filenames = {candidate["source_filename"] for candidate in candidates}
+    all_filenames = (
+        (candidate_filenames - set(exclusions))
+        | {record["source_filename"] for record in demo_records}
+    )
+    missing_audit = sorted(all_filenames - set(audit_by_filename))
+    if missing_audit:
+        raise ValueError("Brak decyzji audytu dla: " + ", ".join(missing_audit))
 
     unknown_overrides = sorted(set(overrides) - candidate_filenames)
     if unknown_overrides:
@@ -297,6 +320,12 @@ def main() -> None:
             )
             for field in DATABASE_FIELDS
         }
+        audit_record = audit_by_filename[source_filename]
+        record["description"] = merged.get("description") if audit_record["source_kind"] == "synthetic" else None
+        record["publication_status"] = audit_record["status"]
+        record["content_audit_version"] = audit_document["audit_version"]
+        record["content_audited_at"] = audit_record.get("audited_at")
+        record["official_source_url"] = audit_record.get("official_source_url")
         record["matching_requirements"] = override.get(
             "matching_requirements",
             {"version": 2, "variants": []},
@@ -319,6 +348,11 @@ def main() -> None:
             **demo_record,
             "matching_requirements": {"version": 2, "variants": []},
         }
+        audit_record = audit_by_filename[demo_record["source_filename"]]
+        demo_record["publication_status"] = audit_record["status"]
+        demo_record["content_audit_version"] = audit_document["audit_version"]
+        demo_record["content_audited_at"] = audit_record.get("audited_at")
+        demo_record["official_source_url"] = audit_record.get("official_source_url")
         validation_errors.extend(validate_record(demo_record))
         records.append(demo_record)
         audit.append(

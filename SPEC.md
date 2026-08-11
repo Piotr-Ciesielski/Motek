@@ -28,7 +28,9 @@ prywatnym magazynie użytkownika.
 
 Użytkownik może:
 
-- założyć konto i zalogować się,
+- ukończyć rejestrację wyłącznie na podstawie jednorazowego zaproszenia,
+- zaakceptować aktualną wersję regulaminu i otrzymać osobno informację o prywatności,
+- zalogować się i korzystać z konta,
 - prowadzić prywatny magazyn motków,
 - przeglądać katalog wzorów,
 - wyszukiwać wzory i łączyć filtry statusu, języka, typu projektu oraz materiału,
@@ -43,16 +45,24 @@ główną funkcją jest świadome wykorzystanie posiadanego zapasu włóczek.
 
 ## 3. Aktualny przepływ użytkownika
 
-1. Użytkownik zakłada konto albo się loguje.
-2. Dodaje motki, podając nazwę, kolor, jeden lub kilka materiałów, klasę
+1. Operator tworzy jednorazowe zaproszenie dla znormalizowanego adresu e-mail.
+2. Użytkownik rejestruje konto z linku zaproszenia i akceptuje aktualny regulamin.
+3. Użytkownik dodaje motki, podając nazwę, kolor, jeden lub kilka materiałów, klasę
    grubości, długość i wagę.
-3. Aplikacja zapisuje magazyn prywatnie w Supabase.
-4. Użytkownik przegląda katalog wzorów.
-5. Uruchamia dopasowanie.
-6. Backend zwraca tylko potwierdzone warianty, które spełniają wymagania.
+4. Aplikacja zapisuje magazyn prywatnie w Supabase.
+5. Użytkownik przegląda katalog wzorów.
+6. Uruchamia dopasowanie.
+7. Backend zwraca tylko potwierdzone warianty, które spełniają wymagania.
 
 Niepełne dane wzoru są widoczne w katalogu, ale nie są używane jako
 potwierdzone rekomendacje. System nie zgaduje brakujących metrów ani gramów.
+Konto bez aktualnej akceptacji zachowuje dostęp do sesji, wylogowania i usunięcia
+konta oraz ekranu ponownej akceptacji, ale nie może czytać ani zmieniać
+prywatnego magazynu, dopasowań ani katalogu wzorów.
+
+Aktualny dokument prawny jest dostępny bez logowania pod ścieżką
+`/informacje-prawne`. Zawiera wersję regulaminu, osobną informację o
+prywatności, sekcję praw autorskich i notę copyright.
 
 ## 4. Architektura
 
@@ -108,6 +118,12 @@ nie ma lokalnego trybu SQLite ani fallbacku do pliku lokalnego.
 - właściciel nowej włóczki wynika z uwierzytelnionej sesji, nie z formularza,
 - dane wejściowe mają limity długości i wartości,
 - logowanie i rejestracja ograniczają serię nieudanych prób per adres klienta i e-mail,
+- zaproszenia są jednorazowe, wygasające i odwoływalne, a baza przechowuje wyłącznie
+  SHA-256 tokenu,
+- aktualna akceptacja regulaminu jest wersjonowana i egzekwowana przez backend, RLS
+  oraz uprzywilejowane RPC,
+- usunięcie konta kaskadowo usuwa profil, akceptacje i dane prywatne, ale zachowuje
+  zużyte zaproszenie oraz ograniczony log rejestracyjny bez identyfikatora użytkownika,
 - odpowiedzi API nie zawierają sekretów ani tokenów,
 - `.env` i lokalny folder `Wzory` nie trafiają do Git.
 
@@ -152,6 +168,21 @@ dodatkowe, kontrastowe lub alternatywne. `matching_requirements` w wersji 2
 zawiera potwierdzone zużycie, rozmiary, warianty włóczek, role, reguły kolorów
 i liczbę nitek używane przez ranking.
 
+### 6.4 Rejestracja na zaproszenie i akceptacja dokumentów prawnych
+
+Rejestracja wymaga ważnego zaproszenia przypisanego do znormalizowanego adresu
+e-mail. System przechowuje w Supabase wyłącznie skrót tokenu zaproszenia;
+rezerwacja i finalizacja tworzą próbę rejestracji, a finalizacja oznacza
+zaproszenie jako zużyte i zapisuje akceptację aktualnego regulaminu oraz
+przekazanie informacji o prywatności.
+
+Sesja bez aktualnej akceptacji regulaminu pozostaje uwierzytelniona, ale dostęp
+do prywatnego profilu, magazynu włóczek, dopasowań i katalogu wzorów jest
+zablokowany do czasu zaakceptowania bieżącej wersji. Publiczna pozostaje tylko
+strona informacji prawnych. Wyjątkiem są `POST /api/auth/logout` i
+`DELETE /api/account`: użytkownik może zawsze zakończyć sesję albo usunąć konto;
+usunięcie wymaga aktywnej sesji, poprawnego hasła i frazy `USUŃ KONTO`.
+
 ## 7. Zasada dopasowania
 
 Wzór może pojawić się w wynikach tylko wtedy, gdy:
@@ -186,6 +217,7 @@ użytkownika. Katalog aplikacji może zawierać do 300 wzorów.
 
 | Endpoint | Znaczenie |
 | --- | --- |
+| `GET /informacje-prawne` | Publiczna strona bieżących dokumentów prawnych |
 | `GET /health` | Kontrola stanu serwera |
 | `GET /api/auth/session` | Sprawdzenie aktywnej sesji |
 | `POST /api/auth/register` | Rejestracja użytkownika |
@@ -196,6 +228,7 @@ użytkownika. Katalog aplikacji może zawierać do 300 wzorów.
 | `POST /api/auth/password` | Ustawienie nowego hasła |
 | `POST /api/auth/logout` | Wylogowanie |
 | `POST /api/auth/activity` | Odświeżenie aktywności bieżącej sesji |
+| `POST /api/legal/acceptance` | Zapis akceptacji bieżącej wersji regulaminu |
 | `DELETE /api/account` | Bezpowrotne usunięcie konta, profilu i własnych włóczek |
 | `GET /api/yarns` | Pobranie własnego magazynu |
 | `POST /api/yarns` | Dodanie włóczki |
@@ -204,9 +237,10 @@ użytkownika. Katalog aplikacji może zawierać do 300 wzorów.
 | `GET /api/patterns` | Pobranie katalogu wzorów |
 | `GET /api/matches` | Pobranie wykonalnych dopasowań |
 
-Endpointy magazynu i rankingu wymagają zalogowanej sesji. `GET /api/patterns`
-jest publicznym odczytem katalogu, ale sekret Supabase nigdy nie trafia do
-frontendu.
+Endpointy magazynu, katalogu i rankingu wymagają zalogowanej sesji z aktualną
+akceptacją regulaminu. `POST /api/legal/acceptance` wymaga zalogowanej sesji,
+przyjmuje bieżącą wersję regulaminu i zapisuje również przekazanie bieżącej
+wersji informacji o prywatności. Sekret Supabase nigdy nie trafia do frontendu.
 
 ## 9. Katalog wzorów i import
 
@@ -291,6 +325,11 @@ brak refresh tokenu lub nieważna sesja kończy się kontrolowanym błędem 400.
 Następnie atomowo rezerwuje grant recovery. Rezerwacja jest zwalniana, jeśli
 `updateUser` zwróci błąd; po udanej zmianie grant jest zużywany, cookies są
 czyszczone, a pozostałe sesje użytkownika są globalnie unieważniane.
+Po wymianie kodu recovery backend tworzy w prywatnym Supabase jednorazowy grant,
+którego cookie zawiera podpisany identyfikator JTI. Po udanym `updateUser` grant
+jest atomowo zużywany, wszystkie pozostałe sesje są unieważniane, a cookies są
+czyszczone. Błąd zużycia grantu nie kasuje dowodu recovery, dzięki czemu można
+bezpiecznie ponowić próbę.
 
 Kontrola danych wzorów bez wykonywania importu:
 
@@ -362,3 +401,8 @@ Grafika w Magazynie zachowuje pionową kompozycję prototypów przez
 `object-fit: cover` i `object-position: right center`; Dopasowanie pozostaje
 szerokim hero. Magazyn i Dopasowanie pokazują same grafiki, bez tekstowych
 nakładek i ramek.
+# Kontrole bezpieczeństwa i ograniczenia planu Free
+
+Backend jest źródłem prawdy dla sesji, recovery, limitów i autoryzacji. Bezpośrednie mutacje tabeli `yarns` są odbierane użytkownikom, a zapis odbywa się przez kontrolowane RPC. Obrazy WAF i Prometheusa w stagingu są przypięte digestami SHA-256. Brak funkcji Supabase „Leaked Password Protection” jest znanym ograniczeniem planu Free; nie wykonujemy upgrade'u Pro.
+
+Po każdej zmianie bezpieczeństwa należy uruchomić `npm run lint`, `npm run format:check`, `npm run check`, `npm audit --json` oraz dostępne testy pgTAP. Aktualny status audytu znajduje się w `docs/operations/security-audit-status-2026-08-07.md`, a plan prac w `docs/superpowers/plans/2026-08-07-security-hardening-free-plan.md`.

@@ -85,7 +85,7 @@ test("auth forms never fall back to GET query strings", () => {
 test("captcha initializes even when the page opens from password recovery", () => {
   assert.match(
     appJs,
-    /const recoveryHandled = await startPasswordRecovery\(\);[\s\S]*await Promise\.all\(\[[\s\S]*initializeCaptcha\(\)/,
+    /const recoveryHandled = await startPasswordRecovery\(\);[\s\S]*await initializeCaptcha\(\)/,
   );
   assert.doesNotMatch(appJs, /const recoveryHandled = await startPasswordRecovery\(\);\s*if \(recoveryHandled\) return;/);
 });
@@ -147,10 +147,10 @@ test("hero copy stays focused and uses the Dopasowanie heading type", () => {
 
   assert.equal(document.querySelector("#inventoryView .inventory-heading .eyebrow"), null);
   assert.equal(document.querySelector("#inventoryView .inventory-heading > div:first-child > p:not(.eyebrow)"), null);
-  assert.equal(document.querySelector("#matchesView .matches-hero__copy .eyebrow"), null);
-  assert.equal(document.querySelector("#matchesView .matches-hero__copy .page-heading > div > p:not(.eyebrow)"), null);
-  assert.equal(document.querySelector("#catalogView .catalog-hero__copy .eyebrow"), null);
-  assert.equal(document.querySelector("#catalogView .catalog-hero__copy > p:not(.eyebrow)"), null);
+  assert.equal(document.querySelector("#matchesView .matches-hero__copy .eyebrow")?.textContent, "Pomysły z Twojego zapasu");
+  assert.equal(document.querySelector("#matchesView .matches-hero__copy .page-heading > div > p:not(.eyebrow)")?.textContent, "Ustaw kryteria i zobacz pasujące wzory na żywo.");
+  assert.equal(document.querySelector("#catalogView .catalog-hero__copy .eyebrow")?.textContent, "Biblioteka inspiracji");
+  assert.equal(document.querySelector("#catalogView .catalog-hero__copy > p:not(.eyebrow)")?.textContent, "Znajdź wzór, który pasuje do Twojej włóczki i kolejnego projektu.");
 
   assert.doesNotMatch(
     stylesCss,

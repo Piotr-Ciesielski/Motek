@@ -37,8 +37,12 @@ function loadApp(patterns = []) {
     const pathname = new URL(input, window.location.href).pathname;
     const payload = pathname === '/api/config'
       ? { captcha: { enabled: false } }
-      : pathname === '/api/auth/session'
-        ? { authenticated: false, user: null }
+        : pathname === '/api/auth/session'
+        ? {
+          authenticated: true,
+          user: { id: 'catalog-user', email: 'catalog@example.test' },
+          legal: { currentVersion: '1.0', acceptedVersion: '1.0', acceptanceRequired: false },
+        }
         : { items: patterns, total: patterns.length };
     return new Response(JSON.stringify(payload), {
       status: 200,

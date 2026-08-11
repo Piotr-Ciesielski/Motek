@@ -16,6 +16,11 @@ npm start
 
 Aplikacja: `http://127.0.0.1:3001`.
 
+Publiczne informacje prawne są dostępne bez logowania pod adresem
+`http://127.0.0.1:3001/informacje-prawne`. Strona pokazuje bieżącą wersję
+regulaminu, informację o prywatności oraz prawa autorskie i pozwala wrócić do
+aplikacji.
+
 Minimalne zmienne `.env`:
 
 ```dotenv
@@ -45,7 +50,29 @@ npm run format:check      # Prettier
 npm run railway:check     # sprawdzenie konfiguracji Railway
 npm run regression:smoke  # szybki test wdrożenia
 npm run regression:full   # pełna regresja stagingu
+npm run invite -- create --email osoba@example.com --expires-at 2030-01-01T00:00:00Z
+npm run invite -- revoke --id <id-zaproszenia>
+npm run invite -- purge
 ```
+
+### Zaproszenia operatora
+
+Narzędzie operatora tworzy zaproszenie, odwołuje je albo uruchamia czyszczenie starych logów bezpieczeństwa. Przy tworzeniu zapisuje w bazie wyłącznie hash tokenu; pełny link jest wypisywany tylko raz i nie jest wysyłany automatycznie e-mailem. Do działania wymagane są `SUPABASE_URL`, `SUPABASE_SECRET_KEY` oraz `APP_ORIGIN` w lokalnym `.env`.
+
+Nie uruchamiaj komendy `create` na środowisku zdalnym bez świadomej decyzji operatora. Surowego tokenu nie da się później odzyskać.
+
+### Regulamin i dostęp do konta
+
+Rejestracja działa wyłącznie z ważnym, jednorazowym zaproszeniem. Formularz
+wymaga świadomego zaznaczenia akceptacji bieżącej wersji regulaminu; osobno
+potwierdza przekazanie informacji o prywatności. Backend ponownie sprawdza
+zaproszenie, wersje dokumentów i akceptację, więc samo zmodyfikowanie
+formularza w przeglądarce nie wystarcza do utworzenia konta.
+
+Jeżeli regulamin zostanie zaktualizowany, zalogowana sesja pozostaje dostępna
+do wyświetlenia informacji prawnych, ponownej akceptacji, wylogowania i
+usunięcia konta. Magazyn włóczek, dopasowania i katalog wzorów pozostają
+zablokowane do czasu zaakceptowania bieżącej wersji.
 
 ## Środowiska i wdrożenia
 
@@ -97,3 +124,13 @@ Sesja użytkownika wygasa po 2 godzinach bezczynności (`AUTH_IDLE_TIMEOUT_SECON
 - [Specyfikacja](SPEC.md)
 - [Konfiguracja stagingu](deploy/staging/README.md)
 - [Historia zmian](CHANGELOG.txt)
+# Stan utwardzenia bezpieczeństwa (2026-08-07)
+
+Audyt restrykcyjny został wykonany z założeniem Supabase Free. Repozytorium zawiera migrację odtwarzającą ACL prywatnego licznika włóczek, wymusza podpisane cookie bezczynności, ogranicza publiczne endpointy i chroni zmianę hasła po przepływie recovery. Ochrona przed wyciekłymi hasłami pozostaje niedostępna na planie Free i nie jest zastępowana płatnym upgrade'em.
+
+Grant recovery jest krótkotrwały, podpisany i jednorazowy: jego hash oraz
+znacznik zużycia są przechowywane w prywatnej tabeli Supabase, a po zmianie
+hasła backend unieważnia pozostałe sesje użytkownika. Migracja recovery nie
+jest wykonywana automatycznie przy starcie aplikacji.
+
+Przed wdrożeniem produkcyjnym należy wykonać migracje na kontrolowanym środowisku, uruchomić testy pgTAP oraz potwierdzić konfigurację proxy i limitów na Railway.
