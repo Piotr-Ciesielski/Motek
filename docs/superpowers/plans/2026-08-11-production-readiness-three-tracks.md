@@ -189,6 +189,29 @@ rekordów.
 
 **Kryterium:** decyzja „worker potrzebny” albo „worker odłożony” wynika z pomiaru, a nie z założenia.
 
+## Punkt kontrolny sesji — 2026-08-11
+
+Na dziś przyjęto, że obecna architektura Motka jest właściwa dla małej,
+prywatnej grupy i obecnych planów Supabase Free, Railway Hobby oraz Cloudflare
+Free. Nie dodajemy Redis, kolejki, workera, Supabase Edge Functions, Cloudflare
+Workers ani płatnego systemu monitoringu bez konkretnego pomiaru, incydentu lub
+wymagania prawnego.
+
+Utrzymujemy jedną replikę Railway, dane użytkowników w Supabase, ochronę
+brzegową Cloudflare oraz lokalne ograniczenia aplikacji. Przed produkcją trzeba
+jeszcze udokumentować ręczny backup/odtworzenie Supabase, ponieważ plan Free nie
+zapewnia automatycznych backupów, oraz potwierdzić, że origin Railway nie omija
+Cloudflare.
+
+Stan końcowy dnia:
+
+- plan trzech ścieżek jest zapisany;
+- nie wykonano żadnej zdalnej migracji ani wdrożenia produkcyjnego;
+- `npm run legal:check` nadal blokuje publikację z powodu niezweryfikowanych
+  dostawców;
+- następny krok: ścieżka A1 — zebranie dowodów produkcyjnych Supabase,
+  Railway i Cloudflare.
+
 ---
 
 ## Kolejność i wykorzystanie zespołu
