@@ -111,11 +111,12 @@ async function runAuthenticatedRegression(options) {
       method: 'POST',
       body: { email, password, captchaToken },
     });
+    const cookiesAfterLogin = Object.keys(session.getCookies()).sort().join(',');
 
     const authenticated = await requireJson(session, '/api/auth/session');
     requireCondition(
       authenticated.body?.authenticated === true,
-      `Authenticated session was not established (${summarizeSessionState(authenticated.body)}; cookies=${Object.keys(session.getCookies()).sort().join(',')}; setCookies=${summarizeSetCookieHeaders(login.response.headers)})`,
+      `Authenticated session was not established (${summarizeSessionState(authenticated.body)}; cookiesBeforeSession=${cookiesAfterLogin}; cookiesAfterSession=${Object.keys(session.getCookies()).sort().join(',')}; setCookies=${summarizeSetCookieHeaders(login.response.headers)})`,
     );
 
     if (authenticated.body?.legal?.acceptanceRequired) {
