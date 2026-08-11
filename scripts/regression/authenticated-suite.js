@@ -93,7 +93,7 @@ async function runAuthenticatedRegression(options) {
   let logoutError = null;
 
   try {
-    await requireJson(session, '/api/auth/login', {
+    const login = await requireJson(session, '/api/auth/login', {
       method: 'POST',
       body: { email, password, captchaToken },
     });
@@ -101,7 +101,7 @@ async function runAuthenticatedRegression(options) {
     const authenticated = await requireJson(session, '/api/auth/session');
     requireCondition(
       authenticated.body?.authenticated === true,
-      `Authenticated session was not established (${summarizeSessionState(authenticated.body)}; cookies=${Object.keys(session.getCookies()).sort().join(',')})`,
+      `Authenticated session was not established (${summarizeSessionState(authenticated.body)}; cookies=${Object.keys(session.getCookies()).sort().join(',')}; setCookieHeader=${Boolean(login.response.headers.get('set-cookie'))}; setCookieArray=${typeof login.response.headers.getSetCookie === 'function' ? login.response.headers.getSetCookie().length : 'unsupported'})`,
     );
 
     if (authenticated.body?.legal?.acceptanceRequired) {
