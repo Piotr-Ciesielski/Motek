@@ -241,3 +241,14 @@ test("mobile catalog exposes the filter disclosure and shortens the account hero
     /@media \(max-width: 640px\)[\s\S]*?\.account-view \.auth-visual \{[\s\S]*?min-height: 220px;/,
   );
 });
+
+test("mobile logged-out account does not let disabled navigation cover the auth form", () => {
+  assert.match(
+    appJs,
+    /document\.body\.classList\.toggle\("auth-logged-out", !authenticated\)/,
+  );
+  assert.match(
+    stylesCss,
+    /@media \(max-width: 640px\)[\s\S]*?\.auth-logged-out \.app-nav \{[\s\S]*?display: none;/,
+  );
+});

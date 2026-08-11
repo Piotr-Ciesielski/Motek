@@ -1893,6 +1893,7 @@ function renderAuthState(payload) {
   authLoggedIn.hidden = !authenticated;
   authUser.hidden = !authenticated;
   accountView.classList.toggle("is-authenticated", authenticated);
+  document.body.classList.toggle("auth-logged-out", !authenticated);
   addYarnBtn.disabled = !authenticated;
   inventoryAddYarnBtn.disabled = !authenticated;
   findBtn.disabled = !authenticated;

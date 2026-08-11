@@ -1653,6 +1653,10 @@ body::before {
     font-size: 0.7rem;
   }
 
+  .auth-logged-out .app-nav {
+    display: none;
+  }
+
   .header-user {
     max-width: 14ch;
   }
