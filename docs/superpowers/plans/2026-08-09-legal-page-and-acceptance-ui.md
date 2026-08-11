@@ -8,7 +8,7 @@
 
 **Tech Stack:** HTML5, CSS3, vanilla JavaScript UMD/CommonJS, JSDOM, Node.js 24 `node:test`, istniejący serwer statyczny Motka.
 
-> **Stan po sesji 2026-08-11:** Zadania 1–6 są ukończone i zapisane na GitHubie. Dokumentacja z Task 7 została uzupełniona. Kontrole kodu przechodzą; do dokończenia pozostaje test Supabase DB oraz regresja smoke zależna od lokalnego Docker/Supabase i konfiguracji środowiska.
+> **Stan po sesji 2026-08-11:** Zadania 1–6 są ukończone i zapisane na GitHubie. Dokumentacja z Task 7 została uzupełniona. Kontrole aplikacji i test Supabase DB przechodzą; do dokończenia pozostaje regresja smoke wymagająca adresu wdrożonego staging/production.
 
 ## Global Constraints
 
@@ -397,13 +397,13 @@ git commit -m "ui: style legal information for screen and print"
 
 README opisuje stronę prawną i zaproszenia. SPEC opisuje session payload, endpoint akceptacji oraz blokadę widoków. CHANGELOG opisuje widoczny rezultat dla użytkownika.
 
-- [ ] **Step 2: Uruchomić pełny zestaw kontroli**
+- [x] **Step 2: Uruchomić pełny zestaw kontroli**
 
 Run: `npm run check`; `npm run lint`; `npm run format:check`; `npm run test:db`; `git diff --check`
 
 Expected: PASS.
 
-Wynik częściowy: `npm run check` (339/339), lint, formatowanie i `git diff --check` przechodzą. `npm run test:db` nie uruchomił kontenerów Supabase i został przerwany po timeoutcie.
+Wynik: `npm run check` (339/339), lint, formatowanie i `git diff --check` przechodzą. Lokalny Supabase został zresetowany, a `supabase test db --local` przechodzi: 8 plików, 219/219 testów. Test publikacji wzorów został dopasowany do obowiązkowego dokumentu `matching_requirements` v2 oraz rzeczywistych constraintów migracji.
 
 - [ ] **Step 3: Uruchomić publiczną regresję lokalną**
 
@@ -411,7 +411,7 @@ Run: `npm start`, a w drugim procesie `npm run regression:smoke`.
 
 Expected: strona główna i `/informacje-prawne` zwracają 200, mają nagłówki bezpieczeństwa i właściwą wersję dokumentu.
 
-Wynik: `npm run regression:smoke` zatrzymał się przed żądaniami z powodu braku `MOTEK_BASE_URL`.
+Wynik: `npm run regression:smoke` zatrzymał się przed żądaniami z powodu braku `MOTEK_BASE_URL`. Skrypt wymaga środowiska `staging` albo `production`; lokalny `.env` ma `DEPLOYMENT_ENV=local`, więc bez adresu wdrożenia nie wykonuje się bezpiecznie na tej maszynie.
 
 - [x] **Step 4: Sprawdzić stan bramki produkcyjnej**
 
@@ -427,13 +427,13 @@ Run: `git status --short`; `git diff --stat`
 
 Expected: wcześniejsze niezwiązane zmiany użytkownika pozostają zachowane poza checkpointami tego planu.
 
-Wynik: do checkpointu należą wyłącznie `README.md`, `SPEC.md` i `CHANGELOG.txt`; zmiany `.gitignore`, `design-qa.md` i migracja SQL pozostają poza zakresem.
+Wynik: do bieżącego checkpointu należą wyłącznie poprawiony test SQL i aktualizacja planu; zmiany `.gitignore`, `design-qa.md` i migracja SQL pozostają poza zakresem.
 
-- [ ] **Step 6: Utworzyć checkpoint dokumentacji**
+- [x] **Step 6: Utworzyć checkpoint dokumentacji i poprawki testu**
 
 ```powershell
-git add README.md SPEC.md CHANGELOG.txt
-git commit -m "docs: document legal information experience"
+git add supabase/tests/database/pattern_publication.test.sql docs/superpowers/plans/2026-08-09-legal-page-and-acceptance-ui.md
+git commit -m "test: align pattern publication database checks"
 ```
 
 ## Completion Gate
