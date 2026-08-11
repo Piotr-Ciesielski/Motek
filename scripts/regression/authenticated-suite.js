@@ -8,6 +8,21 @@ function requireCondition(condition, message) {
   if (!condition) throw new Error(message);
 }
 
+function summarizeSessionState(body) {
+  return JSON.stringify({
+    authenticated: body?.authenticated === true,
+    userPresent: Boolean(body?.user),
+    profilePresent: Boolean(body?.profile),
+    legal: body?.legal
+      ? {
+        currentVersion: body.legal.currentVersion || null,
+        acceptedVersion: body.legal.acceptedVersion || null,
+        acceptanceRequired: body.legal.acceptanceRequired === true,
+      }
+      : null,
+  });
+}
+
 function validateInputs({ baseUrl, email, password, captchaToken, runId }) {
   requireCondition(typeof baseUrl === 'string' && baseUrl.trim(), 'Regression base URL is required');
   requireCondition(typeof email === 'string' && email.trim(), 'Regression email is required');
@@ -84,7 +99,10 @@ async function runAuthenticatedRegression(options) {
     });
 
     const authenticated = await requireJson(session, '/api/auth/session');
-    requireCondition(authenticated.body?.authenticated === true, 'Authenticated session was not established');
+    requireCondition(
+      authenticated.body?.authenticated === true,
+      `Authenticated session was not established (${summarizeSessionState(authenticated.body)})`,
+    );
 
     if (authenticated.body?.legal?.acceptanceRequired) {
       const currentVersion = authenticated.body.legal.currentVersion;
