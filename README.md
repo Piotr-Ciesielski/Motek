@@ -120,6 +120,7 @@ Sesja użytkownika wygasa po 2 godzinach bezczynności (`AUTH_IDLE_TIMEOUT_SECON
 - [Katalog wzorów](docs/PATTERN-CATALOG.md)
 - [Runbook Railway/Cloudflare i regresji](docs/operations/post-deploy-regression.md)
 - [Zweryfikowany stan stagingu z 2026-08-07](docs/operations/staging-status-2026-08-07.md)
+- [Stan gotowości prawnej z 2026-08-11](docs/operations/legal-readiness-status-2026-08-11.md)
 - [Historia zmian](CHANGELOG.txt)
 # Stan utwardzenia bezpieczeństwa (2026-08-07)
 
