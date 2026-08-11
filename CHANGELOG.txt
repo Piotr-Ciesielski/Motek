@@ -6,6 +6,9 @@ Następny pakiet - rejestracja na zaproszenie i dostęp prawny
 - Aktualna akceptacja regulaminu jest wersjonowana i blokuje prywatny magazyn przez backend, RLS i RPC.
 - Konto bez aktualnej zgody nadal może się wylogować albo zostać usunięte.
 - Usunięcie konta kaskadowo usuwa profil, akceptacje i dane prywatne, zachowując zużyte zaproszenie jako ograniczony ślad bezpieczeństwa.
+- Dodano publiczną stronę `/informacje-prawne` z wersją regulaminu, informacją o prywatności, prawami autorskimi i notą copyright.
+- Rejestracja wymaga niezaznaczonej domyślnie akceptacji bieżącej wersji regulaminu; wersje dokumentów są sprawdzane także przez backend.
+- Po zmianie dokumentu konto pokazuje bramkę ponownej akceptacji, a magazyn, dopasowania i katalog pozostają zablokowane do czasu akceptacji.
 
 Wersja 2.0.0-alpha.38 - e-mail jako login konta
 - Formularz rejestracji używa jednego pola `Login (Twój e-mail)` oraz hasła.

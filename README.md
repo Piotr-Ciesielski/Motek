@@ -16,6 +16,11 @@ npm start
 
 Aplikacja: `http://127.0.0.1:3001`.
 
+Publiczne informacje prawne są dostępne bez logowania pod adresem
+`http://127.0.0.1:3001/informacje-prawne`. Strona pokazuje bieżącą wersję
+regulaminu, informację o prywatności oraz prawa autorskie i pozwala wrócić do
+aplikacji.
+
 Minimalne zmienne `.env`:
 
 ```dotenv
@@ -55,6 +60,19 @@ npm run invite -- purge
 Narzędzie operatora tworzy zaproszenie, odwołuje je albo uruchamia czyszczenie starych logów bezpieczeństwa. Przy tworzeniu zapisuje w bazie wyłącznie hash tokenu; pełny link jest wypisywany tylko raz i nie jest wysyłany automatycznie e-mailem. Do działania wymagane są `SUPABASE_URL`, `SUPABASE_SECRET_KEY` oraz `APP_ORIGIN` w lokalnym `.env`.
 
 Nie uruchamiaj komendy `create` na środowisku zdalnym bez świadomej decyzji operatora. Surowego tokenu nie da się później odzyskać.
+
+### Regulamin i dostęp do konta
+
+Rejestracja działa wyłącznie z ważnym, jednorazowym zaproszeniem. Formularz
+wymaga świadomego zaznaczenia akceptacji bieżącej wersji regulaminu; osobno
+potwierdza przekazanie informacji o prywatności. Backend ponownie sprawdza
+zaproszenie, wersje dokumentów i akceptację, więc samo zmodyfikowanie
+formularza w przeglądarce nie wystarcza do utworzenia konta.
+
+Jeżeli regulamin zostanie zaktualizowany, zalogowana sesja pozostaje dostępna
+do wyświetlenia informacji prawnych, ponownej akceptacji, wylogowania i
+usunięcia konta. Magazyn włóczek, dopasowania i katalog wzorów pozostają
+zablokowane do czasu zaakceptowania bieżącej wersji.
 
 ## Środowiska i wdrożenia
 

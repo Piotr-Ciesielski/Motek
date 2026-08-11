@@ -8,7 +8,7 @@
 
 **Tech Stack:** HTML5, CSS3, vanilla JavaScript UMD/CommonJS, JSDOM, Node.js 24 `node:test`, istniejący serwer statyczny Motka.
 
-> **Stan po sesji 2026-08-10:** Zadania 1–6 są ukończone i zapisane w commitach do `de912f1` (opublikowany na GitHub). Następny punkt wznowienia to Task 7: dokumentacja i pełna weryfikacja końcowa.
+> **Stan po sesji 2026-08-11:** Zadania 1–6 są ukończone i zapisane na GitHubie. Dokumentacja z Task 7 została uzupełniona. Kontrole kodu przechodzą; do dokończenia pozostaje test Supabase DB oraz regresja smoke zależna od lokalnego Docker/Supabase i konfiguracji środowiska.
 
 ## Global Constraints
 
@@ -383,7 +383,7 @@ git add styles.css test/legal-layout.test.js test/design-layout.test.js
 git commit -m "ui: style legal information for screen and print"
 ```
 
-### Task 7: Dokumentacja i pełna weryfikacja — ⏳ NASTĘPNY PUNKT
+### Task 7: Dokumentacja i pełna weryfikacja — ⏳ W TOKU
 
 **Files:**
 - Modify: `README.md`
@@ -393,7 +393,7 @@ git commit -m "ui: style legal information for screen and print"
 **Interfaces:**
 - Documents: publiczną ścieżkę, rejestrację, ponowną akceptację i copyright.
 
-- [ ] **Step 1: Zaktualizować dokumentację**
+- [x] **Step 1: Zaktualizować dokumentację**
 
 README opisuje stronę prawną i zaproszenia. SPEC opisuje session payload, endpoint akceptacji oraz blokadę widoków. CHANGELOG opisuje widoczny rezultat dla użytkownika.
 
@@ -403,23 +403,31 @@ Run: `npm run check`; `npm run lint`; `npm run format:check`; `npm run test:db`;
 
 Expected: PASS.
 
+Wynik częściowy: `npm run check` (339/339), lint, formatowanie i `git diff --check` przechodzą. `npm run test:db` nie uruchomił kontenerów Supabase i został przerwany po timeoutcie.
+
 - [ ] **Step 3: Uruchomić publiczną regresję lokalną**
 
 Run: `npm start`, a w drugim procesie `npm run regression:smoke`.
 
 Expected: strona główna i `/informacje-prawne` zwracają 200, mają nagłówki bezpieczeństwa i właściwą wersję dokumentu.
 
-- [ ] **Step 4: Sprawdzić stan bramki produkcyjnej**
+Wynik: `npm run regression:smoke` zatrzymał się przed żądaniami z powodu braku `MOTEK_BASE_URL`.
+
+- [x] **Step 4: Sprawdzić stan bramki produkcyjnej**
 
 Run: `npm run legal:check`
 
 Expected przed uzupełnieniem danych operatora: kontrolowany wynik `not ready`. Nie obchodzić bramki i nie wdrażać produkcyjnie z placeholderami.
 
-- [ ] **Step 5: Sprawdzić zakres zmian**
+Wynik: `LEGAL_PUBLICATION=not ready` z powodu brakujących danych operatora i niezweryfikowanych dostawców.
+
+- [x] **Step 5: Sprawdzić zakres zmian**
 
 Run: `git status --short`; `git diff --stat`
 
 Expected: wcześniejsze niezwiązane zmiany użytkownika pozostają zachowane poza checkpointami tego planu.
+
+Wynik: do checkpointu należą wyłącznie `README.md`, `SPEC.md` i `CHANGELOG.txt`; zmiany `.gitignore`, `design-qa.md` i migracja SQL pozostają poza zakresem.
 
 - [ ] **Step 6: Utworzyć checkpoint dokumentacji**
 

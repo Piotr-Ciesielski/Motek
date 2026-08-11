@@ -57,7 +57,12 @@ główną funkcją jest świadome wykorzystanie posiadanego zapasu włóczek.
 Niepełne dane wzoru są widoczne w katalogu, ale nie są używane jako
 potwierdzone rekomendacje. System nie zgaduje brakujących metrów ani gramów.
 Konto bez aktualnej akceptacji zachowuje dostęp do sesji, wylogowania i usunięcia
-konta, ale nie może czytać ani zmieniać prywatnego magazynu.
+konta oraz ekranu ponownej akceptacji, ale nie może czytać ani zmieniać
+prywatnego magazynu, dopasowań ani katalogu wzorów.
+
+Aktualny dokument prawny jest dostępny bez logowania pod ścieżką
+`/informacje-prawne`. Zawiera wersję regulaminu, osobną informację o
+prywatności, sekcję praw autorskich i notę copyright.
 
 ## 4. Architektura
 
@@ -172,9 +177,9 @@ zaproszenie jako zużyte i zapisuje akceptację aktualnego regulaminu oraz
 przekazanie informacji o prywatności.
 
 Sesja bez aktualnej akceptacji regulaminu pozostaje uwierzytelniona, ale dostęp
-do prywatnego profilu, magazynu włóczek i operacji zależnych od tych danych jest
-zablokowany do czasu zaakceptowania bieżącej wersji. Publiczny katalog wzorów
-pozostaje dostępny. Wyjątkiem są `POST /api/auth/logout` i
+do prywatnego profilu, magazynu włóczek, dopasowań i katalogu wzorów jest
+zablokowany do czasu zaakceptowania bieżącej wersji. Publiczna pozostaje tylko
+strona informacji prawnych. Wyjątkiem są `POST /api/auth/logout` i
 `DELETE /api/account`: użytkownik może zawsze zakończyć sesję albo usunąć konto;
 usunięcie wymaga aktywnej sesji, poprawnego hasła i frazy `USUŃ KONTO`.
 
@@ -212,6 +217,7 @@ użytkownika. Katalog aplikacji może zawierać do 300 wzorów.
 
 | Endpoint | Znaczenie |
 | --- | --- |
+| `GET /informacje-prawne` | Publiczna strona bieżących dokumentów prawnych |
 | `GET /health` | Kontrola stanu serwera |
 | `GET /api/auth/session` | Sprawdzenie aktywnej sesji |
 | `POST /api/auth/register` | Rejestracja użytkownika |
@@ -220,6 +226,7 @@ użytkownika. Katalog aplikacji może zawierać do 300 wzorów.
 | `POST /api/auth/recovery` | Ustanowienie sesji z tokenów linku recovery |
 | `POST /api/auth/password` | Ustawienie nowego hasła |
 | `POST /api/auth/logout` | Wylogowanie |
+| `POST /api/legal/acceptance` | Zapis akceptacji bieżącej wersji regulaminu |
 | `DELETE /api/account` | Bezpowrotne usunięcie konta, profilu i własnych włóczek |
 | `GET /api/yarns` | Pobranie własnego magazynu |
 | `POST /api/yarns` | Dodanie włóczki |
@@ -227,9 +234,10 @@ użytkownika. Katalog aplikacji może zawierać do 300 wzorów.
 | `GET /api/patterns` | Pobranie katalogu wzorów |
 | `GET /api/matches` | Pobranie wykonalnych dopasowań |
 
-Endpointy magazynu i rankingu wymagają zalogowanej sesji. `GET /api/patterns`
-jest publicznym odczytem katalogu, ale sekret Supabase nigdy nie trafia do
-frontendu.
+Endpointy magazynu, katalogu i rankingu wymagają zalogowanej sesji z aktualną
+akceptacją regulaminu. `POST /api/legal/acceptance` wymaga zalogowanej sesji,
+przyjmuje bieżącą wersję regulaminu i zapisuje również przekazanie bieżącej
+wersji informacji o prywatności. Sekret Supabase nigdy nie trafia do frontendu.
 
 ## 9. Katalog wzorów i import
 
