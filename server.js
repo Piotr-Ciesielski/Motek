@@ -709,13 +709,13 @@ async function getAuthenticatedSession(req, res) {
     return null;
   }
 
-  const authenticatedClient = supabaseAuthClientFactory(
-    supabaseAuthConfig,
-    activeAccessToken || undefined
-  );
+  const profileClient = supabaseConnection?.client;
+  if (!profileClient) {
+    throw new ApiError(503, "Nie udało się teraz zweryfikować konta. Spróbuj ponownie.");
+  }
   let profileResult;
   try {
-    profileResult = await authenticatedClient
+    profileResult = await profileClient
       .from("profiles")
       .select("id,login,email,avatar_url,status,role,created_at,updated_at,last_login_at")
       .eq("id", userResult.data.user.id)

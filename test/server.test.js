@@ -321,6 +321,7 @@ test("serwer Motek działa bezpiecznie", async (t) => {
   let updateUserFailure = null;
   let profileResultOverride = null;
   let profileQueryFailure = null;
+  let authenticatedProfileAccessDenied = false;
   let signOutFailure = null;
 
   function sessionCookies(accessToken, refreshToken) {
@@ -379,6 +380,9 @@ test("serwer Motek działa bezpiecznie", async (t) => {
       maybeSingle() {
         if (table === "profiles" && profileQueryFailure) return Promise.reject(profileQueryFailure);
         if (table === "profiles" && profileResultOverride) return Promise.resolve(profileResultOverride);
+        if (table === "profiles" && authenticatedProfileAccessDenied && _token !== "service-role") {
+          return Promise.resolve({ data: null, error: null });
+        }
         const rows = table === "profiles"
           ? Object.values(syntheticProfiles).filter((row) => filters.every(([field, value]) => row[field] === value))
           : [];
@@ -678,15 +682,7 @@ test("serwer Motek działa bezpiecznie", async (t) => {
       },
       from(table) {
         if (table === "profiles") {
-          return {
-            update() {
-              return {
-                async eq() {
-                  return { error: null };
-                },
-              };
-            },
-          };
+          return createSyntheticQuery(table, "service-role");
         }
         assert.equal(table, "patterns");
         return {
@@ -727,6 +723,28 @@ test("serwer Motek działa bezpiecznie", async (t) => {
   const baseUrl = `http://${runtime.host}:${runtime.port}`;
 
   try {
+    await t.test("utrzymuje sesję przed akceptacją aktualnego regulaminu", async () => {
+      const legalState = syntheticLegalStates[syntheticUsers["token-user-a"].id];
+      const previousAcceptedVersion = legalState.acceptedVersion;
+      const previousAcceptanceRequired = legalState.acceptanceRequired;
+      authenticatedProfileAccessDenied = true;
+      legalState.acceptedVersion = null;
+      legalState.acceptanceRequired = true;
+      try {
+        const response = await fetch(`${baseUrl}/api/auth/session`, {
+          headers: { Cookie: sessionCookies("token-user-a") },
+        });
+        assert.equal(response.status, 200);
+        const body = await response.json();
+        assert.equal(body.authenticated, true);
+        assert.equal(body.legal.acceptanceRequired, true);
+      } finally {
+        authenticatedProfileAccessDenied = false;
+        legalState.acceptedVersion = previousAcceptedVersion;
+        legalState.acceptanceRequired = previousAcceptanceRequired;
+      }
+    });
+
     await t.test("zgłasza stan zdrowia bez ujawniania szczegółów", async () => {
       const response = await fetch(`${baseUrl}/health`);
       assert.equal(response.status, 200);
