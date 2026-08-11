@@ -5,31 +5,41 @@
     "supabase": {
       "categories": ["konto", "magazyn", "sesja"],
       "flows": ["aplikacja -> Supabase"],
-      "location": "do uzupełnienia",
-      "transfer": "do uzupełnienia",
-      "retention": "do uzupełnienia",
+      "plan": "Free",
+      "location": "eu-north-1 (potwierdzone dla staging; produkcja do potwierdzenia)",
+      "transfer": "do potwierdzenia dla produkcji",
+      "retention": "Logi API i bazy danych: 1 dzień; logi audytowe Auth: 1 godzina (plan Free)",
       "status": "unverified",
-      "evidence": [],
+      "evidence": [
+        "https://supabase.com/docs/guides/platform/regions",
+        "https://supabase.com/pricing"
+      ],
       "verifiedAt": null
     },
     "railway": {
       "categories": ["logi techniczne"],
       "flows": ["aplikacja -> Railway"],
-      "location": "do uzupełnienia",
+      "plan": "Hobby",
+      "location": "sfo (region wdrożenia produkcji i staging; lokalizacja przetwarzania logów do potwierdzenia)",
       "transfer": "do uzupełnienia",
-      "retention": "do uzupełnienia",
+      "retention": "Logi Railway: 7 dni (plan Hobby)",
       "status": "unverified",
-      "evidence": [],
+      "evidence": [
+        "https://docs.railway.com/observability/logs"
+      ],
       "verifiedAt": null
     },
     "cloudflare-turnstile": {
       "categories": ["dane antybotowe"],
       "flows": ["przeglądarka -> Cloudflare Turnstile"],
+      "plan": "Free",
       "location": "do uzupełnienia",
       "transfer": "do uzupełnienia",
-      "retention": "do uzupełnienia",
+      "retention": "do potwierdzenia; dokumentacja Turnstile nie wskazuje stałego okresu retencji",
       "status": "unverified",
-      "evidence": [],
+      "evidence": [
+        "https://www.cloudflare.com/en-in/turnstile-privacy-policy/"
+      ],
       "verifiedAt": null
     }
   }
