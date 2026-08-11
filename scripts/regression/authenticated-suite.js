@@ -101,7 +101,7 @@ async function runAuthenticatedRegression(options) {
     const authenticated = await requireJson(session, '/api/auth/session');
     requireCondition(
       authenticated.body?.authenticated === true,
-      `Authenticated session was not established (${summarizeSessionState(authenticated.body)})`,
+      `Authenticated session was not established (${summarizeSessionState(authenticated.body)}; cookies=${Object.keys(session.getCookies()).sort().join(',')})`,
     );
 
     if (authenticated.body?.legal?.acceptanceRequired) {
