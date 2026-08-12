@@ -1,6 +1,6 @@
 begin;
 
-select plan(23);
+select plan(25);
 
 select has_schema('private', 'prywatny schemat grantów recovery istnieje');
 select has_table('private', 'auth_recovery_grants', 'granty recovery są przechowywane poza publicznym schematem');
