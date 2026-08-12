@@ -84,14 +84,15 @@ Bieżący checkpoint gałęzi `agent/staging-security-merge` ma SHA
 `e739ce6affea746965321a399d78cc7b55ed6258`. Nie jest on jeszcze wdrożony:
 
 - ostatnio odczytany udany deployment stagingu ma identyfikator Railway
-  `7e4b790d-7b09-4c11-811e-d4a0e82d9605` z 11 sierpnia;
+  `7e4b790d-7b09-4c11-811e-d4a0e82d9605` z 11 sierpnia i commit
+  `f118c84` (`fix: keep session before legal acceptance`);
 - ostatnio odczytany udany deployment produkcji ma identyfikator Railway
-  `551aa616-a3e9-4b85-9e98-7cf15630b6d3` z 8 sierpnia;
+  `551aa616-a3e9-4b85-9e98-7cf15630b6d3` z 8 sierpnia i commit
+  `c4b777a` (`ui: align auth action typography`);
 - oba środowiska mają po jednej replice w `sfo`; logi ostatnich wdrożeń
   potwierdzają udany healthcheck `/health/ready` dla stagingu i produkcji;
-- bieżący odczyt statusu nie zwrócił SHA commitów dla tych deploymentów, więc
-  przed wyborem release candidate trzeba pobrać i zarchiwizować SHA z poziomu
-  konkretnego deploymentu.
+- bieżący checkout `e739ce6` nie jest jeszcze wdrożony; staging i produkcja
+  działają więc na starszych, dokładnie zidentyfikowanych artefaktach.
 - Dockerfile kopiuje jawnie pliki aplikacji, `client`, `server`, `assets` i
   `VERSION`, więc nieśledzone `Designs/`, `tools/` ani audyty nie są częścią
   obrazu.

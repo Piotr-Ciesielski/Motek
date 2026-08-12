@@ -106,10 +106,10 @@ Oczekiwany stan przed zebraniem dowodów: testy przechodzą, a `npm run legal:ch
 
 Stan po odczycie 2026-08-12: bieżący SHA `e739ce6` nie jest wdrożony. Railway
 staging działa z gałęzi `staging`, a produkcja z `main`; oba środowiska mają po
-jednej replice w `sfo`. Logi ostatnich wdrożeń potwierdzają udany healthcheck
-`/health/ready` dla obu środowisk. Odczyt statusu zwrócił identyfikatory
-deploymentów, lecz nie zwrócił ich SHA commitów, więc trzeba je zarchiwizować
-przed wyborem release candidate. Dockerfile używa jawnej listy
+jednej replice w `sfo`. Staging działa z potwierdzonym SHA `f118c84`, produkcja
+z potwierdzonym SHA `c4b777a`, a bieżący checkout `e739ce6` nie jest jeszcze
+wdrożony. Logi ostatnich wdrożeń potwierdzają udany healthcheck
+`/health/ready` dla obu środowisk. Dockerfile używa jawnej listy
 kopiowanych ścieżek, więc nieśledzone materiały lokalne nie trafiają do obrazu.
 B1 pozostaje otwarte do wyboru i weryfikacji jednego release candidate.
 
