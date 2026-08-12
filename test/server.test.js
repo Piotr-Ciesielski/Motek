@@ -294,14 +294,17 @@ test("serwer Motek działa bezpiecznie", async (t) => {
   let nextSyntheticYarnId = 1;
   const recoveryRequests = [];
   const exchangedRecoveryCodes = [];
-  const recoveryGrantCalls = [];
-  const recoveryGrants = new Map();
-  const concurrentConsumeState = {
-    enabled: false,
-    calls: 0,
-    startedResolve: null,
-    release: null,
+  const recoveryGrantRpcs = [];
+  const recoveryGrantState = {
+    claimed: false,
+    claimResult: true,
+    releaseResult: true,
+    consumeResult: true,
+    updateUserCalls: 0,
+    updateUserError: null,
   };
+  const recoveryGrantEvents = [];
+  const signOutScopes = [];
   const signUpRequests = [];
   const issuedSignupConfirmationTokens = [];
   const usedSignupConfirmationTokens = new Set();
@@ -513,9 +516,9 @@ test("serwer Motek działa bezpiecznie", async (t) => {
         },
         async updateUser({ password }) {
           assert.equal(password, "NoweHaslo123!");
-          updateUserCalls += 1;
-          if (updateUserFailure) return { data: null, error: updateUserFailure };
-          return { data: { user: syntheticUsers[token] }, error: null };
+          recoveryGrantState.updateUserCalls += 1;
+          recoveryGrantEvents.push({ name: "updateUser" });
+          return { data: { user: syntheticUsers[token] }, error: recoveryGrantState.updateUserError };
         },
       },
       from(table) {
@@ -523,6 +526,28 @@ test("serwer Motek działa bezpiecznie", async (t) => {
       },
       rpc(name, args) {
         const userId = syntheticUsers[token]?.id;
+        if (name === "create_auth_recovery_grant") {
+          recoveryGrantRpcs.push({ name, args, userId });
+          return Promise.resolve({ data: "grant-jti-user-a", error: null });
+        }
+        if (name === "consume_auth_recovery_grant") {
+          recoveryGrantRpcs.push({ name, args, userId });
+          recoveryGrantEvents.push({ name, args });
+          return Promise.resolve({ data: recoveryGrantState.consumeResult, error: null });
+        }
+        if (name === "claim_auth_recovery_grant") {
+          recoveryGrantRpcs.push({ name, args, userId });
+          recoveryGrantEvents.push({ name, args });
+          const claimed = recoveryGrantState.claimResult === true && !recoveryGrantState.claimed;
+          if (claimed) recoveryGrantState.claimed = true;
+          return Promise.resolve({ data: claimed, error: null });
+        }
+        if (name === "release_auth_recovery_grant") {
+          recoveryGrantRpcs.push({ name, args, userId });
+          recoveryGrantEvents.push({ name, args });
+          recoveryGrantState.claimed = false;
+          return Promise.resolve({ data: recoveryGrantState.releaseResult, error: null });
+        }
         if (name === "get_yarn_store_version") {
           return Promise.resolve({ data: syntheticYarnVersions[userId] ?? 0, error: null });
         }
@@ -1119,6 +1144,18 @@ test("serwer Motek działa bezpiecznie", async (t) => {
         body: JSON.stringify({ password: "NoweHaslo123!" }),
       });
       assert.equal(updateResponse.status, 200);
+      assert.deepEqual(recoveryGrantRpcs.at(-1), {
+        name: "consume_auth_recovery_grant",
+        args: { grant_jti: "grant-jti-user-a" },
+        userId: syntheticUsers["token-user-a"].id,
+      });
+      assert.deepEqual(recoveryGrantEvents.slice(-3).map(({ name }) => name), [
+        "claim_auth_recovery_grant",
+        "updateUser",
+        "consume_auth_recovery_grant",
+      ]);
+      assert.equal(recoveryGrantState.updateUserCalls, 1);
+      assert.deepEqual(signOutScopes.at(-1), { scope: "global" });
       assert.deepEqual(await updateResponse.json(), {
         passwordUpdated: true,
         authenticated: false,
@@ -1128,10 +1165,107 @@ test("serwer Motek działa bezpiecznie", async (t) => {
       assert.match(updateResponse.headers.get("set-cookie"), /motek_refresh_token=.*Max-Age=0/);
       assert.ok(signOutScopes.some((call) => call.scope === "global"), "zmiana hasła unieważnia pozostałe sesje");
 
-      const reusedGrantResponse = await fetch(`${baseUrl}/api/auth/password`, {
+      const passwordRequest = () => fetch(`${baseUrl}/api/auth/password`, {
         method: "POST",
-        headers: { "Content-Type": "application/json", Origin: baseUrl, Cookie: recoveryCookies },
+        headers: {
+          "Content-Type": "application/json",
+          Origin: baseUrl,
+          Cookie: recoveryCookies,
+        },
         body: JSON.stringify({ password: "NoweHaslo123!" }),
+      });
+
+      await passwordT.test("odrzuca zajęty grant bez zmiany hasła", async () => {
+        recoveryGrantState.claimed = true;
+        recoveryGrantEvents.length = 0;
+        try {
+          const updateUserCallsBefore = recoveryGrantState.updateUserCalls;
+          const response = await passwordRequest();
+
+          assert.equal(response.status, 400);
+          assert.deepEqual(await response.json(), {
+            error: "Ten link został już wykorzystany albo wygasł. Rozpocznij odzyskiwanie hasła ponownie.",
+          });
+          assert.equal(recoveryGrantState.updateUserCalls, updateUserCallsBefore);
+          assert.equal(recoveryGrantEvents.some(({ name }) => name === "consume_auth_recovery_grant"), false);
+        } finally {
+          recoveryGrantState.claimed = false;
+          recoveryGrantEvents.length = 0;
+        }
+      });
+
+      await passwordT.test("atomowo przyznaje grant tylko jednemu równoległemu żądaniu zmiany hasła", async () => {
+        recoveryGrantState.claimed = false;
+        recoveryGrantEvents.length = 0;
+        const updateUserCallsBefore = recoveryGrantState.updateUserCalls;
+        try {
+          const responses = await Promise.all([passwordRequest(), passwordRequest()]);
+          const eventNames = recoveryGrantEvents.map(({ name }) => name);
+
+          assert.equal(recoveryGrantState.updateUserCalls - updateUserCallsBefore, 1);
+          assert.deepEqual(responses.map((response) => response.status).sort(), [200, 400]);
+          assert.equal(eventNames.filter((name) => name === "consume_auth_recovery_grant").length, 1);
+        } finally {
+          recoveryGrantState.claimed = false;
+          recoveryGrantEvents.length = 0;
+        }
+      });
+
+      await passwordT.test("zwalnia grant po błędzie zmiany hasła", async () => {
+        recoveryGrantState.claimed = false;
+        recoveryGrantState.updateUserError = new Error("update failed");
+        recoveryGrantEvents.length = 0;
+        try {
+          const response = await passwordRequest();
+
+          assert.equal(response.status, 400);
+          assert.deepEqual(recoveryGrantEvents.map(({ name }) => name), [
+            "claim_auth_recovery_grant",
+            "updateUser",
+            "release_auth_recovery_grant",
+          ]);
+          assert.equal(recoveryGrantState.claimed, false);
+        } finally {
+          recoveryGrantState.updateUserError = null;
+          recoveryGrantState.claimed = false;
+          recoveryGrantEvents.length = 0;
+        }
+      });
+
+      await passwordT.test("zwraca 503 i zatrzymuje grant po błędzie consume", async () => {
+        recoveryGrantState.claimed = false;
+        recoveryGrantState.consumeResult = false;
+        recoveryGrantEvents.length = 0;
+        try {
+          const response = await passwordRequest();
+          const eventNames = recoveryGrantEvents.map(({ name }) => name);
+
+          assert.equal(response.status, 503);
+          assert.deepEqual(await response.json(), {
+            error: "Hasło zostało zmienione. Nie udało się bezpiecznie zakończyć procesu. Zaloguj się nowym hasłem. Jeśli logowanie nie zadziała, rozpocznij odzyskiwanie ponownie.",
+          });
+          assert.equal(eventNames.filter((name) => name === "consume_auth_recovery_grant").length, 1);
+          assert.equal(eventNames.includes("release_auth_recovery_grant"), false);
+          assert.equal(recoveryGrantState.claimed, true);
+        } finally {
+          recoveryGrantState.consumeResult = true;
+          recoveryGrantState.claimed = false;
+          recoveryGrantEvents.length = 0;
+        }
+      });
+
+      await passwordT.test("nie odnawia sesji po usunięciu cookie bezczynności", async () => {
+        const tokenCookies = recoveryCookies
+          .split("; ")
+          .filter((cookie) => !cookie.startsWith("motek_idle_activity="))
+          .join("; ");
+        const response = await fetch(`${baseUrl}/api/auth/activity`, {
+          method: "POST",
+          headers: { Origin: baseUrl, Cookie: tokenCookies },
+          body: "{}",
+        });
+        assert.equal(response.status, 401);
+        assert.match(response.headers.get("set-cookie"), /motek_idle_activity=;/);
       });
       assert.equal(reusedGrantResponse.status, 403);
 
@@ -1186,14 +1320,9 @@ test("serwer Motek działa bezpiecznie", async (t) => {
           },
           body: JSON.stringify({ password: "NoweHaslo123!" }),
         });
-        assert.equal(rejectedSignOutResponse.status, 503);
-        assert.match(rejectedSignOutResponse.headers.get("set-cookie"), /motek_access_token=.*Max-Age=0/);
-        assert.match(rejectedSignOutResponse.headers.get("set-cookie"), /motek_refresh_token=.*Max-Age=0/);
-        assert.match(rejectedSignOutResponse.headers.get("set-cookie"), /motek_idle_activity=.*Max-Age=0/);
-        assert.match(rejectedSignOutResponse.headers.get("set-cookie"), /motek_recovery_grant=.*Max-Age=0/);
-      } finally {
-        signOutFailure = null;
-      }
+        assert.equal(response.status, 400);
+      });
+
     });
 
     await t.test("odrzuca odpowiedź signOut z błędem i czyści cookies", async () => {

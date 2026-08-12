@@ -25,8 +25,8 @@
     path: "/informacje-prawne",
     copyrightYear: 2026,
     operator: Object.freeze({
-      name: "[IMIĘ I NAZWISKO OPERATORA]",
-      email: "[E-MAIL KONTAKTOWY]",
+      name: "Piotr Ciesielski",
+      email: "pc.piotr.ciesielski@gmail.com",
     }),
     sections: Object.freeze([
       freezeSection({
@@ -43,7 +43,7 @@
         id: "prywatnosc",
         title: "Prywatność i przetwarzanie danych",
         blocks: [
-          { type: "paragraph", text: "Operatorem Motka jest [IMIĘ I NAZWISKO OPERATORA]. Kontakt w sprawach prywatności: [E-MAIL KONTAKTOWY]." },
+          { type: "paragraph", text: "Operatorem Motka jest Piotr Ciesielski. Kontakt w sprawach prywatności: pc.piotr.ciesielski@gmail.com." },
           { type: "list", items: ["Przetwarzane mogą być e-mail, identyfikator użytkownika, znaczniki czasu, dane magazynu włóczek, informacje o sesji oraz logi techniczne.", "Dane służą do obsługi konta, działania i zabezpieczenia Motka, diagnostyki oraz komunikacji związanej z usługą.", "Użytkownik może korzystać z praw wynikających z przepisów, w tym żądać dostępu, sprostowania, usunięcia lub ograniczenia przetwarzania, gdy mają zastosowanie."] },
           { type: "notice", text: "Ten dokument przekazuje informacje o przetwarzaniu danych i nie stanowi zgody na całe przetwarzanie danych." },
         ],

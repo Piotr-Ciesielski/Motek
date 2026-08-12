@@ -8,6 +8,21 @@
 
 **Tech Stack:** Node.js 24, vanilla JavaScript UMD/CommonJS, `node:test`, Supabase/PostgreSQL migrations, pgTAP, Python 3, JSON, GitHub Actions.
 
+## Aktualizacja stanu — 2026-08-11
+
+Techniczna część przygotowania dokumentów prawnych, akceptacji, audytu
+katalogu i bramki publikacyjnej została zaimplementowana i przechodzi testy.
+Operator jest uzupełniony. Manifest dostawców zawiera potwierdzone plany,
+znane regiony, dostępne informacje o retencji i źródła, ale dostawcy nadal mają
+status `unverified`, ponieważ brakuje dowodów dla konfiguracji produkcyjnej,
+transferów i wszystkich rzeczywistych okresów retencji.
+
+Bieżący raport oraz lista niezależnych prac znajduje się w
+`docs/operations/legal-readiness-status-2026-08-11.md`. Ten plan pozostaje
+mapą wykonania i nie powinien być interpretowany jako potwierdzenie gotowości
+publikacji. `npm run legal:check` musi nadal zwracać `not ready` do czasu
+zamknięcia braków dostawców.
+
 ## Global Constraints
 
 - Motek jest bezpłatnym, prywatnym narzędziem dla ograniczonej grupy zaproszonych osób.
@@ -423,7 +438,7 @@ git commit -m "fix: expose only audited pattern metadata"
 
 - [ ] **Step 1: Utworzyć wersjonowany manifest w stanie roboczym**
 
-`data/legal-data-providers.json` ma zawierać wpisy `supabase`, `railway` i `cloudflare-turnstile` z polami:
+`data/legal-data-providers.json` ma zawierać wpisy `supabase`, `railway` i `cloudflare` z polami; Cloudflare obejmuje zakresy `edge` i `turnstile`:
 
 ```json
 {

@@ -7,7 +7,8 @@
 - ostatnia wersja wydana: `1.0.2`
 - aktualne źródło danych: Supabase
 - lokalny SQLite: usunięty z aplikacji
-- następny zakres: produkcja wymaga osobnego wdrożenia i regresji; numer wersji pozostaje `2.0.0-alpha.39`
+- następny zakres: domknięcie U-16, U-17, U-19 oraz pełne uporządkowanie U-22; produkcja pozostaje bez zmian
+- aktualny stan gotowości prawnej i lista braków: `docs/operations/legal-readiness-status-2026-08-11.md`
 
 Migracja e-mailowego loginu znajduje się w repozytorium; jej zastosowanie i
 kontrola na zdalnym Supabase są osobnym krokiem operacyjnym.
@@ -361,6 +362,8 @@ Zrealizowano:
 
 Do wykonania pozostają przede wszystkim:
 
+- potwierdzenie produkcyjnych ustawień Supabase, Railway i Cloudflare oraz
+  uzupełnienie transferów, retencji i dowodów w manifeście dostawców;
 - rozszerzenie kompletnych wymagań zużycia na kolejne wzory,
 - uzupełnienie rate limitingu na reverse proxy oraz monitoring prób Auth,
 - wymuszenie HTTPS i HSTS na reverse proxy w produkcji,

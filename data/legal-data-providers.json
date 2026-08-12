@@ -5,31 +5,88 @@
     "supabase": {
       "categories": ["konto", "magazyn", "sesja"],
       "flows": ["aplikacja -> Supabase"],
-      "location": "do uzupełnienia",
-      "transfer": "do uzupełnienia",
-      "retention": "do uzupełnienia",
+      "plan": "Free",
+      "scope": "production-and-staging",
+      "location": "eu-north-1 (produkcja i staging)",
+      "transfer": "do potwierdzenia dla produkcji",
+      "retention": "Logi API i bazy danych: 1 dzień; logi audytowe Auth: 1 godzina (plan Free)",
+      "evidenceScope": "do potwierdzenia dla produkcji",
       "status": "unverified",
-      "evidence": [],
+      "evidence": [
+        "https://supabase.com/docs/guides/platform/regions",
+        "https://supabase.com/pricing",
+        "https://supabase.com/docs/guides/platform/backups",
+        "https://supabase.com/downloads/docs/Supabase%2BDPA%2B260601.pdf"
+      ],
       "verifiedAt": null
     },
     "railway": {
       "categories": ["logi techniczne"],
       "flows": ["aplikacja -> Railway"],
-      "location": "do uzupełnienia",
+      "plan": "Hobby",
+      "scope": "production-and-staging",
+      "location": "sfo (region wdrożenia produkcji i staging; lokalizacja przetwarzania logów do potwierdzenia)",
       "transfer": "do uzupełnienia",
-      "retention": "do uzupełnienia",
+      "retention": "Logi Railway: 7 dni (plan Hobby)",
+      "evidenceScope": "do potwierdzenia dla produkcji",
       "status": "unverified",
-      "evidence": [],
+      "evidence": [
+        "https://docs.railway.com/observability/logs",
+        "https://docs.railway.com/deployments/regions",
+        "https://railway.com/legal/privacy",
+        "https://railway.com/legal/dpa"
+      ],
       "verifiedAt": null
     },
-    "cloudflare-turnstile": {
-      "categories": ["dane antybotowe"],
-      "flows": ["przeglądarka -> Cloudflare Turnstile"],
+    "cloudflare": {
+      "services": ["edge", "turnstile"],
+      "categories": ["dane antybotowe", "metadane ruchu HTTP"],
+      "flows": [
+        "przeglądarka -> Cloudflare Turnstile",
+        "przeglądarka -> Cloudflare edge (DNS/proxy/TLS/WAF)"
+      ],
+      "plan": "Free",
+      "scope": "production-and-staging",
       "location": "do uzupełnienia",
       "transfer": "do uzupełnienia",
-      "retention": "do uzupełnienia",
+      "retention": "Turnstile: do potwierdzenia; edge: do potwierdzenia",
+      "evidenceScope": "do potwierdzenia osobno dla edge i turnstile",
+      "serviceEvidence": {
+        "edge": {
+          "scope": "production",
+          "location": "do uzupełnienia",
+          "transfer": "do uzupełnienia",
+          "retention": "do potwierdzenia",
+          "evidenceScope": "do potwierdzenia dla produkcyjnej strefy edge",
+          "evidence": [
+            "https://developers.cloudflare.com/dns/proxy-status/",
+            "https://developers.cloudflare.com/fundamentals/security/protect-your-origin-server/",
+            "https://developers.cloudflare.com/data-localization/how-to/",
+            "https://www.cloudflare.com/en-gb/cloudflare-customer-dpa/"
+          ],
+          "verifiedAt": null
+        },
+        "turnstile": {
+          "scope": "production-and-staging",
+          "location": "do uzupełnienia",
+          "transfer": "do uzupełnienia",
+          "retention": "do potwierdzenia",
+          "evidenceScope": "do potwierdzenia dla produkcyjnego widgetu Turnstile",
+          "evidence": [
+            "https://www.cloudflare.com/en-in/turnstile-privacy-policy/",
+            "https://www.cloudflare.com/en-gb/privacypolicy/",
+            "https://developers.cloudflare.com/turnstile/get-started/server-side-validation/",
+            "https://www.cloudflare.com/en-gb/cloudflare-customer-dpa/"
+          ],
+          "verifiedAt": null
+        }
+      },
       "status": "unverified",
-      "evidence": [],
+      "evidence": [
+        "https://www.cloudflare.com/en-in/turnstile-privacy-policy/",
+        "https://www.cloudflare.com/en-gb/privacypolicy/",
+        "https://www.cloudflare.com/en-gb/cloudflare-customer-dpa/"
+      ],
       "verifiedAt": null
     }
   }

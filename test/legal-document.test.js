@@ -19,7 +19,7 @@ test("dokument ma stabilną wersję i trzy wymagane sekcje", () => {
 test("nota copyright ma dokładny format produktu", () => {
   assert.equal(
     formatCopyrightNotice(CURRENT_LEGAL_DOCUMENT),
-    "© 2026 Motek — [IMIĘ I NAZWISKO OPERATORA]. Wszelkie prawa zastrzeżone.",
+    "© 2026 Motek — Piotr Ciesielski. Wszelkie prawa zastrzeżone.",
   );
 });
 
@@ -79,6 +79,6 @@ test("dokument jest głęboko niemutowalny", () => {
   try { CURRENT_LEGAL_DOCUMENT.operator.name = "Zmiana"; } catch (error) { assert.ok(error instanceof TypeError); }
   try { CURRENT_LEGAL_DOCUMENT.sections[0].blocks[0].text = "Zmiana"; } catch (error) { assert.ok(error instanceof TypeError); }
   try { CURRENT_LEGAL_DOCUMENT.sections[0].blocks[2].items.push("Zmiana"); } catch (error) { assert.ok(error instanceof TypeError); }
-  assert.equal(CURRENT_LEGAL_DOCUMENT.operator.name, "[IMIĘ I NAZWISKO OPERATORA]");
+  assert.equal(CURRENT_LEGAL_DOCUMENT.operator.name, "Piotr Ciesielski");
   assert.equal(CURRENT_LEGAL_DOCUMENT.sections[0].blocks[0].text.startsWith("Motek"), true);
 });
