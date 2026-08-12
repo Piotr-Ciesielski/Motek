@@ -50,6 +50,10 @@ jeszcze zamknięte: brakuje datowanych dowodów transferów, ról, DPA,
 subprocesorów i retencji dla konkretnych konfiguracji, a Cloudflare edge nie
 obejmuje stagingu. Wymagane zakresy zapisano jako `edge=production` oraz
 `turnstile=production-and-staging`.
+Stwierdzono też rozjazd: lokalna migracja prawna odbiera dostęp do czterech
+RPC magazynu, a produkcyjny Security Advisor nadal raportuje ich dostępność
+dla `authenticated`. To pozostaje blokadą do osobnego, zatwierdzonego
+porównania historii migracji i grantów.
 
 - [ ] Dla Supabase potwierdzić osobno projekt produkcyjny: plan, region, zakres danych, retencję logów i kopii, usuwanie danych, transfery poza EOG, DPA i subprocesorów.
 - [ ] Dla Railway potwierdzić plan Hobby, region wdrożenia produkcji, miejsce przetwarzania logów, retencję logów, zakres danych w logach, transfery, DPA i subprocesorów.

@@ -51,6 +51,14 @@ Odczyt Supabase potwierdził bezpośrednio w panelu/API:
   dostępne dla `authenticated` oraz wyłączoną ochronę przed wyciekłymi
   hasłami; wykryto także informacyjnie nieużywany indeks.
 
+To nie jest wyłącznie ostrzeżenie dokumentacyjne: lokalna migracja
+`20260810120111_enforce_current_terms_for_private_data.sql` zawiera odebranie
+wykonania tych czterech RPC rolom `public`, `anon` i `authenticated`, ale
+zdalny advisor nadal widzi je jako dostępne dla `authenticated`. Oznacza to
+rozjazd między lokalnym checkoutem a produkcyjną bazą albo brak zastosowania
+migracji. Przed jakąkolwiek publikacją trzeba osobno porównać historię i
+uprawnienia; nie wykonano automatycznej naprawy zdalnej.
+
 Odczyt publicznego DNS i HTTPS potwierdził dodatkowo: `www.rysia.org` ma
 rekordy A Cloudflare i odpowiedź `Server: cloudflare`, natomiast
 `staging.rysia.org` jest CNAME do Railway i odpowiada z `Server:
