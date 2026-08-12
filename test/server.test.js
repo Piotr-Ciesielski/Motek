@@ -910,16 +910,11 @@ test("serwer Motek działa bezpiecznie", async (t) => {
         args: { grant_jti: "grant-jti-user-a" },
         userId: syntheticUsers["token-user-a"].id,
       });
-      let sequenceAssertionError = null;
-      try {
-        assert.deepEqual(recoveryGrantEvents.slice(-3).map(({ name }) => name), [
-          "claim_auth_recovery_grant",
-          "updateUser",
-          "consume_auth_recovery_grant",
-        ]);
-      } catch (error) {
-        sequenceAssertionError = error;
-      }
+      assert.deepEqual(recoveryGrantEvents.slice(-3).map(({ name }) => name), [
+        "claim_auth_recovery_grant",
+        "updateUser",
+        "consume_auth_recovery_grant",
+      ]);
       assert.equal(recoveryGrantState.updateUserCalls, 1);
       assert.deepEqual(signOutScopes.at(-1), { scope: "global" });
       assert.deepEqual(await updateResponse.json(), {
@@ -945,8 +940,28 @@ test("serwer Motek działa bezpiecznie", async (t) => {
           const response = await passwordRequest();
 
           assert.equal(response.status, 400);
+          assert.deepEqual(await response.json(), {
+            error: "Ten link został już wykorzystany albo wygasł. Rozpocznij odzyskiwanie hasła ponownie.",
+          });
           assert.equal(recoveryGrantState.updateUserCalls, updateUserCallsBefore);
           assert.equal(recoveryGrantEvents.some(({ name }) => name === "consume_auth_recovery_grant"), false);
+        } finally {
+          recoveryGrantState.claimed = false;
+          recoveryGrantEvents.length = 0;
+        }
+      });
+
+      await passwordT.test("atomowo przyznaje grant tylko jednemu równoległemu żądaniu zmiany hasła", async () => {
+        recoveryGrantState.claimed = false;
+        recoveryGrantEvents.length = 0;
+        const updateUserCallsBefore = recoveryGrantState.updateUserCalls;
+        try {
+          const responses = await Promise.all([passwordRequest(), passwordRequest()]);
+          const eventNames = recoveryGrantEvents.map(({ name }) => name);
+
+          assert.equal(recoveryGrantState.updateUserCalls - updateUserCallsBefore, 1);
+          assert.deepEqual(responses.map((response) => response.status).sort(), [200, 400]);
+          assert.equal(eventNames.filter((name) => name === "consume_auth_recovery_grant").length, 1);
         } finally {
           recoveryGrantState.claimed = false;
           recoveryGrantEvents.length = 0;
@@ -983,6 +998,9 @@ test("serwer Motek działa bezpiecznie", async (t) => {
           const eventNames = recoveryGrantEvents.map(({ name }) => name);
 
           assert.equal(response.status, 503);
+          assert.deepEqual(await response.json(), {
+            error: "Hasło zostało zmienione. Nie udało się bezpiecznie zakończyć procesu. Zaloguj się nowym hasłem. Jeśli logowanie nie zadziała, rozpocznij odzyskiwanie ponownie.",
+          });
           assert.equal(eventNames.filter((name) => name === "consume_auth_recovery_grant").length, 1);
           assert.equal(eventNames.includes("release_auth_recovery_grant"), false);
           assert.equal(recoveryGrantState.claimed, true);
@@ -1025,7 +1043,6 @@ test("serwer Motek działa bezpiecznie", async (t) => {
         assert.equal(response.status, 400);
       });
 
-      assert.equal(sequenceAssertionError, null);
     });
 
     await t.test("pokazuje stan regulaminu i blokuje starej zgodzie dostęp do danych", async () => {
