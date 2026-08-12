@@ -438,7 +438,7 @@ git commit -m "fix: expose only audited pattern metadata"
 
 - [ ] **Step 1: Utworzyć wersjonowany manifest w stanie roboczym**
 
-`data/legal-data-providers.json` ma zawierać wpisy `supabase`, `railway` i `cloudflare-turnstile` z polami:
+`data/legal-data-providers.json` ma zawierać wpisy `supabase`, `railway` i `cloudflare` z polami; Cloudflare obejmuje zakresy `edge` i `turnstile`:
 
 ```json
 {

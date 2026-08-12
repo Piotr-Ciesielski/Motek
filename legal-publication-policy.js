@@ -1,4 +1,4 @@
-const REQUIRED_PROVIDERS = ["supabase", "railway", "cloudflare-turnstile"];
+const REQUIRED_PROVIDERS = ["supabase", "railway", "cloudflare"];
 
 function isPlaceholder(value) {
   return typeof value !== "string" || !value.trim() || /^\[[^\]]+\]$/.test(value.trim());

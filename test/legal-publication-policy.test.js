@@ -7,7 +7,7 @@ const base = {
   providers: {
     supabase: { status: "verified", evidence: ["https://example.com/a"], verifiedAt: "2026-08-09" },
     railway: { status: "verified", evidence: ["https://example.com/b"], verifiedAt: "2026-08-09" },
-    "cloudflare-turnstile": { status: "verified", evidence: ["https://example.com/c"], verifiedAt: "2026-08-09" },
+    cloudflare: { status: "verified", evidence: ["https://example.com/c"], verifiedAt: "2026-08-09" },
   },
   patternAudit: { complete: true, pending_review: 0 },
   deploymentEnvironment: "production",

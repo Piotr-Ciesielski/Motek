@@ -26,11 +26,11 @@ nie ma jeszcze migracji prawnych z 9–10 sierpnia, więc nie traktujemy go jako
 zgodnego z bieżącym release candidate.
 
 Manifest został rozszerzony o zakres środowisk `production-and-staging` dla
-Supabase i Railway, ale dostawcy nadal są `unverified`. Następny krok prawny
-to decyzja o osobnym wpisie `cloudflare-edge` obok `cloudflare-turnstile`.
-Edge obsługuje DNS/proxy/TLS/WAF i cały ruch HTTP, więc nie powinien być
-ukryty pod samym wpisem Turnstile. Do edge trzeba zebrać osobne dowody
-retencji logów bezpieczeństwa, transferów, DPA/subprocesorów i ochrony originu.
+Supabase i Railway, ale dostawcy nadal są `unverified`. Cloudflare pozostaje
+jednym dostawcą z dwoma zakresami usług: `edge` i `turnstile`. Edge obsługuje
+DNS/proxy/TLS/WAF i cały ruch HTTP, a Turnstile sygnały antybotowe. Do obu
+zakresów trzeba zebrać osobne dowody retencji, transferów, DPA/subprocesorów
+i ochrony originu, ale bramka wymaga tylko jednego wpisu `cloudflare`.
 
 ---
 
@@ -44,8 +44,8 @@ retencji logów bezpieczeństwa, transferów, DPA/subprocesorów i ochrony origi
 
 - [ ] Dla Supabase potwierdzić osobno projekt produkcyjny: plan, region, zakres danych, retencję logów i kopii, usuwanie danych, transfery poza EOG, DPA i subprocesorów.
 - [ ] Dla Railway potwierdzić plan Hobby, region wdrożenia produkcji, miejsce przetwarzania logów, retencję logów, zakres danych w logach, transfery, DPA i subprocesorów.
-- [ ] Dla Cloudflare Turnstile potwierdzić plan Free, okres retencji sygnałów antybotowych, lokalizację przetwarzania, transfery, role Cloudflare, DPA i subprocesorów.
-- [ ] Podjąć decyzję, czy Cloudflare jako DNS/proxy/WAF/TLS będzie osobnym dostawcą w dokumencie, czy zostanie opisany jako osobny zakres tego samego dostawcy obok Turnstile.
+- [ ] Dla Cloudflare potwierdzić osobno dla zakresów `edge` i `turnstile`: plan Free, retencję, lokalizację przetwarzania, transfery, role Cloudflare, DPA i subprocesorów.
+- [x] Cloudflare opisujemy jako jednego dostawcę z zakresami `edge` i `turnstile`; nie tworzymy osobnego wpisu `cloudflare-edge`.
 - [ ] Zachować w manifeście adresy źródeł, datę weryfikacji i zakres środowiska, którego dowód dotyczy.
 - [ ] Nie wpisywać do dokumentu wartości „30 dni” ani „90 dni”, dopóki nie ma źródła dla konkretnej konfiguracji Motka.
 

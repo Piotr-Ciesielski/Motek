@@ -31,16 +31,21 @@
       ],
       "verifiedAt": null
     },
-    "cloudflare-turnstile": {
-      "categories": ["dane antybotowe"],
-      "flows": ["przeglądarka -> Cloudflare Turnstile"],
+    "cloudflare": {
+      "services": ["edge", "turnstile"],
+      "categories": ["dane antybotowe", "metadane ruchu HTTP"],
+      "flows": [
+        "przeglądarka -> Cloudflare Turnstile",
+        "przeglądarka -> Cloudflare edge (DNS/proxy/TLS/WAF)"
+      ],
       "plan": "Free",
       "location": "do uzupełnienia",
       "transfer": "do uzupełnienia",
-      "retention": "do potwierdzenia; dokumentacja Turnstile nie wskazuje stałego okresu retencji",
+      "retention": "Turnstile: do potwierdzenia; edge: do potwierdzenia",
       "status": "unverified",
       "evidence": [
-        "https://www.cloudflare.com/en-in/turnstile-privacy-policy/"
+        "https://www.cloudflare.com/en-in/turnstile-privacy-policy/",
+        "https://www.cloudflare.com/policies/privacy/"
       ],
       "verifiedAt": null
     }

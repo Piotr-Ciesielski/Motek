@@ -48,7 +48,7 @@ blokadami:
 
 - Supabase nie jest zweryfikowany;
 - Railway nie jest zweryfikowany;
-- Cloudflare Turnstile nie jest zweryfikowany.
+- Cloudflare nie jest zweryfikowany dla zakresów `edge` i `turnstile`.
 
 Dane operatora nie są już blokadą. Manifest pozostaje w stanie `draft`, a
 wszyscy dostawcy mają status `unverified` do czasu zebrania dowodów dla
@@ -60,7 +60,7 @@ konfiguracji produkcyjnej.
 | --- | --- | --- |
 | Supabase | Plan Free organizacji. Projekty Production i Staging są aktywne w `eu-north-1`. Dla planu Free dokumentacja wskazuje 1 dzień logów API/bazy i 1 godzinę logów audytowych Auth. | Potwierdzić retencję kopii/logów po usunięciu konta, zasady transferu poza EOG, role administratora/podmiotu przetwarzającego oraz właściwe DPA/subprocesorów. Osobno zastosować i zweryfikować brakujące migracje prawne; przedtem przejrzeć ostrzeżenia Security Advisor dla RPC. |
 | Railway | Plan Hobby. Region `sfo` odczytany z konfiguracji wdrożenia produkcji i stagingu. Dokumentacja Railway wskazuje 7 dni retencji logów dla Hobby. | Potwierdzić, czy `sfo` jest także lokalizacją przetwarzania i przechowywania logów. Ustalić zakres danych w logach, zasady ich usunięcia, mechanizm transferu poza EOG oraz właściwe DPA/subprocesorów dla produkcji. |
-| Cloudflare Turnstile | Plan Free. Dodatek prywatności opisuje minimalne sygnały antybotowe, m.in. IP, fingerprint TLS, User-Agent, sitekey i origin. | Potwierdzić rzeczywisty okres retencji, lokalizację przetwarzania, transfery poza EOG, role Cloudflare dla ochrony antybotowej i ulepszania detekcji oraz właściwe DPA/subprocesorów. W przywołanym dodatku nie znaleziono stałego okresu retencji. |
+| Cloudflare (`edge` + `turnstile`) | Plan Free. Turnstile opisuje minimalne sygnały antybotowe, m.in. IP, fingerprint TLS, User-Agent, sitekey i origin. Edge obsługuje DNS, proxy, TLS i WAF dla ruchu aplikacji. | Potwierdzić osobno dla obu zakresów rzeczywistą retencję, lokalizację przetwarzania, transfery poza EOG, role Cloudflare, właściwe DPA/subprocesorów oraz ochronę originu Railway. Dla Turnstile nie znaleziono stałego okresu retencji w przywołanym dodatku. |
 
 Źródła robocze:
 

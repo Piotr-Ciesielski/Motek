@@ -11,5 +11,6 @@ test("manifest dostawców rozróżnia potwierdzone środowiska produkcyjne", () 
   assert.equal(manifest.providers.railway.location, "sfo (region wdrożenia produkcji i staging; lokalizacja przetwarzania logów do potwierdzenia)");
   assert.equal(manifest.providers.supabase.status, "unverified");
   assert.equal(manifest.providers.railway.status, "unverified");
-  assert.equal(manifest.providers["cloudflare-turnstile"].status, "unverified");
+  assert.equal(manifest.providers.cloudflare.status, "unverified");
+  assert.deepEqual(manifest.providers.cloudflare.services, ["edge", "turnstile"]);
 });
