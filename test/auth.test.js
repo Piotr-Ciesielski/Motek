@@ -11,7 +11,12 @@ const {
   buildAuthCookie,
   createAccountDeletionRateLimiter,
   createAuthRateLimiter,
+  createAuthRequestRateLimiters,
   createRequestRateLimiter,
+  enforceAuthRateLimit,
+  enforceRequestRateLimit,
+  AUTH_REQUEST_LIMITS,
+  recordAuthFailure,
   shouldUseSecureCookies,
   validateCookieSecurityConfig,
 } = require("../server");
@@ -175,4 +180,122 @@ test("limiter usuwania konta blokuje po pięciu błędnych hasłach przez 15 min
 
   now = 15 * 60 * 1000;
   assert.equal(limiter.getRetryAfterMs("user:user-a"), 0);
+});
+
+test("limity żądań Auth mają osobne progi i okna", () => {
+  assert.deepEqual(AUTH_REQUEST_LIMITS, {
+    login: { windowMs: 60 * 1000, maxRequests: 10, blockMs: 60 * 1000 },
+    register: { windowMs: 60 * 1000, maxRequests: 3, blockMs: 60 * 1000 },
+    "password-reset-request": {
+      windowMs: 15 * 60 * 1000,
+      maxRequests: 3,
+      blockMs: 15 * 60 * 1000,
+    },
+    recovery: { windowMs: 10 * 60 * 1000, maxRequests: 5, blockMs: 10 * 60 * 1000 },
+  });
+});
+
+test("każdy limiter Auth odrzuca po swoim progu", () => {
+  const limiters = createAuthRequestRateLimiters({ now: () => 0 });
+  for (const [operation, limits] of Object.entries(AUTH_REQUEST_LIMITS)) {
+    const limiter = limiters[operation];
+    for (let index = 0; index < limits.maxRequests; index += 1) {
+      limiter.recordRequest(`ip:${operation}`);
+    }
+    assert.equal(limiter.getRetryAfterMs(`ip:${operation}`), limits.blockMs, operation);
+  }
+});
+
+test("lockout nieudanych prób Auth zwiększa metrykę operacji", () => {
+  assert.equal(typeof enforceAuthRateLimit, "function");
+  assert.equal(typeof recordAuthFailure, "function");
+  if (typeof enforceAuthRateLimit !== "function" || typeof recordAuthFailure !== "function") return;
+
+  const keys = ["ip:198.51.100.99", "email:lockout-test@example.com"];
+  const response = { headers: new Map(), setHeader(name, value) { this.headers.set(name, value); } };
+  const observedOperations = [];
+  const metrics = { observeAuthRateLimitRejection(operation) { observedOperations.push(operation); } };
+  for (let attempt = 0; attempt < 5; attempt += 1) recordAuthFailure(keys);
+
+  assert.throws(
+    () => enforceAuthRateLimit(keys, response, "login", metrics),
+    (error) => error.status === 429,
+  );
+  assert.equal(response.headers.get("Retry-After"), "900");
+  assert.deepEqual(observedOperations, ["login"]);
+});
+
+test("limit Auth odpowiada 429 i Retry-After po przekroczeniu progu", () => {
+  assert.equal(typeof createAuthRequestRateLimiters, "function");
+  assert.equal(typeof enforceRequestRateLimit, "function");
+  if (typeof createAuthRequestRateLimiters !== "function" || typeof enforceRequestRateLimit !== "function") return;
+
+  let now = 0;
+  const limiter = createAuthRequestRateLimiters({ now: () => now }).login;
+  const response = { headers: new Map(), setHeader(name, value) { this.headers.set(name, value); } };
+  const observedOperations = [];
+  const metrics = { observeAuthRateLimitRejection(operation) { observedOperations.push(operation); } };
+  for (let index = 0; index < AUTH_REQUEST_LIMITS.login.maxRequests; index += 1) {
+    limiter.recordRequest("ip:127.0.0.1");
+  }
+
+  assert.throws(
+    () => enforceRequestRateLimit(["ip:127.0.0.1"], limiter, response, "login", metrics),
+    (error) => error.status === 429,
+  );
+  assert.equal(response.headers.get("Retry-After"), "60");
+  assert.deepEqual(observedOperations, ["login"]);
+});
+
+test("reset hasła limituje wspólnie po IP i e-mailu, a recovery wyłącznie po IP", () => {
+  let now = 0;
+  const limiters = createAuthRequestRateLimiters({ now: () => now });
+  const response = { headers: new Map(), setHeader(name, value) { this.headers.set(name, value); } };
+
+  for (let index = 0; index < AUTH_REQUEST_LIMITS["password-reset-request"].maxRequests; index += 1) {
+    enforceRequestRateLimit(
+      ["ip:127.0.0.1", "email:a@example.com"],
+      limiters["password-reset-request"],
+      response,
+      "password-reset-request",
+    );
+  }
+  assert.throws(
+    () => enforceRequestRateLimit(
+      ["ip:203.0.113.8", "email:a@example.com"],
+      limiters["password-reset-request"],
+      response,
+      "password-reset-request",
+    ),
+    (error) => error.status === 429,
+  );
+  assert.throws(
+    () => enforceRequestRateLimit(
+      ["ip:127.0.0.1", "email:b@example.com"],
+      limiters["password-reset-request"],
+      response,
+      "password-reset-request",
+    ),
+    (error) => error.status === 429,
+  );
+
+  now = AUTH_REQUEST_LIMITS["password-reset-request"].blockMs;
+  enforceRequestRateLimit(
+    ["ip:127.0.0.1", "email:b@example.com"],
+    limiters["password-reset-request"],
+    response,
+    "password-reset-request",
+  );
+
+  now = 0;
+  const recoveryResponse = { headers: new Map(), setHeader(name, value) { this.headers.set(name, value); } };
+  for (let index = 0; index < AUTH_REQUEST_LIMITS.recovery.maxRequests; index += 1) {
+    enforceRequestRateLimit(["ip:127.0.0.1"], limiters.recovery, recoveryResponse, "recovery");
+  }
+  assert.throws(
+    () => enforceRequestRateLimit(["ip:127.0.0.1"], limiters.recovery, recoveryResponse, "recovery"),
+    (error) => error.status === 429,
+  );
+  assert.equal(recoveryResponse.headers.get("Retry-After"), "600");
+  enforceRequestRateLimit(["ip:203.0.113.8"], limiters.recovery, recoveryResponse, "recovery");
 });

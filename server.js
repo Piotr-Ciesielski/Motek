@@ -67,9 +67,6 @@ const AUTH_RATE_LIMIT_WINDOW_MS = 15 * 60 * 1000;
 const AUTH_RATE_LIMIT_MAX_FAILURES = 5;
 const AUTH_RATE_LIMIT_BLOCK_MS = 15 * 60 * 1000;
 const AUTH_RATE_LIMIT_MAX_ENTRIES = 10_000;
-const AUTH_REQUEST_WINDOW_MS = 60 * 1000;
-const AUTH_REQUEST_MAX = 30;
-const AUTH_REQUEST_BLOCK_MS = 60 * 1000;
 const YARN_WRITE_WINDOW_MS = 60 * 1000;
 const YARN_WRITE_MAX = 600;
 const YARN_WRITE_BLOCK_MS = 60 * 1000;
@@ -78,13 +75,19 @@ const HTTP_HEADERS_TIMEOUT_MS = 10 * 1000;
 const HTTP_KEEP_ALIVE_TIMEOUT_MS = 5 * 1000;
 const HTTP_BODY_TIMEOUT_MS = 10 * 1000;
 const MAX_PATTERN_PAGE_SIZE = 50;
+const AUTH_REQUEST_LIMITS = Object.freeze({
+  login: { windowMs: 60 * 1000, maxRequests: 10, blockMs: 60 * 1000 },
+  register: { windowMs: 60 * 1000, maxRequests: 3, blockMs: 60 * 1000 },
+  "password-reset-request": {
+    windowMs: 15 * 60 * 1000,
+    maxRequests: 3,
+    blockMs: 15 * 60 * 1000,
+  },
+  recovery: { windowMs: 10 * 60 * 1000, maxRequests: 5, blockMs: 10 * 60 * 1000 },
+});
 const authRateLimiter = createAuthRateLimiter();
 const accountDeletionRateLimiter = createAccountDeletionRateLimiter();
-const authRequestRateLimiter = createRequestRateLimiter({
-  windowMs: AUTH_REQUEST_WINDOW_MS,
-  maxRequests: AUTH_REQUEST_MAX,
-  blockMs: AUTH_REQUEST_BLOCK_MS,
-});
+const authRequestRateLimiters = createAuthRequestRateLimiters();
 const yarnWriteRateLimiter = createRequestRateLimiter({
   windowMs: YARN_WRITE_WINDOW_MS,
   maxRequests: YARN_WRITE_MAX,
@@ -326,6 +329,15 @@ function createRequestRateLimiter(options = {}) {
   };
 }
 
+function createAuthRequestRateLimiters({ now } = {}) {
+  return Object.fromEntries(
+    Object.entries(AUTH_REQUEST_LIMITS).map(([operation, options]) => [
+      operation,
+      createRequestRateLimiter({ ...options, ...(now ? { now } : {}) }),
+    ]),
+  );
+}
+
 function getClientAddress(req, env = process.env) {
   const forwarded = String(req.headers?.["x-forwarded-for"] || "")
     .split(",", 1)[0]
@@ -341,17 +353,19 @@ function getAuthRateLimitKeys(req, email) {
   return [`ip:${getClientAddress(req)}`, `email:${email}`];
 }
 
-function enforceAuthRateLimit(keys, res) {
+function enforceAuthRateLimit(keys, res, operation, metrics = metricsRegistry) {
   const retryAfterMs = Math.max(...keys.map((key) => authRateLimiter.getRetryAfterMs(key)));
   if (retryAfterMs > 0) {
+    if (operation) metrics.observeAuthRateLimitRejection(operation);
     res?.setHeader("Retry-After", String(Math.ceil(retryAfterMs / 1000)));
     throw new ApiError(429, "Zbyt wiele nieudanych prób. Spróbuj ponownie później.");
   }
 }
 
-function enforceRequestRateLimit(keys, limiter, res) {
+function enforceRequestRateLimit(keys, limiter, res, operation, metrics = metricsRegistry) {
   const retryAfterMs = Math.max(...keys.map((key) => limiter.getRetryAfterMs(key)));
   if (retryAfterMs > 0) {
+    if (operation) metrics.observeAuthRateLimitRejection(operation);
     res?.setHeader("Retry-After", String(Math.ceil(retryAfterMs / 1000)));
     throw new ApiError(429, "Zbyt wiele żądań. Spróbuj ponownie później.");
   }
@@ -1194,8 +1208,8 @@ async function handleAuthApi(req, res, url) {
       throw new ApiError(400, error.message);
     }
     const rateLimitKeys = getAuthRateLimitKeys(req, email);
-    enforceRequestRateLimit(rateLimitKeys, authRequestRateLimiter, res);
-    enforceAuthRateLimit(rateLimitKeys, res);
+    enforceRequestRateLimit([`ip:${getClientAddress(req)}`], authRequestRateLimiters.register, res, "register");
+    enforceAuthRateLimit(rateLimitKeys, res, "register");
 
     let registration;
     try {
@@ -1241,8 +1255,8 @@ async function handleAuthApi(req, res, url) {
       throw new ApiError(400, error.message);
     }
     const rateLimitKeys = getAuthRateLimitKeys(req, email);
-    enforceRequestRateLimit(rateLimitKeys, authRequestRateLimiter, res);
-    enforceAuthRateLimit(rateLimitKeys, res);
+    enforceRequestRateLimit([`ip:${getClientAddress(req)}`], authRequestRateLimiters.login, res, "login");
+    enforceAuthRateLimit(rateLimitKeys, res, "login");
     const { data, error } = await authClient().auth.signInWithPassword({
       email,
       password,
@@ -1270,8 +1284,12 @@ async function handleAuthApi(req, res, url) {
     } catch (error) {
       throw new ApiError(400, error.message);
     }
-    const rateLimitKeys = getAuthRateLimitKeys(req, email);
-    enforceRequestRateLimit(rateLimitKeys, authRequestRateLimiter, res);
+    enforceRequestRateLimit(
+      [`ip:${getClientAddress(req)}`, `email:${email}`],
+      authRequestRateLimiters["password-reset-request"],
+      res,
+      "password-reset-request",
+    );
 
     const redirectTo = new URL("/?recovery=1", getExpectedOrigin(req)).toString();
     const { error } = await authClient().auth.resetPasswordForEmail(email, {
@@ -1289,7 +1307,7 @@ async function handleAuthApi(req, res, url) {
   }
 
   if (req.method === "POST" && url.pathname === "/api/auth/recovery") {
-    enforceRequestRateLimit([`ip:${getClientAddress(req)}`, "recovery"], authRequestRateLimiter, res);
+    enforceRequestRateLimit([`ip:${getClientAddress(req)}`], authRequestRateLimiters.recovery, res, "recovery");
     const body = await readBody(req);
     const code = normalizeRecoveryToken(body.code, "jednorazowy");
     const client = authClient();
@@ -1758,7 +1776,12 @@ module.exports = {
   buildAuthCookie,
   createAccountDeletionRateLimiter,
   createAuthRateLimiter,
+  createAuthRequestRateLimiters,
   createRequestRateLimiter,
+  enforceAuthRateLimit,
+  enforceRequestRateLimit,
+  AUTH_REQUEST_LIMITS,
+  recordAuthFailure,
   validateMatchLimits,
   shouldUseSecureCookies,
   shutdown,

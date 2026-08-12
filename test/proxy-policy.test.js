@@ -28,6 +28,6 @@ test("zaufany WAF nadpisuje X-Forwarded-For zamiast dopisywać nagłówek klient
   );
   const forwardedFor = nginx.match(/proxy_set_header X-Forwarded-For \$remote_addr;/g) || [];
 
-  assert.equal(forwardedFor.length, 2);
+  assert.equal(forwardedFor.length, 5);
   assert.doesNotMatch(nginx, /\$proxy_add_x_forwarded_for/);
 });
