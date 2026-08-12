@@ -752,6 +752,11 @@ test("serwer Motek działa bezpiecznie", async (t) => {
       );
       assert.equal(response.headers.get("x-content-type-options"), "nosniff");
       assert.equal(response.headers.get("x-frame-options"), "DENY");
+      assert.equal(response.headers.get("referrer-policy"), "no-referrer");
+      assert.equal(response.headers.get("permissions-policy"), "camera=(), microphone=(), geolocation=()");
+      assert.equal(response.headers.get("cross-origin-opener-policy"), "same-origin");
+      assert.equal(response.headers.get("cross-origin-resource-policy"), "same-origin");
+      assert.equal(response.headers.get("strict-transport-security"), null);
       assert.equal(response.headers.get("access-control-allow-origin"), null);
       const pageHtml = await response.text();
       assert.match(pageHtml, /class="inventory-layout"/);
