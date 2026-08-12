@@ -983,9 +983,9 @@ test("serwer Motek działa bezpiecznie", async (t) => {
           const eventNames = recoveryGrantEvents.map(({ name }) => name);
 
           assert.equal(response.status, 503);
-          assert.equal(recoveryGrantState.claimed, true);
           assert.equal(eventNames.filter((name) => name === "consume_auth_recovery_grant").length, 1);
           assert.equal(eventNames.includes("release_auth_recovery_grant"), false);
+          assert.equal(recoveryGrantState.claimed, true);
         } finally {
           recoveryGrantState.consumeResult = true;
           recoveryGrantState.claimed = false;
