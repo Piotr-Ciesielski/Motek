@@ -65,6 +65,23 @@ rekordy A Cloudflare i odpowiedź `Server: cloudflare`, natomiast
 railway-hikari`. W manifeście oznacza to zakres `edge` tylko dla produkcji,
 a zakres `turnstile` dla produkcji i stagingu.
 
+## Release candidate i wdrożenia — 2026-08-12
+
+Bieżący checkpoint gałęzi `agent/staging-security-merge` ma SHA
+`64e269c696a56fb46da945cff85b39c1e49ddde7`. Nie jest on jeszcze wdrożony:
+
+- staging Railway działa z SHA `f118c844228d9f3a7ee9e0438b2405b0689723a1`;
+- produkcja Railway działa z SHA `c4b777a5f8a96277c0e7fb7ca6ec52d425a0900b`;
+- oba deploymenty mają status `SUCCESS`, jedną replikę w `sfo` i healthcheck
+  `/health/ready`;
+- Dockerfile kopiuje jawnie pliki aplikacji, `client`, `server`, `assets` i
+  `VERSION`, więc nieśledzone `Designs/`, `tools/` ani audyty nie są częścią
+  obrazu.
+
+Wniosek: B1 nie jest jeszcze zamknięte jako release candidate. Przed promocją
+trzeba wskazać jeden zatwierdzony SHA, sprawdzić staging na tym samym artefakcie
+i dopiero potem rozważać produkcję. Nie wykonano promocji ani deployu.
+
 Oficjalne źródła potwierdzają fakty ogólne, ale nie zastępują dowodu konkretnej
 konfiguracji Motka:
 
