@@ -13,6 +13,11 @@ W ramach punktu A1 odczytowo potwierdzono konfigurację produkcyjną:
 - Railway Production ma osobne środowisko, jedną replikę w regionie `sfo`,
   domenę `www.rysia.org`, plan Hobby i ostatni odczytany deployment zakończony
   statusem `SUCCESS` z SHA `c4b777a5f8a96277c0e7fb7ca6ec52d425a0900b`.
+- Bieżący odczyt konfiguracji Railway potwierdził, że staging korzysta z
+  gałęzi `staging`, domeny `staging.rysia.org` i jawnego healthchecka
+  `/health/ready`; produkcja korzysta z gałęzi `main`, domeny `www.rysia.org`
+  i jednej repliki `sfo`, ale odczyt konfiguracji produkcyjnej nie pokazał
+  jawnego healthchecka. To pozostaje osobną kontrolą przed produkcją.
 - Produkcyjny Supabase ma zastosowane migracje tylko do
   `20260807114728_document_recovery_grants_no_client_policy`; późniejsze
   migracje prawne z 9–10 sierpnia nie zostały jeszcze wdrożone.
@@ -59,6 +64,13 @@ rozjazd między lokalnym checkoutem a produkcyjną bazą albo brak zastosowania
 migracji. Przed jakąkolwiek publikacją trzeba osobno porównać historię i
 uprawnienia; nie wykonano automatycznej naprawy zdalnej.
 
+Odczyt historii migracji stagingu potwierdził zastosowanie czterech migracji
+prawnych: publikacji audytu wzorów, rejestracji zaproszonej i akceptacji prawa,
+egzekwowania bieżących warunków dla danych prywatnych oraz unieważniania
+zaproszeń. Produkcja nie ma tych migracji. Jest to oczekiwany stan stagingu,
+ale jednocześnie blokada do osobno zatwierdzonego porównania i wdrożenia
+migracji produkcyjnych.
+
 Odczyt publicznego DNS i HTTPS potwierdził dodatkowo: `www.rysia.org` ma
 rekordy A Cloudflare i odpowiedź `Server: cloudflare`, natomiast
 `staging.rysia.org` jest CNAME do Railway i odpowiada z `Server:
@@ -68,12 +80,17 @@ a zakres `turnstile` dla produkcji i stagingu.
 ## Release candidate i wdrożenia — 2026-08-12
 
 Bieżący checkpoint gałęzi `agent/staging-security-merge` ma SHA
-`64e269c696a56fb46da945cff85b39c1e49ddde7`. Nie jest on jeszcze wdrożony:
+`e739ce6affea746965321a399d78cc7b55ed6258`. Nie jest on jeszcze wdrożony:
 
-- staging Railway działa z SHA `f118c844228d9f3a7ee9e0438b2405b0689723a1`;
-- produkcja Railway działa z SHA `c4b777a5f8a96277c0e7fb7ca6ec52d425a0900b`;
-- oba deploymenty mają status `SUCCESS`, jedną replikę w `sfo` i healthcheck
-  `/health/ready`;
+- ostatnio odczytany udany deployment stagingu ma identyfikator Railway
+  `7e4b790d-7b09-4c11-811e-d4a0e82d9605` z 11 sierpnia;
+- ostatnio odczytany udany deployment produkcji ma identyfikator Railway
+  `551aa616-a3e9-4b85-9e98-7cf15630b6d3` z 8 sierpnia;
+- oba środowiska mają po jednej replice w `sfo`; jawny healthcheck
+  `/health/ready` potwierdzono tylko dla stagingu;
+- bieżący odczyt statusu nie zwrócił SHA commitów dla tych deploymentów, więc
+  przed wyborem release candidate trzeba pobrać i zarchiwizować SHA z poziomu
+  konkretnego deploymentu.
 - Dockerfile kopiuje jawnie pliki aplikacji, `client`, `server`, `assets` i
   `VERSION`, więc nieśledzone `Designs/`, `tools/` ani audyty nie są częścią
   obrazu.

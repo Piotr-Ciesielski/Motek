@@ -104,11 +104,14 @@ Oczekiwany stan przed zebraniem dowodów: testy przechodzą, a `npm run legal:ch
 
 ### B1. Ustalić niezmienny release candidate
 
-Stan po odczycie 2026-08-12: bieżący SHA `64e269c` nie jest wdrożony. Railway
-staging działa z `f118c844`, a produkcja z `c4b777a`; oba środowiska są starsze
-od bieżącego checkoutu. Dockerfile używa jawnej listy kopiowanych ścieżek, więc
-nieśledzone materiały lokalne nie trafiają do obrazu. B1 pozostaje otwarte do
-wyboru i weryfikacji jednego release candidate.
+Stan po odczycie 2026-08-12: bieżący SHA `e739ce6` nie jest wdrożony. Railway
+staging działa z gałęzi `staging`, a produkcja z `main`; oba środowiska mają po
+jednej replice w `sfo`. Jawny healthcheck `/health/ready` potwierdzono dla
+stagingu, ale nie dla bieżącej konfiguracji produkcji. Odczyt statusu zwrócił
+identyfikatory deploymentów, lecz nie zwrócił ich SHA commitów, więc trzeba je
+zarchiwizować przed wyborem release candidate. Dockerfile używa jawnej listy
+kopiowanych ścieżek, więc nieśledzone materiały lokalne nie trafiają do obrazu.
+B1 pozostaje otwarte do wyboru i weryfikacji jednego release candidate.
 
 - [ ] Potwierdzić branch, SHA, wersję aplikacji i zakres migracji przeznaczony do produkcji.
 - [x] Sprawdzić, że nieśledzone lokalne pliki nie wchodzą do artefaktu wdrożenia.
