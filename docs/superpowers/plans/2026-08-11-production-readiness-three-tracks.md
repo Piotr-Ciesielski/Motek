@@ -175,12 +175,26 @@ Stan rozpoznany przez audyt: stagingowy Nginx ma wspólny limit `20 r/m` z
 `burst=10` dla ścieżek Auth, a limiter aplikacyjny działa w pamięci procesu.
 Przy wielu replikach Railway nie zapewnia on wspólnego licznika.
 
-- [ ] Zmapować obecne limity aplikacyjne dla logowania, rejestracji, resetu hasła i zaproszeń.
-- [ ] Dodać ograniczenia na reverse proxy dla tych samych ścieżek, bez blokowania healthchecków i legal page.
-- [ ] Ustalić z operatorem wartości progów i okno czasowe; zapisać je w konfiguracji i testach.
-- [ ] Dodać bezpieczne, niesekretne metryki liczby odrzuceń i błędów Auth.
-- [ ] Sprawdzić, że logi nie zawierają haseł, tokenów, pełnych ciasteczek ani sekretów.
-- [ ] Ustalić osobne progi dla logowania, rejestracji, resetu hasła i zaproszeń; nie kopiować automatycznie jednego limitu `20 r/m` na wszystkie operacje.
+Aktualny odczyt lokalny przed zmianą: logowanie, rejestracja i reset hasła
+korzystały ze wspólnego limitu aplikacyjnego `30 żądań/min`, a blokada po `5`
+nieudanych próbach trwała `15 min`, po kluczu IP i e-maila. Recovery ma osobny
+limit żądań, a zaproszenia nie mają publicznej trasy Auth. Stagingowy reverse
+proxy stosował wspólny limit `20r/m` z `burst=10` dla logowania, rejestracji i
+resetu hasła. Metryki Prometheus obejmowały żądania, czas odpowiedzi, readiness
+i alerty 5xx, ale produkcja ma obecnie `METRICS_ENABLED=false`.
+
+- [x] Zmapować obecne limity aplikacyjne dla logowania, rejestracji, resetu hasła i zaproszeń.
+- [x] Dodać ograniczenia na reverse proxy dla tych samych ścieżek, bez blokowania healthchecków i legal page.
+- [x] Ustalić z operatorem wartości progów i okno czasowe; zapisać je w konfiguracji i testach.
+- [x] Dodać bezpieczne, niesekretne metryki liczby odrzuceń i błędów Auth.
+- [x] Sprawdzić, że logi nie zawierają haseł, tokenów, pełnych ciasteczek ani sekretów.
+- [x] Ustalić osobne progi dla logowania, rejestracji, resetu hasła i recovery; nie kopiować automatycznie jednego limitu `20 r/m` na wszystkie operacje.
+
+Decyzja operatora przyjęta: login `10/min/IP`, rejestracja `3/min/IP`, żądanie
+resetu hasła `3/15 min/IP+email`, recovery `5/10 min/IP`, a blokada po `5`
+nieudanych próbach pozostaje na `15 min`. Limiter aplikacyjny działa w pamięci
+procesu; Nginx stosuje przybliżenie brzegowe. Metryka aplikacyjna nie obejmuje
+429 wygenerowanych przez Nginx.
 
 ### C2. HTTPS, HSTS i nagłówki — przed produkcją
 
@@ -188,6 +202,11 @@ Przy wielu replikach Railway nie zapewnia on wspólnego licznika.
 
 Stan rozpoznany przez audyt: HTTPS i przekierowanie HTTP→HTTPS są przygotowane
 dla stagingu, ale `Strict-Transport-Security` nie jest obecnie egzekwowane.
+
+Odczyt lokalny potwierdził wymaganie `APP_ORIGIN=https://...`, bezpieczne
+cookies oraz nagłówki CSP, `X-Content-Type-Options`, `X-Frame-Options`,
+`Referrer-Policy`, `Permissions-Policy`, COOP i CORP. HSTS pozostaje wyłączone
+do czasu zewnętrznego potwierdzenia produkcyjnego HTTPS i wszystkich subdomen.
 
 - [ ] Potwierdzić wymuszanie HTTPS na domenie produkcyjnej.
 - [ ] Włączyć HSTS dopiero po potwierdzeniu, że wszystkie ścieżki i subdomeny są dostępne przez HTTPS.
@@ -202,6 +221,11 @@ dla stagingu, ale `Strict-Transport-Security` nie jest obecnie egzekwowane.
 Staging ma ModSecurity/OWASP CRS, ale nie jest to dowód, że publiczny origin
 Railway nie może ominąć Cloudflare. Cloudflare Access pozostaje wyłączony,
 ponieważ obecny workflow regresji nie obsługuje service-tokenów.
+
+Odczyt lokalny potwierdził przypięty obraz WAF, limity połączeń i Auth,
+blokadę publicznych metryk, prywatną sieć Prometheusa oraz nadpisywanie
+`X-Forwarded-For`. Nie potwierdza to jeszcze produkcyjnego DNS/proxy,
+ukrycia originu Railway, reguł WAF ani alertów.
 
 - [ ] Potwierdzić, że DNS/proxy Cloudflare wskazuje na origin Railway i że origin nie jest publicznie omijany.
 - [ ] Ustawić i udokumentować reguły WAF oraz limity brzegowe dla Auth, API i dużych żądań.
