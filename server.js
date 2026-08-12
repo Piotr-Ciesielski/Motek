@@ -486,18 +486,6 @@ function parseRecoveryGrantCookie(value, env = process.env, now = Math.floor(Dat
   }
 }
 
-function hashRecoveryGrantJti(jti) {
-  return crypto.createHash("sha256").update(jti).digest("base64url");
-}
-
-function createRecoveryGrant(userId, now = Math.floor(Date.now() / 1000)) {
-  return {
-    userId,
-    jti: crypto.randomUUID(),
-    expiresAt: now + AUTH_RECOVERY_GRANT_MAX_AGE,
-  };
-}
-
 function signIdleActivity(timestamp, env = process.env) {
   return crypto.createHmac("sha256", getIdleSessionSecret(env))
     .update(String(timestamp))
@@ -544,57 +532,6 @@ function clearAuthCookies(res) {
   appendSetCookie(res, buildAuthCookie(AUTH_REFRESH_COOKIE, "", 0));
   appendSetCookie(res, buildAuthCookie(AUTH_IDLE_COOKIE, "", 0));
   appendSetCookie(res, buildAuthCookie(AUTH_RECOVERY_GRANT_COOKIE, "", 0));
-}
-
-async function storeRecoveryGrant(grant) {
-  if (!supabaseConnection?.client) {
-    throw new ApiError(503, "Odzyskiwanie hasła jest chwilowo niedostępne. Spróbuj ponownie później.");
-  }
-  const { error } = await supabaseConnection.client.rpc("create_auth_recovery_grant", {
-    p_user_id: grant.userId,
-    p_jti_hash: hashRecoveryGrantJti(grant.jti),
-    p_expires_at: new Date(grant.expiresAt * 1000).toISOString(),
-  });
-  if (error) {
-    throw new ApiError(503, "Odzyskiwanie hasła jest chwilowo niedostępne. Spróbuj ponownie później.");
-  }
-}
-
-async function consumeRecoveryGrant(grant) {
-  if (!supabaseConnection?.client) return false;
-  const { data, error } = await supabaseConnection.client.rpc("consume_auth_recovery_grant", {
-    p_user_id: grant.userId,
-    p_jti_hash: hashRecoveryGrantJti(grant.jti),
-  });
-  if (error) {
-    throw new ApiError(503, "Odzyskiwanie hasła jest chwilowo niedostępne. Spróbuj ponownie później.");
-  }
-  return data === true;
-}
-
-async function claimRecoveryGrant(grant) {
-  if (!supabaseConnection?.client) return false;
-  const { data, error } = await supabaseConnection.client.rpc("claim_auth_recovery_grant", {
-    p_user_id: grant.userId,
-    p_jti_hash: hashRecoveryGrantJti(grant.jti),
-  });
-  if (error) {
-    throw new ApiError(503, "Odzyskiwanie hasła jest chwilowo niedostępne. Spróbuj ponownie później.");
-  }
-  return data === true;
-}
-
-async function releaseRecoveryGrant(grant) {
-  if (!supabaseConnection?.client) return false;
-  const { data, error } = await supabaseConnection.client.rpc("release_auth_recovery_grant", {
-    p_user_id: grant.userId,
-    p_jti_hash: hashRecoveryGrantJti(grant.jti),
-  });
-  if (error) {
-    console.warn("Nie udało się zwolnić grantu odzyskiwania hasła.");
-    return false;
-  }
-  return data === true;
 }
 
 function normalizeAuthEmail(value) {
@@ -1418,8 +1355,16 @@ async function handleAuthApi(req, res, url) {
     if (error || !data?.user || !data?.session) {
       throw new ApiError(400, "Link odzyskiwania hasła jest nieprawidłowy lub wygasł.");
     }
-    const grant = createRecoveryGrant(data.user.id);
-    await storeRecoveryGrant(grant);
+    const authenticatedClient = supabaseAuthClientFactory(supabaseAuthConfig, data.session.access_token);
+    const { data: grantJti, error: grantError } = await authenticatedClient.rpc("create_auth_recovery_grant", {});
+    if (grantError || typeof grantJti !== "string" || !grantJti) {
+      throw new ApiError(503, "Odzyskiwanie hasła jest chwilowo niedostępne. Spróbuj ponownie później.");
+    }
+    const grant = {
+      userId: data.user.id,
+      jti: grantJti,
+      expiresAt: Math.floor(Date.now() / 1000) + AUTH_RECOVERY_GRANT_MAX_AGE,
+    };
     setAuthCookies(res, data.session);
     appendSetCookie(res, buildRecoveryGrantCookie(grant));
     return sendJson(res, 200, {
@@ -1451,12 +1396,8 @@ async function handleAuthApi(req, res, url) {
       throw new ApiError(403, "Link odzyskiwania hasła jest nieprawidłowy lub wygasł.");
     }
 
-    if (!await claimRecoveryGrant(recoveryGrant)) {
-      throw new ApiError(403, "Link odzyskiwania hasła jest nieprawidłowy lub wygasł.");
-    }
-
     const { data: grantClaimed, error: grantClaimError } = await client.rpc("claim_auth_recovery_grant", {
-      grant_jti: grantJti,
+      grant_jti: recoveryGrant.jti,
     });
     if (grantClaimError || grantClaimed !== true) {
       throw new ApiError(400, "Ten link został już wykorzystany albo wygasł. Rozpocznij odzyskiwanie hasła ponownie.");
@@ -1465,7 +1406,7 @@ async function handleAuthApi(req, res, url) {
     const { error } = await client.auth.updateUser({ password });
     if (error) {
       try {
-        await client.rpc("release_auth_recovery_grant", { grant_jti: grantJti });
+        await client.rpc("release_auth_recovery_grant", { grant_jti: recoveryGrant.jti });
       } catch {
         // Błąd zwalniania nie może przesłonić bezpiecznej odpowiedzi o zmianie hasła.
       }
@@ -1473,7 +1414,7 @@ async function handleAuthApi(req, res, url) {
     }
 
     const { data: grantConsumed, error: grantError } = await client.rpc("consume_auth_recovery_grant", {
-      grant_jti: grantJti,
+      grant_jti: recoveryGrant.jti,
     });
     if (grantError || grantConsumed !== true) {
       console.error("Nie udało się skonsumować grantu odzyskiwania hasła.");

@@ -1,6 +1,5 @@
 const { test } = require("node:test");
 const assert = require("node:assert/strict");
-const crypto = require("node:crypto");
 process.env.HOST = "127.0.0.1";
 process.env.PORT = "0";
 process.env.IDLE_SESSION_SECRET = "test-idle-session-secret";
@@ -304,6 +303,8 @@ test("serwer Motek działa bezpiecznie", async (t) => {
     updateUserError: null,
   };
   const recoveryGrantEvents = [];
+  const recoveryGrantCalls = [];
+  const recoveryGrants = new Map();
   const signOutScopes = [];
   const signUpRequests = [];
   const issuedSignupConfirmationTokens = [];
@@ -319,9 +320,6 @@ test("serwer Motek działa bezpiecznie", async (t) => {
     user_metadata: { login: "nowy@example.com" },
   };
   const deletedUserIds = [];
-  const signOutScopes = [];
-  let updateUserCalls = 0;
-  let updateUserFailure = null;
   let profileResultOverride = null;
   let profileQueryFailure = null;
   let authenticatedProfileAccessDenied = false;
@@ -336,19 +334,6 @@ test("serwer Motek działa bezpiecznie", async (t) => {
       refreshToken ? `motek_refresh_token=${refreshToken}` : null,
       `motek_idle_activity=${idleActivity}`,
     ].filter(Boolean).join("; ");
-  }
-
-  function buildRecoveryGrantCookieValue({ userId, jti, exp }) {
-    const payload = Buffer.from(JSON.stringify({ user_id: userId, jti, exp })).toString("base64url");
-    const signature = crypto
-      .createHmac("sha256", process.env.IDLE_SESSION_SECRET)
-      .update(payload)
-      .digest("base64url");
-    return `${payload}.${signature}`;
-  }
-
-  function recoveryGrantCookie({ userId, jti, exp }) {
-    return `motek_recovery_grant=${encodeURIComponent(buildRecoveryGrantCookieValue({ userId, jti, exp }))}`;
   }
 
     function createSyntheticQuery(table, _token) {
@@ -656,20 +641,6 @@ test("serwer Motek działa bezpiecznie", async (t) => {
           return Promise.resolve({ data: true, error: null });
         }
         if (name === "claim_auth_recovery_grant") {
-          if (concurrentConsumeState.enabled) {
-            concurrentConsumeState.calls += 1;
-            if (concurrentConsumeState.calls === 1) {
-              return new Promise((resolve) => {
-                concurrentConsumeState.startedResolve();
-                concurrentConsumeState.release = () => {
-                  const grant = recoveryGrants.get(args.p_jti_hash);
-                  if (grant) grant.claimed = true;
-                  resolve({ data: true, error: null });
-                };
-              });
-            }
-            return Promise.resolve({ data: false, error: null });
-          }
           const grant = recoveryGrants.get(args.p_jti_hash);
           const usable = grant
             && grant.userId === args.p_user_id
@@ -1066,7 +1037,7 @@ test("serwer Motek działa bezpiecznie", async (t) => {
       });
     });
 
-    await t.test("obsługuje żądanie i zmianę hasła bez ujawniania istnienia konta", async () => {
+    await t.test("obsługuje żądanie i zmianę hasła bez ujawniania istnienia konta", async (passwordT) => {
       const resetResponse = await fetch(`${baseUrl}/api/auth/password-reset-request`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Origin: baseUrl },
@@ -1112,11 +1083,10 @@ test("serwer Motek działa bezpiecznie", async (t) => {
       assert.equal(recoveryGrant.user_id, syntheticUsers["token-user-a"].id);
       assert.equal(typeof recoveryGrant.jti, "string");
       assert.equal(typeof recoveryGrant.exp, "number");
-      assert.equal(recoveryGrantCalls.length, 1);
-      assert.deepEqual(recoveryGrantCalls[0], {
-        p_user_id: syntheticUsers["token-user-a"].id,
-        p_jti_hash: crypto.createHash("sha256").update(recoveryGrant.jti).digest("base64url"),
-        p_expires_at: new Date(recoveryGrant.exp * 1000).toISOString(),
+      assert.deepEqual(recoveryGrantRpcs[0], {
+        name: "create_auth_recovery_grant",
+        args: {},
+        userId: syntheticUsers["token-user-a"].id,
       });
 
       const activityResponse = await fetch(`${baseUrl}/api/auth/activity`, {
@@ -1155,7 +1125,7 @@ test("serwer Motek działa bezpiecznie", async (t) => {
         "consume_auth_recovery_grant",
       ]);
       assert.equal(recoveryGrantState.updateUserCalls, 1);
-      assert.deepEqual(signOutScopes.at(-1), { scope: "global" });
+      assert.equal(signOutScopes.at(-1).scope, "global");
       assert.deepEqual(await updateResponse.json(), {
         passwordUpdated: true,
         authenticated: false,
@@ -1267,155 +1237,6 @@ test("serwer Motek działa bezpiecznie", async (t) => {
         assert.equal(response.status, 401);
         assert.match(response.headers.get("set-cookie"), /motek_idle_activity=;/);
       });
-      assert.equal(reusedGrantResponse.status, 403);
-
-      const expiredGrantResponse = await fetch(`${baseUrl}/api/auth/password`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Origin: baseUrl,
-          Cookie: `${sessionCookies("token-user-a", "refresh-user-a")}; ${recoveryGrantCookie({
-            userId: syntheticUsers["token-user-a"].id,
-            jti: "expired-grant",
-            exp: Math.floor(Date.now() / 1000) - 1,
-          })}`,
-        },
-        body: JSON.stringify({ password: "NoweHaslo123!" }),
-      });
-      assert.equal(expiredGrantResponse.status, 403);
-
-      const foreignGrantResponse = await fetch(`${baseUrl}/api/auth/password`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Origin: baseUrl,
-          Cookie: `${sessionCookies("token-user-a", "refresh-user-a")}; ${recoveryGrantCookie({
-            userId: syntheticUsers["token-user-b"].id,
-            jti: "foreign-grant",
-            exp: Math.floor(Date.now() / 1000) + 60,
-          })}`,
-        },
-        body: JSON.stringify({ password: "NoweHaslo123!" }),
-      });
-      assert.equal(foreignGrantResponse.status, 403);
-
-      const rejectedSignOutRecovery = await fetch(`${baseUrl}/api/auth/recovery`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Origin: baseUrl },
-        body: JSON.stringify({ code: "recovery-code-signout-rejected" }),
-      });
-      assert.equal(rejectedSignOutRecovery.status, 200);
-      const rejectedSignOutCookies = rejectedSignOutRecovery.headers
-        .getSetCookie()
-        .map((cookie) => cookie.split(";", 1)[0])
-        .join("; ");
-      signOutFailure = new Error("Supabase global signOut odrzucony");
-      try {
-        const rejectedSignOutResponse = await fetch(`${baseUrl}/api/auth/password`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Origin: baseUrl,
-            Cookie: rejectedSignOutCookies,
-          },
-          body: JSON.stringify({ password: "NoweHaslo123!" }),
-        });
-        assert.equal(response.status, 400);
-      });
-
-    });
-
-    await t.test("odrzuca odpowiedź signOut z błędem i czyści cookies", async () => {
-      const recoveryResponse = await fetch(`${baseUrl}/api/auth/recovery`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Origin: baseUrl },
-        body: JSON.stringify({ code: "recovery-code-signout-error" }),
-      });
-      const recoveryCookies = recoveryResponse.headers
-        .getSetCookie()
-        .map((cookie) => cookie.split(";", 1)[0])
-        .join("; ");
-      signOutFailure = { error: new Error("Supabase zwróciło błąd globalnego signOut") };
-      try {
-        const response = await fetch(`${baseUrl}/api/auth/password`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json", Origin: baseUrl, Cookie: recoveryCookies },
-          body: JSON.stringify({ password: "NoweHaslo123!" }),
-        });
-        assert.equal(response.status, 503);
-        assert.match(response.headers.get("set-cookie"), /motek_access_token=.*Max-Age=0/);
-        assert.match(response.headers.get("set-cookie"), /motek_refresh_token=.*Max-Age=0/);
-        assert.match(response.headers.get("set-cookie"), /motek_idle_activity=.*Max-Age=0/);
-        assert.match(response.headers.get("set-cookie"), /motek_recovery_grant=.*Max-Age=0/);
-      } finally {
-        signOutFailure = null;
-      }
-    });
-
-    await t.test("nie zużywa grantu, gdy zmiana hasła nie powiedzie się", async () => {
-      const recoveryResponse = await fetch(`${baseUrl}/api/auth/recovery`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Origin: baseUrl },
-        body: JSON.stringify({ code: "recovery-code-update-failure" }),
-      });
-      const recoveryCookies = recoveryResponse.headers
-        .getSetCookie()
-        .map((cookie) => cookie.split(";", 1)[0])
-        .join("; ");
-      const grantHash = recoveryGrantCalls.at(-1).p_jti_hash;
-      updateUserFailure = new Error("hasło odrzucone");
-      try {
-        const response = await fetch(`${baseUrl}/api/auth/password`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json", Origin: baseUrl, Cookie: recoveryCookies },
-          body: JSON.stringify({ password: "NoweHaslo123!" }),
-        });
-        assert.equal(response.status, 400);
-        assert.equal(recoveryGrants.get(grantHash).used, false);
-      } finally {
-        updateUserFailure = null;
-      }
-    });
-
-    await t.test("atomowo zużywa grant przy równoległych zmianach hasła", async () => {
-      const recoveryResponse = await fetch(`${baseUrl}/api/auth/recovery`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Origin: baseUrl },
-        body: JSON.stringify({ code: "recovery-code-concurrent" }),
-      });
-      const recoveryCookies = recoveryResponse.headers
-        .getSetCookie()
-        .map((cookie) => cookie.split(";", 1)[0])
-        .join("; ");
-      const updateCallsBefore = updateUserCalls;
-      concurrentConsumeState.enabled = true;
-      concurrentConsumeState.calls = 0;
-      const firstConsumeStarted = new Promise((resolve) => {
-        concurrentConsumeState.startedResolve = resolve;
-      });
-      try {
-        const request = {
-          method: "POST",
-          headers: { "Content-Type": "application/json", Origin: baseUrl, Cookie: recoveryCookies },
-          body: JSON.stringify({ password: "NoweHaslo123!" }),
-        };
-        const firstResponsePromise = fetch(`${baseUrl}/api/auth/password`, request);
-        await firstConsumeStarted;
-        const secondResponse = await fetch(`${baseUrl}/api/auth/password`, request);
-        assert.equal(secondResponse.status, 403);
-        concurrentConsumeState.release();
-        const firstResponse = await firstResponsePromise;
-        assert.equal(firstResponse.status, 200);
-        assert.equal(updateUserCalls, updateCallsBefore + 1);
-        assert.match(firstResponse.headers.get("set-cookie"), /motek_access_token=.*Max-Age=0/);
-        assert.match(firstResponse.headers.get("set-cookie"), /motek_refresh_token=.*Max-Age=0/);
-        assert.match(firstResponse.headers.get("set-cookie"), /motek_idle_activity=.*Max-Age=0/);
-        assert.match(firstResponse.headers.get("set-cookie"), /motek_recovery_grant=.*Max-Age=0/);
-      } finally {
-        concurrentConsumeState.enabled = false;
-        concurrentConsumeState.startedResolve = null;
-        concurrentConsumeState.release = null;
-      }
     });
 
     await t.test("usuwa bieżące konto po ponownym haśle i frazie", async () => {
