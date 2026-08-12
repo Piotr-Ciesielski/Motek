@@ -17,6 +17,21 @@
 - Nie stage’ować nieśledzonych lokalnych materiałów bez osobnej decyzji; szczególnie `Designs/`, `tools/` i lokalnych audytów.
 - Prace agentów mają rozłączne zakresy zapisu; agenci nie modyfikują tych samych plików równolegle.
 
+## Aktualizacja A1 — 2026-08-12
+
+Odczytowo potwierdzono produkcyjny projekt Supabase `Motek Production` w
+regionie `eu-north-1`, plan Free organizacji oraz produkcyjne środowisko
+Railway z jedną repliką w `sfo` i domeną `www.rysia.org`. Produkcyjny Supabase
+nie ma jeszcze migracji prawnych z 9–10 sierpnia, więc nie traktujemy go jako
+zgodnego z bieżącym release candidate.
+
+Manifest został rozszerzony o zakres środowisk `production-and-staging` dla
+Supabase i Railway, ale dostawcy nadal są `unverified`. Następny krok prawny
+to decyzja o osobnym wpisie `cloudflare-edge` obok `cloudflare-turnstile`.
+Edge obsługuje DNS/proxy/TLS/WAF i cały ruch HTTP, więc nie powinien być
+ukryty pod samym wpisem Turnstile. Do edge trzeba zebrać osobne dowody
+retencji logów bezpieczeństwa, transferów, DPA/subprocesorów i ochrony originu.
+
 ---
 
 ## Ścieżka A — gotowość prawna dostawców

@@ -4,6 +4,28 @@ Ten raport jest bieżącym punktem odniesienia dla prac nad regulaminem,
 informacją o prywatności i rejestrem dostawców. Nie zastępuje przeglądu
 prawnego przez operatora.
 
+## Aktualizacja stanu — 2026-08-12
+
+W ramach punktu A1 odczytowo potwierdzono konfigurację produkcyjną:
+
+- Supabase Production (`Motek Production`) jest aktywny, działa w regionie
+  `eu-north-1`, a organizacja ma plan Free. Staging działa w tym samym regionie.
+- Railway Production ma osobne środowisko, jedną replikę w regionie `sfo`,
+  domenę `www.rysia.org` i ostatni odczytany deployment zakończony statusem
+  `SUCCESS`.
+- Produkcyjny Supabase ma zastosowane migracje tylko do
+  `20260807114728_document_recovery_grants_no_client_policy`; późniejsze
+  migracje prawne z 9–10 sierpnia nie zostały jeszcze wdrożone.
+- Supabase Security Advisor zgłasza ostrzeżenia dla czterech wersjonowanych RPC
+  `SECURITY DEFINER` dostępnych roli `authenticated` oraz wyłączoną ochronę
+  przed wyciekłymi hasłami. Ochrona haseł jest ograniczeniem planu Free;
+  dostępność RPC wymaga osobnego przeglądu, nie automatycznej zmiany.
+
+Manifest został uzupełniony o zakres `production-and-staging` dla Supabase i
+Railway oraz o potwierdzony produkcyjny region Supabase. Dostawcy nadal mają
+status `unverified`, ponieważ nie potwierdzono jeszcze transferów, pełnej
+retencji, DPA/subprocesorów ani zakresu Cloudflare DNS/proxy/WAF/TLS.
+
 ## Co zrobiono dziś
 
 - poprawiono nachodzenie mobilnej nawigacji na dolną nawigację aplikacji;
@@ -36,7 +58,7 @@ konfiguracji produkcyjnej.
 
 | Dostawca | Potwierdzone | Do uzupełnienia przed publikacją |
 | --- | --- | --- |
-| Supabase | Plan Free. Region `eu-north-1` potwierdzony bezpośrednio dla stagingu. Dla planu Free dokumentacja wskazuje 1 dzień logów API/bazy i 1 godzinę logów audytowych Auth. | Potwierdzić region i plan projektu produkcyjnego. Potwierdzić zakres danych i przepływów, retencję kopii/logów po usunięciu konta, zasady transferu poza EOG, role administratora/podmiotu przetwarzającego oraz właściwe DPA/subprocesorów. |
+| Supabase | Plan Free organizacji. Projekty Production i Staging są aktywne w `eu-north-1`. Dla planu Free dokumentacja wskazuje 1 dzień logów API/bazy i 1 godzinę logów audytowych Auth. | Potwierdzić retencję kopii/logów po usunięciu konta, zasady transferu poza EOG, role administratora/podmiotu przetwarzającego oraz właściwe DPA/subprocesorów. Osobno zastosować i zweryfikować brakujące migracje prawne; przedtem przejrzeć ostrzeżenia Security Advisor dla RPC. |
 | Railway | Plan Hobby. Region `sfo` odczytany z konfiguracji wdrożenia produkcji i stagingu. Dokumentacja Railway wskazuje 7 dni retencji logów dla Hobby. | Potwierdzić, czy `sfo` jest także lokalizacją przetwarzania i przechowywania logów. Ustalić zakres danych w logach, zasady ich usunięcia, mechanizm transferu poza EOG oraz właściwe DPA/subprocesorów dla produkcji. |
 | Cloudflare Turnstile | Plan Free. Dodatek prywatności opisuje minimalne sygnały antybotowe, m.in. IP, fingerprint TLS, User-Agent, sitekey i origin. | Potwierdzić rzeczywisty okres retencji, lokalizację przetwarzania, transfery poza EOG, role Cloudflare dla ochrony antybotowej i ulepszania detekcji oraz właściwe DPA/subprocesorów. W przywołanym dodatku nie znaleziono stałego okresu retencji. |
 
@@ -78,3 +100,6 @@ Na końcu dnia poza zapisanymi commitami pozostają:
 
 Nie zostały dołączone do dzisiejszych commitów. Przed osobnym zapisaniem trzeba
 potwierdzić ich zakres i powiązanie z planem.
+
+Lista nieśledzonych zmian powyżej jest historyczna dla raportu z 11 sierpnia;
+aktualny stan checkoutu należy sprawdzać przez `git status --short`.
