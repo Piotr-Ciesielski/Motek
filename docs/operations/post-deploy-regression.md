@@ -96,6 +96,47 @@ zmiennych adresów IP runnerów GitHub Actions.
 
 Po ustabilizowaniu HTTPS można rozpocząć HSTS od `max-age=86400`, bez `includeSubDomains`. Proxy i WAF nie dowodzą, że originu Railway nie da się ominąć; usuń zbędne domeny Railway dopiero po sprawdzeniu domen własnych i healthchecka.
 
+### 5.1 Operatorska checklista C2/C3
+
+Poniższe punkty wymagają dowodu dla konkretnej produkcji. Wynik testu lokalnego
+nie zastępuje potwierdzenia w panelu Cloudflare/Railway ani testu na żywej
+domenie. W checklistach i raporcie rozdzielaj zawsze „potwierdzone lokalnie”
+od „wymaga operatora”.
+
+**Potwierdzone lokalnie**
+
+- [x] Testy konfiguracji i odpowiedzi potwierdzają wymagane nagłówki HTTPS,
+  CSP, bezpieczne cookies, `X-Content-Type-Options`, `X-Frame-Options`,
+  `Referrer-Policy`, `Permissions-Policy`, COOP i CORP.
+- [x] Lokalny test alertu Auth potwierdza bezpieczną, niesekretną metrykę
+  odrzuceń; nie jest to potwierdzenie dostarczenia alertu do odbiorcy.
+- [x] Lokalny test publicznego `/internal/metrics` oczekuje blokady; nie jest
+  to jeszcze test domeny produkcyjnej ani bezpośredniego originu.
+
+**Wymaga operatora i dowodu zewnętrznego**
+
+- [ ] Potwierdź, że rekordy DNS produkcji w Cloudflare są proxied (pomarańczowa
+  chmura), a nie DNS only.
+- [ ] Potwierdź, że origin Railway nie jest osiągalny z pominięciem Cloudflare;
+  sprawdź bezpośredni adres originu oraz wszystkie zbędne domeny Railway.
+- [ ] Potwierdź TLS `Full (strict)` oraz przekierowanie HTTP do HTTPS dla
+  każdej domeny produkcyjnej.
+- [ ] Potwierdź brak cache dla `/api/*`, Auth i treści konta.
+- [ ] Potwierdź reguły WAF i rate limiting dla Auth/API, w tym ostrzejsze limity
+  dla rejestracji i resetu hasła.
+- [ ] Wykonaj test publicznego `/internal/metrics` przez domenę produkcyjną
+  oraz osobno przez bezpośredni adres originu; oba wejścia mają być prywatne
+  (zwracać blokadę, a nie metryki).
+- [ ] Wskaż rzeczywistego odbiorcę alertów Auth/5xx i wykonaj test procedury
+  reakcji na alert; zapisz wynik i czas reakcji bez ujawniania sekretów.
+- [ ] Pozostaw Cloudflare Access wyłączone do czasu obsługi service-tokenów
+  przez workflow regresji; nie traktuj wyłączenia jako dowodu ukrycia originu.
+- [ ] Włącz HSTS dopiero po potwierdzeniu wszystkich domen i subdomen. Zacznij
+  od `max-age=86400`, bez `includeSubDomains`.
+
+Nie oznaczaj punktów z tej sekcji jako wykonanych na podstawie samego planu,
+konfiguracji lokalnej albo ogólnego opisu dostawcy.
+
 ## 6. Supabase i Turnstile
 
 Zastosuj ten sam uporządkowany zestaw `supabase/migrations/` osobno w stagingu i produkcji. Migracje nie uruchamiają się wraz z kontenerem. Przed promocją sprawdź RLS tabel eksponowanych przez API, Security Advisor, Performance Advisor i funkcje `SECURITY DEFINER`.

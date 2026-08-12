@@ -212,7 +212,7 @@ do czasu zewnętrznego potwierdzenia produkcyjnego HTTPS i wszystkich subdomen.
 - [ ] Włączyć HSTS dopiero po potwierdzeniu, że wszystkie ścieżki i subdomeny są dostępne przez HTTPS.
 - [ ] Zacząć od `max-age=86400` bez `includeSubDomains`; zwiększać zakres dopiero po osobnej weryfikacji wszystkich subdomen.
 - [ ] Zachować wyjątki dla lokalnego developmentu i stagingu, jeżeli są wymagane przez istniejące testy.
-- [ ] Zweryfikować CSP, `X-Content-Type-Options`, `Referrer-Policy`, `Permissions-Policy` i bezpieczne cookies.
+- [x] Lokalnie zweryfikować CSP, `X-Content-Type-Options`, `Referrer-Policy`, `Permissions-Policy`, bezpieczne cookies oraz pozostałe wymagane nagłówki odpowiedzi.
 
 ### C3. WAF, DDoS i origin — przed publicznym udostępnieniem
 
@@ -229,7 +229,8 @@ ukrycia originu Railway, reguł WAF ani alertów.
 
 - [ ] Potwierdzić, że DNS/proxy Cloudflare wskazuje na origin Railway i że origin nie jest publicznie omijany.
 - [ ] Ustawić i udokumentować reguły WAF oraz limity brzegowe dla Auth, API i dużych żądań.
-- [ ] Zdefiniować alerty, kontakt operatora i procedurę reakcji na skok ruchu albo atak.
+- [x] Lokalnie potwierdzić alert Auth i niesekretną metrykę odrzuceń; potwierdzenie dostarczenia pozostaje odrębne.
+- [ ] Ustalić rzeczywistego odbiorcę alertów, przetestować procedurę reakcji na alert oraz udokumentować wynik.
 - [ ] Wykonać tylko bezpieczne testy smoke; testy obciążeniowe i zmiany WAF wymagają osobnej zgody.
 
 ### C4. Katalog wzorów — po zabezpieczeniu bram produkcyjnych
