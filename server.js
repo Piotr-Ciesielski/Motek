@@ -1330,8 +1330,20 @@ async function handleAuthApi(req, res, url) {
       throw new ApiError(400, "Link odzyskiwania hasła jest nieprawidłowy lub wygasł.");
     }
 
+    const { data: grantClaimed, error: grantClaimError } = await client.rpc("claim_auth_recovery_grant", {
+      grant_jti: grantJti,
+    });
+    if (grantClaimError || grantClaimed !== true) {
+      throw new ApiError(400, "Link odzyskiwania hasła jest nieprawidłowy lub wygasł.");
+    }
+
     const { error } = await client.auth.updateUser({ password });
     if (error) {
+      try {
+        await client.rpc("release_auth_recovery_grant", { grant_jti: grantJti });
+      } catch {
+        // Błąd zwalniania nie może przesłonić bezpiecznej odpowiedzi o zmianie hasła.
+      }
       throw new ApiError(400, "Nie udało się zmienić hasła. Sprawdź hasło i spróbuj ponownie.");
     }
 
@@ -1339,6 +1351,7 @@ async function handleAuthApi(req, res, url) {
       grant_jti: grantJti,
     });
     if (grantError || grantConsumed !== true) {
+      console.error("Nie udało się skonsumować grantu odzyskiwania hasła.");
       throw new ApiError(503, "Nie udało się potwierdzić jednorazowej zmiany hasła. Spróbuj ponownie później.");
     }
 
