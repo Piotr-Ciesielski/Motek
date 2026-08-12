@@ -16,8 +16,9 @@ W ramach punktu A1 odczytowo potwierdzono konfigurację produkcyjną:
 - Bieżący odczyt konfiguracji Railway potwierdził, że staging korzysta z
   gałęzi `staging`, domeny `staging.rysia.org` i jawnego healthchecka
   `/health/ready`; produkcja korzysta z gałęzi `main`, domeny `www.rysia.org`
-  i jednej repliki `sfo`, ale odczyt konfiguracji produkcyjnej nie pokazał
-  jawnego healthchecka. To pozostaje osobną kontrolą przed produkcją.
+  i jednej repliki `sfo`. Pole healthchecka nie było widoczne w odpowiedzi
+  konfiguracji produkcji, ale logi builda ostatniego wdrożenia potwierdziły
+  udane sprawdzenie `/health/ready` także dla produkcji.
 - Produkcyjny Supabase ma zastosowane migracje tylko do
   `20260807114728_document_recovery_grants_no_client_policy`; późniejsze
   migracje prawne z 9–10 sierpnia nie zostały jeszcze wdrożone.
@@ -86,8 +87,8 @@ Bieżący checkpoint gałęzi `agent/staging-security-merge` ma SHA
   `7e4b790d-7b09-4c11-811e-d4a0e82d9605` z 11 sierpnia;
 - ostatnio odczytany udany deployment produkcji ma identyfikator Railway
   `551aa616-a3e9-4b85-9e98-7cf15630b6d3` z 8 sierpnia;
-- oba środowiska mają po jednej replice w `sfo`; jawny healthcheck
-  `/health/ready` potwierdzono tylko dla stagingu;
+- oba środowiska mają po jednej replice w `sfo`; logi ostatnich wdrożeń
+  potwierdzają udany healthcheck `/health/ready` dla stagingu i produkcji;
 - bieżący odczyt statusu nie zwrócił SHA commitów dla tych deploymentów, więc
   przed wyborem release candidate trzeba pobrać i zarchiwizować SHA z poziomu
   konkretnego deploymentu.
