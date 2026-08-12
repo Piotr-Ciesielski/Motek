@@ -76,6 +76,14 @@ test("proxy blokuje publiczne metryki i Prometheus używa sieci wewnętrznej", (
   assert.match(prometheus, /\/internal\/metrics/);
 });
 
+test("staging definiuje alert skoku odrzuceń Auth", () => {
+  const alerts = fs.readFileSync(path.join(root, "prometheus", "alerts.yml"), "utf8");
+  assert.match(alerts, /alert: MotekAuthRateLimitSpike/);
+  assert.match(alerts, /motek_auth_rate_limit_rejections_total/);
+  assert.match(alerts, /for: 5m/);
+  assert.match(alerts, /severity: warning/);
+});
+
 test("CI przypina Supabase CLI do zweryfikowanego pełnego SHA", () => {
   const workflow = fs.readFileSync(path.join(__dirname, "..", ".github", "workflows", "ci.yml"), "utf8");
   assert.match(
