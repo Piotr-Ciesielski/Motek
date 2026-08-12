@@ -102,14 +102,36 @@ trzeba wskazać jeden zatwierdzony SHA, sprawdzić staging na tym samym artefakc
 i dopiero potem rozważać produkcję. Nie wykonano promocji ani deployu.
 
 Na potrzeby dalszej decyzji obecny checkout pozostaje linią roboczą:
-`agent/staging-security-merge@77d30bc`, wersja `2.0.0-alpha.38`, SHA
-`77d30bc`. Zweryfikowany snapshot stagingu `2.0.0-alpha.39` znajduje się na
-SHA `62d0b84e`, ale obie linie nie są relacją przodek–potomek. Oznacza to, że
-alpha.39 zawiera późniejsze poprawki stagingowe, a obecny checkout zawiera
-późniejsze prace prawne i migracyjne. Mechaniczne podbicie wersji do alpha.40
-byłoby więc przedwczesne. Najpierw trzeba wybrać i scalić potrzebny zakres obu
-linii, uzgodnić migracje na stagingu i wykonać kontrolowaną regresję; dopiero
-potem można utworzyć nowego kandydata wydaniowego.
+`agent/staging-security-merge@2942393`, wersja `2.0.0-alpha.38`, SHA
+`2942393`. Zweryfikowany snapshot stagingu `2.0.0-alpha.39` znajduje się na
+SHA `62d0b84e`, a wdrożony artefakt na `f118c84`; obie linie nie są relacją
+przodek–potomek. Oznacza to, że alpha.39 zawiera późniejsze poprawki
+stagingowe, a obecny checkout zawiera późniejsze prace prawne i migracyjne.
+Mechaniczne podbicie wersji do alpha.40 byłoby więc przedwczesne.
+Najpierw trzeba wybrać i scalić potrzebny zakres obu linii, uzgodnić migracje
+na stagingu i wykonać kontrolowaną regresję; dopiero potem można utworzyć
+nowego kandydata wydaniowego.
+
+## Analiza integracyjna alpha.39 — 2026-08-12
+
+Porównanie wdrożonego stagingu `f118c84` z bieżącą linią nie uzasadnia
+mechanicznego merge ani cherry-pick całego branchu stagingowego:
+
+- początkowa poprawka bezpieczeństwa z `4b24191` została później przekształcona
+  przez kolejne prace Supabase Free i bieżące zmiany prawne; bezpośredni
+  cherry-pick grozi przywróceniem starych migracji i konfliktami w `server.js`;
+- migracja `20260807150000_reconcile_yarn_acl_and_recovery.sql` w bieżącym
+  checkoutcie jest zgodna z wariantem użytym w linii stagingowej i nie wymaga
+  ponownego dodawania; problemem pozostaje jej zastosowanie na produkcji;
+- poprawka `f118c84` dotycząca zachowania sesji po akceptacji regulaminu ma
+  odpowiednik w bieżącym `server.js`, a lokalny regres obejmuje akceptację prawa;
+- poprawki stagingowe dotyczące zachowania starszych wersji włóczek i ACL
+  należy potwierdzić przez replay migracji oraz testy na nowym kandydacie, a
+  nie przenosić jako osobne, historyczne migracje.
+
+Wniosek: następny candidate powinien powstać z bieżącej linii prawnej po
+kontroli równoważności zachowań i migracji. Nie tworzymy alpha.40 przed tym
+sprawdzeniem i przed pozytywną regresją stagingu.
 
 Oficjalne źródła potwierdzają fakty ogólne, ale nie zastępują dowodu konkretnej
 konfiguracji Motka:

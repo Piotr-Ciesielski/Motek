@@ -115,12 +115,14 @@ B1 pozostaje otwarte do wyboru i weryfikacji jednego release candidate.
 
 - [ ] Potwierdzić branch, SHA, wersję aplikacji i zakres migracji przeznaczony do produkcji.
 - [x] Sprawdzić, że nieśledzone lokalne pliki nie wchodzą do artefaktu wdrożenia.
-- Stan roboczy: obecna linia `agent/staging-security-merge@77d30bc`, wersja
+- Stan roboczy: obecna linia `agent/staging-security-merge@2942393`, wersja
   `2.0.0-alpha.38`. Zweryfikowany snapshot stagingu `2.0.0-alpha.39` jest na
-  SHA `62d0b84e`, ale obie linie nie są relacją przodek–potomek: staging ma
-  późniejsze poprawki stagingowe, a obecna linia ma późniejsze prace prawne i
-  migracyjne. Nie należy więc mechanicznie podbijać wersji do alpha.40.
-  Najpierw trzeba scalić wybrany zakres, uzgodnić migracje i wykonać regresję.
+  SHA `62d0b84e`, a wdrożony artefakt na `f118c84`; obie linie nie są relacją
+  przodek–potomek. Analiza wykazała, że migracja uzgadniająca ACL/recovery jest
+  już obecna w bieżącej linii, a poprawka sesji po akceptacji prawa ma w niej
+  odpowiednik. Nie należy więc mechanicznie podbijać wersji do alpha.40 ani
+  cherry-pickować całego stagingu. Najpierw trzeba potwierdzić równoważność
+  zachowań i replay migracji, a następnie wykonać regresję.
 - [ ] Uruchomić lokalnie pełne kontrole kodu i testy bazy bez kontaktu z produkcją.
 
 ```powershell
