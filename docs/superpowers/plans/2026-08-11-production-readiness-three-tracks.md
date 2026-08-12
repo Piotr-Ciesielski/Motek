@@ -53,11 +53,14 @@ i ochrony originu, ale bramka wymaga tylko jednego wpisu `cloudflare`.
 
 ### A2. Zaostrzyć walidację manifestu
 
-- [ ] Dodać do `legal-publication-policy.js` wymaganie nie-placeholderowych pól `location`, `transfer` i `retention` dla produkcji.
-- [ ] Wymagać niepustego `evidence`, daty `verifiedAt` w formacie `YYYY-MM-DD` oraz statusu `verified`.
-- [ ] Odrzucać dowód, który nie jest adresem `https:` do zatwierdzonego źródła dostawcy albo nie opisuje konkretnej konfiguracji produkcyjnej; sama obecność dowolnego linku nie może wystarczać.
-- [ ] Dodać testy odrzucające dostawcę z uzupełnionym planem, ale bez potwierdzonego transferu albo retencji.
-- [ ] Zachować test, który nie ujawnia danych operatora w komunikacie błędu.
+- [x] Dodać do `legal-publication-policy.js` wymaganie nie-placeholderowych pól `location`, `transfer` i `retention` dla produkcji.
+- [x] Wymagać niepustego `evidence`, daty `verifiedAt` w formacie `YYYY-MM-DD` oraz statusu `verified`.
+- [x] Wymagać zakresu dowodu (`evidenceScope`) oraz adresu `https:` do zatwierdzonej domeny dostawcy; sama obecność dowolnego linku nie może wystarczać.
+- [x] Dodać testy odrzucające dostawcę z uzupełnionym planem, ale bez potwierdzonego transferu albo retencji.
+- [x] Zachować test, który nie ujawnia danych operatora w komunikacie błędu.
+
+Stan po wykonaniu: produkcja nadal jest blokowana, ponieważ bieżący manifest
+ma status `draft`, a wszyscy dostawcy pozostają `unverified`.
 
 **Sprawdzenie:**
 
@@ -225,7 +228,7 @@ Stan końcowy dnia:
 - `npm run legal:check` nadal blokuje publikację z powodu niezweryfikowanych
   dostawców;
 - następny krok: ścieżka A1 — zebranie dowodów produkcyjnych Supabase,
-  Railway i Cloudflare.
+  Railway i Cloudflare; bramka A2 jest gotowa do użycia fail-closed.
 
 ---
 

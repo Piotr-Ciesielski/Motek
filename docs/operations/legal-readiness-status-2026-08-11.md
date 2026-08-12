@@ -26,6 +26,13 @@ Railway oraz o potwierdzony produkcyjny region Supabase. Dostawcy nadal mają
 status `unverified`, ponieważ nie potwierdzono jeszcze transferów, pełnej
 retencji, DPA/subprocesorów ani zakresu Cloudflare DNS/proxy/WAF/TLS.
 
+Walidacja bramki została zaostrzona: zweryfikowany dostawca musi mieć
+potwierdzony zakres produkcyjny, lokalizację, transfer, retencję i zakres
+dowodu, co najmniej jeden dowód HTTPS z zatwierdzonej domeny oraz prawidłową,
+nieprzyszłą datę `verifiedAt`. Nieznani dostawcy i nieznane środowisko
+wdrożenia również blokują produkcję. Wartości typu „do uzupełnienia” i „do
+potwierdzenia” są odrzucane.
+
 ## Co zrobiono dziś
 
 - poprawiono nachodzenie mobilnej nawigacji na dolną nawigację aplikacji;
@@ -35,8 +42,8 @@ retencji, DPA/subprocesorów ani zakresu Cloudflare DNS/proxy/WAF/TLS.
   dostępne informacje o retencji i źródła dowodowe;
 - zachowano bramkę fail-closed: produkcja nie przejdzie dalej na podstawie
   samych deklaracji planu;
-- uruchomiono lint, formatowanie i 17 testów prawnych — wszystkie zakończyły
-  się powodzeniem;
+- uruchomiono lint, formatowanie, 23 testy prawne oraz pełny check projektu
+  obejmujący 346 testów — wszystkie zakończyły się powodzeniem;
 - zapisano i wysłano na GitHub trzy dzisiejsze etapy na gałęzi
   `agent/staging-security-merge`:
   `70250fd`, `77fc4dc`, `62f24bf`.

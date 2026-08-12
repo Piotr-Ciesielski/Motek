@@ -5,9 +5,36 @@ const { validateLegalPublication } = require("../legal-publication-policy");
 const base = {
   legalDocument: { operator: { name: "Operator", email: "operator@example.com" } },
   providers: {
-    supabase: { status: "verified", evidence: ["https://example.com/a"], verifiedAt: "2026-08-09" },
-    railway: { status: "verified", evidence: ["https://example.com/b"], verifiedAt: "2026-08-09" },
-    cloudflare: { status: "verified", evidence: ["https://example.com/c"], verifiedAt: "2026-08-09" },
+    supabase: {
+      status: "verified",
+      scope: "production-and-staging",
+      location: "eu-north-1",
+      transfer: "UE lub potwierdzony mechanizm transferu",
+      retention: "Potwierdzona retencja",
+      evidenceScope: "Potwierdzony projekt produkcyjny Motek",
+      evidence: ["https://supabase.com/docs/guides/platform/regions"],
+      verifiedAt: "2026-08-09",
+    },
+    railway: {
+      status: "verified",
+      scope: "production-and-staging",
+      location: "sfo",
+      transfer: "Potwierdzony mechanizm transferu",
+      retention: "7 dni",
+      evidenceScope: "Potwierdzona usługa produkcyjna Motek",
+      evidence: ["https://docs.railway.com/observability/logs"],
+      verifiedAt: "2026-08-09",
+    },
+    cloudflare: {
+      status: "verified",
+      scope: "production-and-staging",
+      location: "Potwierdzona lokalizacja przetwarzania",
+      transfer: "Potwierdzony mechanizm transferu",
+      retention: "Potwierdzona retencja",
+      evidenceScope: "Potwierdzone strefy produkcyjne Motka",
+      evidence: ["https://www.cloudflare.com/policies/privacy/"],
+      verifiedAt: "2026-08-09",
+    },
   },
   patternAudit: { complete: true, pending_review: 0 },
   deploymentEnvironment: "production",
@@ -28,6 +55,70 @@ test("unverified provider blokuje produkcję bez ujawniania operatora", () => {
   assert.equal(result.ready, false);
   assert.match(result.errors.join(" "), /railway|dostawc/i);
   assert.doesNotMatch(result.errors.join(" "), /TAJNY|secret@example.com/);
+});
+
+test("produkcja odrzuca zweryfikowanego dostawcę z placeholderem transferu lub retencji", () => {
+  const result = validateLegalPublication({
+    ...base,
+    providers: {
+      ...base.providers,
+      railway: { ...base.providers.railway, transfer: "do uzupełnienia", retention: "do potwierdzenia" },
+    },
+  });
+  assert.equal(result.ready, false);
+  assert.match(result.errors.join(" "), /railway.*(transfer|retencj)/i);
+});
+
+test("produkcja odrzuca placeholder danych operatora", () => {
+  const result = validateLegalPublication({
+    ...base,
+    legalDocument: { operator: { name: "do uzupełnienia", email: "operator@example.com" } },
+  });
+  assert.equal(result.ready, false);
+  assert.match(result.errors.join(" "), /operatora/i);
+});
+
+test("produkcja odrzuca nieznanego dostawcę", () => {
+  const result = validateLegalPublication({
+    ...base,
+    providers: { ...base.providers, unknown: { status: "verified" } },
+  });
+  assert.equal(result.ready, false);
+  assert.match(result.errors.join(" "), /unknown|nieznan/i);
+});
+
+test("produkcja odrzuca dowód spoza zatwierdzonej domeny dostawcy", () => {
+  const result = validateLegalPublication({
+    ...base,
+    providers: {
+      ...base.providers,
+      railway: { ...base.providers.railway, evidence: ["https://example.com/fake-proof"] },
+    },
+  });
+  assert.equal(result.ready, false);
+  assert.match(result.errors.join(" "), /railway.*dowodu/i);
+});
+
+test("produkcja odrzuca placeholder zakresu dowodu i przyszłą datę weryfikacji", () => {
+  const result = validateLegalPublication({
+    ...base,
+    providers: {
+      ...base.providers,
+      cloudflare: {
+        ...base.providers.cloudflare,
+        evidenceScope: "TBD",
+        verifiedAt: "2999-01-01",
+      },
+    },
+  });
+  assert.equal(result.ready, false);
+  assert.match(result.errors.join(" "), /cloudflare.*(dowodu|daty)/i);
+});
+
+test("nieznane środowisko wdrożenia blokuje publikację", () => {
+  const result = validateLegalPublication({ ...base, deploymentEnvironment: "prod" });
+  assert.equal(result.ready, false);
+  assert.match(result.errors.join(" "), /środowisk/i);
 });
 
 test("draft lokalny nie blokuje środowiska lokalnego", () => {

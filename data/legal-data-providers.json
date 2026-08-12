@@ -10,6 +10,7 @@
       "location": "eu-north-1 (produkcja i staging)",
       "transfer": "do potwierdzenia dla produkcji",
       "retention": "Logi API i bazy danych: 1 dzień; logi audytowe Auth: 1 godzina (plan Free)",
+      "evidenceScope": "do potwierdzenia dla produkcji",
       "status": "unverified",
       "evidence": [
         "https://supabase.com/docs/guides/platform/regions",
@@ -25,6 +26,7 @@
       "location": "sfo (region wdrożenia produkcji i staging; lokalizacja przetwarzania logów do potwierdzenia)",
       "transfer": "do uzupełnienia",
       "retention": "Logi Railway: 7 dni (plan Hobby)",
+      "evidenceScope": "do potwierdzenia dla produkcji",
       "status": "unverified",
       "evidence": [
         "https://docs.railway.com/observability/logs"
@@ -42,6 +44,7 @@
       "location": "do uzupełnienia",
       "transfer": "do uzupełnienia",
       "retention": "Turnstile: do potwierdzenia; edge: do potwierdzenia",
+      "evidenceScope": "do potwierdzenia osobno dla edge i turnstile",
       "status": "unverified",
       "evidence": [
         "https://www.cloudflare.com/en-in/turnstile-privacy-policy/",
