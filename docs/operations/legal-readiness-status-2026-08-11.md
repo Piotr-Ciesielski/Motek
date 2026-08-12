@@ -82,6 +82,16 @@ Wniosek: B1 nie jest jeszcze zamknięte jako release candidate. Przed promocją
 trzeba wskazać jeden zatwierdzony SHA, sprawdzić staging na tym samym artefakcie
 i dopiero potem rozważać produkcję. Nie wykonano promocji ani deployu.
 
+Na potrzeby dalszej decyzji obecny checkout pozostaje linią roboczą:
+`agent/staging-security-merge@77d30bc`, wersja `2.0.0-alpha.38`, SHA
+`77d30bc`. Zweryfikowany snapshot stagingu `2.0.0-alpha.39` znajduje się na
+SHA `62d0b84e`, ale obie linie nie są relacją przodek–potomek. Oznacza to, że
+alpha.39 zawiera późniejsze poprawki stagingowe, a obecny checkout zawiera
+późniejsze prace prawne i migracyjne. Mechaniczne podbicie wersji do alpha.40
+byłoby więc przedwczesne. Najpierw trzeba wybrać i scalić potrzebny zakres obu
+linii, uzgodnić migracje na stagingu i wykonać kontrolowaną regresję; dopiero
+potem można utworzyć nowego kandydata wydaniowego.
+
 Oficjalne źródła potwierdzają fakty ogólne, ale nie zastępują dowodu konkretnej
 konfiguracji Motka:
 
