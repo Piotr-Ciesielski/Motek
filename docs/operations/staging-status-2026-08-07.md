@@ -3,6 +3,29 @@
 Ten dokument jest krótkim raportem operacyjnym, a nie deklaracją wydania
 produkcyjnego.
 
+## Najnowszy zweryfikowany snapshot — 2026-08-12
+
+- domena: `https://staging.rysia.org`;
+- branch: `staging`;
+- commit: `301469dfb19e576ac38034c269bdc1089b7690fd`;
+- wersja aplikacji: `2.0.0-alpha.39`;
+- środowisko: `staging`;
+- produkcja pozostała nietknięta.
+
+CI `31605847868` zakończyło sukcesem testy kodu oraz replay wszystkich
+migracji i testów bazy. Po wdrożeniu Railway pełna regresja stagingu
+`31605875935` również zakończyła się sukcesem. Endpointy zweryfikowano jako:
+
+- `/health/live` → `200`, `status: ok`;
+- `/health/ready` → `200`, `status: ready`;
+- `/health/release` → `200`, `status: ready`, SHA powyżej,
+  `environment: staging`.
+
+Na Supabase Staging zastosowano migrację `add_recovery_grant_claim`.
+Zdalny numer migracji to `20260812135011`, a numer pliku repozytorium to
+`20260812122131`; jest to różnica numeracji nadana przez narzędzie zdalne,
+nie różnica treści migracji.
+
 ## Aktualny snapshot
 
 - domena: `https://staging.rysia.org`;

@@ -4,6 +4,30 @@ Ten raport jest bieżącym punktem odniesienia dla prac nad regulaminem,
 informacją o prywatności i rejestrem dostawców. Nie zastępuje przeglądu
 prawnego przez operatora.
 
+## Aktualizacja po wdrożeniu stagingu — 2026-08-12
+
+Kandydat stagingowy został zweryfikowany end-to-end:
+
+- branch: `staging`;
+- commit: `301469dfb19e576ac38034c269bdc1089b7690fd`;
+- wersja: `2.0.0-alpha.39`;
+- CI GitHub `31605847868`: testy kodu i replay migracji zakończone sukcesem;
+- regresja po wdrożeniu `31605875935`: pełny profil stagingu zakończony sukcesem;
+- `/health/live` zwraca `200` i `status: ok`, `/health/ready` zwraca `200` i
+  `status: ready`, a `/health/release` potwierdza powyższy SHA oraz
+  `environment: staging`;
+- na Supabase Staging zastosowano migrację recovery claim; narzędzie nadało
+  jej zdalny numer `20260812135011`, podczas gdy plik repozytorium ma numer
+  `20260812122131` — rozbieżność numeracji została odnotowana i nie zmienia
+  treści migracji;
+- produkcyjny Supabase, Railway i Cloudflare nie były w ramach tego kroku
+  modyfikowane.
+
+Staging jest więc zweryfikowaną bramą techniczną dla tego kandydata, ale nie
+oznacza to gotowości publikacji prawnej ani zgody na wdrożenie produkcyjne.
+`npm run legal:check` nadal powinno zwracać `LEGAL_PUBLICATION=not ready`,
+ponieważ Supabase, Railway i Cloudflare pozostają niezweryfikowane prawnie.
+
 ## Aktualizacja stanu — 2026-08-12
 
 W ramach punktu A1 odczytowo potwierdzono konfigurację produkcyjną:

@@ -104,26 +104,22 @@ Oczekiwany stan przed zebraniem dowodów: testy przechodzą, a `npm run legal:ch
 
 ### B1. Ustalić niezmienny release candidate
 
-Stan po odczycie 2026-08-12: bieżący SHA `e739ce6` nie jest wdrożony. Railway
-staging działa z gałęzi `staging`, a produkcja z `main`; oba środowiska mają po
-jednej replice w `sfo`. Staging działa z potwierdzonym SHA `f118c84`, produkcja
-z potwierdzonym SHA `c4b777a`, a bieżący checkout `e739ce6` nie jest jeszcze
-wdrożony. Logi ostatnich wdrożeń potwierdzają udany healthcheck
-`/health/ready` dla obu środowisk. Dockerfile używa jawnej listy
-kopiowanych ścieżek, więc nieśledzone materiały lokalne nie trafiają do obrazu.
-B1 pozostaje otwarte do wyboru i weryfikacji jednego release candidate.
+Stan po weryfikacji 2026-08-12: zaakceptowany technicznie kandydat stagingowy
+to `staging@301469dfb19e576ac38034c269bdc1089b7690fd`, wersja
+`2.0.0-alpha.39`. Railway staging działa z gałęzi `staging`, a produkcja z
+`main`; oba środowiska mają po jednej replice w `sfo`. Produkcja nadal działa
+na osobnym, wcześniejszym SHA. Dockerfile używa jawnej listy kopiowanych
+ścieżek, więc nieśledzone materiały lokalne nie trafiają do obrazu. B1 jest
+zamknięte technicznie dla stagingu, ale pozostaje otwarte jako decyzja
+produkcyjna do czasu kontroli migracji i osobnej zgody operatora.
 
-- [ ] Potwierdzić branch, SHA, wersję aplikacji i zakres migracji przeznaczony do produkcji.
+- [x] Potwierdzić branch, SHA i wersję aplikacji kandydata stagingowego.
+- [ ] Potwierdzić zakres migracji przeznaczony do produkcji oraz plan jego bezpiecznego zastosowania.
 - [x] Sprawdzić, że nieśledzone lokalne pliki nie wchodzą do artefaktu wdrożenia.
-- Stan roboczy: obecna linia `agent/staging-security-merge@2942393`, wersja
-  `2.0.0-alpha.38`. Zweryfikowany snapshot stagingu `2.0.0-alpha.39` jest na
-  SHA `62d0b84e`, a wdrożony artefakt na `f118c84`; obie linie nie są relacją
-  przodek–potomek. Analiza wykazała, że migracja uzgadniająca ACL/recovery jest
-  już obecna w bieżącej linii, a poprawka sesji po akceptacji prawa ma w niej
-  odpowiednik. Nie należy więc mechanicznie podbijać wersji do alpha.40 ani
-  cherry-pickować całego stagingu. Najpierw trzeba potwierdzić równoważność
-  zachowań i replay migracji, a następnie wykonać regresję.
-- [ ] Uruchomić lokalnie pełne kontrole kodu i testy bazy bez kontaktu z produkcją.
+- [x] Uruchomić lokalnie pełne kontrole kodu i testy bazy bez kontaktu z produkcją.
+
+Weryfikacja kandydata objęła `npm run check`, lint, formatowanie, testy bazy,
+`git diff --check`, testy serwera 33/33, CI oraz pełną regresję po wdrożeniu.
 
 ```powershell
 npm run check
@@ -135,12 +131,12 @@ git diff --check
 
 ### B2. Zweryfikować staging jako bramę przed produkcją
 
-- [ ] Wykonać migracje wyłącznie na kontrolowanym stagingu, jeżeli release candidate je zawiera.
-- [ ] Sprawdzić `/health/live`, `/health/ready` i `/health/release`.
-- [ ] Uruchomić `npm run regression:full` przeciwko stagingowi.
-- [ ] Potwierdzić, że regresja obejmuje logowanie, akceptację dokumentów, magazyn, ETag/If-Match, katalog, dopasowania i wylogowanie.
-- [ ] Zarchiwizować SHA, wynik migracji i wynik regresji w raporcie operacyjnym.
-- [ ] Odnotować, że CI wykonuje lokalny replay migracji, ale nie potwierdza automatycznie ich zastosowania na zdalnym Supabase.
+- [x] Wykonać migrację wyłącznie na kontrolowanym stagingu.
+- [x] Sprawdzić `/health/live`, `/health/ready` i `/health/release`.
+- [x] Uruchomić pełną regresję stagingu po wdrożeniu.
+- [x] Potwierdzić, że regresja obejmuje logowanie, akceptację dokumentów, magazyn, ETag/If-Match, katalog, dopasowania i wylogowanie.
+- [x] Zarchiwizować SHA, wynik migracji i wynik regresji w raporcie operacyjnym.
+- [x] Odnotować różnicę między lokalnym replay migracji w CI a zastosowaniem migracji na zdalnym Supabase; zdalne zastosowanie potwierdzono osobnym odczytem stagingu.
 
 **Kryterium:** staging działa z dokładnie tym samym artefaktem, który ma zostać zatwierdzony do produkcji.
 
