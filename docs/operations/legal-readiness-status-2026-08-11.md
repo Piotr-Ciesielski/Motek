@@ -100,14 +100,24 @@ konfiguracji Motka:
   projektu;
 - [Supabase — backupy](https://supabase.com/docs/guides/platform/backups)
   zaleca dla planu Free regularne ręczne eksporty i backup poza Supabase;
+- [Supabase — DPA](https://supabase.com/downloads/docs/Supabase%2BDPA%2B260601.pdf)
+  opisuje role procesora, transfery i listę subprocesorów, ale samo źródło nie
+  potwierdza zawarcia DPA dla Motka;
 - [Railway — logi](https://docs.railway.com/observability/logs) podaje 7 dni
   retencji logów dla Hobby/Trial;
-- [Railway — zgodność i DPA](https://docs.railway.com/enterprise/compliance)
-  wskazuje dostępność standardowego DPA, ale nie potwierdza jego zawarcia dla
-  Motka;
+- [Railway — regiony](https://docs.railway.com/deployments/regions) opisuje
+  dostępne regiony wdrożeń, ale nie potwierdza lokalizacji logów;
+- [Railway — DPA](https://railway.com/legal/dpa) opisuje role, transfery,
+  usuwanie danych i subprocesorów, ale nie potwierdza zawarcia DPA dla Motka;
 - [Cloudflare — Turnstile Privacy Addendum](https://www.cloudflare.com/en-in/turnstile-privacy-policy/)
   rozróżnia rolę procesora dla ochrony strony i administratora dla ulepszania
   detekcji botów, bez podania stałej retencji dla konkretnego widgetu;
+- [Cloudflare — DPA](https://www.cloudflare.com/en-gb/cloudflare-customer-dpa/)
+  opisuje role, subprocesory, transfery i kryteria usuwania danych, ale nie
+  potwierdza zawarcia DPA dla Motka;
+- [Cloudflare — Data Localization Suite](https://developers.cloudflare.com/data-localization/how-to/)
+  opisuje mechanizmy lokalizacji inspekcji ruchu i metadanych; nie są one
+  włączone ani potwierdzone dla obecnego planu Motka;
 - [Cloudflare — proxy status](https://developers.cloudflare.com/dns/proxy-status/)
   opisuje, że ruch przez rekord proxied przechodzi przez Cloudflare, a rekord
   DNS-only kieruje bezpośrednio do originu;
@@ -160,8 +170,11 @@ konfiguracji produkcyjnej.
 
 - [Supabase — regiony](https://supabase.com/docs/guides/platform/regions)
 - [Supabase — ceny i limity planu Free](https://supabase.com/pricing)
+- [Supabase — DPA](https://supabase.com/downloads/docs/Supabase%2BDPA%2B260601.pdf)
 - [Railway — logi i retencja](https://docs.railway.com/observability/logs)
+- [Railway — DPA](https://railway.com/legal/dpa)
 - [Cloudflare — Turnstile Privacy Addendum](https://www.cloudflare.com/en-in/turnstile-privacy-policy/)
+- [Cloudflare — DPA](https://www.cloudflare.com/en-gb/cloudflare-customer-dpa/)
 
 Do manifestu nie należy wpisywać okresów „30 dni” albo „90 dni”, dopóki nie
 zostaną potwierdzone dla rzeczywistej konfiguracji Motka. Po zebraniu dowodów

@@ -14,7 +14,9 @@
       "status": "unverified",
       "evidence": [
         "https://supabase.com/docs/guides/platform/regions",
-        "https://supabase.com/pricing"
+        "https://supabase.com/pricing",
+        "https://supabase.com/docs/guides/platform/backups",
+        "https://supabase.com/downloads/docs/Supabase%2BDPA%2B260601.pdf"
       ],
       "verifiedAt": null
     },
@@ -29,7 +31,10 @@
       "evidenceScope": "do potwierdzenia dla produkcji",
       "status": "unverified",
       "evidence": [
-        "https://docs.railway.com/observability/logs"
+        "https://docs.railway.com/observability/logs",
+        "https://docs.railway.com/deployments/regions",
+        "https://railway.com/legal/privacy",
+        "https://railway.com/legal/dpa"
       ],
       "verifiedAt": null
     },
@@ -55,7 +60,9 @@
           "evidenceScope": "do potwierdzenia dla produkcyjnej strefy edge",
           "evidence": [
             "https://developers.cloudflare.com/dns/proxy-status/",
-            "https://developers.cloudflare.com/fundamentals/security/protect-your-origin-server/"
+            "https://developers.cloudflare.com/fundamentals/security/protect-your-origin-server/",
+            "https://developers.cloudflare.com/data-localization/how-to/",
+            "https://www.cloudflare.com/en-gb/cloudflare-customer-dpa/"
           ],
           "verifiedAt": null
         },
@@ -67,7 +74,9 @@
           "evidenceScope": "do potwierdzenia dla produkcyjnego widgetu Turnstile",
           "evidence": [
             "https://www.cloudflare.com/en-in/turnstile-privacy-policy/",
-            "https://www.cloudflare.com/policies/privacy/"
+            "https://www.cloudflare.com/en-gb/privacypolicy/",
+            "https://developers.cloudflare.com/turnstile/get-started/server-side-validation/",
+            "https://www.cloudflare.com/en-gb/cloudflare-customer-dpa/"
           ],
           "verifiedAt": null
         }
@@ -75,7 +84,8 @@
       "status": "unverified",
       "evidence": [
         "https://www.cloudflare.com/en-in/turnstile-privacy-policy/",
-        "https://www.cloudflare.com/policies/privacy/"
+        "https://www.cloudflare.com/en-gb/privacypolicy/",
+        "https://www.cloudflare.com/en-gb/cloudflare-customer-dpa/"
       ],
       "verifiedAt": null
     }
