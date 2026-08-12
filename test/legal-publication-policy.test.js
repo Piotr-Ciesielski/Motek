@@ -32,6 +32,27 @@ const base = {
       transfer: "Potwierdzony mechanizm transferu",
       retention: "Potwierdzona retencja",
       evidenceScope: "Potwierdzone strefy produkcyjne Motka",
+      services: ["edge", "turnstile"],
+      serviceEvidence: {
+        edge: {
+          scope: "production",
+          location: "Potwierdzona lokalizacja edge",
+          transfer: "Potwierdzony transfer edge",
+          retention: "Potwierdzona retencja edge",
+          evidenceScope: "Potwierdzona strefa edge Motka",
+          evidence: ["https://developers.cloudflare.com/dns/proxy-status/"],
+          verifiedAt: "2026-08-09",
+        },
+        turnstile: {
+          scope: "production-and-staging",
+          location: "Potwierdzona lokalizacja Turnstile",
+          transfer: "Potwierdzony transfer Turnstile",
+          retention: "Potwierdzona retencja Turnstile",
+          evidenceScope: "Potwierdzony widget Turnstile Motka",
+          evidence: ["https://www.cloudflare.com/en-in/turnstile-privacy-policy/"],
+          verifiedAt: "2026-08-09",
+        },
+      },
       evidence: ["https://www.cloudflare.com/policies/privacy/"],
       verifiedAt: "2026-08-09",
     },
@@ -113,6 +134,57 @@ test("produkcja odrzuca placeholder zakresu dowodu i przyszłą datę weryfikacj
   });
   assert.equal(result.ready, false);
   assert.match(result.errors.join(" "), /cloudflare.*(dowodu|daty)/i);
+});
+
+test("produkcja wymaga osobnych dowodów dla zakresów Cloudflare", () => {
+  const result = validateLegalPublication({
+    ...base,
+    providers: {
+      ...base.providers,
+      cloudflare: { ...base.providers.cloudflare, serviceEvidence: undefined },
+    },
+  });
+  assert.equal(result.ready, false);
+  assert.match(result.errors.join(" "), /cloudflare.*(edge|turnstile|zakres)/i);
+});
+
+test("produkcja odrzuca niekompletny dowód pojedynczego zakresu Cloudflare", () => {
+  const result = validateLegalPublication({
+    ...base,
+    providers: {
+      ...base.providers,
+      cloudflare: {
+        ...base.providers.cloudflare,
+        serviceEvidence: {
+          ...base.providers.cloudflare.serviceEvidence,
+          turnstile: {
+            ...base.providers.cloudflare.serviceEvidence.turnstile,
+            retention: "do potwierdzenia",
+          },
+        },
+      },
+    },
+  });
+  assert.equal(result.ready, false);
+  assert.match(result.errors.join(" "), /cloudflare.*turnstile.*retencj/i);
+});
+
+test("produkcja odrzuca zakres Cloudflare bez produkcyjnego scope", () => {
+  const result = validateLegalPublication({
+    ...base,
+    providers: {
+      ...base.providers,
+      cloudflare: {
+        ...base.providers.cloudflare,
+        serviceEvidence: {
+          ...base.providers.cloudflare.serviceEvidence,
+          edge: { ...base.providers.cloudflare.serviceEvidence.edge, scope: "staging" },
+        },
+      },
+    },
+  });
+  assert.equal(result.ready, false);
+  assert.match(result.errors.join(" "), /cloudflare.*edge.*zakres/i);
 });
 
 test("nieznane środowisko wdrożenia blokuje publikację", () => {

@@ -41,10 +41,37 @@
         "przeglądarka -> Cloudflare edge (DNS/proxy/TLS/WAF)"
       ],
       "plan": "Free",
+      "scope": "production-and-staging",
       "location": "do uzupełnienia",
       "transfer": "do uzupełnienia",
       "retention": "Turnstile: do potwierdzenia; edge: do potwierdzenia",
       "evidenceScope": "do potwierdzenia osobno dla edge i turnstile",
+      "serviceEvidence": {
+        "edge": {
+          "scope": "production",
+          "location": "do uzupełnienia",
+          "transfer": "do uzupełnienia",
+          "retention": "do potwierdzenia",
+          "evidenceScope": "do potwierdzenia dla produkcyjnej strefy edge",
+          "evidence": [
+            "https://developers.cloudflare.com/dns/proxy-status/",
+            "https://developers.cloudflare.com/fundamentals/security/protect-your-origin-server/"
+          ],
+          "verifiedAt": null
+        },
+        "turnstile": {
+          "scope": "production-and-staging",
+          "location": "do uzupełnienia",
+          "transfer": "do uzupełnienia",
+          "retention": "do potwierdzenia",
+          "evidenceScope": "do potwierdzenia dla produkcyjnego widgetu Turnstile",
+          "evidence": [
+            "https://www.cloudflare.com/en-in/turnstile-privacy-policy/",
+            "https://www.cloudflare.com/policies/privacy/"
+          ],
+          "verifiedAt": null
+        }
+      },
       "status": "unverified",
       "evidence": [
         "https://www.cloudflare.com/en-in/turnstile-privacy-policy/",

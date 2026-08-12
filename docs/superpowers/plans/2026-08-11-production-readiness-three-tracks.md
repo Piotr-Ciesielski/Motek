@@ -42,6 +42,15 @@ i ochrony originu, ale bramka wymaga tylko jednego wpisu `cloudflare`.
 
 ### A1. Zbudować macierz dowodów produkcyjnych
 
+Stan po odczycie 2026-08-12: potwierdzono techniczny zakres Supabase
+Production/Staging (`eu-north-1`, plan Free), Railway Production/Staging
+(Hobby, `sfo`, po jednej replice, domeny `www.rysia.org` i
+`staging.rysia.org`) oraz rzeczywisty routing DNS/HTTPS Cloudflare. A1 nie jest
+jeszcze zamknięte: brakuje datowanych dowodów transferów, ról, DPA,
+subprocesorów i retencji dla konkretnych konfiguracji, a Cloudflare edge nie
+obejmuje stagingu. Wymagane zakresy zapisano jako `edge=production` oraz
+`turnstile=production-and-staging`.
+
 - [ ] Dla Supabase potwierdzić osobno projekt produkcyjny: plan, region, zakres danych, retencję logów i kopii, usuwanie danych, transfery poza EOG, DPA i subprocesorów.
 - [ ] Dla Railway potwierdzić plan Hobby, region wdrożenia produkcji, miejsce przetwarzania logów, retencję logów, zakres danych w logach, transfery, DPA i subprocesorów.
 - [ ] Dla Cloudflare potwierdzić osobno dla zakresów `edge` i `turnstile`: plan Free, retencję, lokalizację przetwarzania, transfery, role Cloudflare, DPA i subprocesorów.
@@ -56,6 +65,7 @@ i ochrony originu, ale bramka wymaga tylko jednego wpisu `cloudflare`.
 - [x] Dodać do `legal-publication-policy.js` wymaganie nie-placeholderowych pól `location`, `transfer` i `retention` dla produkcji.
 - [x] Wymagać niepustego `evidence`, daty `verifiedAt` w formacie `YYYY-MM-DD` oraz statusu `verified`.
 - [x] Wymagać zakresu dowodu (`evidenceScope`) oraz adresu `https:` do zatwierdzonej domeny dostawcy; sama obecność dowolnego linku nie może wystarczać.
+- [x] Dla dostawcy z wieloma zakresami wymagać osobnych dowodów per zakres; Cloudflare pozostaje jednym dostawcą z `serviceEvidence.edge` i `serviceEvidence.turnstile`.
 - [x] Dodać testy odrzucające dostawcę z uzupełnionym planem, ale bez potwierdzonego transferu albo retencji.
 - [x] Zachować test, który nie ujawnia danych operatora w komunikacie błędu.
 

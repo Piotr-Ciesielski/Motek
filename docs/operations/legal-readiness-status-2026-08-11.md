@@ -11,8 +11,8 @@ W ramach punktu A1 odczytowo potwierdzono konfigurację produkcyjną:
 - Supabase Production (`Motek Production`) jest aktywny, działa w regionie
   `eu-north-1`, a organizacja ma plan Free. Staging działa w tym samym regionie.
 - Railway Production ma osobne środowisko, jedną replikę w regionie `sfo`,
-  domenę `www.rysia.org` i ostatni odczytany deployment zakończony statusem
-  `SUCCESS`.
+  domenę `www.rysia.org`, plan Hobby i ostatni odczytany deployment zakończony
+  statusem `SUCCESS` z SHA `c4b777a5f8a96277c0e7fb7ca6ec52d425a0900b`.
 - Produkcyjny Supabase ma zastosowane migracje tylko do
   `20260807114728_document_recovery_grants_no_client_policy`; późniejsze
   migracje prawne z 9–10 sierpnia nie zostały jeszcze wdrożone.
@@ -33,6 +33,58 @@ nieprzyszłą datę `verifiedAt`. Nieznani dostawcy i nieznane środowisko
 wdrożenia również blokują produkcję. Wartości typu „do uzupełnienia” i „do
 potwierdzenia” są odrzucane.
 
+Weryfikacja zakresów Cloudflare jest teraz rozdzielona wewnątrz jednego wpisu
+dostawcy: `edge` i `turnstile` muszą mieć własne lokalizacje, transfery,
+retencje, zakresy dowodów, źródła i daty weryfikacji. Nie powstaje osobny
+dostawca `cloudflare-edge`.
+
+## Odczyt źródeł i konfiguracji — 2026-08-12
+
+Odczyt Supabase potwierdził bezpośrednio w panelu/API:
+
+- `Motek Production` i `Motek Staging` są aktywne i zdrowe w regionie
+  `eu-north-1`;
+- organizacja `Piotr Ciesielski` działa na planie Free;
+- produkcja ma zastosowane migracje tylko do
+  `20260807114728_document_recovery_grants_no_client_policy`;
+- Security Advisor produkcji nadal zgłasza cztery funkcje `SECURITY DEFINER`
+  dostępne dla `authenticated` oraz wyłączoną ochronę przed wyciekłymi
+  hasłami; wykryto także informacyjnie nieużywany indeks.
+
+Odczyt publicznego DNS i HTTPS potwierdził dodatkowo: `www.rysia.org` ma
+rekordy A Cloudflare i odpowiedź `Server: cloudflare`, natomiast
+`staging.rysia.org` jest CNAME do Railway i odpowiada z `Server:
+railway-hikari`. W manifeście oznacza to zakres `edge` tylko dla produkcji,
+a zakres `turnstile` dla produkcji i stagingu.
+
+Oficjalne źródła potwierdzają fakty ogólne, ale nie zastępują dowodu konkretnej
+konfiguracji Motka:
+
+- [Supabase — regiony i rezydencja danych](https://supabase.com/docs/guides/platform/regions)
+  wskazuje, że wybrany region określa miejsce przechowywania głównych danych
+  projektu;
+- [Supabase — backupy](https://supabase.com/docs/guides/platform/backups)
+  zaleca dla planu Free regularne ręczne eksporty i backup poza Supabase;
+- [Railway — logi](https://docs.railway.com/observability/logs) podaje 7 dni
+  retencji logów dla Hobby/Trial;
+- [Railway — zgodność i DPA](https://docs.railway.com/enterprise/compliance)
+  wskazuje dostępność standardowego DPA, ale nie potwierdza jego zawarcia dla
+  Motka;
+- [Cloudflare — Turnstile Privacy Addendum](https://www.cloudflare.com/en-in/turnstile-privacy-policy/)
+  rozróżnia rolę procesora dla ochrony strony i administratora dla ulepszania
+  detekcji botów, bez podania stałej retencji dla konkretnego widgetu;
+- [Cloudflare — proxy status](https://developers.cloudflare.com/dns/proxy-status/)
+  opisuje, że ruch przez rekord proxied przechodzi przez Cloudflare, a rekord
+  DNS-only kieruje bezpośrednio do originu;
+- [Cloudflare — ochrona originu](https://developers.cloudflare.com/fundamentals/security/protect-your-origin-server/)
+  wskazuje wymagane kontrole proxy, allowlisty i ochrony przed obejściem
+  originu.
+
+Wniosek: źródła ogólne można zachować jako podstawę opisu usług, ale nie można
+na ich podstawie ustawić `verified`. Nadal potrzebne są datowane dowody
+konkretnego projektu Railway i strefy Cloudflare, a także potwierdzenie DPA,
+subprocesorów, transferów, lokalizacji i retencji.
+
 ## Co zrobiono dziś
 
 - poprawiono nachodzenie mobilnej nawigacji na dolną nawigację aplikacji;
@@ -42,8 +94,8 @@ potwierdzenia” są odrzucane.
   dostępne informacje o retencji i źródła dowodowe;
 - zachowano bramkę fail-closed: produkcja nie przejdzie dalej na podstawie
   samych deklaracji planu;
-- uruchomiono lint, formatowanie, 23 testy prawne oraz pełny check projektu
-  obejmujący 346 testów — wszystkie zakończyły się powodzeniem;
+- uruchomiono lint, formatowanie, 14 testów bramki prawnej oraz pełny zestaw
+  350 testów projektu — wszystkie zakończyły się powodzeniem;
 - zapisano i wysłano na GitHub trzy dzisiejsze etapy na gałęzi
   `agent/staging-security-merge`:
   `70250fd`, `77fc4dc`, `62f24bf`.
@@ -67,7 +119,7 @@ konfiguracji produkcyjnej.
 | --- | --- | --- |
 | Supabase | Plan Free organizacji. Projekty Production i Staging są aktywne w `eu-north-1`. Dla planu Free dokumentacja wskazuje 1 dzień logów API/bazy i 1 godzinę logów audytowych Auth. | Potwierdzić retencję kopii/logów po usunięciu konta, zasady transferu poza EOG, role administratora/podmiotu przetwarzającego oraz właściwe DPA/subprocesorów. Osobno zastosować i zweryfikować brakujące migracje prawne; przedtem przejrzeć ostrzeżenia Security Advisor dla RPC. |
 | Railway | Plan Hobby. Region `sfo` odczytany z konfiguracji wdrożenia produkcji i stagingu. Dokumentacja Railway wskazuje 7 dni retencji logów dla Hobby. | Potwierdzić, czy `sfo` jest także lokalizacją przetwarzania i przechowywania logów. Ustalić zakres danych w logach, zasady ich usunięcia, mechanizm transferu poza EOG oraz właściwe DPA/subprocesorów dla produkcji. |
-| Cloudflare (`edge` + `turnstile`) | Plan Free. Turnstile opisuje minimalne sygnały antybotowe, m.in. IP, fingerprint TLS, User-Agent, sitekey i origin. Edge obsługuje DNS, proxy, TLS i WAF dla ruchu aplikacji. | Potwierdzić osobno dla obu zakresów rzeczywistą retencję, lokalizację przetwarzania, transfery poza EOG, role Cloudflare, właściwe DPA/subprocesorów oraz ochronę originu Railway. Dla Turnstile nie znaleziono stałego okresu retencji w przywołanym dodatku. |
+| Cloudflare (`edge` + `turnstile`) | Plan Free. Produkcja jest kierowana przez Cloudflare edge; staging odpowiada bezpośrednio z Railway. Turnstile jest używany w obu środowiskach. Turnstile opisuje minimalne sygnały antybotowe, m.in. IP, fingerprint TLS, User-Agent, sitekey i origin. | Potwierdzić osobno dla obu zakresów rzeczywistą retencję, lokalizację przetwarzania, transfery poza EOG, role Cloudflare, właściwe DPA/subprocesorów oraz ochronę originu Railway. Dla Turnstile nie znaleziono stałego okresu retencji w przywołanym dodatku. |
 
 Źródła robocze:
 
