@@ -6,7 +6,7 @@ prawnego przez operatora.
 
 ## Kanoniczny release candidate — 2026-08-13
 
-Bieżący rekord wydania znajduje się w [`staging-status-2026-08-07.md`](staging-status-2026-08-07.md): branch `release/motek-recovery-rc`, pełny SHA `504d33ba8becd4e596f7451b3ce7f40bf972e1fc`, wersja `2.0.0-alpha.39`. Staging i produkcja są `NOT CONFIRMED` na tym SHA. `LEGAL_PUBLICATION=not ready`; brak zewnętrznych dowodów.
+Bieżący rekord wydania znajduje się w [`staging-status-2026-08-07.md`](staging-status-2026-08-07.md): branch `release/motek-recovery-rc`, pełny SHA `e691af891758ebc17f6d4683dbca5d997f65dbe5`, wersja `2.0.0-alpha.39`. Staging jest `CONFIRMED` na tym SHA, a produkcja pozostaje `NOT CONFIRMED` i nietknięta. `LEGAL_PUBLICATION=not ready`; brak zewnętrznych dowodów legalnych.
 
 ## Aktualizacja stanu — 2026-08-12
 

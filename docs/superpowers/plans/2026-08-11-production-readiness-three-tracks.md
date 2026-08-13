@@ -22,9 +22,10 @@
 Bieżący rekord release candidate znajduje się w
 [`docs/operations/staging-status-2026-08-07.md`](../../operations/staging-status-2026-08-07.md):
 branch `release/motek-recovery-rc`, pełny SHA
-`504d33ba8becd4e596f7451b3ce7f40bf972e1fc`, wersja `2.0.0-alpha.39`.
-Staging i produkcja są `NOT CONFIRMED` na tym SHA. Legal publication pozostaje
-`LEGAL_PUBLICATION=not ready`, bez zewnętrznych dowodów.
+`e691af891758ebc17f6d4683dbca5d997f65dbe5`, wersja `2.0.0-alpha.39`.
+Staging jest `CONFIRMED` na tym SHA, a produkcja pozostaje `NOT CONFIRMED` i
+nietknięta. Legal publication pozostaje `LEGAL_PUBLICATION=not ready`, bez
+zewnętrznych dowodów legalnych.
 
 ## Aktualizacja A1 — 2026-08-12
 
@@ -120,8 +121,9 @@ staging na `f118c84` i produkcję na `c4b777a`; nie są to potwierdzenia bieżą
 release candidate. Logi tamtych wdrożeń potwierdzały udany healthcheck
 `/health/ready` dla obu środowisk. Dockerfile używa jawnej listy
 kopiowanych ścieżek, więc nieśledzone materiały lokalne nie trafiają do obrazu.
-B1 pozostaje otwarte: bieżący candidate jest wskazany, ale staging i produkcja
-nie są potwierdzone na jego SHA.
+B1 pozostaje częściowo otwarte: branch, SHA i wersja kandydata są potwierdzone,
+staging jest `CONFIRMED` na tym SHA, a produkcja pozostaje `NOT CONFIRMED` i
+nietknięta.
 
 - [ ] Potwierdzić branch, SHA, wersję aplikacji i zakres migracji przeznaczony do produkcji.
 - [x] Sprawdzić, że nieśledzone lokalne pliki nie wchodzą do artefaktu wdrożenia.
@@ -138,6 +140,13 @@ git diff --check
 ```
 
 ### B2. Zweryfikować staging jako bramę przed produkcją
+
+Stan 2026-08-13: staging jest `CONFIRMED` na SHA
+`e691af891758ebc17f6d4683dbca5d997f65dbe5`. Railway deployment zakończył się
+statusem `SUCCESS`, endpointy `/health/live`, `/health/ready` i
+`/health/release` zwróciły `200`, a GitHub post-deploy regression run
+`31692142042` zakończył pełną regresję stagingu statusem `PASS`. Produkcja
+pozostaje `NOT CONFIRMED` i nietknięta.
 
 - [ ] Wykonać migracje wyłącznie na kontrolowanym stagingu, jeżeli release candidate je zawiera.
 - [ ] Sprawdzić `/health/live`, `/health/ready` i `/health/release`.

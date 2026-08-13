@@ -3,9 +3,9 @@
 ## 1. Status projektu
 
 - bieżący release candidate: branch `release/motek-recovery-rc`, pełny SHA
-  `504d33ba8becd4e596f7451b3ce7f40bf972e1fc`, wersja `2.0.0-alpha.39`, data
+  `e691af891758ebc17f6d4683dbca5d997f65dbe5`, wersja `2.0.0-alpha.39`, data
   `2026-08-13`; szczegóły i dowody: [`docs/operations/staging-status-2026-08-07.md`](docs/operations/staging-status-2026-08-07.md)
-- staging i produkcja: `NOT CONFIRMED` na tym SHA; nie jest to potwierdzenie wdrożenia
+- staging: `CONFIRMED` na tym SHA; produkcja: `NOT CONFIRMED` i nietknięta — nie jest to potwierdzenie wdrożenia produkcyjnego
 - ostatnia wersja wydana: `1.0.2`
 - aktualne źródło danych: Supabase
 - lokalny SQLite: usunięty z aplikacji
