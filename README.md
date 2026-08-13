@@ -93,7 +93,7 @@ GitHub Actions uruchamiają testy, lint, formatowanie, audyt npm i testy Supabas
 
 Numer wersji jest w pliku [`VERSION`](VERSION) (obecnie `2.0.0-alpha.39`) i musi odpowiadać wersji w `package.json`. CI kontroluje wersję i SHA; numer wydania aktualizuje się świadomie w repozytorium.
 
-Zweryfikowany snapshot stagingu z 2026-08-08 to `2.0.0-alpha.39`, commit `cf60ce65`. Produkcja została wydana z commita `1991f139` i po kontroli źródła działa na deploymentcie Railway `7b0b1f56`. Szczegóły kontroli środowisk znajdują się w [`docs/operations/production-release-2026-08-08.md`](docs/operations/production-release-2026-08-08.md).
+Bieżący release candidate jest opisany wyłącznie w [kanonicznym rekordzie](docs/operations/staging-status-2026-08-07.md): branch `release/motek-recovery-rc`, pełny SHA `504d33ba8becd4e596f7451b3ce7f40bf972e1fc`, wersja `2.0.0-alpha.39`, data `2026-08-13`. Staging i produkcja są `NOT CONFIRMED` na tym SHA; nie jest to twierdzenie o wdrożeniu.
 
 Staging korzysta z krótkotrwałych, podpisanych i jednorazowych grantów recovery.
 Backend atomowo rezerwuje grant przed zmianą hasła, zwalnia rezerwację przy

@@ -4,6 +4,10 @@ Ten raport jest bieżącym punktem odniesienia dla prac nad regulaminem,
 informacją o prywatności i rejestrem dostawców. Nie zastępuje przeglądu
 prawnego przez operatora.
 
+## Kanoniczny release candidate — 2026-08-13
+
+Bieżący rekord wydania znajduje się w [`staging-status-2026-08-07.md`](staging-status-2026-08-07.md): branch `release/motek-recovery-rc`, pełny SHA `504d33ba8becd4e596f7451b3ce7f40bf972e1fc`, wersja `2.0.0-alpha.39`. Staging i produkcja są `NOT CONFIRMED` na tym SHA. `LEGAL_PUBLICATION=not ready`; brak zewnętrznych dowodów.
+
 ## Aktualizacja stanu — 2026-08-12
 
 W ramach punktu A1 odczytowo potwierdzono konfigurację produkcyjną:
@@ -78,10 +82,9 @@ rekordy A Cloudflare i odpowiedź `Server: cloudflare`, natomiast
 railway-hikari`. W manifeście oznacza to zakres `edge` tylko dla produkcji,
 a zakres `turnstile` dla produkcji i stagingu.
 
-## Release candidate i wdrożenia — 2026-08-12
+## Historyczne odczyty wdrożeń — 2026-08-12
 
-Bieżący checkpoint gałęzi `agent/staging-security-merge` ma SHA
-`e739ce6affea746965321a399d78cc7b55ed6258`. Nie jest on jeszcze wdrożony:
+Poniższe odczyty są historyczne i nie opisują bieżącego release candidate:
 
 - ostatnio odczytany udany deployment stagingu ma identyfikator Railway
   `7e4b790d-7b09-4c11-811e-d4a0e82d9605` z 11 sierpnia i commit
@@ -97,20 +100,8 @@ Bieżący checkpoint gałęzi `agent/staging-security-merge` ma SHA
   `VERSION`, więc nieśledzone `Designs/`, `tools/` ani audyty nie są częścią
   obrazu.
 
-Wniosek: B1 nie jest jeszcze zamknięte jako release candidate. Przed promocją
-trzeba wskazać jeden zatwierdzony SHA, sprawdzić staging na tym samym artefakcie
-i dopiero potem rozważać produkcję. Nie wykonano promocji ani deployu.
-
-Na potrzeby dalszej decyzji obecny checkout pozostaje linią roboczą:
-`agent/staging-security-merge@2942393`, wersja `2.0.0-alpha.38`, SHA
-`2942393`. Zweryfikowany snapshot stagingu `2.0.0-alpha.39` znajduje się na
-SHA `62d0b84e`, a wdrożony artefakt na `f118c84`; obie linie nie są relacją
-przodek–potomek. Oznacza to, że alpha.39 zawiera późniejsze poprawki
-stagingowe, a obecny checkout zawiera późniejsze prace prawne i migracyjne.
-Mechaniczne podbicie wersji do alpha.40 byłoby więc przedwczesne.
-Najpierw trzeba wybrać i scalić potrzebny zakres obu linii, uzgodnić migracje
-na stagingu i wykonać kontrolowaną regresję; dopiero potem można utworzyć
-nowego kandydata wydaniowego.
+Wniosek historyczny: wcześniejsze odczyty nie potwierdzały jednego kandydata.
+Bieżący kandydat i jego status są określone wyłącznie w kanonicznym rekordzie.
 
 ## Analiza integracyjna alpha.39 — 2026-08-12
 

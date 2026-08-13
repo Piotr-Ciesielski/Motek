@@ -17,6 +17,15 @@
 - Nie stage’ować nieśledzonych lokalnych materiałów bez osobnej decyzji; szczególnie `Designs/`, `tools/` i lokalnych audytów.
 - Prace agentów mają rozłączne zakresy zapisu; agenci nie modyfikują tych samych plików równolegle.
 
+## Kanoniczny release candidate — 2026-08-13
+
+Bieżący rekord release candidate znajduje się w
+[`docs/operations/staging-status-2026-08-07.md`](../../operations/staging-status-2026-08-07.md):
+branch `release/motek-recovery-rc`, pełny SHA
+`504d33ba8becd4e596f7451b3ce7f40bf972e1fc`, wersja `2.0.0-alpha.39`.
+Staging i produkcja są `NOT CONFIRMED` na tym SHA. Legal publication pozostaje
+`LEGAL_PUBLICATION=not ready`, bez zewnętrznych dowodów.
+
 ## Aktualizacja A1 — 2026-08-12
 
 Odczytowo potwierdzono produkcyjny projekt Supabase `Motek Production` w
@@ -104,25 +113,20 @@ Oczekiwany stan przed zebraniem dowodów: testy przechodzą, a `npm run legal:ch
 
 ### B1. Ustalić niezmienny release candidate
 
-Stan po odczycie 2026-08-12: bieżący SHA `e739ce6` nie jest wdrożony. Railway
-staging działa z gałęzi `staging`, a produkcja z `main`; oba środowiska mają po
-jednej replice w `sfo`. Staging działa z potwierdzonym SHA `f118c84`, produkcja
-z potwierdzonym SHA `c4b777a`, a bieżący checkout `e739ce6` nie jest jeszcze
-wdrożony. Logi ostatnich wdrożeń potwierdzają udany healthcheck
+Stan historycznego odczytu 2026-08-12: bieżący wtedy SHA `e739ce6` nie był
+wdrożony. Railway staging działał z gałęzi `staging`, a produkcja z `main`;
+oba środowiska miały po jednej replice w `sfo`. Historyczne odczyty wskazywały
+staging na `f118c84` i produkcję na `c4b777a`; nie są to potwierdzenia bieżącego
+release candidate. Logi tamtych wdrożeń potwierdzały udany healthcheck
 `/health/ready` dla obu środowisk. Dockerfile używa jawnej listy
 kopiowanych ścieżek, więc nieśledzone materiały lokalne nie trafiają do obrazu.
-B1 pozostaje otwarte do wyboru i weryfikacji jednego release candidate.
+B1 pozostaje otwarte: bieżący candidate jest wskazany, ale staging i produkcja
+nie są potwierdzone na jego SHA.
 
 - [ ] Potwierdzić branch, SHA, wersję aplikacji i zakres migracji przeznaczony do produkcji.
 - [x] Sprawdzić, że nieśledzone lokalne pliki nie wchodzą do artefaktu wdrożenia.
-- Stan roboczy: obecna linia `agent/staging-security-merge@2942393`, wersja
-  `2.0.0-alpha.38`. Zweryfikowany snapshot stagingu `2.0.0-alpha.39` jest na
-  SHA `62d0b84e`, a wdrożony artefakt na `f118c84`; obie linie nie są relacją
-  przodek–potomek. Analiza wykazała, że migracja uzgadniająca ACL/recovery jest
-  już obecna w bieżącej linii, a poprawka sesji po akceptacji prawa ma w niej
-  odpowiednik. Nie należy więc mechanicznie podbijać wersji do alpha.40 ani
-  cherry-pickować całego stagingu. Najpierw trzeba potwierdzić równoważność
-  zachowań i replay migracji, a następnie wykonać regresję.
+- Historyczne snapshoty `62d0b84e`, `301469d`, `f118c84`, `c4b777a`,
+  `c7b4639` i `3e3712e` pozostają zachowane; nie są bieżącym kandydatem.
 - [ ] Uruchomić lokalnie pełne kontrole kodu i testy bazy bez kontaktu z produkcją.
 
 ```powershell
