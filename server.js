@@ -70,6 +70,14 @@ const AUTH_RATE_LIMIT_MAX_ENTRIES = 10_000;
 const AUTH_REQUEST_WINDOW_MS = 60 * 1000;
 const AUTH_REQUEST_MAX = 30;
 const AUTH_REQUEST_BLOCK_MS = 60 * 1000;
+const AUTH_REQUEST_LIMITS = Object.freeze({
+  "password-reset-request": {
+    windowMs: 15 * 60 * 1000,
+    maxRequests: 3,
+    blockMs: 15 * 60 * 1000,
+  },
+  recovery: { windowMs: 10 * 60 * 1000, maxRequests: 5, blockMs: 10 * 60 * 1000 },
+});
 const YARN_WRITE_WINDOW_MS = 60 * 1000;
 const YARN_WRITE_MAX = 600;
 const YARN_WRITE_BLOCK_MS = 60 * 1000;
@@ -88,6 +96,7 @@ const authRequestRateLimiter = createRequestRateLimiter({
   maxRequests: AUTH_REQUEST_MAX,
   blockMs: AUTH_REQUEST_BLOCK_MS,
 });
+const authRequestRateLimiters = createAuthRequestRateLimiters();
 const yarnWriteRateLimiter = createRequestRateLimiter({
   windowMs: YARN_WRITE_WINDOW_MS,
   maxRequests: YARN_WRITE_MAX,
@@ -323,6 +332,15 @@ function createRequestRateLimiter(options = {}) {
   };
 }
 
+function createAuthRequestRateLimiters({ now } = {}) {
+  return Object.fromEntries(
+    Object.entries(AUTH_REQUEST_LIMITS).map(([operation, options]) => [
+      operation,
+      createRequestRateLimiter({ ...options, ...(now ? { now } : {}) }),
+    ]),
+  );
+}
+
 function getClientAddress(req, env = process.env) {
   const forwarded = String(req.headers?.["x-forwarded-for"] || "")
     .split(",", 1)[0]
@@ -445,45 +463,39 @@ function getRecoveryGrantSecret(env = process.env) {
   return secret;
 }
 
-function signRecoveryGrant(payload, env = process.env) {
-  return crypto.createHmac("sha256", getRecoveryGrantSecret(env))
-    .update(payload)
+function buildRecoveryGrantCookie(userId, options = {}) {
+  const jti = typeof options.jti === "string" && options.jti ? options.jti : crypto.randomUUID();
+  const timestamp = Math.floor(Number(options.timestamp ?? Date.now() / 1000));
+  const env = options.env || process.env;
+  const payload = `${userId}.${jti}.${timestamp}`;
+  const signature = crypto.createHmac("sha256", getRecoveryGrantSecret(env))
+    .update(`recovery:${payload}`)
     .digest("base64url");
+  return buildAuthCookie(AUTH_RECOVERY_GRANT_COOKIE, `${payload}.${signature}`, AUTH_RECOVERY_GRANT_MAX_AGE, env);
 }
 
-function buildRecoveryGrantCookie(grant, env = process.env) {
-  const payload = Buffer.from(JSON.stringify({
-    user_id: grant.userId,
-    jti: grant.jti,
-    exp: grant.expiresAt,
-  })).toString("base64url");
-  const value = `${payload}.${signRecoveryGrant(payload, env)}`;
-  return buildAuthCookie(AUTH_RECOVERY_GRANT_COOKIE, value, AUTH_RECOVERY_GRANT_MAX_AGE, env);
-}
-
-function parseRecoveryGrantCookie(value, env = process.env, now = Math.floor(Date.now() / 1000)) {
-  if (typeof value !== "string") return null;
-  const [payload, signature] = value.split(".");
-  if (!payload || !signature) return null;
-  const expectedBuffer = Buffer.from(signRecoveryGrant(payload, env));
+function parseRecoveryGrantCookie(value, userId, now = Math.floor(Date.now() / 1000), env = process.env) {
+  if (typeof value !== "string" || typeof userId !== "string") return false;
+  const parts = value.split(".");
+  if (parts.length !== 4) return false;
+  const [rawUserId, jti, rawTimestamp, signature] = parts;
+  const timestamp = Number(rawTimestamp);
+  if (!rawUserId || rawUserId !== userId || !jti || !Number.isSafeInteger(timestamp) || !signature) return false;
+  const expected = crypto.createHmac("sha256", getRecoveryGrantSecret(env))
+    .update(`recovery:${rawUserId}.${jti}.${timestamp}`)
+    .digest("base64url");
+  const expectedBuffer = Buffer.from(expected);
   const receivedBuffer = Buffer.from(signature);
-  if (receivedBuffer.length !== expectedBuffer.length || !crypto.timingSafeEqual(receivedBuffer, expectedBuffer)) return null;
+  return receivedBuffer.length === expectedBuffer.length
+    && crypto.timingSafeEqual(receivedBuffer, expectedBuffer)
+    && now >= timestamp
+    && now - timestamp <= AUTH_RECOVERY_GRANT_MAX_AGE;
+}
 
-  try {
-    const grant = JSON.parse(Buffer.from(payload, "base64url").toString("utf8"));
-    if (
-      typeof grant?.user_id !== "string"
-      || typeof grant?.jti !== "string"
-      || !grant.jti
-      || !Number.isSafeInteger(grant?.exp)
-      || grant.exp <= now
-    ) {
-      return null;
-    }
-    return { userId: grant.user_id, jti: grant.jti, expiresAt: grant.exp };
-  } catch {
-    return null;
-  }
+function getRecoveryGrantJti(value, userId) {
+  if (!parseRecoveryGrantCookie(value, userId)) return null;
+  const [, jti] = value.split(".");
+  return jti || null;
 }
 
 function signIdleActivity(timestamp, env = process.env) {
@@ -1330,7 +1342,11 @@ async function handleAuthApi(req, res, url) {
       throw new ApiError(400, error.message);
     }
     const rateLimitKeys = getAuthRateLimitKeys(req, email);
-    enforceRequestRateLimit(rateLimitKeys, authRequestRateLimiter, res);
+    enforceRequestRateLimit(
+      rateLimitKeys,
+      authRequestRateLimiters["password-reset-request"],
+      res,
+    );
 
     const redirectTo = new URL("/?recovery=1", getExpectedOrigin(req)).toString();
     const { error } = await authClient().auth.resetPasswordForEmail(email, {
@@ -1348,6 +1364,11 @@ async function handleAuthApi(req, res, url) {
   }
 
   if (req.method === "POST" && url.pathname === "/api/auth/recovery") {
+    enforceRequestRateLimit(
+      [`ip:${getClientAddress(req)}`],
+      authRequestRateLimiters.recovery,
+      res,
+    );
     const body = await readBody(req);
     const code = normalizeRecoveryToken(body.code, "jednorazowy");
     const client = authClient();
@@ -1360,13 +1381,8 @@ async function handleAuthApi(req, res, url) {
     if (grantError || typeof grantJti !== "string" || !grantJti) {
       throw new ApiError(503, "Odzyskiwanie hasła jest chwilowo niedostępne. Spróbuj ponownie później.");
     }
-    const grant = {
-      userId: data.user.id,
-      jti: grantJti,
-      expiresAt: Math.floor(Date.now() / 1000) + AUTH_RECOVERY_GRANT_MAX_AGE,
-    };
     setAuthCookies(res, data.session);
-    appendSetCookie(res, buildRecoveryGrantCookie(grant));
+    appendSetCookie(res, buildRecoveryGrantCookie(data.user.id, { jti: grantJti }));
     return sendJson(res, 200, {
       user: sanitizeAuthUser(data.user),
       idleTimeoutMs: getIdleTimeoutMs(),
@@ -1378,13 +1394,10 @@ async function handleAuthApi(req, res, url) {
     const body = await readBody(req);
     const password = validateAuthPassword(body.password);
     const cookies = parseCookies(req.headers.cookie);
-    const recoveryGrant = parseRecoveryGrantCookie(cookies[AUTH_RECOVERY_GRANT_COOKIE]);
-    if (!recoveryGrant || recoveryGrant.userId !== session.user.id) {
-      throw new ApiError(403, "Link odzyskiwania hasła jest nieprawidłowy lub wygasł.");
-    }
     const refreshToken = cookies[AUTH_REFRESH_COOKIE];
-    if (!refreshToken) {
-      throw new ApiError(403, "Link odzyskiwania hasła jest nieprawidłowy lub wygasł.");
+    const grantJti = getRecoveryGrantJti(cookies[AUTH_RECOVERY_GRANT_COOKIE], session.user.id);
+    if (!refreshToken || !grantJti) {
+      throw new ApiError(400, "Link odzyskiwania hasła jest nieprawidłowy lub wygasł.");
     }
 
     const client = supabaseAuthClientFactory(supabaseAuthConfig, session.accessToken);
@@ -1393,20 +1406,23 @@ async function handleAuthApi(req, res, url) {
       refresh_token: refreshToken,
     });
     if (sessionError) {
-      throw new ApiError(403, "Link odzyskiwania hasła jest nieprawidłowy lub wygasł.");
+      throw new ApiError(400, "Link odzyskiwania hasła jest nieprawidłowy lub wygasł.");
     }
 
     const { data: grantClaimed, error: grantClaimError } = await client.rpc("claim_auth_recovery_grant", {
-      grant_jti: recoveryGrant.jti,
+      grant_jti: grantJti,
     });
-    if (grantClaimError || grantClaimed !== true) {
+    if (grantClaimError) {
+      throw new ApiError(503, "Odzyskiwanie hasła jest chwilowo niedostępne. Spróbuj ponownie później.");
+    }
+    if (grantClaimed !== true) {
       throw new ApiError(400, "Ten link został już wykorzystany albo wygasł. Rozpocznij odzyskiwanie hasła ponownie.");
     }
 
     const { error } = await client.auth.updateUser({ password });
     if (error) {
       try {
-        await client.rpc("release_auth_recovery_grant", { grant_jti: recoveryGrant.jti });
+        await client.rpc("release_auth_recovery_grant", { grant_jti: grantJti });
       } catch {
         // Błąd zwalniania nie może przesłonić bezpiecznej odpowiedzi o zmianie hasła.
       }
@@ -1414,7 +1430,7 @@ async function handleAuthApi(req, res, url) {
     }
 
     const { data: grantConsumed, error: grantError } = await client.rpc("consume_auth_recovery_grant", {
-      grant_jti: recoveryGrant.jti,
+      grant_jti: grantJti,
     });
     if (grantError || grantConsumed !== true) {
       console.error("Nie udało się skonsumować grantu odzyskiwania hasła.");
@@ -1839,6 +1855,8 @@ module.exports = {
   createAccountDeletionRateLimiter,
   createAuthRateLimiter,
   createRequestRateLimiter,
+  createAuthRequestRateLimiters,
+  AUTH_REQUEST_LIMITS,
   enforceRequestRateLimit,
   validateMatchLimits,
   shouldUseSecureCookies,
@@ -1847,6 +1865,8 @@ module.exports = {
   getIdleTimeoutSeconds,
   buildIdleActivityCookie,
   parseIdleActivityCookie,
+  buildRecoveryGrantCookie,
+  parseRecoveryGrantCookie,
   validateAuthPassword,
   normalizeRecoveryToken,
 };
