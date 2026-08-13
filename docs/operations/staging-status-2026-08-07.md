@@ -11,6 +11,15 @@ pozostają historycznymi snapshotami i nie opisują bieżącego statusu.
 | Data rekordu | `2026-08-13` |
 | Staging na tym SHA | `CONFIRMED` |
 | Produkcja na tym SHA | `NOT CONFIRMED` / nietknięta |
+
+### Tożsamość artefaktu i branchu
+
+Dowody stagingu dotyczą dokładnie SHA `e691af891758ebc17f6d4683dbca5d997f65dbe5`.
+Branch `release/motek-recovery-rc` ma obecnie HEAD
+`a1d72f84059da63187dc73636a7dbc20784e98b9`; ten późniejszy commit zmienia
+wyłącznie dokumentację i nie był wdrażany na staging. Nie należy traktować
+`a1d...` jako potwierdzenia wdrożenia stagingu bez ponownego deploymentu i
+regresji.
 | Legal publication | `LEGAL_PUBLICATION=not ready` |
 
 ## Lokalne dowody

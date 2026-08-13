@@ -23,6 +23,8 @@ Bieżący rekord release candidate znajduje się w
 [`docs/operations/staging-status-2026-08-07.md`](../../operations/staging-status-2026-08-07.md):
 branch `release/motek-recovery-rc`, pełny SHA
 `e691af891758ebc17f6d4683dbca5d997f65dbe5`, wersja `2.0.0-alpha.39`.
+Późniejszy HEAD brancha `release/motek-recovery-rc` to `a1d72f8` i zawiera
+wyłącznie dokumentację; nie jest objęty dowodami wdrożenia stagingu.
 Staging jest `CONFIRMED` na tym SHA, a produkcja pozostaje `NOT CONFIRMED` i
 nietknięta. Legal publication pozostaje `LEGAL_PUBLICATION=not ready`, bez
 zewnętrznych dowodów legalnych.
