@@ -126,6 +126,10 @@ Motek`; oba statusy są `SUCCESS`, a `cronSchedule` jest pusty. Konfiguracja
   CAPTCHA, `SUPABASE_URL`, klucze publishable/secret oraz `TRUST_PROXY`; tylko
   Production ma dodatkową nazwę `AUTH_IDLE_TIMEOUT_SECONDS`. Wartości były
   ukryte, więc nie jest to dowód zgodności konfiguracji ani sekretów.
+- Lista deploymentów Railway potwierdza, że ostatni udany Production to
+  `c4b777a` z 2026-08-08, a ostatni udany Staging to `e691af8` z 2026-08-13.
+  Nie ma dowodu niejawnej promocji RC do Production; oba odczyty były
+  read-only.
 - Lista Edge Functions dla Production zwróciła pustą listę. Wywołanie listy
   dla Staging zakończyło się błędem argumentu konektora; nie oznaczam tego jako
   dowodu braku funkcji i pozostawiam ponowny odczyt jako zadanie otwarte.
