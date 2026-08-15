@@ -193,6 +193,23 @@ Wynik zamyka lokalny zakres inwentaryzacji jako `PASS`, ale nie potwierdza
 braku klientów poza repozytorium, zewnętrznych webhooków, ręcznych skryptów ani
 historycznych klientów PostgREST. Bramka cleanupu pozostaje `OPEN`.
 
+## Railway — konfiguracja usług i brak cron schedule — 2026-08-15
+
+Read-only odczyt konfiguracji usługi Motek oraz statusu obu środowisk potwierdził:
+
+- Production śledzi repozytorium `Piotr-Ciesielski/Motek` z gałęzi `main`, ma
+  domenę `www.rysia.org`, jedną replikę w `sfo` i `cronSchedule: null`;
+- Staging śledzi gałąź `staging`, ma `staging.rysia.org` oraz domenę Railway,
+  jedną replikę w `sfo` i `cronSchedule: null`;
+- oba ostatnie deploymenty mają status `SUCCESS`; nie ma Railway cron joba;
+- Staging jawnie deklaruje `node server.js` i healthcheck `/health/ready` z
+  timeoutem 300 s; odpowiedź konfiguracji Production nie zwróciła tych pól,
+  więc ich dziedziczenie z obrazu/Dockerfile wymaga potwierdzenia przed deployem.
+
+Wniosek: brak Railway cron joba wzmacnia lokalną inwentaryzację, ale nie
+wyklucza zewnętrznych klientów. Różnica healthcheck/start command jest punktem
+preflight, nie podstawą do samodzielnej zmiany konfiguracji.
+
 ## Powiązane dokumenty
 
 - [runbook wdrożenia i regresji](post-deploy-regression.md),

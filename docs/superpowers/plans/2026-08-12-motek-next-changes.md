@@ -1172,3 +1172,14 @@ deploy exact SHA `e691af8` oraz smoke/obserwacja pozostają `NOT AUTHORIZED`.
 Macierz rozdziela trzy niezależne zgody: migrację bazy, deploy aplikacji oraz
 60-minutową obserwację. Nie wykonano zmian produkcyjnych, zmian Cloudflare ani
 zmian danych; produkcja pozostaje `NO-GO`.
+
+## Handoff — Railway account-specific preflight, 2026-08-15
+
+Read-only konfiguracja Railway potwierdziła `cronSchedule: null` w Production i
+Staging, więc w Railway nie ma skonfigurowanego cron joba. Production śledzi
+`main`, Staging `staging`; oba ostatnie deploymenty są `SUCCESS`.
+
+Staging ma jawnie `node server.js` i healthcheck `/health/ready` (300 s),
+natomiast odpowiedź konfiguracji Production nie pokazała tych pól. Nie
+zmieniam konfiguracji; przed deployem trzeba potwierdzić, czy Production
+dziedziczy te ustawienia z Dockerfile lub innego poziomu konfiguracji.
