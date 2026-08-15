@@ -343,6 +343,17 @@ oceny prawnej i nie zmieniają statusu `unverified` w manifeście.
   są spójne między aplikacją, Supabase i Cloudflare. Nadal brakuje dowodu
   pomyślnej walidacji prawdziwego tokenu produkcyjnego.
 
+## Ręczny smoke Auth QA — staging — 2026-08-15
+
+- Operator wykonał ręczne logowanie istniejącym kontem QA na
+  `https://staging.rysia.org`.
+- Logowanie zakończyło się sukcesem i dostęp do aplikacji został uzyskany.
+- Hasło, token CAPTCHA i dane konta nie zostały przekazane ani zapisane w
+  dokumentacji.
+- Ten wynik potwierdza stagingowy przepływ Auth z użytkownikiem QA. Nie jest
+  pełną regresją mutacji danych i nie potwierdza produkcyjnego Siteverify,
+  ponieważ staging używa testowego widgetu Turnstile.
+
 ## Reconciliation Supabase Production — odczyt read-only 2026-08-15
 
 Po migracji wykonano ponowny, ograniczony odczyt metadanych i agregatów
