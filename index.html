@@ -196,6 +196,45 @@
               <a href="#logoutBtn">Wyloguj się</a> lub <a href="#deleteAccountForm">usuń konto</a>, jeśli nie chcesz zaakceptować zmian.
             </p>
           </section>
+          <section class="account-security-zone" aria-labelledby="changePasswordTitle">
+            <div class="account-security-zone__header">
+              <div>
+                <h3 id="changePasswordTitle">Zmień hasło</h3>
+                <p class="field-hint">Zaktualizuj hasło używane do logowania do Motka.</p>
+              </div>
+              <button id="changePasswordToggle" class="button button--ghost" type="button"
+                aria-controls="changePasswordForm" aria-expanded="false">Zmień hasło</button>
+            </div>
+            <form id="changePasswordForm" class="account-security-zone__panel" method="post" action="/api/auth/password/change" hidden>
+              <div class="auth-field">
+                <label for="change-current-password">Aktualne hasło</label>
+                <span class="password-field">
+                  <input id="change-current-password" name="currentPassword" type="password" autocomplete="current-password" required aria-describedby="changePasswordHint changePasswordMessage" />
+                  <button class="password-reveal" type="button" data-password-reveal="change-current-password"
+                    aria-controls="change-current-password" aria-pressed="false" aria-label="Przytrzymaj, aby pokazać hasło"></button>
+                </span>
+              </div>
+              <div class="auth-field">
+                <label for="change-password">Nowe hasło</label>
+                <span class="password-field">
+                  <input id="change-password" name="password" type="password" minlength="8" maxlength="256" autocomplete="new-password" required aria-describedby="changePasswordHint changePasswordMessage" />
+                  <button class="password-reveal" type="button" data-password-reveal="change-password"
+                    aria-controls="change-password" aria-pressed="false" aria-label="Przytrzymaj, aby pokazać hasło"></button>
+                </span>
+              </div>
+              <div class="auth-field">
+                <label for="change-password-confirmation">Powtórz nowe hasło</label>
+                <span class="password-field">
+                  <input id="change-password-confirmation" name="passwordConfirmation" type="password" minlength="8" maxlength="256" autocomplete="new-password" required aria-describedby="changePasswordHint changePasswordMessage" />
+                  <button class="password-reveal" type="button" data-password-reveal="change-password-confirmation"
+                    aria-controls="change-password-confirmation" aria-pressed="false" aria-label="Przytrzymaj, aby pokazać hasło"></button>
+                </span>
+              </div>
+              <p id="changePasswordHint" class="field-hint">Nowe hasło: 8–256 znaków, w tym mała i wielka litera, cyfra oraz znak specjalny.</p>
+              <p id="changePasswordMessage" class="field-hint" role="status" aria-live="polite">Wpisz nowe hasło ponownie, aby sprawdzić, czy hasła są zgodne.</p>
+              <button class="button" type="submit">Zmień hasło</button>
+            </form>
+          </section>
           <button id="logoutBtn" class="button button--ghost" type="button">Wyloguj się</button>
           <form id="deleteAccountForm" class="account-danger-zone" method="post" action="/api/account" novalidate>
             <h3 id="deleteAccountTitle">Usuń konto</h3>

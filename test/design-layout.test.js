@@ -124,6 +124,82 @@ test("inventory shelves collapse from two columns to one on mobile", () => {
   );
 });
 
+test("zalogowane konto udostępnia zwinięty formularz zmiany hasła", () => {
+  const document = new JSDOM(indexHtml).window.document;
+  const loggedIn = document.getElementById("authLoggedIn");
+  const security = loggedIn.querySelector("section.account-security-zone");
+  const toggle = document.getElementById("changePasswordToggle");
+  const form = document.getElementById("changePasswordForm");
+
+  assert.ok(security, "strefa bezpieczeństwa jest w stanie zalogowanym");
+  assert.equal(security.getAttribute("aria-labelledby"), "changePasswordTitle");
+  assert.ok(toggle, "formularz ma widoczny przycisk otwierający panel");
+  assert.equal(toggle.type, "button");
+  assert.equal(toggle.getAttribute("aria-controls"), "changePasswordForm");
+  assert.equal(toggle.getAttribute("aria-expanded"), "false");
+  assert.ok(form);
+  assert.equal(form.hidden, true);
+  assert.equal(form.method, "post");
+  assert.equal(form.getAttribute("action"), "/api/auth/password/change");
+});
+
+test("formularz zmiany hasła ma kontrakt pól i nie zmienia recovery", () => {
+  const document = new JSDOM(indexHtml).window.document;
+  const form = document.getElementById("changePasswordForm");
+  const current = document.getElementById("change-current-password");
+  const password = document.getElementById("change-password");
+  const confirmation = document.getElementById("change-password-confirmation");
+  const recovery = {
+    reset: document.getElementById("passwordResetForm"),
+    update: document.getElementById("passwordUpdateForm"),
+  };
+
+  assert.equal(form.closest("#authLoggedIn"), document.getElementById("authLoggedIn"));
+  assert.equal(current.name, "currentPassword");
+  assert.equal(current.autocomplete, "current-password");
+  assert.equal(current.required, true);
+  assert.equal(password.name, "password");
+  assert.equal(password.autocomplete, "new-password");
+  assert.equal(password.minLength, 8);
+  assert.equal(password.maxLength, 256);
+  assert.equal(password.required, true);
+  assert.equal(confirmation.name, "passwordConfirmation");
+  assert.equal(confirmation.autocomplete, "new-password");
+  assert.equal(confirmation.minLength, 8);
+  assert.equal(confirmation.maxLength, 256);
+  assert.equal(confirmation.required, true);
+  assert.ok(password.getAttribute("aria-describedby"));
+  assert.ok(confirmation.getAttribute("aria-describedby"));
+  assert.match(form.textContent, /hasła są zgodne|hasła nie są zgodne/i);
+  assert.equal(form.querySelector('button[type="submit"]').textContent.trim(), "Zmień hasło");
+  assert.equal(recovery.reset.getAttribute("action"), "/api/auth/password-reset-request");
+  assert.equal(recovery.update.getAttribute("action"), "/api/auth/password");
+});
+
+test("frontend obsługuje panel zmiany hasła bez wysyłania potwierdzenia", () => {
+  assert.match(appJs, /const changePasswordToggle = document\.getElementById\("changePasswordToggle"\)/);
+  assert.match(appJs, /changePasswordToggle\.addEventListener\("click", \(\) => \{[\s\S]*?changePasswordForm\.hidden = !isOpen;[\s\S]*?changePasswordToggle\.setAttribute\("aria-expanded", String\(isOpen\)\);/);
+  assert.match(appJs, /changePasswordToggle\.addEventListener\("click", \(\) => \{[\s\S]*?if \(!isOpen\) \{[\s\S]*?changePasswordForm\.reset\(\);[\s\S]*?\}[\s\S]*?changePasswordForm\.hidden = !isOpen;/);
+  assert.match(appJs, /if \(body\.password !== passwordConfirmation\) \{[\s\S]*?setAuthMessage\([^\n]+, "error"\);[\s\S]*?return;/);
+  assert.match(appJs, /api\("\/api\/auth\/password\/change", \{[\s\S]*?method: "POST",[\s\S]*?body: JSON\.stringify\(\{ currentPassword: body\.currentPassword, password: body\.password \}\),/);
+});
+
+test("callback recovery przyjmuje kod bez markera i usuwa dane adresu", () => {
+  assert.match(appJs, /const isRecoveryCallback = Boolean\(code\) && !\(accessToken && refreshToken && hash\.get\("type"\) === "signup"\);/);
+  assert.match(appJs, /if \(!isRecoveryCallback\) \{[\s\S]*?return false;/);
+  assert.match(appJs, /window\.history\.replaceState\(\{\}, document\.title, window\.location\.pathname\);[\s\S]*?await api\("\/api\/auth\/recovery"/);
+});
+
+test("reset hasła odświeża CAPTCHA po każdej próbie", () => {
+  assert.match(appJs, /passwordResetForm\.addEventListener\("submit",[\s\S]*?finally \{[\s\S]*?resetCaptchaForForm\(passwordResetForm\);[\s\S]*?setAuthBusy\(passwordResetForm, false\);/);
+});
+
+test("style zmiany hasła jest ograniczony do strefy bezpieczeństwa", () => {
+  assert.match(stylesCss, /\.account-security-zone\s*\{/);
+  assert.match(stylesCss, /\.account-security-zone[\s\S]*?\.account-security-zone__panel/);
+  assert.doesNotMatch(stylesCss, /#changePasswordForm\s*\{/);
+});
+
 test("rejestracja wymaga regulaminu, wersji dokumentu i tokenu zaproszenia", () => {
   const document = new JSDOM(indexHtml).window.document;
   const checkbox = document.querySelector('#registerForm [name="termsAccepted"]');

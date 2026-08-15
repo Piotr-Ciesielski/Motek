@@ -398,8 +398,13 @@ test("serwer Motek działa bezpiecznie", async (t) => {
     updateUserCalls: 0,
     updateUserError: null,
     signOutError: null,
+    verifyPasswordCalls: 0,
+    verifyPasswordError: null,
+    signInWithPasswordArgs: [],
   };
   const recoveryGrantEvents = [];
+  const passwordChangeEvents = [];
+  const authClientFactoryTokens = [];
   const signOutScopes = [];
   const signUpRequests = [];
   const deletedUserIds = [];
@@ -474,6 +479,7 @@ test("serwer Motek działa bezpiecznie", async (t) => {
   }
 
   function fakeSupabaseAuthClientFactory(config, token) {
+    authClientFactoryTokens.push(token);
     return {
       auth: {
         async getUser(accessToken) {
@@ -482,6 +488,7 @@ test("serwer Motek działa bezpiecznie", async (t) => {
         },
         async signOut(options) {
           signOutScopes.push(options);
+          passwordChangeEvents.push({ name: "signOut", args: options });
           if (recoveryGrantState.signOutError) throw recoveryGrantState.signOutError;
         },
         async signUp({ email, options }) {
@@ -501,8 +508,15 @@ test("serwer Motek działa bezpiecznie", async (t) => {
           };
         },
         async signInWithPassword({ email, password }) {
+          recoveryGrantState.verifyPasswordCalls += 1;
+          recoveryGrantState.signInWithPasswordArgs.push({ email, password });
+          passwordChangeEvents.push({ name: "signInWithPassword", args: { email, password } });
+          if (recoveryGrantState.verifyPasswordError) {
+            return { data: null, error: recoveryGrantState.verifyPasswordError };
+          }
           if (
             (email === syntheticUsers["token-user-a"].email && password === "DeleteHaslo1!") ||
+            (email === syntheticUsers["token-user-a"].email && password === "  DeleteHaslo1!  ") ||
             (email === syntheticUsers["token-user-stale"].email && password === "DeleteStale1!")
           ) {
             const user = email === syntheticUsers["token-user-stale"].email
@@ -535,6 +549,7 @@ test("serwer Motek działa bezpiecznie", async (t) => {
           assert.equal(password, "NoweHaslo123!");
           recoveryGrantState.updateUserCalls += 1;
           recoveryGrantEvents.push({ name: "updateUser" });
+          passwordChangeEvents.push({ name: "updateUser", args: { password } });
           return { data: { user: syntheticUsers[token] }, error: recoveryGrantState.updateUserError };
         },
       },
@@ -1122,6 +1137,218 @@ test("serwer Motek działa bezpiecznie", async (t) => {
         assert.equal(response.status, 400);
       });
 
+    });
+
+    await t.test("zwykła zmiana hasła wymaga ponownego uwierzytelnienia i bezpiecznie kończy sesję", async (passwordT) => {
+      const sessionCookies = syntheticAuthCookies("token-user-a");
+      const changePasswordRequest = (overrides = {}) => fetch(`${baseUrl}/api/auth/password/change`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Origin: baseUrl,
+          ...(overrides.cookie ? { Cookie: overrides.cookie } : {}),
+        },
+        body: JSON.stringify({
+          currentPassword: "DeleteHaslo1!",
+          password: "NoweHaslo123!",
+          ...overrides.body,
+        }),
+      });
+      const resetPasswordChangeState = () => {
+        recoveryGrantState.verifyPasswordCalls = 0;
+        recoveryGrantState.verifyPasswordError = null;
+        recoveryGrantState.signInWithPasswordArgs.length = 0;
+        recoveryGrantState.updateUserCalls = 0;
+        recoveryGrantState.updateUserError = null;
+        recoveryGrantState.signOutError = null;
+        authClientFactoryTokens.length = 0;
+        passwordChangeEvents.length = 0;
+        signOutScopes.length = 0;
+      };
+      const secretPattern = /DeleteHaslo1!|NoweHaslo123!|token-user-a|refresh-token/;
+      const requestWithCapturedOutput = async (configure = () => {}) => {
+        resetPasswordChangeState();
+        configure();
+        const capturedLogs = [];
+        const consoleMethods = ["error", "warn", "log"];
+        const originalConsoleMethods = Object.fromEntries(
+          consoleMethods.map((method) => [method, console[method]])
+        );
+        for (const method of consoleMethods) {
+          console[method] = (...args) => capturedLogs.push(`${method}: ${args.join(" ")}`);
+        }
+        try {
+          const response = await changePasswordRequest({ cookie: sessionCookies });
+          const body = await response.text();
+          return {
+            response,
+            body,
+            capturedText: `${body}\n${capturedLogs.join("\n")}`,
+          };
+        } finally {
+          for (const method of consoleMethods) {
+            console[method] = originalConsoleMethods[method];
+          }
+        }
+      };
+      const assertJsonErrorBody = (response, body, expectedStatus) => {
+        assert.equal(response.status, expectedStatus);
+        assert.match(response.headers.get("content-type") ?? "", /^application\/json(?:;|$)/);
+        const parsedBody = JSON.parse(body);
+        assert.equal(typeof parsedBody.error, "string");
+        assert.ok(parsedBody.error.length > 0);
+        return parsedBody;
+      };
+      const assertJsonErrorResponse = async (response, expectedStatus) => {
+        assert.equal(response.status, expectedStatus);
+        assert.match(response.headers.get("content-type") ?? "", /^application\/json(?:;|$)/);
+        const parsedBody = await response.json();
+        assert.equal(typeof parsedBody.error, "string");
+        assert.ok(parsedBody.error.length > 0);
+        return parsedBody;
+      };
+
+      await passwordT.test("zwraca potwierdzenie po poprawnej zmianie hasła", async () => {
+        const { response, body, capturedText } = await requestWithCapturedOutput();
+
+        assert.equal(response.status, 200);
+        assert.deepEqual(JSON.parse(body), { passwordUpdated: true, authenticated: false });
+        assert.deepEqual(passwordChangeEvents.map(({ name }) => name), ["signInWithPassword", "updateUser", "signOut"]);
+        assert.deepEqual(recoveryGrantState.signInWithPasswordArgs, [{
+          email: syntheticUsers["token-user-a"].email,
+          password: "DeleteHaslo1!",
+        }]);
+        assert.deepEqual(authClientFactoryTokens, [undefined, undefined, "token-user-a"]);
+        assert.deepEqual(signOutScopes, [{ scope: "global" }]);
+        assert.doesNotMatch(capturedText, secretPattern);
+      });
+
+      await passwordT.test("weryfikuje bieżące hasło z zachowaniem znaczących spacji", async () => {
+        resetPasswordChangeState();
+        const response = await changePasswordRequest({
+          cookie: sessionCookies,
+          body: { currentPassword: "  DeleteHaslo1!  " },
+        });
+
+        assert.equal(response.status, 200);
+        assert.deepEqual(recoveryGrantState.signInWithPasswordArgs, [{
+          email: syntheticUsers["token-user-a"].email,
+          password: "  DeleteHaslo1!  ",
+        }]);
+        assert.deepEqual(authClientFactoryTokens, [undefined, undefined, "token-user-a"]);
+      });
+
+      await passwordT.test("odrzuca brak sesji przed weryfikacją hasła", async () => {
+        resetPasswordChangeState();
+        const response = await changePasswordRequest();
+
+        await assertJsonErrorResponse(response, 401);
+        assert.equal(recoveryGrantState.verifyPasswordCalls, 0);
+      });
+
+      await passwordT.test("odrzuca brak bieżącego hasła bez wywołania Auth", async () => {
+        resetPasswordChangeState();
+        const response = await changePasswordRequest({ cookie: sessionCookies, body: { currentPassword: undefined } });
+
+        await assertJsonErrorResponse(response, 400);
+        assert.equal(recoveryGrantState.verifyPasswordCalls, 0);
+      });
+
+      await passwordT.test("odrzuca puste bieżące hasło bez wywołania Auth", async () => {
+        resetPasswordChangeState();
+        const response = await changePasswordRequest({ cookie: sessionCookies, body: { currentPassword: "" } });
+
+        await assertJsonErrorResponse(response, 400);
+        assert.equal(recoveryGrantState.verifyPasswordCalls, 0);
+      });
+
+      await passwordT.test("nie zmienia hasła po błędnej weryfikacji starego hasła", async () => {
+        resetPasswordChangeState();
+        recoveryGrantState.verifyPasswordError = new Error("invalid credentials");
+        const response = await changePasswordRequest({ cookie: sessionCookies });
+
+        const errorBody = await assertJsonErrorResponse(response, 401);
+        assert.equal(errorBody.error, "Nie udało się zmienić hasła. Spróbuj ponownie.");
+        assert.equal(recoveryGrantState.updateUserCalls, 0);
+        assert.deepEqual(passwordChangeEvents.map(({ name }) => name), ["signInWithPassword"]);
+      });
+
+      await passwordT.test("odrzuca niepoprawne nowe hasło przed wywołaniem Auth", async () => {
+        resetPasswordChangeState();
+        const response = await changePasswordRequest({ cookie: sessionCookies, body: { password: "niepoprawne" } });
+
+        await assertJsonErrorResponse(response, 400);
+        assert.equal(recoveryGrantState.verifyPasswordCalls, 0);
+        assert.equal(recoveryGrantState.updateUserCalls, 0);
+      });
+
+      await passwordT.test("odrzuca brak nowego hasła bez wywołania Auth", async () => {
+        resetPasswordChangeState();
+        const response = await changePasswordRequest({ cookie: sessionCookies, body: { password: undefined } });
+
+        await assertJsonErrorResponse(response, 400);
+        assert.equal(recoveryGrantState.verifyPasswordCalls, 0);
+        assert.equal(recoveryGrantState.updateUserCalls, 0);
+      });
+
+      await passwordT.test("nie wylogowuje globalnie po błędzie updateUser", async () => {
+        resetPasswordChangeState();
+        recoveryGrantState.updateUserError = new Error("update failed");
+        const response = await changePasswordRequest({ cookie: sessionCookies });
+
+        await assertJsonErrorResponse(response, 400);
+        assert.equal(recoveryGrantState.updateUserCalls, 1);
+        assert.deepEqual(signOutScopes, []);
+      });
+
+      await passwordT.test("czyści cookies po błędzie globalnego wylogowania", async () => {
+        resetPasswordChangeState();
+        recoveryGrantState.signOutError = new Error("sign out failed");
+        const response = await changePasswordRequest({ cookie: sessionCookies });
+
+        const errorBody = await assertJsonErrorResponse(response, 503);
+        assert.doesNotMatch(errorBody.error, secretPattern);
+        assert.equal(recoveryGrantState.updateUserCalls, 1);
+        assert.deepEqual(passwordChangeEvents.map(({ name }) => name), ["signInWithPassword", "updateUser", "signOut"]);
+        for (const cookieName of ["motek_access_token", "motek_refresh_token", "motek_idle_activity"]) {
+          const cookie = response.headers.getSetCookie().find((value) => value.startsWith(`${cookieName}=`) && /Max-Age=0/.test(value));
+          assert.ok(cookie, `Brak cookie ${cookieName}`);
+        }
+      });
+
+      await passwordT.test("nie ujawnia sekretów po błędzie weryfikacji hasła", async () => {
+        const { response, body, capturedText } = await requestWithCapturedOutput(() => {
+          recoveryGrantState.verifyPasswordError = new Error("invalid credentials");
+        });
+
+        const errorBody = assertJsonErrorBody(response, body, 401);
+        assert.doesNotMatch(errorBody.error, secretPattern);
+        assert.doesNotMatch(capturedText, secretPattern);
+      });
+
+      await passwordT.test("nie ujawnia sekretów po błędzie updateUser", async () => {
+        const { response, body, capturedText } = await requestWithCapturedOutput(() => {
+          recoveryGrantState.updateUserError = new Error("update failed");
+        });
+
+        const errorBody = assertJsonErrorBody(response, body, 400);
+        assert.doesNotMatch(errorBody.error, secretPattern);
+        assert.doesNotMatch(capturedText, secretPattern);
+      });
+
+      await passwordT.test("nie ujawnia sekretów po błędzie globalnego wylogowania", async () => {
+        try {
+          const { response, body, capturedText } = await requestWithCapturedOutput(() => {
+            recoveryGrantState.signOutError = new Error("sign out failed");
+          });
+
+          const errorBody = assertJsonErrorBody(response, body, 503);
+          assert.doesNotMatch(errorBody.error, secretPattern);
+          assert.doesNotMatch(capturedText, secretPattern);
+        } finally {
+          resetPasswordChangeState();
+        }
+      });
     });
 
     await t.test("pokazuje stan regulaminu i blokuje starej zgodzie dostęp do danych", async () => {

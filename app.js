@@ -54,6 +54,8 @@ const forgotPasswordBtn = document.getElementById("forgotPasswordBtn");
 const passwordResetForm = document.getElementById("passwordResetForm");
 const passwordUpdateForm = document.getElementById("passwordUpdateForm");
 const cancelPasswordResetBtn = document.getElementById("cancelPasswordResetBtn");
+const changePasswordToggle = document.getElementById("changePasswordToggle");
+const changePasswordForm = document.getElementById("changePasswordForm");
 const accountView = document.getElementById("accountView");
 const headerUser = document.getElementById("headerUser");
 const themeToggle = document.getElementById("themeToggle");
@@ -1851,7 +1853,8 @@ async function startPasswordRecovery() {
       return true;
     }
   }
-  if (!code || query.get("recovery") !== "1") {
+  const isRecoveryCallback = Boolean(code) && !(accessToken && refreshToken && hash.get("type") === "signup");
+  if (!isRecoveryCallback) {
     return false;
   }
   // Usuń jednorazowy kod z adresu przed pierwszym żądaniem sieciowym.
@@ -2122,7 +2125,50 @@ passwordResetForm.addEventListener("submit", async (event) => {
   } catch (error) {
     setAuthMessage(error.message, "error");
   } finally {
+    resetCaptchaForForm(passwordResetForm);
     setAuthBusy(passwordResetForm, false);
+  }
+});
+
+changePasswordToggle.addEventListener("click", () => {
+  const isOpen = changePasswordForm.hidden;
+  if (!isOpen) {
+    changePasswordForm.reset();
+  }
+  changePasswordForm.hidden = !isOpen;
+  changePasswordToggle.setAttribute("aria-expanded", String(isOpen));
+  if (isOpen) {
+    changePasswordForm.querySelector('input[name="currentPassword"]').focus();
+  }
+});
+
+changePasswordForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const body = Object.fromEntries(new FormData(changePasswordForm).entries());
+  const passwordConfirmation = body.passwordConfirmation;
+  if (body.password !== passwordConfirmation) {
+    setAuthMessage("Wpisane hasła nie są zgodne.", "error");
+    changePasswordForm.querySelector('input[name="passwordConfirmation"]').focus();
+    return;
+  }
+
+  setAuthBusy(changePasswordForm, true);
+  setAuthMessage("Zmieniam hasło...");
+  try {
+    await api("/api/auth/password/change", {
+      method: "POST",
+      body: JSON.stringify({ currentPassword: body.currentPassword, password: body.password }),
+    });
+    changePasswordForm.reset();
+    changePasswordForm.hidden = true;
+    changePasswordToggle.setAttribute("aria-expanded", "false");
+    renderAuthState({ authenticated: false });
+    showAuthForm(loginForm);
+    setAuthMessage("Hasło zmienione. Zaloguj się nowym hasłem.", "success");
+  } catch {
+    setAuthMessage("Nie udało się zmienić hasła. Spróbuj ponownie.", "error");
+  } finally {
+    setAuthBusy(changePasswordForm, false);
   }
 });
 

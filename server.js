@@ -1391,6 +1391,45 @@ async function handleAuthApi(req, res, url) {
     return sendJson(res, 200, { passwordUpdated: true, authenticated: false });
   }
 
+  if (req.method === "POST" && url.pathname === "/api/auth/password/change") {
+    const session = await requireAuthenticatedSession(req, res);
+    const body = await readBody(req);
+    const currentPassword = body.currentPassword;
+    if (typeof currentPassword !== "string" || !currentPassword.trim()) {
+      throw new ApiError(400, "Podaj bieżące hasło.");
+    }
+    const password = validateAuthPassword(body.password);
+
+    const verifier = supabaseAuthClientFactory(supabaseAuthConfig);
+    const { data: verificationData, error: verificationError } = await verifier.auth.signInWithPassword({
+      email: session.user.email,
+      password: currentPassword,
+    });
+    if (verificationError || !verificationData?.user) {
+      throw new ApiError(401, "Nie udało się zmienić hasła. Spróbuj ponownie.");
+    }
+
+    const client = supabaseAuthClientFactory(supabaseAuthConfig, session.accessToken);
+    const { error: updateError } = await client.auth.updateUser({ password });
+    if (updateError) {
+      throw new ApiError(400, "Nie udało się zmienić hasła. Sprawdź hasło i spróbuj ponownie.");
+    }
+
+    try {
+      const signOutResult = await client.auth.signOut({ scope: "global" });
+      if (signOutResult?.error) {
+        throw new ApiError(503, "Hasło zostało zmienione. Nie udało się wylogować wszystkich sesji.");
+      }
+    } catch (error) {
+      if (error instanceof ApiError) throw error;
+      throw new ApiError(503, "Hasło zostało zmienione. Nie udało się wylogować wszystkich sesji.");
+    } finally {
+      clearAuthCookies(res);
+    }
+
+    return sendJson(res, 200, { passwordUpdated: true, authenticated: false });
+  }
+
   if (req.method === "POST" && url.pathname === "/api/auth/logout") {
     const cookies = parseCookies(req.headers.cookie);
     try {

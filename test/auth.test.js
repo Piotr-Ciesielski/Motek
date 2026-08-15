@@ -1,5 +1,7 @@
 const { test } = require("node:test");
 const assert = require("node:assert/strict");
+const { readFileSync } = require("node:fs");
+const path = require("node:path");
 
 const { buildRegistrationAuthPayload } = require("../client-policy");
 const { CURRENT_LEGAL_DOCUMENT } = require("../legal-document");
@@ -20,6 +22,15 @@ const {
   shouldUseSecureCookies,
   validateCookieSecurityConfig,
 } = require("../server");
+
+const appJs = readFileSync(path.join(__dirname, "..", "app.js"), "utf8");
+
+test("zmiana hasła lokalnie odrzuca niezgodne nowe hasła", () => {
+  assert.match(
+    appJs,
+    /const passwordConfirmation = body\.passwordConfirmation;[\s\S]*?if \(body\.password !== passwordConfirmation\) \{[\s\S]*?return;/,
+  );
+});
 
 test("payload rejestracji przekazuje boolean akceptacji i bieżące wersje prawa", () => {
   const payload = buildRegistrationAuthPayload(
@@ -77,6 +88,12 @@ test("walidacja hasła wymaga podstawowej różnorodności znaków", () => {
   assert.equal(validateAuthPassword("Hasłó123!"), "Hasłó123!");
   assert.throws(() => validateAuthPassword("password"), /małą i wielką/);
   assert.throws(() => validateAuthPassword("Aa1      "), /wyłącznie ze spacji|znak specjalny/);
+});
+
+test("walidacja hasła odrzuca brakujące i puste wartości", () => {
+  assert.throws(() => validateAuthPassword(undefined), /8 do 256/);
+  assert.throws(() => validateAuthPassword(null), /8 do 256/);
+  assert.throws(() => validateAuthPassword(""), /8 do 256/);
 });
 
 test("produkcja wymaga jawnego Secure dla ciasteczek sesji", () => {
