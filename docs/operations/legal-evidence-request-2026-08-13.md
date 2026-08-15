@@ -280,6 +280,33 @@ a następnie testy regresji.
 `supabase_execute_sql`, projekt `vueotocjsgzosqzhcish`, pozyskane
 2026-08-15. Odczyt nie zawiera sekretów ani surowych danych użytkowników.
 
+## Audyt kontraktu RPC Production — odczyt read-only 2026-08-15
+
+- `create_auth_recovery_grant()` dla zalogowanego użytkownika oraz tekstowe
+  `claim/release/consume` są `SECURITY DEFINER`, mają `search_path = ''`,
+  wiążą operację z `auth.uid()` i są wykonywalne przez `authenticated`, ale
+  nie przez `anon`.
+- Przeciążenie administracyjne `create_auth_recovery_grant(uuid,text,timestamptz)`
+  jest ograniczone do `service_role`; stare UUID `consume` nie jest dostępne
+  dla `authenticated`.
+- Wersjonowane RPC magazynu (`get/insert/update/delete_yarn_versioned`) mają
+  `SECURITY DEFINER`, pusty `search_path`, kontrolę właściciela, kontrolę
+  wersji i wymaganie aktualnej akceptacji dokumentów.
+- Oba legacy `insert_yarn_with_limit(...)` nadal są wykonywalne przez
+  `authenticated`. Nie są `SECURITY DEFINER`, ale stanowią stary publiczny
+  kontrakt i nie mogą zostać usunięte przed potwierdzeniem, że nie ma już
+  kompatybilnych klientów oraz że release korzysta wyłącznie z wersjonowanych
+  RPC.
+- Brakuje pełnych testów negatywnych dla wszystkich recovery RPC: jawnego
+  zachowania bez sesji, `PUBLIC/anon` dla każdego przeciążenia, grantu
+  wygasłego i grantu należącego do innego użytkownika. To jest luka testowa,
+  nie zgoda na zmianę produkcji.
+
+Decyzja techniczna na teraz: nie włączać RLS ad hoc i nie wykonywać cleanupu
+legacy RPC. Najpierw uzupełnić lokalne testy kontraktu RPC, wykonać replay
+migracji oraz ponownie zweryfikować Production read-only. Dopiero potem można
+przygotować małą, forward-only zmianę i osobno zatwierdzić jej wykonanie.
+
 ## Niezależna recenzja i check lokalny — 2026-08-15
 
 - Pełny `npm run check` przeszedł: 363 testy, 0 błędów.
