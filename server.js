@@ -1406,7 +1406,7 @@ async function handleAuthApi(req, res, url) {
       password: currentPassword,
     });
     if (verificationError || !verificationData?.user) {
-      throw new ApiError(401, "Nie udało się zmienić hasła. Spróbuj ponownie.");
+      throw new ApiError(403, "Nie udało się zmienić hasła. Spróbuj ponownie.");
     }
 
     const client = supabaseAuthClientFactory(supabaseAuthConfig, session.accessToken);

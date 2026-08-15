@@ -1270,7 +1270,7 @@ test("serwer Motek działa bezpiecznie", async (t) => {
         recoveryGrantState.verifyPasswordError = new Error("invalid credentials");
         const response = await changePasswordRequest({ cookie: sessionCookies });
 
-        const errorBody = await assertJsonErrorResponse(response, 401);
+        const errorBody = await assertJsonErrorResponse(response, 403);
         assert.equal(errorBody.error, "Nie udało się zmienić hasła. Spróbuj ponownie.");
         assert.equal(recoveryGrantState.updateUserCalls, 0);
         assert.deepEqual(passwordChangeEvents.map(({ name }) => name), ["signInWithPassword"]);
@@ -1341,7 +1341,7 @@ test("serwer Motek działa bezpiecznie", async (t) => {
           recoveryGrantState.verifyPasswordError = new Error("invalid credentials");
         });
 
-        const errorBody = assertJsonErrorBody(response, body, 401);
+        const errorBody = assertJsonErrorBody(response, body, 403);
         assert.doesNotMatch(errorBody.error, secretPattern);
         assert.doesNotMatch(capturedText, secretPattern);
       });

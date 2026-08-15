@@ -178,8 +178,9 @@ test("formularz zmiany hasła ma kontrakt pól i nie zmienia recovery", () => {
   };
 
   assert.equal(form.closest("#authLoggedIn"), document.getElementById("authLoggedIn"));
+  assert.equal(form.getAttribute("autocomplete"), "new-password");
   assert.equal(current.name, "currentPassword");
-  assert.equal(current.autocomplete, "current-password");
+  assert.equal(current.autocomplete, "new-password");
   assert.equal(current.required, true);
   assert.equal(password.name, "password");
   assert.equal(password.autocomplete, "new-password");
@@ -206,6 +207,16 @@ test("frontend obsługuje panel zmiany hasła bez wysyłania potwierdzenia", () 
   assert.match(appJs, /changePasswordToggle\.addEventListener\("click", \(\) => \{[\s\S]*?if \(!isOpen\) \{[\s\S]*?changePasswordForm\.reset\(\);[\s\S]*?\}[\s\S]*?changePasswordForm\.hidden = !isOpen;/);
   assert.match(appJs, /if \(body\.password !== passwordConfirmation\) \{[\s\S]*?setAuthMessage\([^\n]+, "error"\);[\s\S]*?return;/);
   assert.match(appJs, /api\("\/api\/auth\/password\/change", \{[\s\S]*?method: "POST",[\s\S]*?body: JSON\.stringify\(\{ currentPassword: body\.currentPassword, password: body\.password \}\),/);
+});
+
+test("403 zmiany hasła wyjaśnia błąd bieżącego hasła", () => {
+  const changePasswordHandler = appJs.match(
+    /changePasswordForm\.addEventListener\("submit",[\s\S]*?\n\}\);/,
+  )?.[0];
+
+  assert.ok(changePasswordHandler);
+  assert.match(changePasswordHandler, /error\.status === 403[\s\S]*?Bieżące hasło jest nieprawidłowe/);
+  assert.match(changePasswordHandler, /error\.status === 401[\s\S]*?Sesja wygasła\. Zaloguj się ponownie\./);
 });
 
 test("wylogowanie resetuje i zamyka panel zmiany hasła", () => {

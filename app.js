@@ -2196,6 +2196,19 @@ changePasswordForm.addEventListener("submit", async (event) => {
       setAuthMessage(error.message, "error");
       return;
     }
+    if (error instanceof ApiError && error.status === 403) {
+      setAuthMessage("Bieżące hasło jest nieprawidłowe.", "error");
+      return;
+    }
+    if (error instanceof ApiError && error.status === 401) {
+      changePasswordForm.reset();
+      changePasswordForm.hidden = true;
+      changePasswordToggle.setAttribute("aria-expanded", "false");
+      renderAuthState({ authenticated: false });
+      showAuthForm(loginForm);
+      setAuthMessage("Sesja wygasła. Zaloguj się ponownie.", "error");
+      return;
+    }
     setAuthMessage("Nie udało się zmienić hasła. Spróbuj ponownie.", "error");
   } finally {
     setAuthBusy(changePasswordForm, false);

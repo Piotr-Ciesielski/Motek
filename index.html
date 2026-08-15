@@ -206,11 +206,11 @@
               <button id="changePasswordToggle" class="button button--ghost" type="button"
                 aria-controls="changePasswordForm" aria-expanded="false">Zmień hasło</button>
             </div>
-            <form id="changePasswordForm" class="account-security-zone__panel" method="post" action="/api/auth/password/change" hidden>
+            <form id="changePasswordForm" class="account-security-zone__panel" method="post" action="/api/auth/password/change" autocomplete="new-password" hidden>
               <div class="auth-field">
                 <label for="change-current-password">Aktualne hasło</label>
                 <span class="password-field">
-                  <input id="change-current-password" name="currentPassword" type="password" autocomplete="current-password" required aria-describedby="changePasswordHint changePasswordMessage" />
+                  <input id="change-current-password" name="currentPassword" type="password" autocomplete="new-password" required aria-describedby="changePasswordHint changePasswordMessage" />
                   <button class="password-reveal" type="button" data-password-reveal="change-current-password"
                     aria-controls="change-current-password" aria-pressed="false" aria-label="Przytrzymaj, aby pokazać hasło"></button>
                 </span>
