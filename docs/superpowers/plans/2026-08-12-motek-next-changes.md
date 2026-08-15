@@ -1184,3 +1184,10 @@ natomiast panel Production nie pokazał tych pól. Odczyt `origin/main:railway.j
 potwierdził ten sam start command/healthcheck, a Dockerfile ma `CMD ["node",
 "server.js"]`; zgodność źródła ma `PASS`, a runtime pozostaje do potwierdzenia
 w post-deploy smoke. Nie zmieniam konfiguracji.
+
+## Handoff — metryki Railway przed oknem produkcyjnym, 2026-08-15
+
+Read-only odczyt 24h nie wykazał oczywistej anomalii CPU/pamięci w Production ani
+Staging. To potwierdza dostępność sygnału operacyjnego, ale nie zamyka
+monitoringu: nadal brakuje progów alarmowych, odbiorcy alertów i właściciela
+dyżuru. Nie zmieniono ustawień Railway.

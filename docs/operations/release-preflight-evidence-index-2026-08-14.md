@@ -212,6 +212,20 @@ wyklucza zewnętrznych klientów. Zgodność źródła konfiguracji Production i
 Staging ma `PASS`; runtime healthcheck pozostaje do potwierdzenia w post-deploy
 smoke, nie wymaga samodzielnej zmiany konfiguracji.
 
+## Railway — odczyt metryk zasobów — 2026-08-15
+
+Read-only odczyt ostatnich 24 godzin obejmował 289 próbek CPU i pamięci dla
+każdego środowiska:
+
+| Środowisko | CPU avg / max | Pamięć avg / max |
+|---|---:|---:|
+| Production | `0.0005` / `0.0015` | `0.0600` / `0.0625 GB` |
+| Staging | `0.0006` / `0.0011` | `0.0597` / `0.0731 GB` |
+
+Nie widać oczywistej anomalii zasobów w tym oknie. Odczyt metryk nie potwierdza
+jednak alertów, progów, retencji monitoringu ani właściciela dyżuru, więc bramka
+monitoringu pozostaje `OPEN`.
+
 ## Powiązane dokumenty
 
 - [runbook wdrożenia i regresji](post-deploy-regression.md),
