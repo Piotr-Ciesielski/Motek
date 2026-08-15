@@ -381,6 +381,21 @@ oceny prawnej i nie zmieniają statusu `unverified` w manifeście.
   stagingu. Do czasu decyzji traktujemy je jako nieuzgodniony fixture, a nie
   część źródła prawdy katalogu.
 
+## Audyt pierwszego pakietu katalogu — 2026-08-15
+
+Read-only weryfikacja stron autorów/wydawców potwierdziła tożsamość i zakres
+metadanych dla trzech wzorów, które już mają lokalne warianty dopasowania:
+
+- `HollyBerryCharitySocks.pdf` → [Ravelry — HollyBerryCharitySocks](https://www.ravelry.com/patterns/library/hollyberrycharitysocks),
+- `Kopia pliku na_pole_wzor.pdf` → [Ravelry — Na Pole Tee](https://www.ravelry.com/patterns/library/na-pole-tee),
+- `Oslohuen_2.0_ENGELSK.pdf` → [PetiteKnit — Oslo Hat](https://www.petiteknit.com/en/products/oslo-hue).
+
+Manifest `data/pattern-content-audit.json` oznacza te trzy rekordy jako
+`published` z datą audytu `2026-08-15` i zachowuje pozostałe 103 rekordy jako
+`hidden`. Jest to wyłącznie przygotowanie lokalnego pakietu; nie wykonano
+jeszcze importu do Supabase ani publikacji na stagingu. Przed importem należy
+uruchomić walidację i uzyskać zgodę na zmianę zdalnych danych stagingu.
+
 ## Reconciliation Supabase Production — odczyt read-only 2026-08-15
 
 Po migracji wykonano ponowny, ograniczony odczyt metadanych i agregatów
