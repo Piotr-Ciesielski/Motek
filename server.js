@@ -1613,7 +1613,11 @@ async function main(options = {}) {
       },
       deploymentEnvironment: "production",
     });
-    if (!publication.ready) throw new Error("Publikacja prawna nie jest gotowa.");
+    if (!publication.ready) {
+      console.warn(
+        "Publikacja prawna nie jest jeszcze gotowa; uruchamiam aplikację z aktywnym RLS i wymogiem akceptacji dokumentów."
+      );
+    }
   }
   validateCookieSecurityConfig();
   validateOriginConfig();
