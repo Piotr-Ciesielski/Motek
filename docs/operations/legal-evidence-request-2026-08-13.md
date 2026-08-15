@@ -317,6 +317,20 @@ oceny prawnej i nie zmieniają statusu `unverified` w manifeście.
   testu rzeczywistego przepływu Auth albo obserwacji logów; samo ostrzeżenie
   nie jest wystarczającym dowodem, że konfiguracja Supabase jest wyłączona.
 
+## Kontrolowany probe stagingu — 2026-08-15
+
+- Wysłano jedno żądanie `POST /api/auth/login` na staging z poprawnym
+  pochodzeniem, fikcyjnym adresem e-mail, fikcyjnym hasłem i testowym dummy
+  tokenem CAPTCHA. Odpowiedź była `401 Nieprawidłowy e-mail lub hasło.`; nie
+  utworzono konta i nie wykonano zapisu danych.
+- Po odświeżeniu panelu Cloudflare ostrzeżenie `Siteverify isn't being called`
+  dla widgetu produkcyjnego pozostało bez zmian.
+- Wynik jest niejednoznaczny: test potwierdza ścieżkę backendu Auth, ale dummy
+  token nie jest dowodem pomyślnej walidacji Turnstile. Do zamknięcia blokady
+  potrzebny jest kontrolowany test z prawdziwym tokenem uzyskanym przez widget
+  oraz bezpiecznym kontem QA stagingu albo jednoznaczny odczyt logów dostawcy.
+- Nie wykonywano analogicznego testu na produkcji.
+
 ## Reconciliation Supabase Production — odczyt read-only 2026-08-15
 
 Po migracji wykonano ponowny, ograniczony odczyt metadanych i agregatów
