@@ -1232,3 +1232,22 @@ Wynik wzmacnia status `UNRESOLVED` dla grup versioned/recovery/ACL i nie zamyka
 bramki migracji. Następny bezpieczny krok to porównanie efektu obiektów oraz
 mapy grup scalonych; nie wykonywać `migration repair`, ręcznych grantów ani
 migracji częściowych. Produkcja pozostaje `NO-GO`.
+
+## Handoff — snapshot efektu funkcji, kolumn i RLS, 2026-08-15
+
+Read-only SQL potwierdził realny `EFFECT_CONFLICT`, a nie wyłącznie różnicę
+numeracji migracji. Production ma legacy recovery bez `claim/release`, hash
+43-znakowy, brak `claimed_at`, brak `has_current_terms_acceptance()` i dwa
+legacy overloady `insert_yarn_with_limit`. Staging ma pełny lifecycle recovery,
+hash SHA-256/64, legal gate w RLS oraz brak legacy overloadów.
+
+Production zachowuje `private.yarn_store_versions.updated_at`, a Staging go nie
+ma; ta różnica jest oznaczona jako `ACCEPTED_COMPATIBILITY` i wymaga zachowania
+danych podczas przyszłej delty. W obu środowiskach recovery RPC są
+`SECURITY DEFINER` z pustym `search_path`, a prywatna tabela nie jest dostępna
+klientowi.
+
+Snapshot zamyka porównanie efektu kluczowych obiektów, ale nie jest zgodą na
+migrację. Pozostają preflight snapshot danych, plan forward-only,
+legal/infrastructure readiness i osobne zgody wykonawcze. Produkcja pozostaje
+`NO-GO`.

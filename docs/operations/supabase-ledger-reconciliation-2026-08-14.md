@@ -345,3 +345,23 @@ zgodność nazwy nie wystarcza, a fingerprint zdalnej instrukcji nie jest
 bezpośrednio porównywalny z lokalnym hashem pliku. Do zamknięcia pozostaje
 porównanie efektu obiektów oraz jawna mapa grup scalonych. Nie wykonywano
 `migration repair`, ręcznych grantów ani migracji.
+
+## Świeży snapshot efektu funkcji, kolumn i RLS — 2026-08-15
+
+Read-only SQL porównał definicje funkcji, ACL wykonania, kolumny i polityki RLS
+w Production i Staging. Wszystkie odczytane funkcje `SECURITY DEFINER` mają
+pusty `search_path`; różnice dotyczą kontraktu i uprawnień:
+
+| Obszar | Production | Staging | Status |
+|---|---|---|---|
+| Recovery user-facing | brak `claim`/`release`, tylko legacy `consume(uuid,text)` dla `service_role` | `claim(text)`, `release(text)`, `consume(text)` dla `authenticated` oraz legacy overload | `EFFECT_CONFLICT` |
+| Recovery hash/lifecycle | brak `claimed_at`, constraint 43 znaków | `claimed_at`, constraint 64 znaki | `EFFECT_CONFLICT` |
+| Legal gate | brak `has_current_terms_acceptance()`; polityki profili/włóczek bez bramki | funkcja obecna; polityki wymagają aktualnej akceptacji | `EFFECT_CONFLICT` |
+| Versioned RPC | obecne, bez legal gate; status konfliktu pozostaje legacy | obecne z legal gate i kontraktem stagingowym | `EFFECT_CONFLICT` |
+| Legacy `insert_yarn_with_limit` | 2 overloady, `EXECUTE` dla `authenticated` i `service_role` | brak overloadów | `EFFECT_CONFLICT` |
+| `private.yarn_store_versions` | `updated_at` zachowane | brak `updated_at` | `ACCEPTED_COMPATIBILITY`, wymaga ochrony danych |
+
+W obu środowiskach `anon` nie ma wykonania odczytanych RPC recovery, a prywatna
+tabela recovery pozostaje poza bezpośrednim dostępem klienta. To zamyka tylko
+te granice dostępu; nie zmniejsza konfliktu kontraktu. Wynik jest dowodem efektu
+schematu, nie zgodą na zastosowanie delty. Produkcja pozostaje `NO-GO`.
