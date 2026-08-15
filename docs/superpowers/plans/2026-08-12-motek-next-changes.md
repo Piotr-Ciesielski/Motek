@@ -1218,3 +1218,17 @@ gdy stagingowy kontrakt z wcześniejszego smoke wymagał `401`. To pozostaje
 kryterium STOP dla promocji, zgodnie z decyzją „katalog wyłącznie przez
 backend”. Nie wykonano zmian produkcyjnych, migracji, deployu ani zmian
 Cloudflare.
+
+## Handoff — fingerprinty zdalnych migracji, 2026-08-15
+
+Read-only SQL odczytał fingerprinty `md5(statements::text)` i długości
+instrukcji dla nierozstrzygniętych wpisów Production i Staging. Odczyt
+potwierdził osobne fingerprinty dla `add_versioned_yarn_inventory`, grup
+recovery, ACL oraz stagingowych poprawek konfliktu wersji. Są to fingerprinty
+zapisanych instrukcji zdalnych, a nie hashe lokalnych plików; nie oznaczają
+równoważności ani konfliktu bez porównania efektu.
+
+Wynik wzmacnia status `UNRESOLVED` dla grup versioned/recovery/ACL i nie zamyka
+bramki migracji. Następny bezpieczny krok to porównanie efektu obiektów oraz
+mapy grup scalonych; nie wykonywać `migration repair`, ręcznych grantów ani
+migracji częściowych. Produkcja pozostaje `NO-GO`.

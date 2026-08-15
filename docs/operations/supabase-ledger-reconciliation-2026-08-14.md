@@ -318,3 +318,30 @@ warunkowy REVOKE niczego nie zmienia. Nie wykonywać ręcznych grantów ani
 migracji częściowych.
 
 Produkcja pozostaje `NO-GO`.
+
+## Świeży fingerprint zdalnych instrukcji migracji — 2026-08-15
+
+Read-only SQL odczytał `md5(statements::text)` oraz długość zapisanych
+instrukcji z tabeli `supabase_migrations.schema_migrations`. Fingerprinty są
+tożsamością zdalnego zapisu instrukcji, a nie hashami lokalnych plików
+migracji; nie wolno porównywać ich bezpośrednio z SHA-256 plików.
+
+| Środowisko | Wersja / nazwa | MD5 instrukcji | Długość |
+|---|---|---|---:|
+| Production | `20260804190613 add_versioned_yarn_inventory` | `57d33bfb350f62b2d57cb36be357d28e` | 6951 |
+| Production | `20260807113952 add_recovery_grants` | `cf26ea9958facdf1affe6c594e9ad3f1` | 2225 |
+| Production | `20260807114131 restrict_yarn_mutations_acl` | `6e08bbc8893406acef84a33fbd38a42b` | 1027 |
+| Production | `20260807114716 document_patterns_service_role_policy` | `0dbee86381808351d11f1bbceb017d94` | 200 |
+| Production | `20260807114728 document_recovery_grants_no_client_policy` | `04a4967027fb6ba5610bdeb8b1799abf` | 247 |
+| Staging | `20260803192748 add_versioned_yarn_inventory` | `621403595dc4c1f04cf3a9fc64f511c4` | 6954 |
+| Staging | `20260803193245 fix_yarn_version_conflict_code` | `b848a5a15918c97d00e61682eb2ed436` | 6954 |
+| Staging | `20260803194324 restore_atomic_yarn_store_versions_contract` | `13e9a8c870a383bdc7ca48dff73a21f2` | 6659 |
+| Staging | `20260806223212 add_recovery_grants` | `cc315eff4fc16e62929f61a6b4c95773` | 2359 |
+| Staging | `20260812135011 add_recovery_grant_claim` | `f87479d802e0f6c379c348f1457959da` | 2259 |
+| Staging | `20260813103831 harden_recovery_grant_release` | `183119e910bdb6b805e24a2a66c25762` | 1784 |
+
+Wynik wzmacnia status `UNRESOLVED` dla grup versioned/recovery/ACL: sama
+zgodność nazwy nie wystarcza, a fingerprint zdalnej instrukcji nie jest
+bezpośrednio porównywalny z lokalnym hashem pliku. Do zamknięcia pozostaje
+porównanie efektu obiektów oraz jawna mapa grup scalonych. Nie wykonywano
+`migration repair`, ręcznych grantów ani migracji.
