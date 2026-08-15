@@ -371,6 +371,15 @@ oceny prawnej i nie zmieniają statusu `unverified` w manifeście.
   `pending_review`; nie publikowano ich automatycznie. Rozwiązanie wymaga
   osobnego audytu i decyzji dotyczącej publikacji katalogu, a nie obejścia
   filtra `published`.
+- Porównanie identyfikatorów źródeł wykazało, że staging zawiera 106 rekordów
+  zgodnych z lokalnym `data/patterns-import.json` oraz pięć dodatkowych
+  rekordów testowych: `test-motek-fingering-any-material.pdf`,
+  `test-motek-holly-berry.pdf`, `test-motek-oslo-double.pdf`,
+  `test-motek-sport-bamboo.pdf` i `test-motek-sport-cotton.pdf`. Wszystkie
+  pozostają `pending_review`; nie wchodzą do audytu właściwego katalogu.
+- Usunięcie tych pięciu rekordów wymaga osobnej zgody na zmianę danych
+  stagingu. Do czasu decyzji traktujemy je jako nieuzgodniony fixture, a nie
+  część źródła prawdy katalogu.
 
 ## Reconciliation Supabase Production — odczyt read-only 2026-08-15
 
