@@ -7,6 +7,7 @@ COPY *.js *.json *.html *.css *.svg VERSION ./
 COPY client ./client
 COPY server ./server
 COPY assets ./assets
+COPY data ./data
 
 ENV NODE_ENV=production HOST=0.0.0.0
 USER node
