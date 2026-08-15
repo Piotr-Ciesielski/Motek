@@ -234,12 +234,55 @@ warunków prawnych. Nie zmienia statusu `unverified` w manifeście.
 
 ### Cloudflare Edge i Turnstile
 
-- Ten odczyt nie wykonywał ponownie odczytu panelu Cloudflare. Wcześniejszy
-  zapis w tym dokumencie pozostaje jedynie materiałem roboczym: proxied DNS
-  produkcji, DNS-only dla stagingu, ustawienia TLS i brak reguł custom wymagają
-  nadal datowanego zrzutu lub eksportu z panelu.
-- Nie zmieniono żadnych ustawień Cloudflare ani sekretów Turnstile. Brak
-  account-specific dowodu Cloudflare pozostaje blokadą legal-readiness.
+- Wcześniejszy snapshot konektorowy pozostawał materiałem roboczym: proxied DNS
+  produkcji, DNS-only dla stagingu, ustawienia TLS i brak reguł custom wymagały
+  datowanego potwierdzenia z panelu.
+- Późniejszy odczyt zalogowanego panelu Cloudflare z 2026-08-15 dostarczył
+  account-specific dowodu technicznego, opisanego w sekcji poniżej. Nie jest on
+  samodzielnym dowodem warunków prawnych ani lokalizacji przetwarzania.
+- Nie zmieniono żadnych ustawień Cloudflare ani sekretów Turnstile.
+
+## Snapshot paneli zalogowanych — odczyt read-only 2026-08-15
+
+Uzupełniający odczyt wykonano w istniejących, zalogowanych panelach dostawców.
+Nie wykonywano zapisów, wdrożeń, zmian planu, zmian sekretów ani odrzucania
+oczekujących zmian. Są to dowody techniczne konfiguracji konta; nie zastępują
+oceny prawnej i nie zmieniają statusu `unverified` w manifeście.
+
+### Supabase Production
+
+- Panel projektu `Motek Production` potwierdza plan `Free`, status `Healthy`,
+  region `North EU (Stockholm)` (`eu-north-1`) i PostgreSQL `17.6.1.155`.
+- Panel pokazuje `Last migration: production_legal_versioned_recovery_delta`
+  oraz `Last backup: No backups`.
+- Odczyt nie zmieniał ustawień backupów ani danych. Brak backupu widocznego w
+  panelu jest ryzykiem operacyjnym i pozostaje osobnym punktem do decyzji.
+
+### Railway Production
+
+- Panel usługi `Motek` potwierdza repozytorium
+  `Piotr-Ciesielski/Motek`, gałąź `main`, domenę `www.rysia.org`, region
+  `US West (California, USA)` i jedną replikę.
+- Auto-deploy z gałęzi GitHub jest wyłączony. Ustawienia wynikające z
+  `railway.json` są widoczne jako `Start command: node server.js` oraz
+  `Healthcheck Path: /health/ready`.
+- Panel ma obecnie `2 changes to apply`: usunięcie `Healthcheck Path` oraz
+  usunięcie `Start Command`. Nie zastosowano ani nie odrzucono tych zmian,
+  ponieważ ich zastosowanie spowodowałoby ponowne wdrożenie produkcji.
+
+### Cloudflare Edge i Turnstile
+
+- Panel konta potwierdza strefę `rysia.org` na planie `Free`, pełny status DNS
+  oraz ruch przechodzący przez Cloudflare. Panel nie wykazał podłączonego
+  Workera dla tej strefy.
+- Panel Turnstile potwierdza widget `Motek production`, tryb `Managed`,
+  `2` hostnames i brak pre-clearance.
+- Cloudflare wyświetla ostrzeżenie: `Siteverify isn't being called for Motek
+  production`; tokeny widgetu nie są walidowane, a chronione formularze
+  pozostają otwarte na boty. To jest aktywna blokada bezpieczeństwa, a nie
+  tylko brak dokumentu.
+- Nie odczytywano ani nie zapisywano sekretu Turnstile. Nie zmieniano ustawień
+  Cloudflare.
 
 ## Reconciliation Supabase Production — odczyt read-only 2026-08-15
 
