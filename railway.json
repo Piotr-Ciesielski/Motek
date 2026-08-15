@@ -5,7 +5,7 @@
     "dockerfilePath": "deploy/railway/Dockerfile"
   },
   "deploy": {
-    "startCommand": "node server.js",
+    "startCommand": "sleep infinity",
     "healthcheckPath": "/health/ready",
     "healthcheckTimeout": 300,
     "restartPolicyType": "ON_FAILURE",
