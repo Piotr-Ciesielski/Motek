@@ -1170,7 +1170,7 @@ legal-readiness i Cloudflare/origin/WAF pozostają `OPEN`. Migracja Supabase,
 deploy exact SHA `e691af8` oraz smoke/obserwacja pozostają `NOT AUTHORIZED`.
 
 Macierz rozdziela trzy niezależne zgody: migrację bazy, deploy aplikacji oraz
-60-minutową obserwację. Nie wykonano zmian produkcyjnych, zmian Cloudflare ani
+30-minutową obserwację. Nie wykonano zmian produkcyjnych, zmian Cloudflare ani
 zmian danych; produkcja pozostaje `NO-GO`.
 
 ## Handoff — Railway account-specific preflight, 2026-08-15
@@ -1188,6 +1188,17 @@ w post-deploy smoke. Nie zmieniam konfiguracji.
 ## Handoff — metryki Railway przed oknem produkcyjnym, 2026-08-15
 
 Read-only odczyt 24h nie wykazał oczywistej anomalii CPU/pamięci w Production ani
-Staging. To potwierdza dostępność sygnału operacyjnego, ale nie zamyka
-monitoringu: nadal brakuje progów alarmowych, odbiorcy alertów i właściciela
-dyżuru. Nie zmieniono ustawień Railway.
+Staging. To potwierdza dostępność sygnału operacyjnego. Właściciel i odbiorca
+alertów są potwierdzeni jako operator Motka; nadal trzeba wpisać progi alarmowe
+i kryteria STOP. Nie zmieniono ustawień Railway.
+
+## Handoff — potwierdzenia operatora i okno produkcyjne, 2026-08-15
+
+Operator potwierdził brak zewnętrznych klientów legacy RPC, zadeklarował
+zweryfikowanie zakresu legal, przyjął siebie jako właściciela i odbiorcę alertów,
+zaakceptował 30-minutową obserwację, pozostawienie Cloudflare bez zmian oraz
+potwierdził okno produkcyjne.
+
+Manifest legal pozostaje bez zmian do czasu przypisania datowanych źródeł do
+konkretnych pól. Potwierdzenie okna nie jest zgodą na migrację ani deploy;
+osobne zgody wykonawcze i kryteria STOP nadal obowiązują.

@@ -139,15 +139,15 @@ Za `PASS` uznać dopiero jednocześnie:
 
 ## Proponowane okno obserwacji po deployu
 
-Minimalne okno obserwacji: 60 minut od zakończenia smoke. Kontrole co 10 minut
+Minimalne okno obserwacji: 30 minut od zakończenia smoke. Kontrole co 10 minut
 oraz po każdym alarmie obejmują `/health/ready`, `/health/release`, błędy 5xx,
 logowanie, recovery, opóźnienia żądań i odpowiedzi prywatnych. Proponowane
 kryterium końcowe to brak nieoczekiwanych 5xx, brak błędów Auth/recovery,
 zgodny exact SHA, brak `HIT` dla prywatnego API i potwierdzony cleanup testów.
 
-Właściciel dyżuru, odbiorca alertów i konkretne progi opóźnień muszą zostać
-wpisane przed zgodą wykonawczą. Do tego czasu brama monitoringu pozostaje
-`OPEN`, a końcowa decyzja pozostaje `NO-GO`.
+Właścicielem dyżuru i odbiorcą alertów jest operator Motka. Operator zaakceptował
+30-minutowe okno obserwacji; konkretne progi opóźnień i kryteria STOP pozostają
+elementem preflightu przed zgodą wykonawczą.
 
 ## Bezpieczny wariant delty forward-only
 
@@ -215,14 +215,14 @@ STOP i potwierdzenie wyniku. Ten dokument nie jest zgodą wykonawczą.
 | Bramka | Stan | Warunek zamknięcia |
 |---|---|---|
 | Lokalny klient legacy RPC | PASS | Brak odwołań w aplikacji, workflowach, skryptach i narzędziach repozytorium |
-| Zewnętrzny klient legacy RPC | OPEN | Potwierdzenie operatora lub kontrolowane wygaszenie i obserwacja; staging ma 4 historyczne wywołania PostgREST |
+| Zewnętrzny klient legacy RPC | PASS* | Operator potwierdził brak zewnętrznych klientów; staging ma 4 historyczne wywołania PostgREST, więc cleanup pozostaje osobną migracją z postflightem |
 | Ledger migracji | OPEN | Mapa zdalny wpis → lokalny plik → hash/efekt; Production 23, Staging 27, RC 32 pliki |
 | Recovery/data preflight | OPEN | Snapshot bezpośrednio przed oknem, zachowanie 2 produkcyjnych liczników i `updated_at`, kontrola 43→64 |
-| Legal readiness | OPEN | Account-specific dowody planu, transferów, retencji, DPA i subprocesorów; manifest nadal `unverified` |
+| Legal readiness | OPEN* | Operator potwierdził weryfikację; trzeba jeszcze przypiąć datowane źródła do manifestu, który nadal jest `unverified` |
 | Cloudflare/origin/WAF | OPEN | Potwierdzenie originu Railway, WAF/rate limiting, monitoringu, właściciela alertów i progów STOP |
 | Migracja Supabase | NOT AUTHORIZED | Wszystkie powyższe bramki zamknięte oraz osobna zgoda wykonawcza |
 | Deploy aplikacji | NOT AUTHORIZED | PASS migracji i osobna zgoda na exact SHA `e691af8` |
-| Smoke/obserwacja | NOT AUTHORIZED | Właściciel dyżuru, odbiorca alertów, 60-minutowe okno i kryteria STOP |
+| Smoke/obserwacja | NOT AUTHORIZED | Właściciel i odbiorca: operator Motka; 30-minutowe okno oraz kryteria STOP |
 
 Świeży publiczny smoke potwierdził `200` dla readiness/release/config oraz
 `Cache-Control: no-store` i `cf-cache-status: DYNAMIC`, ale nadal wykazał
@@ -231,3 +231,15 @@ Production. Nie zamyka to bram aplikacyjnego kontraktu ani legal-readiness.
 
 Macierz porządkuje kolejność decyzji; nie stanowi zgody na migrację, deploy,
 zmianę Cloudflare ani zmianę danych.
+
+## Potwierdzenia operatora — 2026-08-15
+
+- Operator potwierdził brak zewnętrznych klientów legacy RPC.
+- Operator zadeklarował, że zakres legal dostawców został zweryfikowany; nie
+  zmieniono jeszcze manifestu, ponieważ formalny wpis wymaga przypisania
+  datowanych źródeł do konkretnych pól każdego dostawcy.
+- Właścicielem dyżuru i odbiorcą alertów jest operator Motka; zaakceptowano
+  30-minutowe okno obserwacji.
+- Cloudflare pozostaje bez zmian; nie włączono WAF, rate limiting ani HSTS.
+- Okno produkcyjne zostało potwierdzone. Nie jest to zgoda na wykonanie
+  migracji Supabase ani deployu — te zgody pozostają niezależne.
