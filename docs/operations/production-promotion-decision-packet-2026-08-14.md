@@ -1,0 +1,211 @@
+# Pakiet decyzji: promocja recovery na produkcję — 2026-08-14
+
+## Decyzja bieżąca
+
+**NO-GO — nie wykonywać jeszcze migracji ani deployu produkcji.**
+
+Pakiet jest gotowy do przeglądu i uzyskania osobnych zgód planistycznych, ale
+nie do wykonania operacji. Produkcja i staging nie są obecnie tym samym
+artefaktem.
+
+## Decyzja produktowo-prawna — potwierdzona 2026-08-14
+
+Zaakceptowano, że Production ma wymagać aktualnej akceptacji warunków prawnych
+przy dostępie do prywatnych danych użytkownika, tak samo jak Staging. Oznacza
+to przyjęcie przez produkt docelowego zachowania:
+
+- odczyt i modyfikacja własnych włóczek wymagają `has_current_terms_acceptance()`;
+- RPC wersjonowanego magazynu włóczek zachowują tę samą bramkę;
+- brak aktualnej akceptacji blokuje operację, ale nie zmienia publicznego
+  katalogu wzorów ani procesu logowania;
+- pierwszy pakiet migracji celowo pozostawia legacy `insert_yarn_with_limit`;
+  jego usunięcie wymaga osobnej migracji po snapshotcie, preflight i obserwacji.
+
+Decyzja zamyka wybór produktu, ale nie jest zgodą na wykonanie migracji.
+Backup i izolowany restore wykonano 2026-08-14 z wynikiem `PASS warunkowy` dla
+obecnego pustego Storage. Nadal wymagane są uzgodnienie ledgeru, preflight,
+osobna zgoda na migrację i postflight.
+
+## Stan przed operacją
+
+- produkcyjny SHA aplikacji: `c4b777a5f8a96277c0e7fb7ca6ec52d425a0900b`;
+- produkcyjny ledger: 23 migracje;
+- snapshot pełnego ledgera Production/Staging: [supabase-ledger-reconciliation-2026-08-14.md](supabase-ledger-reconciliation-2026-08-14.md);
+- robocza macierz stagingowych wpisów: [supabase-staging-migration-matrix-2026-08-14.md](supabase-staging-migration-matrix-2026-08-14.md);
+- zdalne porównanie recovery/RLS/ACL: [supabase-remote-definition-comparison-2026-08-14.md](supabase-remote-definition-comparison-2026-08-14.md);
+- produkcja `/informacje-prawne`: `404`;
+- produkcja `/api/patterns` anonimowo: `200` z odpowiedzią JSON — naruszenie
+  decyzji „katalog wyłącznie przez backend”;
+- produkcja nie ma kompletnego kontraktu recovery stagingu.
+
+## Kandydat docelowy
+
+- źródło: `origin/staging@e691af891758ebc17f6d4683dbca5d997f65dbe5`;
+- wersja: `2.0.0-alpha.39`;
+- staging `/health/release`: dokładny SHA i `environment: staging`;
+- CI `31692102925`: test i database PASS;
+- post-deploy `31692142042`: pełna regresja stagingu PASS;
+- lokalny replay aktualnego RC: 32/32 migracji, pgTAP 9 plików / 291 testów;
+- staging `/informacje-prawne`: `200`;
+- staging anonimowy `/api/patterns`: `401`.
+
+Ważne: lokalny łańcuch 32 migracji oraz jego 11-migracyjny podpakiet recovery
+to kandydat z repozytorium, nie dowód zgodności z 23 wpisami Production ani z
+27 historycznymi wpisami Staging. Pełny ledger i efekt obiektów zdalnych nadal
+muszą zostać uzgodnione przed migracją produkcji.
+
+## Warunki przed zgodą wykonawczą
+
+1. Uzupełnić mapę `wersja zdalna → plik → hash → efekt schematu/RPC` dla
+   produkcyjnego ledgera. Lokalny plik/hash map jest już zapisany w [reconciliacji
+   ledgerów](supabase-ledger-reconciliation-2026-08-14.md), ale zdalna
+   równoważność treści i efektu nadal nie jest potwierdzona. Trzeba zebrać
+   minimalny snapshot funkcji, constraintów, RLS, polityk, grantów, triggerów i
+   rozszerzeń opisany w tym dokumencie. Nie stosować migracji tylko na podstawie
+   numerów.
+2. Rozstrzygnąć potwierdzoną różnicę kontraktu recovery: Production nie ma
+   `claimed_at` ani RPC `claim/release`, a jego ścieżka legacy używa 43-znakowego
+   hasha. Staging ma lifecycle `claim → release/consume` z SHA-256 i dodatkowo
+   wymusza `has_current_terms_acceptance()` na włóczkach. Szczegóły są w
+   [porównaniu definicji zdalnych](supabase-remote-definition-comparison-2026-08-14.md).
+3. Użyć wykonanego 2026-08-14 pełnego backupu produkcji (`public/private`,
+   Auth, Storage, metadane) i izolowanego restore; przed oknem odświeżyć go,
+   jeśli zmieni się stan danych. Hash pakietu jest zapisany poza repozytorium
+   i w lokalnym indeksie dowodów.
+ 4. Utrzymać dowód odtworzenia w zgodnym, izolowanym stacku Supabase: eksport
+    `public/private`, Auth i Storage został już odtworzony, porównano liczności,
+    zdrowie Auth, logowanie/recovery oraz pusty Storage. Przed przyszłym oknem
+    produkcyjnym odświeżyć eksport, jeżeli zmieni się stan danych; nie wykonywać
+    restore na produkcji.
+5. Potwierdzić legal-readiness: dane, role dostawców, regiony, transfery,
+   retencję, DPA i subprocesorów dla Supabase, Railway, Cloudflare edge oraz
+   Turnstile. Do tego czasu pozostaje `LEGAL_PUBLICATION=not ready`.
+6. Zamknąć infrastrukturę: origin Railway, cache API/Auth, WAF/rate limiting,
+   monitoring, odbiorcę alertów oraz certyfikat/SNI originu.
+7. Wskazać kompatybilny rollback aplikacji. Sam rollback Railway nie cofa
+   migracji Supabase; po migracji stare `c4b777a` nie jest automatycznie
+   bezpiecznym rollbackiem.
+8. Zachować produkcyjne `private.yarn_store_versions.updated_at` jako
+   zaakceptowaną kompatybilność danych. Odczyt wykazał 2 wiersze z wypełnioną
+   wartością; delta nie może wykonywać `DROP COLUMN` ani zmieniać tych wartości.
+
+## Proponowana kolejność operacji
+
+Poniższa kolejność jest propozycją wykonawczą, a nie udzieloną zgodą:
+
+1. Odczyt preflight i backup produkcji.
+2. Izolowany restore oraz porównanie danych.
+3. Replay i walidacja pełnego łańcucha migracji forward-only.
+4. Osobno zatwierdzona migracja produkcyjnego Supabase.
+5. Postflight RPC/RLS/ACL i zatrzymanie przy pierwszej niezgodności.
+6. Osobno zatwierdzony deploy aplikacji `e691af8` na Railway production.
+7. Post-deploy smoke, test publicznego kontraktu i obserwacja.
+8. Końcowe `GO/NO-GO` po obserwacji.
+
+## Wspólne warunki natychmiastowego STOP
+
+Operację należy zatrzymać i nie przechodzić do następnego etapu, gdy wystąpi
+którykolwiek z poniższych warunków:
+
+- niezgodny exact SHA lub `environment` kandydata;
+- nieuzgodniony ledger, nieznany efekt migracji albo częściowo zastosowana
+  migracja;
+- brak potwierdzonego backupu, hasha, szyfrowania lub izolowanego restore;
+- brak write-freeze albo niekontrolowane zapisy w czasie migracji;
+- `404` na `/informacje-prawne` albo anonimowy `200` na `/api/patterns`,
+  `/api/yarns` lub `/api/matches`;
+- `HIT` cache dla prywatnej odpowiedzi, błąd Auth/recovery albo ujawnienie
+  sekretu/PII;
+- brak kompatybilnego rollbacku aplikacji i właściciela decyzji awaryjnej;
+- brak potwierdzonego cleanupu, alertów, odbiorcy alertów lub okna obserwacji;
+- dowolny nieoczekiwany 5xx albo niezgodność RPC/RLS/ACL po migracji.
+
+Nie przygotowywać klasycznego `down SQL`. W razie błędu wybór jest jawny:
+kompatybilny rollback aplikacji, naprawa forward albo restore bazy — każdy
+wymaga osobnej decyzji.
+
+## Minimalny post-deploy smoke
+
+Za `PASS` uznać dopiero jednocześnie:
+
+- `/health/release` ma SHA `e691af8…` i `environment: production`;
+- `/health/ready` i `/health/live` zwracają sukces;
+- `/informacje-prawne` oraz `/informacje-prawne/` zwracają `200`;
+- anonimowe `/api/patterns`, `/api/yarns` i `/api/matches` zwracają `401`;
+- `/api/config` i `/api/auth/session` mają `Cache-Control: no-store`;
+- `/internal/metrics` pozostaje niedostępne publicznie;
+- redirecty, TLS, brak 5xx i nagłówki bezpieczeństwa są poprawne;
+- nie ma niepewnego cleanupu ani ujawnienia sekretów.
+
+## Proponowane okno obserwacji po deployu
+
+Minimalne okno obserwacji: 60 minut od zakończenia smoke. Kontrole co 10 minut
+oraz po każdym alarmie obejmują `/health/ready`, `/health/release`, błędy 5xx,
+logowanie, recovery, opóźnienia żądań i odpowiedzi prywatnych. Proponowane
+kryterium końcowe to brak nieoczekiwanych 5xx, brak błędów Auth/recovery,
+zgodny exact SHA, brak `HIT` dla prywatnego API i potwierdzony cleanup testów.
+
+Właściciel dyżuru, odbiorca alertów i konkretne progi opóźnień muszą zostać
+wpisane przed zgodą wykonawczą. Do tego czasu brama monitoringu pozostaje
+`OPEN`, a końcowa decyzja pozostaje `NO-GO`.
+
+## Bezpieczny wariant delty forward-only
+
+Po zamknięciu ledgeru i backupu proponowana delta powinna:
+
+1. zachować `private.yarn_store_versions.updated_at` i istniejące wartości;
+2. dodać/uzgodnić `has_current_terms_acceptance()` oraz polityki profili i
+   włóczek;
+3. wyrównać versioned RPC do stagingowego kontraktu (`P0003`, legal gate,
+   pusty `search_path`, `SECURITY DEFINER`);
+4. w pierwszym pakiecie pozostawić oba legacy overloady `insert_yarn_with_limit`,
+   a ich usunięcie wykonać dopiero jako osobną migrację po potwierdzeniu braku
+   zależności klientów;
+5. przeprowadzić recovery 43→64 z kontrolą liczności i hashy oraz zachować
+   kompatybilność istniejących overloadów service-role;
+6. dodać `claimed_at`, `claim/release/consume` oraz właściwe ACL/RLS;
+7. wykonać postflight funkcji, constraintów, RLS, ACL i testów recovery.
+
+Nie tworzyć klasycznego `down SQL`, nie wykonywać ręcznych grantów i nie
+stosować tej listy bezpośrednio jako polecenia produkcyjnego. Najpierw trzeba
+uzgodnić historyczne wpisy ledgeru, wykorzystać potwierdzony backup/restore i
+uzyskać osobne zgody wykonawcze.
+
+## Twarde zabezpieczenia delty
+
+Szczegółowa inwentaryzacja operacji ryzyka i kolejności forward-only znajduje
+się w [osobnym dokumencie](production-forward-delta-risk-inventory-2026-08-14.md).
+
+Przed wykonaniem i w postflight trzeba potwierdzić:
+
+- brak `DROP COLUMN updated_at`, `DROP TABLE private.yarn_store_versions` i
+  resetu licznika;
+- zachowanie najwyższego `version` per użytkownik oraz wartości `updated_at`;
+- cztery versioned RPC z `auth.uid()`, `SECURITY DEFINER`, pustym
+  `search_path`, `FOR UPDATE`, legal gate i ACL wyłącznie dla
+  `authenticated`;
+- polityki `profiles_*` i `yarns_*` wymagające własności oraz aktualnych
+  warunków;
+- brak bezpośredniego zapisu do `public.yarns` i użycia sekwencji; oba
+  overloady `insert_yarn_with_limit` pozostają do czasu osobnego cleanupu;
+- brak aktywnego legacy recovery 43-znakowego albo jawny, zweryfikowany plan
+  kompatybilności przed zmianą constraintu na 64 znaki;
+- `claim/release/consume`, ważność grantu, `claimed_at`, `used_at` i
+  odrzucenie wygasłego grantu.
+
+Natychmiastowy STOP następuje przy innej sygnaturze, `search_path`, trybie
+bezpieczeństwa, warunku legalnym, ACL, polityce `USING/WITH CHECK`, częściowym
+wykonaniu albo zmianie danych poza zatwierdzonym zakresem.
+
+## Osobne zgody
+
+- [x] backup i eksport produkcji (wykonane 2026-08-14; write-freeze pozostaje
+  elementem przyszłego okna);
+- [x] izolowany restore i porównanie (PASS warunkowo dla pustego Storage);
+- [ ] migracja Supabase forward-only;
+- [ ] deploy aplikacji `e691af8`;
+- [ ] smoke i okno obserwacji;
+- [ ] forward repair albo restore w przypadku awarii.
+
+Do zaznaczenia każdej zgody potrzebny jest właściciel, zakres, data, kryterium
+STOP i potwierdzenie wyniku. Ten dokument nie jest zgodą wykonawczą.
