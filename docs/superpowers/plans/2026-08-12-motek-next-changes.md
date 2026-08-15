@@ -1137,3 +1137,16 @@ zaproszeń używa wyłącznie własnych RPC zaproszeń i logów bezpieczeństwa.
 Lokalna bramka inwentaryzacji ma `PASS`; nie obejmuje zewnętrznych webhooków,
 jobów poza repozytorium, ręcznych skryptów ani historycznych klientów
 PostgREST. Cleanup produkcyjny pozostaje `OPEN`, a produkcja `NO-GO`.
+
+## Handoff — publiczne dowody dostawców legal/infrastructure, 2026-08-15
+
+Aktualna dokumentacja dostawców nie zmienia statusu manifestu, ale doprecyzowuje
+zakres brakujących dowodów: Supabase zaleca dla Free własny eksport CLI,
+Railway opisuje podstawowe przetwarzanie w USA i 7-dniową retencję logów
+Hobby/Trial, a Cloudflare rozdziela role procesora i administratora dla
+Turnstile oraz ustawienia lokalizacji ruchu i logów.
+
+Są to dowody publicznego zakresu usługi, nie account-specific potwierdzenie
+konfiguracji Motka. Nadal trzeba potwierdzić plan, retencję, transfery,
+DPA/subprocesorów i konfigurację Cloudflare dla konta. Manifest pozostaje
+`unverified`, `npm run legal:check` fail-closed, a produkcja `NO-GO`.

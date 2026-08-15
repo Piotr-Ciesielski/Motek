@@ -719,3 +719,29 @@ Odczyt publiczny nie wykazał zmiany położenia bramek:
 
 Wniosek: produkcja pozostaje `NO-GO`. Nie wykonano patcha produkcyjnego,
 migracji, deployu ani zmian GitHub.
+
+## Aktualizacja oficjalnej dokumentacji dostawców — 2026-08-15
+
+Ponownie sprawdzono publiczną dokumentację dostawców. Jest to dowód zakresu
+usług i ich ogólnych warunków, ale nie dowód konfiguracji ani akceptacji
+konkretnego konta Motka:
+
+- Supabase wskazuje, że automatyczne backupy dzienne dotyczą planów Pro, Team
+  i Enterprise, a dla Free zaleca regularny eksport danych przez `supabase db
+  dump` i przechowywanie kopii poza usługą ([Database Backups](https://supabase.com/docs/guides/platform/backups)).
+- Railway w aktualnym DPA wskazuje, że podstawowe operacje przetwarzania mają
+  miejsce w USA, a transfery poza EOG opierają się na odpowiednich
+  zabezpieczeniach, w tym SCC/DPF; lista subprocessors jest utrzymywana w
+  Trust Center ([Railway DPA](https://railway.com/legal/dpa)). Dokumentacja logów
+  podaje retencję 7 dni dla Hobby/Trial ([Railway Logs](https://docs.railway.com/observability/logs)).
+- Cloudflare Turnstile opisuje przetwarzanie sygnałów takich jak IP, fingerprint
+  TLS, User-Agent i sitekey; Cloudflare występuje jako procesor przy ochronie
+  strony oraz jako administrator przy ulepszaniu detekcji ([Turnstile Privacy Addendum](https://www.cloudflare.com/en-in/turnstile-privacy-policy/)).
+  Dokumentacja Data Localization rozdziela kontrolę miejsca deszyfrowania/
+  przetwarzania ruchu od miejsca przechowywania logów, więc sama konfiguracja
+  proxied DNS nie potwierdza tych ustawień ([Data Localization](https://developers.cloudflare.com/data-localization/how-to/)).
+
+Wniosek: publiczne źródła wzmacniają listę wymaganych dowodów, ale nie
+potwierdzają planu, retencji, transferów, DPA/subprocesorów ani ustawień
+Cloudflare dla konkretnego konta Motka. Manifest pozostaje `unverified`,
+`npm run legal:check` pozostaje fail-closed, a produkcja `NO-GO`.
