@@ -302,6 +302,21 @@ oceny prawnej i nie zmieniają statusu `unverified` w manifeście.
   obecnie potrzebna ani zatwierdzona.
 - Źródło: [Supabase — Enable CAPTCHA Protection](https://supabase.com/docs/guides/auth/auth-captcha).
 
+## Odczyt Supabase Auth Protection — 2026-08-15
+
+- Production: `Enable Captcha protection` jest włączone, provider to
+  `Turnstile by Cloudflare`, sekret jest zapisany, a przycisk `Save changes`
+  pozostaje nieaktywny. Wartości sekretu nie odczytywano ani nie ujawniano.
+- Staging: identycznie — ochrona jest włączona, provider to Turnstile, sekret
+  jest zapisany, a formularz nie ma niezapisanych zmian. Nie odczytywano ani
+  nie ujawniano wartości sekretu.
+- Odczyt nie wykonywał logowania, rejestracji, resetu hasła ani żadnej operacji
+  na danych użytkowników. Nie zmieniono konfiguracji Supabase.
+- Wniosek: wcześniejsza hipoteza o pustym sekrecie nie potwierdziła się.
+  Ostrzeżenie Cloudflare o braku `Siteverify` wymaga jeszcze kontrolowanego
+  testu rzeczywistego przepływu Auth albo obserwacji logów; samo ostrzeżenie
+  nie jest wystarczającym dowodem, że konfiguracja Supabase jest wyłączona.
+
 ## Reconciliation Supabase Production — odczyt read-only 2026-08-15
 
 Po migracji wykonano ponowny, ograniczony odczyt metadanych i agregatów
