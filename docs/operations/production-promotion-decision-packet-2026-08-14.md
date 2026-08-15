@@ -209,3 +209,25 @@ wykonaniu albo zmianie danych poza zatwierdzonym zakresem.
 
 Do zaznaczenia każdej zgody potrzebny jest właściciel, zakres, data, kryterium
 STOP i potwierdzenie wyniku. Ten dokument nie jest zgodą wykonawczą.
+
+## Aktualna macierz bram przed zgodami — 2026-08-15
+
+| Bramka | Stan | Warunek zamknięcia |
+|---|---|---|
+| Lokalny klient legacy RPC | PASS | Brak odwołań w aplikacji, workflowach, skryptach i narzędziach repozytorium |
+| Zewnętrzny klient legacy RPC | OPEN | Potwierdzenie operatora lub kontrolowane wygaszenie i obserwacja; staging ma 4 historyczne wywołania PostgREST |
+| Ledger migracji | OPEN | Mapa zdalny wpis → lokalny plik → hash/efekt; Production 23, Staging 27, RC 32 pliki |
+| Recovery/data preflight | OPEN | Snapshot bezpośrednio przed oknem, zachowanie 2 produkcyjnych liczników i `updated_at`, kontrola 43→64 |
+| Legal readiness | OPEN | Account-specific dowody planu, transferów, retencji, DPA i subprocesorów; manifest nadal `unverified` |
+| Cloudflare/origin/WAF | OPEN | Potwierdzenie originu Railway, WAF/rate limiting, monitoringu, właściciela alertów i progów STOP |
+| Migracja Supabase | NOT AUTHORIZED | Wszystkie powyższe bramki zamknięte oraz osobna zgoda wykonawcza |
+| Deploy aplikacji | NOT AUTHORIZED | PASS migracji i osobna zgoda na exact SHA `e691af8` |
+| Smoke/obserwacja | NOT AUTHORIZED | Właściciel dyżuru, odbiorca alertów, 60-minutowe okno i kryteria STOP |
+
+Świeży publiczny smoke potwierdził `200` dla readiness/release/config oraz
+`Cache-Control: no-store` i `cf-cache-status: DYNAMIC`, ale nadal wykazał
+anonimowe `200` dla `/api/patterns` i `404` dla `/informacje-prawne` w
+Production. Nie zamyka to bram aplikacyjnego kontraktu ani legal-readiness.
+
+Macierz porządkuje kolejność decyzji; nie stanowi zgody na migrację, deploy,
+zmianę Cloudflare ani zmianę danych.

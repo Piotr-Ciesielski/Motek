@@ -1161,3 +1161,14 @@ najwyższą wersję `142`, `claimed_at` w recovery i brak `updated_at` w licznik
 To jest aktualny dowód kształtu danych, ale nie snapshot bezpośrednio przed
 migracją. Różnicę liczności i wersji należy zachować w preflight; brak rekordów
 recovery nie zamyka bramki backup/restore ani nie jest zgodą na migrację.
+
+## Handoff — macierz zgód produkcyjnych, 2026-08-15
+
+Pakiet decyzji produkcyjnych uzupełniono o macierz bram: lokalny skan legacy ma
+`PASS`, ale zewnętrzni klienci legacy, reconciliacja ledgerów, preflight danych,
+legal-readiness i Cloudflare/origin/WAF pozostają `OPEN`. Migracja Supabase,
+deploy exact SHA `e691af8` oraz smoke/obserwacja pozostają `NOT AUTHORIZED`.
+
+Macierz rozdziela trzy niezależne zgody: migrację bazy, deploy aplikacji oraz
+60-minutową obserwację. Nie wykonano zmian produkcyjnych, zmian Cloudflare ani
+zmian danych; produkcja pozostaje `NO-GO`.
