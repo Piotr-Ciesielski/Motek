@@ -193,6 +193,86 @@ Po zebraniu dowodów można przygotować osobny, mały commit manifestu legalneg
 uruchomić npm run legal:check, przeprowadzić niezależną recenzję i dopiero
 potem wrócić do stagingu oraz kolejnego okna produkcyjnego.
 
+## Snapshot konfiguracji kontowej — odczyt read-only 2026-08-15
+
+Poniższy snapshot został zebrany z konektorów dostawców bez zmiany ustawień.
+Potwierdza konfigurację techniczną Motka, ale nie jest samodzielnym dowodem
+warunków prawnych. Nie zmienia statusu `unverified` w manifeście.
+
+### Supabase
+
+- Production: projekt `Motek Production`, ref `vueotocjsgzosqzhcish`, status
+  `ACTIVE_HEALTHY`, region `eu-north-1`, PostgreSQL `17.6.1.155`.
+- Staging: projekt `Motek Staging`, ref `rprhbmtabwjsenvfgicg`, status
+  `ACTIVE_HEALTHY`, region `eu-north-1`, PostgreSQL `17.6.1.155`.
+- Odczyt potwierdza identyfikację projektów, region i zdrowie usługi. Nie
+  potwierdza planu, konfiguracji backupów, retencji, transferu ani usuwania
+  danych.
+- Dowód techniczny: wynik read-only `supabase_get_project` / `supabase_list_projects`,
+  pozyskany 2026-08-15. Do pakietu operatora należy dołączyć zrzut lub eksport
+  panelu projektu obejmujący plan i backupy.
+
+### Railway
+
+- Production: projekt `balanced-fulfillment`, usługa `Motek`, źródło
+  `Piotr-Ciesielski/Motek` z gałęzi `main`, Dockerfile
+  `/deploy/railway/Dockerfile`, jedna replika w `sfo`, domena
+  `https://www.rysia.org`.
+- Staging: gałąź `staging`, jedna replika w `sfo`, domeny
+  `https://staging.rysia.org` oraz
+  `https://motek-staging-motek.up.railway.app`.
+- Produkcyjny deployment `063029eb-4ea6-415b-884d-d51823ecd359` zakończył się
+  statusem `SUCCESS` 2026-08-15. Log startowy potwierdził nasłuchiwanie na
+  porcie 8080 i połączenie z Supabase.
+- Odczyt nazw zmiennych nie ujawniał ich wartości ani sekretów. Nie potwierdza
+  planu workspace'u, retencji logów, lokalizacji przetwarzania logów, transferu
+  ani usuwania danych.
+- Dowód techniczny: wynik read-only `railway_get_service_config`,
+  `railway_list_domains`, `railway_list_deployments` i
+  `railway_get_logs`, pozyskany 2026-08-15. Do pakietu operatora należy
+  dołączyć zrzut planu workspace'u i ustawień retencji/logów.
+
+### Cloudflare Edge i Turnstile
+
+- Ten odczyt nie wykonywał ponownie odczytu panelu Cloudflare. Wcześniejszy
+  zapis w tym dokumencie pozostaje jedynie materiałem roboczym: proxied DNS
+  produkcji, DNS-only dla stagingu, ustawienia TLS i brak reguł custom wymagają
+  nadal datowanego zrzutu lub eksportu z panelu.
+- Nie zmieniono żadnych ustawień Cloudflare ani sekretów Turnstile. Brak
+  account-specific dowodu Cloudflare pozostaje blokadą legal-readiness.
+
+## Reconciliation Supabase Production — odczyt read-only 2026-08-15
+
+Po migracji wykonano ponowny, ograniczony odczyt metadanych i agregatów
+Production. Wynik nie zmienia schematu ani danych użytkowników:
+
+- migracja `20260815115028 / production_legal_versioned_recovery_delta` jest
+  obecna w historii Supabase;
+- `private.auth_recovery_grants` ma 0 rekordów, a kolumny obejmują
+  `jti_hash`, `user_id`, `expires_at`, `used_at`, `created_at`, `claimed_at`;
+- `private.yarn_store_versions` ma 2 rekordy, z `max(version) = 4`;
+- RPC recovery `claim_auth_recovery_grant(text)`,
+  `release_auth_recovery_grant(text)` i
+  `consume_auth_recovery_grant(text)` są wykonywalne przez `authenticated`;
+- legacy UUID overload `consume_auth_recovery_grant(uuid,text)` nie jest
+  wykonywalny przez `authenticated`;
+- wersjonowane RPC yarnów są obecne i wykonywalne przez `authenticated`;
+- oba legacy overloads `insert_yarn_with_limit(...)` nadal istnieją i są
+  wykonywalne przez `authenticated`. Ich usunięcie pozostaje odroczone do
+  czasu wdrożenia zgodnego release'u i obserwacji po wdrożeniu.
+
+Odczyt tabel zgłosił również advisory Supabase `rls_disabled` dla sześciu
+tabel schematu `private` (`yarn_store_versions`, `legal_document_versions`,
+`terms_acceptances`, `registration_invitations`, `registration_attempts`,
+`privacy_notice_deliveries`). Nie stosuję automatycznej remediacji: włączenie
+RLS bez dopasowanych polityk może zablokować legalne operacje backendu. Przed
+zmianą potrzebna jest osobna analiza ekspozycji schematu `private`, ścieżek
+RPC i polityk właścicielskich, a następnie testy regresji.
+
+Źródło: read-only `supabase_list_migrations`, `supabase_list_tables` oraz
+`supabase_execute_sql`, projekt `vueotocjsgzosqzhcish`, pozyskane
+2026-08-15. Odczyt nie zawiera sekretów ani surowych danych użytkowników.
+
 ## Oficjalne źródła referencyjne — zebrane 2026-08-15
 
 Poniższe materiały potwierdzają warunki ogólne usług. Nie potwierdzają same
