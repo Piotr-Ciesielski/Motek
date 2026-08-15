@@ -121,6 +121,11 @@ sekretów, PII ani `verifiedAt`; manifest pozostaje `unverified` zgodnie z
 Motek`; oba statusy są `SUCCESS`, a `cronSchedule` jest pusty. Konfiguracja
   nie wykazuje harmonogramu cron. Odczytano wyłącznie nazwy zmiennych, bez ich
   wartości.
+- Świeży odczyt nazw zmiennych Railway wykazał 25 zmiennych w Production i 23
+  w Staging. Wspólny zestaw aplikacyjny obejmuje m.in. `APP_ORIGIN`, ustawienia
+  CAPTCHA, `SUPABASE_URL`, klucze publishable/secret oraz `TRUST_PROXY`; tylko
+  Production ma dodatkową nazwę `AUTH_IDLE_TIMEOUT_SECONDS`. Wartości były
+  ukryte, więc nie jest to dowód zgodności konfiguracji ani sekretów.
 - Lista Edge Functions dla Production zwróciła pustą listę. Wywołanie listy
   dla Staging zakończyło się błędem argumentu konektora; nie oznaczam tego jako
   dowodu braku funkcji i pozostawiam ponowny odczyt jako zadanie otwarte.
