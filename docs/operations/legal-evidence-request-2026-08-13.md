@@ -307,6 +307,39 @@ legacy RPC. Najpierw uzupełnić lokalne testy kontraktu RPC, wykonać replay
 migracji oraz ponownie zweryfikować Production read-only. Dopiero potem można
 przygotować małą, forward-only zmianę i osobno zatwierdzić jej wykonanie.
 
+## Świeży publiczny smoke — 2026-08-15
+
+Odczyt GET bez sesji potwierdził aktualny rozjazd środowisk:
+
+| Środowisko | `/health/release` | `/informacje-prawne` | anonimowy `/api/patterns` |
+|---|---|---:|---:|
+| Production | `200`, `environment=production`, `commit=local` | `404` | `200` |
+| Staging | `200`, exact `e691af891758ebc17f6d4683dbca5d997f65dbe5`, `environment=staging` | `200` | `401` |
+
+Production `/health/live` i `/health/ready` zwróciły `200`, ale nie zamyka to
+bramki promocji: brak dokładnego SHA, brak strony prawnej i anonimowy dostęp
+do katalogu pozostają kryteriami STOP. Smoke nie wykonywał zapisu, logowania,
+migracji, cleanupu ani zmian Cloudflare.
+
+Dodatkowy odczyt kontraktu API potwierdził w obu środowiskach: `/api/config`
+zwraca `200`, chronione `/api/yarns` i `/api/matches` zwracają `401`, a
+`/internal/metrics` zwraca `404`. Ten wynik nie zmienia blokady produkcji, ale
+potwierdza, że problem nie dotyczy ogólnej ochrony API ani publicznych metryk.
+
+Automatyczny `npm run regression:smoke` przeszedł dla stagingu z exact
+`e691af891758ebc17f6d4683dbca5d997f65dbe5`. Uruchomienie tego samego profilu
+dla Production z oczekiwanym rollbackiem `c4b777a5f8a96277c0e7fb7ca6ec52d425a0900b`
+nie zakończyło się w limicie runnera, ponieważ Production nadal zwraca
+`commit: local` zamiast 40-znakowego SHA. Jest to formalne potwierdzenie
+blokady exact release; smoke był wyłącznie odczytowy.
+
+Diagnoza źródłowa: `release-info.js` raportuje exact SHA wyłącznie z
+`RAILWAY_GIT_COMMIT_SHA`, a bieżący rollback został uruchomiony przez CLI z
+izolowanego worktree. W tej ścieżce Railway nie przekazał SHA do procesu, więc
+aplikacja prawidłowo przełączyła się na bezpieczną wartość `local`. Nie należy
+omijać tej bramki zmianą kodu; przyszłe wdrożenie exact SHA musi użyć ścieżki,
+która przekaże identyfikator do środowiska, a następnie przejść smoke.
+
 ## Niezależna recenzja i check lokalny — 2026-08-15
 
 - Pełny `npm run check` przeszedł: 363 testy, 0 błędów.
