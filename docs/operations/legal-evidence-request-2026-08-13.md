@@ -354,6 +354,24 @@ oceny prawnej i nie zmieniają statusu `unverified` w manifeście.
   pełną regresją mutacji danych i nie potwierdza produkcyjnego Siteverify,
   ponieważ staging używa testowego widgetu Turnstile.
 
+## Diagnoza pustych dopasowań — staging — 2026-08-15
+
+- Operator potwierdził poprawne działanie magazynu włóczek, ale ekran
+  dopasowania zwracał dla każdego magazynu komunikat o braku pełnego
+  dopasowania.
+- Odczyt stagingowego `public.patterns` wykazał 111 rekordów, z czego 111
+  ma `publication_status = pending_review`, a 0 ma `publication_status =
+  published`. Żaden rekord nie ma jeszcze `content_audit_version` ani
+  `content_audited_at`.
+- To jest zgodne z zachowaniem backendu: `getCatalogPatterns()` filtruje
+  katalog do rekordów `published`, a `/api/matches` korzysta z tego samego
+  katalogu. Przy zerowej liczbie opublikowanych wzorów wynik dopasowania
+  jest pusty niezależnie od zawartości prywatnego magazynu.
+- Trzy syntetyczne wzory demonstracyjne również są obecnie
+  `pending_review`; nie publikowano ich automatycznie. Rozwiązanie wymaga
+  osobnego audytu i decyzji dotyczącej publikacji katalogu, a nie obejścia
+  filtra `published`.
+
 ## Reconciliation Supabase Production — odczyt read-only 2026-08-15
 
 Po migracji wykonano ponowny, ograniczony odczyt metadanych i agregatów
