@@ -1399,13 +1399,20 @@ async function handleAuthApi(req, res, url) {
       throw new ApiError(400, "Podaj bieżące hasło.");
     }
     const password = validateAuthPassword(body.password);
+    let captchaToken;
+    try {
+      captchaToken = normalizeCaptchaToken(body.captchaToken, captchaConfig.enabled);
+    } catch (error) {
+      throw new ApiError(400, error.message);
+    }
 
     const verifier = supabaseAuthClientFactory(supabaseAuthConfig);
     const { data: verificationData, error: verificationError } = await verifier.auth.signInWithPassword({
       email: session.user.email,
       password: currentPassword,
+      ...(captchaToken ? { options: { captchaToken } } : {}),
     });
-    if (verificationError || !verificationData?.user) {
+    if (verificationError || verificationData?.user?.id !== session.user.id) {
       throw new ApiError(403, "Nie udało się zmienić hasła. Spróbuj ponownie.");
     }
 

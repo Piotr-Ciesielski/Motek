@@ -508,10 +508,10 @@ test("serwer Motek działa bezpiecznie", async (t) => {
             error: null,
           };
         },
-        async signInWithPassword({ email, password }) {
+        async signInWithPassword({ email, password, options }) {
           recoveryGrantState.verifyPasswordCalls += 1;
-          recoveryGrantState.signInWithPasswordArgs.push({ email, password });
-          passwordChangeEvents.push({ name: "signInWithPassword", args: { email, password } });
+          recoveryGrantState.signInWithPasswordArgs.push({ email, password, ...(options ? { options } : {}) });
+          passwordChangeEvents.push({ name: "signInWithPassword", args: { email, password, ...(options ? { options } : {}) } });
           if (recoveryGrantState.verifyPasswordError) {
             return { data: null, error: recoveryGrantState.verifyPasswordError };
           }
@@ -1153,6 +1153,7 @@ test("serwer Motek działa bezpiecznie", async (t) => {
         body: JSON.stringify({
           currentPassword: "DeleteHaslo1!",
           password: "NoweHaslo123!",
+          captchaToken: "test-captcha-token",
           ...overrides.body,
         }),
       });
@@ -1220,6 +1221,7 @@ test("serwer Motek działa bezpiecznie", async (t) => {
         assert.deepEqual(recoveryGrantState.signInWithPasswordArgs, [{
           email: syntheticUsers["token-user-a"].email,
           password: "DeleteHaslo1!",
+          options: { captchaToken: "test-captcha-token" },
         }]);
         assert.deepEqual(authClientFactoryTokens, [undefined, undefined, "token-user-a"]);
         assert.deepEqual(signOutScopes, [{ scope: "global" }]);
@@ -1237,6 +1239,7 @@ test("serwer Motek działa bezpiecznie", async (t) => {
         assert.deepEqual(recoveryGrantState.signInWithPasswordArgs, [{
           email: syntheticUsers["token-user-a"].email,
           password: "  DeleteHaslo1!  ",
+          options: { captchaToken: "test-captcha-token" },
         }]);
         assert.deepEqual(authClientFactoryTokens, [undefined, undefined, "token-user-a"]);
       });
@@ -1262,6 +1265,15 @@ test("serwer Motek działa bezpiecznie", async (t) => {
         const response = await changePasswordRequest({ cookie: sessionCookies, body: { currentPassword: "" } });
 
         await assertJsonErrorResponse(response, 400);
+        assert.equal(recoveryGrantState.verifyPasswordCalls, 0);
+      });
+
+      await passwordT.test("wymaga CAPTCHA przed ponowną weryfikacją hasła", async () => {
+        resetPasswordChangeState();
+        const response = await changePasswordRequest({ cookie: sessionCookies, body: { captchaToken: undefined } });
+
+        const errorBody = await assertJsonErrorResponse(response, 400);
+        assert.equal(errorBody.error, "Potwierdź zabezpieczenie CAPTCHA.");
         assert.equal(recoveryGrantState.verifyPasswordCalls, 0);
       });
 

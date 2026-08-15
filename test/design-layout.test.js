@@ -178,16 +178,16 @@ test("formularz zmiany hasła ma kontrakt pól i nie zmienia recovery", () => {
   };
 
   assert.equal(form.closest("#authLoggedIn"), document.getElementById("authLoggedIn"));
-  assert.equal(form.getAttribute("autocomplete"), "new-password");
-  assert.equal(current.name, "currentPassword");
-  assert.equal(current.autocomplete, "new-password");
+  assert.equal(form.getAttribute("autocomplete"), "off");
+  assert.equal(current.name, "currentSecret");
+  assert.equal(current.autocomplete, "one-time-code");
   assert.equal(current.required, true);
-  assert.equal(password.name, "password");
+  assert.equal(password.name, "newSecret");
   assert.equal(password.autocomplete, "new-password");
   assert.equal(password.minLength, 8);
   assert.equal(password.maxLength, 256);
   assert.equal(password.required, true);
-  assert.equal(confirmation.name, "passwordConfirmation");
+  assert.equal(confirmation.name, "newSecretConfirmation");
   assert.equal(confirmation.autocomplete, "new-password");
   assert.equal(confirmation.minLength, 8);
   assert.equal(confirmation.maxLength, 256);
@@ -205,8 +205,14 @@ test("frontend obsługuje panel zmiany hasła bez wysyłania potwierdzenia", () 
   assert.match(appJs, /changePasswordToggle\.addEventListener\("click", \(\) => \{[\s\S]*?changePasswordForm\.hidden = !isOpen;[\s\S]*?changePasswordToggle\.setAttribute\("aria-expanded", String\(isOpen\)\);/);
   assert.match(appJs, /changePasswordToggle\.textContent = isOpen \? "Anuluj" : "Zmień hasło";/);
   assert.match(appJs, /changePasswordToggle\.addEventListener\("click", \(\) => \{[\s\S]*?if \(!isOpen\) \{[\s\S]*?changePasswordForm\.reset\(\);[\s\S]*?\}[\s\S]*?changePasswordForm\.hidden = !isOpen;/);
-  assert.match(appJs, /if \(body\.password !== passwordConfirmation\) \{[\s\S]*?setAuthMessage\([^\n]+, "error"\);[\s\S]*?return;/);
-  assert.match(appJs, /api\("\/api\/auth\/password\/change", \{[\s\S]*?method: "POST",[\s\S]*?body: JSON\.stringify\(\{ currentPassword: body\.currentPassword, password: body\.password \}\),/);
+  assert.match(appJs, /if \(formValues\.newSecret !== passwordConfirmation\) \{[\s\S]*?setAuthMessage\([^\n]+, "error"\);[\s\S]*?return;/);
+  assert.match(appJs, /api\("\/api\/auth\/password\/change", \{[\s\S]*?method: "POST",[\s\S]*?buildAuthPayload\(\{[\s\S]*?currentPassword: formValues\.currentSecret,[\s\S]*?password: formValues\.newSecret,[\s\S]*?captchaToken: captchaTokens\.passwordChange/);
+});
+
+test("ukryte formularze logowania są wyłączane dla menedżera haseł", () => {
+  assert.match(appJs, /function setAuthFormDisabled\(form, disabled\)/);
+  assert.match(appJs, /candidate\.hidden = candidate !== form;[\s\S]*?setAuthFormDisabled\(candidate, candidate !== form\);/);
+  assert.match(appJs, /authLoggedIn\.hidden = !authenticated;[\s\S]*?setAuthFormDisabled\(form, authenticated\);/);
 });
 
 test("403 zmiany hasła wyjaśnia błąd bieżącego hasła", () => {
@@ -301,8 +307,9 @@ test("konto zawiera ukryty gate aktualnej akceptacji z drogą wyjścia", () => {
 });
 
 test("captcha remains available in every auth flow", () => {
-  assert.equal((indexHtml.match(/data-turnstile-for=/g) || []).length, 3);
+  assert.equal((indexHtml.match(/data-turnstile-for=/g) || []).length, 4);
   assert.match(indexHtml, /data-turnstile-for="passwordReset"/);
+  assert.match(indexHtml, /data-turnstile-for="passwordChange"/);
   assert.match(appJs, /challenges\.cloudflare\.com\/turnstile\/v0\/api\.js\?render=explicit/);
 });
 

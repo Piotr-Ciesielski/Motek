@@ -193,8 +193,8 @@ let preservedDraftRequiresSave = false;
 let hasCalculatedMatches = false;
 let inventoryChangedSinceMatch = false;
 let authCaptchaConfig = { enabled: false, provider: null, siteKey: null };
-const captchaTokens = { login: null, register: null, passwordReset: null };
-const captchaWidgetIds = { login: null, register: null, passwordReset: null };
+const captchaTokens = { login: null, register: null, passwordReset: null, passwordChange: null };
+const captchaWidgetIds = { login: null, register: null, passwordReset: null, passwordChange: null };
 
 function canAccessPrivateData() {
   return isAuthenticated && !requiresLegalAcceptance;
@@ -244,7 +244,7 @@ async function initializeCaptcha() {
   authCaptchaConfig = config.captcha || authCaptchaConfig;
   if (!authCaptchaConfig.enabled) return;
   await loadTurnstileScript();
-  ["login", "register", "passwordReset"].forEach((kind) => {
+  ["login", "register", "passwordReset", "passwordChange"].forEach((kind) => {
     const container = document.querySelector(`[data-turnstile-for="${kind}"]`);
     if (!container) return;
     captchaWidgetIds[kind] = window.turnstile.render(container, {
@@ -258,7 +258,13 @@ async function initializeCaptcha() {
 }
 
 function resetCaptchaForForm(form) {
-  const kind = form === registerForm ? "register" : form === passwordResetForm ? "passwordReset" : "login";
+  const kind = form === registerForm
+    ? "register"
+    : form === passwordResetForm
+      ? "passwordReset"
+      : form === changePasswordForm
+        ? "passwordChange"
+        : "login";
   captchaTokens[kind] = null;
   if (captchaWidgetIds[kind] !== null && window.turnstile) {
     window.turnstile.reset(captchaWidgetIds[kind]);
@@ -1811,9 +1817,16 @@ function setAuthBusy(form, busy) {
   form.toggleAttribute("aria-busy", busy);
 }
 
+function setAuthFormDisabled(form, disabled) {
+  form.querySelectorAll("input, button, select, textarea").forEach((control) => {
+    control.disabled = disabled;
+  });
+}
+
 function showAuthForm(form) {
   [loginForm, registerForm, passwordResetForm, passwordUpdateForm].forEach((candidate) => {
     candidate.hidden = candidate !== form;
+    setAuthFormDisabled(candidate, candidate !== form);
   });
   const isRecoveryForm = form === passwordResetForm || form === passwordUpdateForm;
   authModeSwitch.hidden = isRecoveryForm || isAuthenticated;
@@ -1896,6 +1909,9 @@ function renderAuthState(payload) {
   authForms.hidden = authenticated;
   authModeSwitch.hidden = authenticated;
   authLoggedIn.hidden = !authenticated;
+  [loginForm, registerForm, passwordResetForm, passwordUpdateForm].forEach((form) => {
+    setAuthFormDisabled(form, authenticated);
+  });
   authUser.hidden = !authenticated;
   accountView.classList.toggle("is-authenticated", authenticated);
   document.body.classList.toggle("auth-logged-out", !authenticated);
@@ -2159,17 +2175,17 @@ changePasswordToggle.addEventListener("click", () => {
   changePasswordToggle.setAttribute("aria-expanded", String(isOpen));
   changePasswordToggle.textContent = isOpen ? "Anuluj" : "Zmień hasło";
   if (isOpen) {
-    changePasswordForm.querySelector('input[name="currentPassword"]').focus();
+    changePasswordForm.querySelector('input[name="currentSecret"]').focus();
   }
 });
 
 changePasswordForm.addEventListener("submit", async (event) => {
   event.preventDefault();
-  const body = Object.fromEntries(new FormData(changePasswordForm).entries());
-  const passwordConfirmation = body.passwordConfirmation;
-  if (body.password !== passwordConfirmation) {
+  const formValues = Object.fromEntries(new FormData(changePasswordForm).entries());
+  const passwordConfirmation = formValues.newSecretConfirmation;
+  if (formValues.newSecret !== passwordConfirmation) {
     setAuthMessage("Wpisane hasła nie są zgodne.", "error");
-    changePasswordForm.querySelector('input[name="passwordConfirmation"]').focus();
+    changePasswordForm.querySelector('input[name="newSecretConfirmation"]').focus();
     return;
   }
 
@@ -2178,7 +2194,13 @@ changePasswordForm.addEventListener("submit", async (event) => {
   try {
     await api("/api/auth/password/change", {
       method: "POST",
-      body: JSON.stringify({ currentPassword: body.currentPassword, password: body.password }),
+      body: JSON.stringify(buildAuthPayload({
+        currentPassword: formValues.currentSecret,
+        password: formValues.newSecret,
+      }, {
+        captchaEnabled: authCaptchaConfig.enabled,
+        captchaToken: captchaTokens.passwordChange,
+      })),
     });
     changePasswordForm.reset();
     changePasswordForm.hidden = true;
