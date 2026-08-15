@@ -392,10 +392,12 @@ test("serwer Motek działa bezpiecznie", async (t) => {
   const recoveryGrantState = {
     claimed: false,
     claimResult: true,
+    claimError: null,
     releaseResult: true,
     consumeResult: true,
     updateUserCalls: 0,
     updateUserError: null,
+    signOutError: null,
   };
   const recoveryGrantEvents = [];
   const signOutScopes = [];
@@ -480,6 +482,7 @@ test("serwer Motek działa bezpiecznie", async (t) => {
         },
         async signOut(options) {
           signOutScopes.push(options);
+          if (recoveryGrantState.signOutError) throw recoveryGrantState.signOutError;
         },
         async signUp({ email, options }) {
           signUpRequests.push({ email, options });
@@ -552,6 +555,9 @@ test("serwer Motek działa bezpiecznie", async (t) => {
         if (name === "claim_auth_recovery_grant") {
           recoveryGrantRpcs.push({ name, args, userId });
           recoveryGrantEvents.push({ name, args });
+          if (recoveryGrantState.claimError) {
+            return Promise.resolve({ data: null, error: recoveryGrantState.claimError });
+          }
           const claimed = recoveryGrantState.claimResult === true && !recoveryGrantState.claimed;
           if (claimed) recoveryGrantState.claimed = true;
           return Promise.resolve({ data: claimed, error: null });
@@ -956,6 +962,26 @@ test("serwer Motek działa bezpiecznie", async (t) => {
         }
       });
 
+      await passwordT.test("zwraca 503 przy błędzie RPC claim bez zmiany hasła", async () => {
+        recoveryGrantState.claimed = false;
+        recoveryGrantState.claimError = new Error("claim failed");
+        recoveryGrantEvents.length = 0;
+        try {
+          const updateUserCallsBefore = recoveryGrantState.updateUserCalls;
+          const response = await passwordRequest();
+
+          assert.equal(response.status, 503);
+          assert.deepEqual(await response.json(), {
+            error: "Nie udało się bezpiecznie zweryfikować linku odzyskiwania. Spróbuj ponownie.",
+          });
+          assert.equal(recoveryGrantState.updateUserCalls, updateUserCallsBefore);
+        } finally {
+          recoveryGrantState.claimError = null;
+          recoveryGrantState.claimed = false;
+          recoveryGrantEvents.length = 0;
+        }
+      });
+
       await passwordT.test("atomowo przyznaje grant tylko jednemu równoległemu żądaniu zmiany hasła", async () => {
         recoveryGrantState.claimed = false;
         recoveryGrantEvents.length = 0;
@@ -998,6 +1024,7 @@ test("serwer Motek działa bezpiecznie", async (t) => {
         recoveryGrantState.claimed = false;
         recoveryGrantState.consumeResult = false;
         recoveryGrantEvents.length = 0;
+        signOutScopes.length = 0;
         try {
           const response = await passwordRequest();
           const eventNames = recoveryGrantEvents.map(({ name }) => name);
@@ -1009,8 +1036,55 @@ test("serwer Motek działa bezpiecznie", async (t) => {
           assert.equal(eventNames.filter((name) => name === "consume_auth_recovery_grant").length, 1);
           assert.equal(eventNames.includes("release_auth_recovery_grant"), false);
           assert.equal(recoveryGrantState.claimed, true);
+          assert.deepEqual(signOutScopes, [{ scope: "global" }]);
+          for (const cookieName of [
+            "motek_access_token",
+            "motek_refresh_token",
+            "motek_idle_activity",
+            "motek_recovery_grant",
+          ]) {
+            const cookie = response.headers
+              .getSetCookie()
+              .find((value) => value.startsWith(`${cookieName}=`) && /Max-Age=0/.test(value));
+            assert.ok(cookie, `Brak cookie ${cookieName}`);
+          }
         } finally {
           recoveryGrantState.consumeResult = true;
+          recoveryGrantState.claimed = false;
+          recoveryGrantEvents.length = 0;
+          signOutScopes.length = 0;
+        }
+      });
+
+      await passwordT.test("czyści cookies po wyjątku globalnego wylogowania", async () => {
+        recoveryGrantState.claimed = false;
+        recoveryGrantState.signOutError = new Error("sign out failed");
+        recoveryGrantEvents.length = 0;
+        try {
+          const response = await passwordRequest();
+
+          assert.equal(response.status, 500);
+          assert.deepEqual(await response.json(), {
+            error: "Wewnętrzny błąd serwera.",
+          });
+          assert.deepEqual(recoveryGrantEvents.map(({ name }) => name), [
+            "claim_auth_recovery_grant",
+            "updateUser",
+            "consume_auth_recovery_grant",
+          ]);
+          for (const cookieName of [
+            "motek_access_token",
+            "motek_refresh_token",
+            "motek_idle_activity",
+            "motek_recovery_grant",
+          ]) {
+            const cookie = response.headers
+              .getSetCookie()
+              .find((value) => value.startsWith(`${cookieName}=`) && /Max-Age=0/.test(value));
+            assert.ok(cookie, `Brak cookie ${cookieName}`);
+          }
+        } finally {
+          recoveryGrantState.signOutError = null;
           recoveryGrantState.claimed = false;
           recoveryGrantEvents.length = 0;
         }

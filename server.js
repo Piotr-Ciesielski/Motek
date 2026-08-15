@@ -1351,7 +1351,10 @@ async function handleAuthApi(req, res, url) {
     const { data: grantClaimed, error: grantClaimError } = await client.rpc("claim_auth_recovery_grant", {
       grant_jti: grantJti,
     });
-    if (grantClaimError || grantClaimed !== true) {
+    if (grantClaimError) {
+      throw new ApiError(503, "Nie udało się bezpiecznie zweryfikować linku odzyskiwania. Spróbuj ponownie.");
+    }
+    if (grantClaimed !== true) {
       throw new ApiError(400, "Ten link został już wykorzystany albo wygasł. Rozpocznij odzyskiwanie hasła ponownie.");
     }
 
@@ -1370,11 +1373,21 @@ async function handleAuthApi(req, res, url) {
     });
     if (grantError || grantConsumed !== true) {
       console.error("Nie udało się skonsumować grantu odzyskiwania hasła.");
+      try {
+        await client.auth.signOut({ scope: "global" });
+      } catch {
+        // Błąd wylogowania nie może przesłonić bezpiecznej odpowiedzi o zmianie hasła.
+      } finally {
+        clearAuthCookies(res);
+      }
       throw new ApiError(503, "Hasło zostało zmienione. Nie udało się bezpiecznie zakończyć procesu. Zaloguj się nowym hasłem. Jeśli logowanie nie zadziała, rozpocznij odzyskiwanie ponownie.");
     }
 
-    await client.auth.signOut({ scope: "global" });
-    clearAuthCookies(res);
+    try {
+      await client.auth.signOut({ scope: "global" });
+    } finally {
+      clearAuthCookies(res);
+    }
     return sendJson(res, 200, { passwordUpdated: true, authenticated: false });
   }
 
