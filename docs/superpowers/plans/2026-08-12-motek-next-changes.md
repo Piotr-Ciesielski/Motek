@@ -1108,3 +1108,21 @@ bezpośrednie trasy WAF i SSL/TLS zwróciły pustą zawartość/404. Nie zmienia
 ustawień. Pozostają otwarte: legal scope dostawców, origin/WAF/rate limiting,
 monitoring, pełne uzgodnienie produkcyjnego ledgera oraz osobne zgody
 wykonawcze. Produkcja pozostaje `NO-GO`.
+
+## Handoff — snapshot efektu recovery/legal/RPC, 2026-08-15
+
+Read-only SQL porównał funkcje, ACL, kolumny, constrainty i RLS Production oraz
+Staging. Production ma recovery legacy: hash 43 znaki, brak `claimed_at` i
+brak `claim/release`; Staging ma hash 64, `claimed_at`, pełny lifecycle oraz
+legal gate `has_current_terms_acceptance()` w politykach profili i włóczek.
+
+Production zachowuje `private.yarn_store_versions.updated_at`, którego nie ma
+na Stagingu, oraz oba legacy overloady `insert_yarn_with_limit` z EXECUTE dla
+`authenticated` i `service_role`. Versioned RPC są w obu środowiskach, lecz
+ich kontrakt legalny nie jest jeszcze równy. Snapshot potwierdza, że RC jest
+forward-only kandydatem do wyrównania efektu, ale nie zamyka migracji ani
+bramki klienta legacy.
+
+Nie zmieniono danych, ACL, RLS, ledgerów ani ustawień dostawców. Produkcja
+pozostaje `NO-GO`; następne bramki to potwierdzenie zewnętrznych klientów,
+legal-readiness, pełna reconciliacja efektu oraz osobne zgody wykonawcze.
