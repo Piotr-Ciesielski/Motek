@@ -4,7 +4,14 @@ const { validatePatternAuditManifest } = require("../pattern-content-policy");
 
 const root = path.join(__dirname, "..");
 const inputPath = path.join(root, "data", "patterns-import.json");
-const outputPath = path.join(root, "data", "pattern-content-audit.json");
+const outputArgumentIndex = process.argv.indexOf("--output");
+const outputArgument = outputArgumentIndex >= 0 ? process.argv[outputArgumentIndex + 1] : null;
+if (outputArgumentIndex >= 0 && (!outputArgument || outputArgument.startsWith("--"))) {
+  throw new Error("Opcja --output wymaga ścieżki pliku");
+}
+const outputPath = outputArgument
+  ? path.resolve(outputArgument)
+  : path.join(root, "data", "pattern-content-audit.json");
 const replace = process.argv.includes("--replace");
 
 if (fs.existsSync(outputPath) && !replace) {
