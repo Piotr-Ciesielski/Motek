@@ -261,3 +261,50 @@ ustawień Cloudflare.
 - Cloudflare pozostaje bez zmian; nie włączono WAF, rate limiting ani HSTS.
 - Okno produkcyjne zostało potwierdzone. Nie jest to zgoda na wykonanie
   migracji Supabase ani deployu — te zgody pozostają niezależne.
+
+## Próba okna produkcyjnego i blokada write-freeze — 2026-08-15
+
+Po wyraźnej zgodzie operatora wykonano wyłącznie preflight i próbę
+ustanowienia write-freeze. Aktualny snapshot przed operacją zgadzał się z
+punktem odtworzenia: Production miała 2 profile, 10 włóczek, 15 wzorów, 2
+liczniki wersji z maksimum 4, 0 grantów recovery oraz pusty Storage.
+
+Write-freeze Railway nie zadziałał. Panelowe próby ustawienia
+`startCommand = sleep infinity` oraz `healthcheckPath = /nonexistent` były
+nadpisywane przez `railway.json` z repozytorium, którego manifest wymusza
+`node server.js` i `/health/ready`. Publiczne endpointy nadal zwracały 200,
+więc migracji Supabase nie rozpoczęto.
+
+W ramach bezpiecznego wycofania przywrócono Production do poprzedniego SHA
+`c4b777a5f8a96277c0e7fb7ca6ec52d425a0900b` — deployment
+`73f3c193-135c-46a8-a39f-d7ce12ed27ed`. `/health/release` ponownie zwraca 200,
+środowisko `production` i ten SHA. Panelowe override'y Railway ustawiono z
+powrotem na neutralne; efektywnym źródłem pozostaje `railway.json`.
+
+Nie zmieniono repozytorium, Supabase, Cloudflare, env vars ani stagingu.
+Pozostaje jedna blokada wykonawcza: tymczasowa, jawnie zatwierdzona zmiana
+`railway.json` dla write-freeze albo decyzja o niewykonywaniu migracji przy
+aktywnych zapisach. Druga opcja jest odradzana.
+
+## Wykonane okno produkcyjne — wynik operacji: Production NO-GO, 2026-08-15
+
+Status końcowy: `Production NO-GO` dla promocji nowego release’u.
+Freeze skutecznie ustanowił deployment `dfec8c7e-f6d0-4cc2-89b1-e5c5e2d16c0a`
+z tymczasowej gałęzi operacyjnej; poprzednia replika została usunięta, a
+publiczny healthcheck zwracał 502. W tym stanie zastosowano migrację
+`production_legal_versioned_recovery_delta` (`20260815115028`). Postflight
+potwierdził zachowanie danych: 2 profile, 10 włóczek, 2 liczniki wersji,
+maximum wersji 4, 0 grantów recovery, 0 bucketów i 0 obiektów Storage.
+Obecne są legal gate, wersjonowane RPC oraz `claim/release` recovery.
+
+Exact SHA `e691af8` nie wystartował: najpierw obraz nie kopiował katalogu
+`data`, a po dodaniu `COPY data ./data` aplikacja zatrzymała się na poprawnym
+bezpieczniku `Publikacja prawna nie jest gotowa`, ponieważ
+`data/legal-data-providers.json` nadal ma status `draft/unverified`. Tego
+bezpiecznika nie obchodzono. Produkcję przywrócono do
+`c4b777a5f8a96277c0e7fb7ca6ec52d425a0900b`, deployment
+`063029eb-4ea6-415b-884d-d51823ecd359` zakończył się sukcesem. Smoke: readiness
+i release 200, katalog 200, `/informacje-prawne` 404 jako cecha starszego
+release’u. Cleanup legacy RPC nie został wykonany; promocja nowego release’u
+pozostaje zablokowana przez legal readiness i kontrakt katalogu. Produkcja
+działa na rollbacku `c4b777a`; nie jest to akceptacja pakietu recovery.

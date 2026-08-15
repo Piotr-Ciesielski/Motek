@@ -1264,3 +1264,48 @@ rekordów w żadnym środowisku.
 Snapshot nie jest preflightem bezpośrednio przed migracją i nie uruchamia
 write-freeze. Przed przyszłym oknem trzeba powtórzyć odczyt po przypięciu
 exact SHA i potwierdzeniu świeżego backupu. Produkcja pozostaje `NO-GO`.
+
+## Handoff — próba okna produkcyjnego i przywrócenie, 2026-08-15
+
+Po zgodzie operatora wykonano świeży preflight danych i próbę write-freeze.
+Snapshot Production zgadzał się z backupem: 2 profile, 10 włóczek, 15 wzorów,
+2 liczniki wersji, maksimum 4, 0 grantów recovery i pusty Storage.
+
+Railway nie pozwolił ustanowić freeze'u z poziomu panelu/API, ponieważ
+`railway.json` nadpisuje `startCommand` i `healthcheckPath`. Próby kończyły się
+normalnym backendem i publicznym 200. Migracji Supabase nie wykonano.
+
+Production przywrócono do `c4b777a5f8a96277c0e7fb7ca6ec52d425a0900b`, deployment
+`73f3c193-135c-46a8-a39f-d7ce12ed27ed`; `/health/release` działa poprawnie.
+Panelowe override'y są neutralne. Nie zmieniono repozytorium, Supabase,
+Cloudflare, env vars ani stagingu.
+
+Następny krok wymaga decyzji produktowo-operacyjnej: tymczasowy, odwracalny
+maintenance freeze zapisany w `railway.json` i osobny deploy, albo zatrzymanie
+promocji. Migracja przy aktywnych zapisach pozostaje odrzucona jako ryzykowna.
+
+## Handoff — wykonane okno: Production NO-GO i blokady końcowe, 2026-08-15
+
+Status końcowy: `Production NO-GO` dla promocji nowego release’u.
+Write-freeze został skutecznie ustanowiony przez deployment
+`dfec8c7e-f6d0-4cc2-89b1-e5c5e2d16c0a`; poprzednia replika została usunięta,
+a publiczny endpoint zwracał 502. W tym oknie wykonano migrację
+`production_legal_versioned_recovery_delta` (`20260815115028`) w Production.
+Postflight PASS: dane pozostały bez zmian, legal gate i wersjonowane RPC są
+obecne, recovery ma claim/release, a liczba grantów recovery nadal wynosi 0.
+
+Przywracanie exact SHA `e691af8` ujawniło dwa niezależne warunki startowe:
+Dockerfile nie kopiował `data`, a po korekcie aplikacja prawidłowo odrzuciła
+start z powodu niezweryfikowanej publikacji prawnej
+(`draft/unverified`). Nie obchodzimy tego warunku i nie oznaczamy manifestu
+jako zweryfikowanego bez datowanych dowodów.
+
+Aktualnie Production działa na `c4b777a5f8a96277c0e7fb7ca6ec52d425a0900b`,
+deployment `063029eb-4ea6-415b-884d-d51823ecd359`. Smoke: readiness/release
+200, katalog 200, `/informacje-prawne` 404 jako cecha starszego release’u.
+Cleanup legacy RPC pozostaje niewykonany i nie wolno go wykonywać przed
+wdrożeniem kompatybilnego release’u. Następny krok wymaga udokumentowania
+legal readiness i przygotowania release’u zawierającego zarówno katalog
+`data`, jak i poprawny manifest prawny; dopiero potem można powtórzyć deploy,
+obserwację 30-minutową i osobny cleanup. Rollback do `c4b777a` jest stanem
+ratunkowym, nie akceptacją pakietu recovery.
