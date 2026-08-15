@@ -397,6 +397,7 @@ test("serwer Motek działa bezpiecznie", async (t) => {
     consumeResult: true,
     updateUserCalls: 0,
     updateUserError: null,
+    updateUserException: null,
     signOutError: null,
     verifyPasswordCalls: 0,
     verifyPasswordError: null,
@@ -550,6 +551,7 @@ test("serwer Motek działa bezpiecznie", async (t) => {
           recoveryGrantState.updateUserCalls += 1;
           recoveryGrantEvents.push({ name: "updateUser" });
           passwordChangeEvents.push({ name: "updateUser", args: { password } });
+          if (recoveryGrantState.updateUserException) throw recoveryGrantState.updateUserException;
           return { data: { user: syntheticUsers[token] }, error: recoveryGrantState.updateUserError };
         },
       },
@@ -1160,6 +1162,7 @@ test("serwer Motek działa bezpiecznie", async (t) => {
         recoveryGrantState.signInWithPasswordArgs.length = 0;
         recoveryGrantState.updateUserCalls = 0;
         recoveryGrantState.updateUserError = null;
+        recoveryGrantState.updateUserException = null;
         recoveryGrantState.signOutError = null;
         authClientFactoryTokens.length = 0;
         passwordChangeEvents.length = 0;
@@ -1299,6 +1302,23 @@ test("serwer Motek działa bezpiecznie", async (t) => {
         await assertJsonErrorResponse(response, 400);
         assert.equal(recoveryGrantState.updateUserCalls, 1);
         assert.deepEqual(signOutScopes, []);
+      });
+
+      await passwordT.test("traktuje wyjątek transportowy updateUser jako niepewny wynik i kończy sesję", async () => {
+        const { response, body, capturedText } = await requestWithCapturedOutput(() => {
+          recoveryGrantState.updateUserException = new Error("transport failed: DeleteHaslo1! token-user-a");
+        });
+
+        const errorBody = assertJsonErrorBody(response, body, 503);
+        assert.equal(errorBody.error, "Wynik zmiany hasła jest niepewny. Zostałeś wylogowany. Zaloguj się ponownie.");
+        assert.doesNotMatch(errorBody.error, secretPattern);
+        assert.doesNotMatch(capturedText, secretPattern);
+        assert.deepEqual(passwordChangeEvents.map(({ name }) => name), ["signInWithPassword", "updateUser", "signOut"]);
+        assert.deepEqual(signOutScopes, [{ scope: "global" }]);
+        for (const cookieName of ["motek_access_token", "motek_refresh_token", "motek_idle_activity"]) {
+          const cookie = response.headers.getSetCookie().find((value) => value.startsWith(`${cookieName}=`) && /Max-Age=0/.test(value));
+          assert.ok(cookie, `Brak cookie ${cookieName}`);
+        }
       });
 
       await passwordT.test("czyści cookies po błędzie globalnego wylogowania", async () => {

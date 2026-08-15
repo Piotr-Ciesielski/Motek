@@ -184,6 +184,37 @@ test("frontend obsługuje panel zmiany hasła bez wysyłania potwierdzenia", () 
   assert.match(appJs, /api\("\/api\/auth\/password\/change", \{[\s\S]*?method: "POST",[\s\S]*?body: JSON\.stringify\(\{ currentPassword: body\.currentPassword, password: body\.password \}\),/);
 });
 
+test("wylogowanie resetuje i zamyka panel zmiany hasła", () => {
+  const renderAuthState = appJs.match(
+    /function renderAuthState\(payload\) \{[\s\S]*?\r?\n\}\r?\n\r?\nasync function refreshAuthSession/,
+  )?.[0];
+
+  assert.ok(renderAuthState, "renderAuthState jest dostępne w kodzie aplikacji");
+  assert.match(
+    renderAuthState,
+    /if \(!authenticated\) \{[\s\S]*?changePasswordForm\.reset\(\);[\s\S]*?changePasswordForm\.hidden = true;[\s\S]*?changePasswordToggle\.setAttribute\("aria-expanded", "false"\);/,
+  );
+});
+
+test("błąd 503 zmiany hasła wylogowuje i pokazuje bezpieczny komunikat logowania", () => {
+  const changePasswordHandler = appJs.match(
+    /changePasswordForm\.addEventListener\("submit",[\s\S]*?\n\}\);/,
+  )?.[0];
+
+  assert.ok(changePasswordHandler, "handler zmiany hasła jest dostępny w kodzie aplikacji");
+  const unavailableBranch = changePasswordHandler.match(
+    /if \(error\s+instanceof\s+ApiError\s+&&\s+error\.status\s+===\s+503\) \{[\s\S]*?\n\s+\}/,
+  )?.[0];
+
+  assert.ok(unavailableBranch, "handler rozpoznaje błąd ApiError 503");
+  assert.match(unavailableBranch, /changePasswordForm\.reset\(\);/);
+  assert.match(unavailableBranch, /changePasswordForm\.hidden = true;/);
+  assert.match(unavailableBranch, /changePasswordToggle\.setAttribute\("aria-expanded", "false"\);/);
+  assert.match(unavailableBranch, /renderAuthState\(\{ authenticated: false \}\);/);
+  assert.match(unavailableBranch, /showAuthForm\(loginForm\);/);
+  assert.match(unavailableBranch, /setAuthMessage\(error\.message, "error"\);/);
+});
+
 test("callback recovery przyjmuje kod bez markera i usuwa dane adresu", () => {
   assert.match(appJs, /const isRecoveryCallback = Boolean\(code\) && !\(accessToken && refreshToken && hash\.get\("type"\) === "signup"\);/);
   assert.match(appJs, /if \(!isRecoveryCallback\) \{[\s\S]*?return false;/);

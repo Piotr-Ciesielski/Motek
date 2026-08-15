@@ -1,7 +1,7 @@
-# Pakiet odłożony: zarządzanie hasłem
+# Pakiet: zarządzanie hasłem
 
 Data zapisu: 2026-08-15
-Status: odłożone do wykonania po zakończeniu bieżącego etapu recovery/staging
+Status: implementacja zakończona lokalnie; ręczna weryfikacja stagingu oczekuje na zalogowaną sesję QA i wiadomość resetującą
 
 ## Obserwacja ze stagingu
 
@@ -12,20 +12,20 @@ nie ma również formularza ani akcji do zmiany już istniejącego hasła.
 To jest brakująca funkcja produktowa, ale nie blokuje domknięcia bieżącego
 etapu naprawy kontraktu recovery na stagingu. Nie zmieniamy jej w tym pakiecie.
 
-## Stan obecnej implementacji
+## Stan implementacji
 
-- `index.html` zawiera ukryty formularz żądania resetu hasła oraz ukryty
-  formularz „Ustaw nowe hasło”.
-- `app.js` oczekuje powrotu z linku w formacie `/?recovery=1&code=...`.
-- Po poprawnym `POST /api/auth/recovery` frontend pokazuje formularz nowego
-  hasła w widoku „Konto”.
-- Zapis nowego hasła korzysta z `POST /api/auth/password`; ten endpoint jest
-  przeznaczony dla sesji recovery, a zwykła zalogowana sesja nie może użyć go
-  jako zmiany istniejącego hasła.
-- W zwykłym widoku „Konto” nie ma osobnej funkcji „Zmień hasło”.
-- Obecne testy pokrywają kontrakt backendu i statyczną obecność formularzy, ale
-  brakuje bezpośredniego testu przeglądarkowego całej ścieżki od kliknięcia
-  linku z wiadomości do widocznego formularza.
+- `index.html` zawiera formularz żądania resetu, formularz „Ustaw nowe hasło”
+  oraz zwijany panel „Zmień hasło” w karcie „Konto”.
+- `app.js` obsługuje callback recovery z jednorazowym `code`, usuwa kod z URL
+  przed żądaniem sieciowym i pokazuje formularz ustawienia nowego hasła.
+- Zwykła zmiana hasła korzysta z osobnego `POST /api/auth/password/change`,
+  wymaga dotychczasowego hasła, a po udanej zmianie unieważnia wszystkie sesje.
+- Błąd niepewnego wyniku `updateUser` kończy się kontrolowanym 503, próbą
+  globalnego wylogowania i wyczyszczeniem cookies.
+- Każde wylogowanie czyści pola formularza zmiany hasła, a błąd 503 prowadzi
+  użytkownika do logowania zamiast pozostawiać pozornie aktywne konto.
+- Recovery nadal korzysta wyłącznie z `POST /api/auth/recovery` oraz
+  `POST /api/auth/password`; kontrakty nie zostały połączone.
 
 ## Zakres następnego pakietu
 
@@ -40,20 +40,41 @@ etapu naprawy kontraktu recovery na stagingu. Nie zmieniamy jej w tym pakiecie.
    włącznie z błędami walidacji, wygaśnięciem linku, wylogowaniem po resecie
    i czytelnymi komunikatami dla użytkownika.
 
-## Decyzje odłożone do rozpoczęcia pakietu
+## Decyzje przyjęte
 
-- Czy zmiana istniejącego hasła wymaga podania dotychczasowego hasła, czy
-  wystarczy aktywna sesja oraz ewentualne ponowne uwierzytelnienie.
-- Czy po zmianie hasła unieważniamy wszystkie pozostałe sesje, czy tylko
-  bieżącą sesję.
-- Ostateczny wygląd okna w karcie „Konto” i treść komunikatów.
+- Zmiana istniejącego hasła wymaga podania dotychczasowego hasła.
+- Po zmianie hasła unieważniamy wszystkie sesje i wymagamy ponownego logowania.
+- Interfejs to prosty zwijany panel w karcie „Konto”, bez nowej strony ani
+  systemu modalnego.
 
-Te decyzje mają wpływ na bezpieczeństwo i widoczne zachowanie produktu,
-dlatego nie są podejmowane automatycznie w bieżącym etapie.
+Nie dodano nowej migracji ani RPC dla zwykłej zmiany hasła.
+
+## Weryfikacja lokalna 2026-08-15
+
+- `npm run check`: 389/389 testów zaliczonych.
+- `npm run lint`: zaliczony.
+- `npm run format:check`: zaliczony.
+- `git diff --check`: zaliczony.
+- Niezależna recenzja po poprawkach: `ACCEPT`, bez blokad wysokiego ani
+  średniego priorytetu.
+
+Pozostają niskopriorytetowe usprawnienia: bezpośredni test DOM całego handlera
+formularza oraz osobny limiter prób weryfikacji dotychczasowego hasła.
+
+## Stan weryfikacji stagingu
+
+Staging jest dostępny, ale podczas ostatniej próby karta Edge była wylogowana.
+Nie wpisywano danych uwierzytelniających ani nie wykonywano zmiany hasła.
+Do zamknięcia pakietu pozostaje test z kontem QA:
+
+1. zalogować się w stagingu i sprawdzić panel „Zmień hasło”, błędne hasło,
+   poprawną zmianę, ponowne logowanie i brak działania starego hasła;
+2. sprawdzić reset z prawdziwej wiadomości oraz link wykorzystany/wygasły;
+3. potwierdzić zachowanie drugiej sesji i brak zmian w magazynie włóczek.
 
 ## Kryteria akceptacji
 
-- Kliknięcie prawidłowego linku z wiadomości otwiera formularz ustawienia
+- Kliknięcie prawidłowego linku z wiadomości ma otwierać formularz ustawienia
   nowego hasła, niezależnie od tego, czy użytkownik był wcześniej zalogowany.
 - Link jednorazowy, wygasły lub uszkodzony nie daje dostępu do formularza ani
   do konta i pokazuje zrozumiały komunikat.
@@ -61,5 +82,5 @@ dlatego nie są podejmowane automatycznie w bieżącym etapie.
   a użytkownik może zalogować się nowym hasłem.
 - Zalogowany użytkownik może z karty „Konto” rozpocząć zmianę istniejącego
   hasła i otrzymuje jasny wynik sukcesu albo błąd bez ujawniania wrażliwych
-  informacji.
+  informacji — potwierdzone testami lokalnymi, staging oczekuje na test QA.
 - Obie ścieżki mają test automatyczny oraz sprawdzenie na stagingu.

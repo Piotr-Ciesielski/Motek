@@ -1410,7 +1410,21 @@ async function handleAuthApi(req, res, url) {
     }
 
     const client = supabaseAuthClientFactory(supabaseAuthConfig, session.accessToken);
-    const { error: updateError } = await client.auth.updateUser({ password });
+    let updateResult;
+    try {
+      updateResult = await client.auth.updateUser({ password });
+    } catch {
+      try {
+        await client.auth.signOut({ scope: "global" });
+      } catch {
+        // Błąd wylogowania nie może przesłonić bezpiecznej odpowiedzi o niepewnym wyniku.
+      } finally {
+        clearAuthCookies(res);
+      }
+      throw new ApiError(503, "Wynik zmiany hasła jest niepewny. Zostałeś wylogowany. Zaloguj się ponownie.");
+    }
+
+    const { error: updateError } = updateResult;
     if (updateError) {
       throw new ApiError(400, "Nie udało się zmienić hasła. Sprawdź hasło i spróbuj ponownie.");
     }

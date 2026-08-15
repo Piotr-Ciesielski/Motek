@@ -1921,6 +1921,9 @@ function renderAuthState(payload) {
     authUser.textContent = "";
     authProfileSummary.textContent = "";
     deleteAccountForm.reset();
+    changePasswordForm.reset();
+    changePasswordForm.hidden = true;
+    changePasswordToggle.setAttribute("aria-expanded", "false");
     setDeleteAccountMessage("");
     authLead.textContent = "Załóż konto, aby przygotować aplikację do prywatnego magazynu włóczek.";
     showAuthForm(loginForm);
@@ -2165,7 +2168,16 @@ changePasswordForm.addEventListener("submit", async (event) => {
     renderAuthState({ authenticated: false });
     showAuthForm(loginForm);
     setAuthMessage("Hasło zmienione. Zaloguj się nowym hasłem.", "success");
-  } catch {
+  } catch (error) {
+    if (error instanceof ApiError && error.status === 503) {
+      changePasswordForm.reset();
+      changePasswordForm.hidden = true;
+      changePasswordToggle.setAttribute("aria-expanded", "false");
+      renderAuthState({ authenticated: false });
+      showAuthForm(loginForm);
+      setAuthMessage(error.message, "error");
+      return;
+    }
     setAuthMessage("Nie udało się zmienić hasła. Spróbuj ponownie.", "error");
   } finally {
     setAuthBusy(changePasswordForm, false);
