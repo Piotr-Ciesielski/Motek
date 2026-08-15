@@ -192,3 +192,46 @@ npm run legal:check obowiązuje:
 Po zebraniu dowodów można przygotować osobny, mały commit manifestu legalnego,
 uruchomić npm run legal:check, przeprowadzić niezależną recenzję i dopiero
 potem wrócić do stagingu oraz kolejnego okna produkcyjnego.
+
+## Oficjalne źródła referencyjne — zebrane 2026-08-15
+
+Poniższe materiały potwierdzają warunki ogólne usług. Nie potwierdzają same
+w sobie planu, ustawień ani zakresu przetwarzania konkretnego konta Motka.
+Do każdego dostawcy nadal potrzebny jest dowód konfiguracji konta.
+
+### Supabase
+
+- Regiony platformy: https://supabase.com/docs/guides/platform/regions
+- Backupy i restore: https://supabase.com/docs/guides/platform/backups
+- Backup/restore CLI: https://supabase.com/docs/guides/platform/migrating-within-supabase/backup-restore
+- DPA: https://supabase.com/downloads/docs/Supabase%2BDPA%2B260601.pdf
+
+Do potwierdzenia kontowego pozostają: plan projektu vueotocjsgzosqzhcish,
+aktualny region, zakres Database/Auth/Storage, retencja i sposób wykonywania
+backupów oraz zasady usuwania danych.
+
+### Railway
+
+- DPA: https://railway.com/legal/dpa
+- Privacy Policy: https://railway.com/legal/privacy
+- Logi i retencja planów: https://docs.railway.com/observability/logs
+- Lista subprocesorów: https://trust.railway.com/item/subprocessors
+
+Materiały Railway wskazują między innymi retencję logów zależną od planu oraz
+możliwe transfery poza EOG opisane w DPA. Do potwierdzenia kontowego pozostają:
+plan workspace’u, region usługi Motek, zakres logów, retencja dla bieżącego
+planu oraz rzeczywisty zakres przetwarzania.
+
+### Cloudflare Edge i Turnstile
+
+- Data Localization Suite: https://developers.cloudflare.com/data-localization/
+- Region support: https://developers.cloudflare.com/data-localization/region-support/
+- Customer Metadata Boundary: https://developers.cloudflare.com/data-localization/metadata-boundary/get-started/
+- Turnstile: https://developers.cloudflare.com/turnstile/
+- Siteverify: https://developers.cloudflare.com/turnstile/get-started/server-side-validation/
+- Customer DPA: https://cf-assets.www.cloudflare.com/slt3lc6tev37/1TTgT35GoUNlKZYGuKWBFy/4e7dfc8cf402419a9b1cf624291fc69f/cloudflare_customer_dpa-v6.4_april_3_2026.pdf
+
+Materiały Cloudflare wyraźnie rozdzielają lokalizację przetwarzania ruchu,
+lokalizację metadanych/logów oraz ustawienia Turnstile. Do potwierdzenia
+kontowego pozostają: rzeczywisty status Customer Metadata Boundary, ustawienia
+strefy i widgetów, zakres analytics/logów, retencja oraz używane warunki DPA.
