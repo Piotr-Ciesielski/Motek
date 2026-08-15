@@ -331,6 +331,18 @@ oceny prawnej i nie zmieniają statusu `unverified` w manifeście.
   oraz bezpiecznym kontem QA stagingu albo jednoznaczny odczyt logów dostawcy.
 - Nie wykonywano analogicznego testu na produkcji.
 
+## Korelacja publicznego site key — 2026-08-15
+
+- Production `/api/config` zwraca publiczny site key
+  `0x4AAAAAAEGHX0B76Mq86Y3p`, zgodny z widgetem `Motek production` odczytanym
+  w panelu Cloudflare. Nie jest to sekret.
+- Staging `/api/config` zwraca oficjalny testowy site key
+  `1x00000000000000000000AA`; testowy token pozostaje ograniczony do stagingu.
+- W połączeniu z odczytem Supabase Auth Protection oznacza to, że znane
+  elementy konfiguracji (`enabled`, provider, site key i obecność sekretu)
+  są spójne między aplikacją, Supabase i Cloudflare. Nadal brakuje dowodu
+  pomyślnej walidacji prawdziwego tokenu produkcyjnego.
+
 ## Reconciliation Supabase Production — odczyt read-only 2026-08-15
 
 Po migracji wykonano ponowny, ograniczony odczyt metadanych i agregatów
