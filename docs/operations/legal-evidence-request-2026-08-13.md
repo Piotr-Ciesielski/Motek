@@ -261,17 +261,39 @@ Production. Wynik nie zmienia schematu ani danych użytkowników:
   wykonywalne przez `authenticated`. Ich usunięcie pozostaje odroczone do
   czasu wdrożenia zgodnego release'u i obserwacji po wdrożeniu.
 
-Odczyt tabel zgłosił również advisory Supabase `rls_disabled` dla sześciu
-tabel schematu `private` (`yarn_store_versions`, `legal_document_versions`,
-`terms_acceptances`, `registration_invitations`, `registration_attempts`,
-`privacy_notice_deliveries`). Nie stosuję automatycznej remediacji: włączenie
-RLS bez dopasowanych polityk może zablokować legalne operacje backendu. Przed
-zmianą potrzebna jest osobna analiza ekspozycji schematu `private`, ścieżek
-RPC i polityk właścicielskich, a następnie testy regresji.
+Odczyt tabel wykazał siedem tabel schematu `private`; advisory Supabase
+`rls_disabled` zgłosił sześć z nich (`yarn_store_versions`,
+`legal_document_versions`, `terms_acceptances`, `registration_invitations`,
+`registration_attempts`, `privacy_notice_deliveries`).
+`auth_recovery_grants` ma RLS włączone i nie pojawia się na tej liście.
+Read-only privilege check potwierdził, że role `anon` i `authenticated` nie
+mają uprawnień `USAGE` do schematu `private` ani bezpośrednich uprawnień
+odczytu lub mutacji tych tabel. Oznacza to, że advisory nie jest obecnie
+dowodem publicznej ekspozycji danych; pozostaje jednak brak obrony warstwowej
+i ryzyko przy przyszłej zmianie ekspozycji lub błędzie w RPC.
+Nie stosuję automatycznej remediacji: włączenie RLS bez dopasowanych polityk
+może zablokować legalne operacje backendu. Przed zmianą potrzebna jest osobna
+analiza ekspozycji schematu `private`, ścieżek RPC i polityk właścicielskich,
+a następnie testy regresji.
 
 Źródło: read-only `supabase_list_migrations`, `supabase_list_tables` oraz
 `supabase_execute_sql`, projekt `vueotocjsgzosqzhcish`, pozyskane
 2026-08-15. Odczyt nie zawiera sekretów ani surowych danych użytkowników.
+
+## Niezależna recenzja i check lokalny — 2026-08-15
+
+- Pełny `npm run check` przeszedł: 363 testy, 0 błędów.
+- Recenzja kontraktu publicznego potwierdziła, że kolejny release musi
+  zapewnić między innymi `200` dla `/health/live`, `/health/ready` i
+  `/health/release` przy prawidłowym środowisku oraz `401` dla anonimowego
+  `/api/patterns`, `/api/yarns` i `/api/matches`.
+- Zapisany stan produkcyjny nadal nie spełnia bramki GO: `/informacje-prawne`
+  i anonimowy katalog pozostają do ponownej weryfikacji na dokładnym release;
+  `e691af8` nie jest zatwierdzony do produkcji.
+- Włączenie RLS na sześciu tabelach zgłoszonych przez advisory pozostaje
+  osobnym zadaniem bezpieczeństwa. Najpierw trzeba potwierdzić ekspozycję
+  schematu, ścieżki RPC i polityki właścicielskie; dopiero potem można
+  przygotować migrację oraz testy. Nie wykonano żadnej zmiany zdalnej.
 
 ## Oficjalne źródła referencyjne — zebrane 2026-08-15
 
