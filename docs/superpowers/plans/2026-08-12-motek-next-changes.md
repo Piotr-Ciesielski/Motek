@@ -1251,3 +1251,16 @@ Snapshot zamyka porównanie efektu kluczowych obiektów, ale nie jest zgodą na
 migrację. Pozostają preflight snapshot danych, plan forward-only,
 legal/infrastructure readiness i osobne zgody wykonawcze. Produkcja pozostaje
 `NO-GO`.
+
+## Handoff — korekta preflightu danych i okna obserwacji, 2026-08-15
+
+Runbook forward-only ujednolicono z decyzją operatora: obserwacja po deployu ma
+trwać 30 minut, nie 60. Backup/restore rehearsal otrzymał świeży, agregowany
+snapshot orientacyjny: Production ma 2 rekordy `yarn_store_versions` i maksimum
+wersji 4, Staging 6 rekordów i maksimum 142; `updated_at` pozostaje tylko w
+Production, a `claimed_at` tylko w Stagingu. W recovery nie ma aktywnych
+rekordów w żadnym środowisku.
+
+Snapshot nie jest preflightem bezpośrednio przed migracją i nie uruchamia
+write-freeze. Przed przyszłym oknem trzeba powtórzyć odczyt po przypięciu
+exact SHA i potwierdzeniu świeżego backupu. Produkcja pozostaje `NO-GO`.
