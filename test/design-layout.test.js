@@ -62,6 +62,29 @@ test("main navigation uses text labels without decorative symbols", () => {
   assert.doesNotMatch(navigation, /[⌂✦▦○]/);
 });
 
+test("nagłówek zachowuje produkcyjny przycisk logowania i wylogowania", () => {
+  const document = new JSDOM(indexHtml).window.document;
+  const action = document.getElementById("headerAuthAction");
+
+  assert.ok(action, "nagłówek ma przycisk auth");
+  assert.equal(action.type, "button");
+  assert.equal(action.textContent.trim(), "Zaloguj");
+  assert.match(appJs, /headerAuthAction\.addEventListener\("click", \(\) => \{[\s\S]*?logoutBtn\.click\(\);/);
+  assert.match(appJs, /headerAuthAction\.textContent = authenticated \? "Wyloguj" : "Zaloguj";/);
+});
+
+test("karta Konta zachowuje produkcyjny zwijany panel usuwania konta", () => {
+  const document = new JSDOM(indexHtml).window.document;
+  const disclosure = document.getElementById("deleteAccountDisclosure");
+  const form = document.getElementById("deleteAccountForm");
+
+  assert.ok(disclosure, "usuwanie konta jest w panelu disclosure");
+  assert.equal(disclosure.tagName, "DETAILS");
+  assert.ok(disclosure.querySelector("summary"));
+  assert.equal(form.closest("#deleteAccountDisclosure"), disclosure);
+  assert.match(stylesCss, /account-danger-disclosure/);
+});
+
 test("auth forms never fall back to GET query strings", () => {
   assert.match(
     indexHtml,
@@ -260,6 +283,8 @@ test("konto zawiera ukryty gate aktualnej akceptacji z drogą wyjścia", () => {
   assert.ok(gate.querySelector('[role="status"]'));
   assert.equal(gate.querySelector('a[href="#logoutBtn"]').textContent, "Wyloguj się");
   assert.equal(gate.querySelector('a[href="#deleteAccountForm"]').textContent, "usuń konto");
+  assert.equal(gate.querySelector("#legalDeleteAccountLink").id, "legalDeleteAccountLink");
+  assert.match(appJs, /legalDeleteAccountLink\.addEventListener\("click", \(\) => \{[\s\S]*?deleteAccountDisclosure\.open = true;[\s\S]*?querySelector\("summary"\)\?\.focus\(/);
   assert.equal(document.querySelectorAll("[data-view]").length, 4);
 });
 

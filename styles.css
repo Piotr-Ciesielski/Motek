@@ -214,17 +214,6 @@ body {
   background: var(--nav-active);
 }
 
-.header-user {
-  min-width: 0;
-  max-width: 20ch;
-  overflow: hidden;
-  color: var(--accent);
-  font-size: 0.82rem;
-  font-weight: 700;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
 .app-view {
   min-width: 0;
 }
@@ -799,6 +788,192 @@ h1 {
 
 .account-danger-zone .button--danger {
   justify-self: start;
+}
+
+.account-danger-disclosure {
+  flex-basis: 100%;
+  overflow: hidden;
+  margin-top: 1.5rem;
+  border: 1px solid var(--danger-border);
+  border-radius: 1rem;
+  background: var(--surface-danger);
+}
+
+.account-danger-disclosure summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  min-height: 44px;
+  padding: 0.7rem 0.9rem;
+  color: var(--danger);
+  font-weight: 800;
+  cursor: pointer;
+  list-style: none;
+}
+
+.account-danger-disclosure summary::-webkit-details-marker {
+  display: none;
+}
+
+.account-danger-disclosure summary::after {
+  content: "+";
+  font-size: 1.25rem;
+  line-height: 1;
+}
+
+.account-danger-disclosure[open] summary {
+  border-bottom: 1px solid var(--danger-border);
+}
+
+.account-danger-disclosure[open] summary::after {
+  content: "−";
+}
+
+.account-danger-disclosure summary:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: -3px;
+}
+
+.account-danger-disclosure__warning {
+  margin-right: auto;
+  color: var(--text-muted);
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.account-danger-disclosure .account-danger-zone {
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+  background: color-mix(in srgb, var(--surface-danger) 82%, var(--panel));
+}
+
+/* Production account composition: one focused panel after authentication. */
+.app-header__actions > #themeToggle {
+  order: 0;
+}
+
+.app-header__actions > #headerAuthAction {
+  order: 1;
+}
+
+.header-auth-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 44px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 10px 14px;
+  color: var(--muted);
+  background: var(--panel);
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.header-auth-action:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: var(--nav-active);
+}
+
+.header-auth-action:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 3px;
+}
+
+#accountView.is-authenticated .auth-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  width: min(100%, 680px);
+  min-height: 0;
+  margin: 0 auto 22px;
+  border-radius: 16px;
+}
+
+#accountView.is-authenticated .auth-visual {
+  display: none;
+}
+
+#accountView.is-authenticated .auth-panel {
+  min-height: 0;
+  padding: clamp(24px, 4vw, 36px);
+  border: 0;
+  border-radius: 16px;
+}
+
+#accountView.is-authenticated .auth-panel .panel__header .eyebrow {
+  display: none;
+}
+
+#accountView.is-authenticated .auth-logged-in {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 14px;
+}
+
+#accountView.is-authenticated #authProfileSummary {
+  min-width: 0;
+  margin: 0;
+  overflow: hidden;
+  color: var(--text);
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+#accountView.is-authenticated .auth-logged-in > .field-hint,
+#accountView.is-authenticated .legal-acceptance-gate,
+#accountView.is-authenticated .account-security-zone,
+#accountView.is-authenticated .account-danger-disclosure {
+  grid-column: 1 / -1;
+}
+
+#accountView.is-authenticated .account-danger-disclosure {
+  margin-top: 0;
+  border-radius: 12px;
+}
+
+#accountView.is-authenticated .account-danger-zone {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 12px;
+  margin: 0;
+  padding: 14px;
+  border: 0;
+  border-radius: 0;
+  color: var(--text);
+}
+
+#accountView.is-authenticated .account-danger-zone .button--danger {
+  min-height: 44px;
+}
+
+@media (max-width: 640px) {
+  #accountView.is-authenticated .auth-layout {
+    width: 100%;
+    margin-bottom: 18px;
+  }
+
+  #accountView.is-authenticated .auth-panel {
+    padding: 22px 18px;
+    border-radius: 14px;
+  }
+
+  #accountView.is-authenticated .auth-logged-in {
+    grid-template-columns: minmax(0, 1fr);
+    align-items: stretch;
+  }
+
+  #accountView.is-authenticated #logoutBtn,
+  #accountView.is-authenticated .account-danger-zone .button--danger {
+    width: 100%;
+  }
 }
 
 .account-security-zone {
@@ -1687,10 +1862,6 @@ body::before {
 
   .auth-logged-out .app-nav {
     display: none;
-  }
-
-  .header-user {
-    max-width: 14ch;
   }
 
   .page-heading {

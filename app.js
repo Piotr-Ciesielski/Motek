@@ -40,7 +40,9 @@ const legalAcceptanceForm = document.getElementById("legalAcceptanceForm");
 const legalAcceptanceGate = document.getElementById("legalAcceptanceGate");
 const legalAcceptanceMessage = document.getElementById("legalAcceptanceMessage");
 const legalAcceptanceVersion = document.getElementById("legalAcceptanceVersion");
+const legalDeleteAccountLink = document.getElementById("legalDeleteAccountLink");
 const deleteAccountForm = document.getElementById("deleteAccountForm");
+const deleteAccountDisclosure = document.getElementById("deleteAccountDisclosure");
 const deleteAccountMessage = document.getElementById("deleteAccountMessage");
 const authLead = document.getElementById("authLead");
 const authTitle = document.getElementById("authTitle");
@@ -57,7 +59,7 @@ const cancelPasswordResetBtn = document.getElementById("cancelPasswordResetBtn")
 const changePasswordToggle = document.getElementById("changePasswordToggle");
 const changePasswordForm = document.getElementById("changePasswordForm");
 const accountView = document.getElementById("accountView");
-const headerUser = document.getElementById("headerUser");
+const headerAuthAction = document.getElementById("headerAuthAction");
 const themeToggle = document.getElementById("themeToggle");
 const themeToggleIcon = themeToggle?.querySelector(".theme-toggle__icon");
 const inventoryThemeImage = document.getElementById("inventoryThemeImage");
@@ -1897,6 +1899,8 @@ function renderAuthState(payload) {
   authUser.hidden = !authenticated;
   accountView.classList.toggle("is-authenticated", authenticated);
   document.body.classList.toggle("auth-logged-out", !authenticated);
+  headerAuthAction.textContent = authenticated ? "Wyloguj" : "Zaloguj";
+  headerAuthAction.setAttribute("aria-label", authenticated ? "Wyloguj" : "Zaloguj");
   addYarnBtn.disabled = !authenticated;
   inventoryAddYarnBtn.disabled = !authenticated;
   findBtn.disabled = !authenticated;
@@ -1910,8 +1914,7 @@ function renderAuthState(payload) {
     patternCatalog.replaceChildren();
     patternCatalogSummary.textContent = "";
     results.replaceChildren();
-    headerUser.hidden = true;
-    headerUser.textContent = "";
+    deleteAccountDisclosure.open = false;
     if (["inventory", "matches"].includes(activeView)) {
       setActiveView("account", { focus: false });
     }
@@ -1934,9 +1937,6 @@ function renderAuthState(payload) {
   const login = profile.login || payload.user.metadata?.login || payload.user.email;
   authUser.textContent = `Zalogowano jako ${login}`;
   authUser.title = login;
-  headerUser.textContent = login;
-  headerUser.title = login;
-  headerUser.hidden = false;
   const profileEmail = profile.email || payload.user.email || "";
   authProfileSummary.textContent = profileEmail || "Zalogowany użytkownik";
   authTitle.textContent = "Twoje konto";
@@ -2074,6 +2074,22 @@ registerModeBtn.addEventListener("click", () => {
   showAuthForm(registerForm);
   setAuthMessage("");
   registerForm.querySelector('input[name="login"]').focus();
+});
+
+headerAuthAction.addEventListener("click", () => {
+  if (isAuthenticated) {
+    logoutBtn.click();
+    return;
+  }
+  setActiveView("account");
+  showAuthForm(loginForm);
+  setAuthMessage("");
+  loginForm.querySelector('input[name="email"]').focus({ preventScroll: true });
+});
+
+legalDeleteAccountLink.addEventListener("click", () => {
+  deleteAccountDisclosure.open = true;
+  deleteAccountDisclosure.querySelector("summary")?.focus({ preventScroll: true });
 });
 
 authModeSwitch.addEventListener("keydown", (event) => {
