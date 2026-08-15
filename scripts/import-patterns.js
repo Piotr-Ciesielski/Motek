@@ -66,11 +66,21 @@ function validatePatternAuditManifest(records) {
       source.endsWith(".synthetic.json") ? "synthetic" : "pdf"
     );
     if (record.publication_status === "published" && (
-      sourceKind !== "synthetic" ||
       !record.content_audit_version ||
       !record.content_audited_at
     )) {
-      throw new Error(`Rekord ${source}: published wymaga jawnie potwierdzonych danych syntetycznych.`);
+      throw new Error(`Rekord ${source}: published wymaga metadanych audytu.`);
+    }
+    if (record.publication_status === "published" && sourceKind !== "synthetic") {
+      let sourceUrl;
+      try {
+        sourceUrl = new URL(record.official_source_url);
+      } catch {
+        throw new Error(`Rekord ${source}: published PDF wymaga źródła HTTPS.`);
+      }
+      if (sourceUrl.protocol !== "https:") {
+        throw new Error(`Rekord ${source}: published PDF wymaga źródła HTTPS.`);
+      }
     }
   }
 }

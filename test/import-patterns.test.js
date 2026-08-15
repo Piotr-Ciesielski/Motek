@@ -59,11 +59,18 @@ test("import odrzuca brak decyzji audytu i pola dowodu przed zapisem", () => {
   );
 });
 
-test("import dopuszcza ukryty rekord bez dowodów i jawnie opublikowany syntetyczny", () => {
+test("import dopuszcza ukryty rekord oraz opublikowane rekordy z właściwym audytem", () => {
   assert.doesNotThrow(() => validatePatternAuditManifest([
     { source_filename: "a.pdf", publication_status: "hidden" },
     { source_filename: "demo.synthetic.json", publication_status: "published", source_kind: "synthetic", content_audit_version: "1.0", content_audited_at: "2026-08-09T00:00:00Z" },
+    { source_filename: "audited.pdf", publication_status: "published", source_kind: "pdf", content_audit_version: "1.0", content_audited_at: "2026-08-15T00:00:00Z", official_source_url: "https://example.com/pattern" },
   ]));
+  assert.throws(
+    () => validatePatternAuditManifest([
+      { source_filename: "audited.pdf", publication_status: "published", source_kind: "pdf", content_audit_version: "1.0", content_audited_at: "2026-08-15T00:00:00Z" },
+    ]),
+    /źródła HTTPS/
+  );
 });
 
 test("importRecords odrzuca rekord bez audytu przed wywołaniem upsert", async () => {

@@ -396,6 +396,18 @@ Manifest `data/pattern-content-audit.json` oznacza te trzy rekordy jako
 jeszcze importu do Supabase ani publikacji na stagingu. Przed importem należy
 uruchomić walidację i uzyskać zgodę na zmianę zdalnych danych stagingu.
 
+## Import pierwszego pakietu do stagingu — 2026-08-15
+
+Kontrola lokalna potwierdziła poprawność 106 rekordów, ale Data API nie było
+dostępne z bieżącego środowiska z powodu nierozwiązywalnego DNS. Po weryfikacji
+tożsamości projektu użyto bezpośredniego, kontrolowanego połączenia Supabase
+Connector do projektu Motek Staging `rprhbmtabwjsenvfgicg`.
+
+Import wykonano w sześciu partiach przez `upsert` po `source_filename`. Po
+zapisie odczyt kontrolny wykazał: 111 rekordów łącznie, 3 `published`, 103
+`hidden` i 5 `pending_review`. Pięć rekordów `test-motek-*` pozostało bez
+zmiany. Nie wykonano kasowania danych ani importu do produkcji.
+
 ## Reconciliation Supabase Production — odczyt read-only 2026-08-15
 
 Po migracji wykonano ponowny, ograniczony odczyt metadanych i agregatów
