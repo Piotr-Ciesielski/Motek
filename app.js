@@ -1927,6 +1927,7 @@ function renderAuthState(payload) {
     changePasswordForm.reset();
     changePasswordForm.hidden = true;
     changePasswordToggle.setAttribute("aria-expanded", "false");
+    changePasswordToggle.textContent = "Zmień hasło";
     setDeleteAccountMessage("");
     authLead.textContent = "Załóż konto, aby przygotować aplikację do prywatnego magazynu włóczek.";
     showAuthForm(loginForm);
@@ -2156,6 +2157,7 @@ changePasswordToggle.addEventListener("click", () => {
   }
   changePasswordForm.hidden = !isOpen;
   changePasswordToggle.setAttribute("aria-expanded", String(isOpen));
+  changePasswordToggle.textContent = isOpen ? "Anuluj" : "Zmień hasło";
   if (isOpen) {
     changePasswordForm.querySelector('input[name="currentPassword"]').focus();
   }

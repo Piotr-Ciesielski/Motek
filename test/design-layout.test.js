@@ -202,6 +202,7 @@ test("formularz zmiany hasła ma kontrakt pól i nie zmienia recovery", () => {
 test("frontend obsługuje panel zmiany hasła bez wysyłania potwierdzenia", () => {
   assert.match(appJs, /const changePasswordToggle = document\.getElementById\("changePasswordToggle"\)/);
   assert.match(appJs, /changePasswordToggle\.addEventListener\("click", \(\) => \{[\s\S]*?changePasswordForm\.hidden = !isOpen;[\s\S]*?changePasswordToggle\.setAttribute\("aria-expanded", String\(isOpen\)\);/);
+  assert.match(appJs, /changePasswordToggle\.textContent = isOpen \? "Anuluj" : "Zmień hasło";/);
   assert.match(appJs, /changePasswordToggle\.addEventListener\("click", \(\) => \{[\s\S]*?if \(!isOpen\) \{[\s\S]*?changePasswordForm\.reset\(\);[\s\S]*?\}[\s\S]*?changePasswordForm\.hidden = !isOpen;/);
   assert.match(appJs, /if \(body\.password !== passwordConfirmation\) \{[\s\S]*?setAuthMessage\([^\n]+, "error"\);[\s\S]*?return;/);
   assert.match(appJs, /api\("\/api\/auth\/password\/change", \{[\s\S]*?method: "POST",[\s\S]*?body: JSON\.stringify\(\{ currentPassword: body\.currentPassword, password: body\.password \}\),/);
