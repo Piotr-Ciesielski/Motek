@@ -219,10 +219,10 @@ STOP i potwierdzenie wyniku. Ten dokument nie jest zgodą wykonawczą.
 | Ledger migracji | OPEN | Mapa zdalny wpis → lokalny plik → hash/efekt; Production 23, Staging 27, RC 32 pliki |
 | Recovery/data preflight | OPEN | Snapshot bezpośrednio przed oknem, zachowanie 2 produkcyjnych liczników i `updated_at`, kontrola 43→64 |
 | Legal readiness | OPEN* | Operator potwierdził weryfikację; trzeba jeszcze przypiąć datowane źródła do manifestu, który nadal jest `unverified` |
-| Cloudflare/origin/WAF | OPEN | Potwierdzenie originu Railway, WAF/rate limiting, monitoringu, właściciela alertów i progów STOP |
+| Cloudflare/origin/WAF | OPEN | Potwierdzenie originu Railway, WAF/rate limiting i progów STOP; właściciel oraz odbiorca alertów są już potwierdzeni |
 | Migracja Supabase | NOT AUTHORIZED | Wszystkie powyższe bramki zamknięte oraz osobna zgoda wykonawcza |
 | Deploy aplikacji | NOT AUTHORIZED | PASS migracji i osobna zgoda na exact SHA `e691af8` |
-| Smoke/obserwacja | NOT AUTHORIZED | Właściciel i odbiorca: operator Motka; 30-minutowe okno oraz kryteria STOP |
+| Smoke/obserwacja | NOT AUTHORIZED | Operator Motka, 30-minutowe okno potwierdzone; potrzebne są kryteria STOP i osobna zgoda wykonawcza |
 
 Świeży publiczny smoke potwierdził `200` dla readiness/release/config oraz
 `Cache-Control: no-store` i `cf-cache-status: DYNAMIC`, ale nadal wykazał
@@ -231,6 +231,24 @@ Production. Nie zamyka to bram aplikacyjnego kontraktu ani legal-readiness.
 
 Macierz porządkuje kolejność decyzji; nie stanowi zgody na migrację, deploy,
 zmianę Cloudflare ani zmianę danych.
+
+## Świeży baseline publicznych endpointów — 2026-08-15 11:11 UTC
+
+Odczyt GET wykonany bez zapisu i bez uwierzytelnienia. Czasy są obserwacją
+diagnostyczną, nie zatwierdzonymi progami SLA:
+
+| Endpoint | Staging | Production |
+|---|---:|---:|
+| `/health/ready` | 200 / 0,987 s | 200 / 0,526 s |
+| `/health/release` | 200 / 0,496 s | 200 / 0,517 s |
+| `/api/config` | 200 / 0,248 s | 200 / 0,250 s |
+| `/api/patterns` | wcześniejszy smoke: 401 | 200 / 0,714 s |
+
+Staging nadal wskazuje exact SHA `e691af891758ebc17f6d4683dbca5d997f65dbe5`,
+a Production `c4b777a5f8a96277c0e7fb7ca6ec52d425a0900b`. Produkcyjny anonimowy
+`200` dla `/api/patterns` pozostaje kryterium STOP względem decyzji „katalog
+wyłącznie przez backend”. Pomiar nie jest zgodą na migrację, deploy ani zmianę
+ustawień Cloudflare.
 
 ## Potwierdzenia operatora — 2026-08-15
 

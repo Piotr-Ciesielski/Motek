@@ -1202,3 +1202,19 @@ potwierdził okno produkcyjne.
 Manifest legal pozostaje bez zmian do czasu przypisania datowanych źródeł do
 konkretnych pól. Potwierdzenie okna nie jest zgodą na migrację ani deploy;
 osobne zgody wykonawcze i kryteria STOP nadal obowiązują.
+
+## Handoff — świeży baseline publicznych endpointów, 2026-08-15
+
+Odczyt GET wykonany o 11:11 UTC bez zapisu i bez uwierzytelnienia. Staging
+zwrócił `200` dla `/health/ready` (0,987 s), `/health/release` (0,496 s) i
+`/api/config` (0,248 s). Production zwrócił `200` odpowiednio w 0,526 s,
+0,517 s i 0,250 s. Czasy są baseline'em diagnostycznym, nie zatwierdzonymi
+progami alarmowymi.
+
+Staging nadal działa na exact SHA `e691af891758ebc17f6d4683dbca5d997f65dbe5`,
+a Production na `c4b777a5f8a96277c0e7fb7ca6ec52d425a0900b`. Dodatkowy odczyt
+potwierdził produkcyjne anonimowe `200` dla `/api/patterns` (0,714 s), podczas
+gdy stagingowy kontrakt z wcześniejszego smoke wymagał `401`. To pozostaje
+kryterium STOP dla promocji, zgodnie z decyzją „katalog wyłącznie przez
+backend”. Nie wykonano zmian produkcyjnych, migracji, deployu ani zmian
+Cloudflare.
