@@ -1088,3 +1088,23 @@ staging`, zakończony sukcesem. Zamykamy więc bramę pełnej regresji na poziom
 workflowu bez ponownego zapisu stagingu. Metadane nie są osobnym dowodem
 szczegółowego cleanupu ani braku osieroconych rekordów, dlatego pozostawiamy
 ten zakres jako ograniczenie dowodowe.
+
+## Handoff — świeże blokady legacy/legal/infrastructure, 2026-08-15
+
+Read-only `extensions.pg_stat_statements` potwierdził, że Production ma osiem
+dopasowanych wywołań dotyczących wyłącznie definicji, komentarzy i grantów
+legacy RPC. Staging ma czternaście dopasowanych wywołań, w tym cztery przez
+PostgREST pod rolą `authenticated`; statystyka trwa co najmniej od 3 sierpnia,
+ale nie wskazuje ostatniego wykonania ani konkretnego klienta. To wzmacnia
+bramkę „brak zewnętrznych klientów” jako `OPEN` i wyklucza automatyczny cleanup.
+
+Railway potwierdził read-only nazwy zmiennych: Production ma 25, Staging 23,
+bez odczytu wartości sekretów. Ostatni udany deployment Production to
+`c4b777a` z 2026-08-08, a Staging `e691af8` z 2026-08-13; nie ma niejawnej
+promocji RC do produkcji.
+
+Ponowny odczyt panelu Cloudflare nie dostarczył nowego dowodu, ponieważ
+bezpośrednie trasy WAF i SSL/TLS zwróciły pustą zawartość/404. Nie zmieniano
+ustawień. Pozostają otwarte: legal scope dostawców, origin/WAF/rate limiting,
+monitoring, pełne uzgodnienie produkcyjnego ledgera oraz osobne zgody
+wykonawcze. Produkcja pozostaje `NO-GO`.
