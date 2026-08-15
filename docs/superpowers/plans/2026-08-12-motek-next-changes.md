@@ -1150,3 +1150,14 @@ Są to dowody publicznego zakresu usługi, nie account-specific potwierdzenie
 konfiguracji Motka. Nadal trzeba potwierdzić plan, retencję, transfery,
 DPA/subprocesorów i konfigurację Cloudflare dla konta. Manifest pozostaje
 `unverified`, `npm run legal:check` fail-closed, a produkcja `NO-GO`.
+
+## Handoff — świeży agregowany snapshot danych recovery/versioning, 2026-08-15
+
+Read-only SQL potwierdził `0` rekordów `private.auth_recovery_grants` w
+Production i Staging. Production ma 2 rekordy `private.yarn_store_versions`,
+najwyższą wersję `4` oraz zachowane `updated_at`; Staging ma 6 rekordów,
+najwyższą wersję `142`, `claimed_at` w recovery i brak `updated_at` w liczniku.
+
+To jest aktualny dowód kształtu danych, ale nie snapshot bezpośrednio przed
+migracją. Różnicę liczności i wersji należy zachować w preflight; brak rekordów
+recovery nie zamyka bramki backup/restore ani nie jest zgodą na migrację.

@@ -285,6 +285,24 @@ uzasadnia przygotowany forward-only pakiet RC. Nie jest to zgoda na migrację;
 przed wykonaniem pozostają legal-readiness, bramka legacy oraz osobne zgody
 operacyjne.
 
+## Świeży agregowany snapshot danych recovery/versioning — 2026-08-15
+
+Odczyt agregowany nie ujawniał tokenów, identyfikatorów ani danych użytkowników:
+
+| Zakres | Production | Staging |
+|---|---:|---:|
+| Rekordy `private.auth_recovery_grants` | 0 | 0 |
+| Długości hashy recovery | brak rekordów | brak rekordów |
+| Rekordy `private.yarn_store_versions` | 2 | 6 |
+| Najwyższa wersja | 4 | 142 |
+| `claimed_at` | brak kolumny | obecna |
+| `updated_at` w `yarn_store_versions` | obecna | brak kolumny |
+
+To potwierdza brak aktywnych rekordów recovery w chwili odczytu, ale nie
+zastępuje snapshotu wykonywanego bezpośrednio przed oknem produkcyjnym.
+Różnica liczności i najwyższej wersji yarnów musi zostać zachowana w preflight;
+nie wolno zakładać, że dane Production są identyczne ze Stagingiem.
+
 ## Co pozostaje otwarte
 
 Przed migracją produkcji nadal trzeba przygotować mapę:
