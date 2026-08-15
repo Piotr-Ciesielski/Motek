@@ -745,3 +745,21 @@ Wniosek: publiczne źródła wzmacniają listę wymaganych dowodów, ale nie
 potwierdzają planu, retencji, transferów, DPA/subprocesorów ani ustawień
 Cloudflare dla konkretnego konta Motka. Manifest pozostaje `unverified`,
 `npm run legal:check` pozostaje fail-closed, a produkcja `NO-GO`.
+
+## Potwierdzenie operatora — 2026-08-15
+
+Operator potwierdził, że zakres legal dostawców został przez niego
+zweryfikowany. Jest to decyzja i oświadczenie operatora, ale nie zastępuje
+przypisania datowanych źródeł do konkretnych pól manifestu. Dlatego:
+
+- `data/legal-data-providers.json` pozostaje bez zmian;
+- wszyscy dostawcy oraz zakresy Cloudflare `edge` i `turnstile` pozostają
+  `unverified`;
+- `verifiedAt` pozostaje puste;
+- `npm run legal:check` ma nadal działać fail-closed jako
+  `LEGAL_PUBLICATION=not ready`;
+- produkcja pozostaje `NO-GO` do czasu zebrania i przypięcia dowodów oraz
+  uzyskania osobnych zgód operacyjnych.
+
+Potwierdzenie obejmuje również decyzję, aby nie zmieniać obecnej konfiguracji
+Cloudflare. Nie jest to zgoda na zmianę Cloudflare ani na publikację produkcji.
