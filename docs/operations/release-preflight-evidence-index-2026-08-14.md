@@ -203,12 +203,14 @@ Read-only odczyt konfiguracji usługi Motek oraz statusu obu środowisk potwierd
   jedną replikę w `sfo` i `cronSchedule: null`;
 - oba ostatnie deploymenty mają status `SUCCESS`; nie ma Railway cron joba;
 - Staging jawnie deklaruje `node server.js` i healthcheck `/health/ready` z
-  timeoutem 300 s; odpowiedź konfiguracji Production nie zwróciła tych pól,
-  więc ich dziedziczenie z obrazu/Dockerfile wymaga potwierdzenia przed deployem.
+  timeoutem 300 s; panel Production nie zwrócił tych pól, ale `origin/main`
+  zawiera `railway.json` z tym samym start command/healthcheckiem, a
+  `deploy/railway/Dockerfile` ma `CMD ["node", "server.js"]`.
 
 Wniosek: brak Railway cron joba wzmacnia lokalną inwentaryzację, ale nie
-wyklucza zewnętrznych klientów. Różnica healthcheck/start command jest punktem
-preflight, nie podstawą do samodzielnej zmiany konfiguracji.
+wyklucza zewnętrznych klientów. Zgodność źródła konfiguracji Production i
+Staging ma `PASS`; runtime healthcheck pozostaje do potwierdzenia w post-deploy
+smoke, nie wymaga samodzielnej zmiany konfiguracji.
 
 ## Powiązane dokumenty
 

@@ -1180,6 +1180,7 @@ Staging, więc w Railway nie ma skonfigurowanego cron joba. Production śledzi
 `main`, Staging `staging`; oba ostatnie deploymenty są `SUCCESS`.
 
 Staging ma jawnie `node server.js` i healthcheck `/health/ready` (300 s),
-natomiast odpowiedź konfiguracji Production nie pokazała tych pól. Nie
-zmieniam konfiguracji; przed deployem trzeba potwierdzić, czy Production
-dziedziczy te ustawienia z Dockerfile lub innego poziomu konfiguracji.
+natomiast panel Production nie pokazał tych pól. Odczyt `origin/main:railway.json`
+potwierdził ten sam start command/healthcheck, a Dockerfile ma `CMD ["node",
+"server.js"]`; zgodność źródła ma `PASS`, a runtime pozostaje do potwierdzenia
+w post-deploy smoke. Nie zmieniam konfiguracji.
