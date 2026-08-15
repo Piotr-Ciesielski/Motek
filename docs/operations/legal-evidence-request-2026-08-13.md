@@ -284,6 +284,24 @@ oceny prawnej i nie zmieniają statusu `unverified` w manifeście.
 - Nie odczytywano ani nie zapisywano sekretu Turnstile. Nie zmieniano ustawień
   Cloudflare.
 
+## Diagnoza braku Siteverify — 2026-08-15
+
+- Kod Motka renderuje widget Turnstile z publicznym site key i przekazuje
+  otrzymany `captchaToken` do Supabase Auth przy rejestracji, logowaniu oraz
+  żądaniu resetu hasła. Nie ma potrzeby dodawania osobnego endpointu
+  `siteverify` do aplikacji, jeśli działa wbudowana integracja Supabase Auth.
+- Oficjalna dokumentacja Supabase wskazuje, że trzeba włączyć ochronę CAPTCHA
+  w ustawieniach Auth projektu, wybrać Cloudflare Turnstile i zapisać jego
+  Secret Key. Sam widget w przeglądarce nie wystarcza.
+- Ostrzeżenie Cloudflare `Siteverify isn't being called` oznacza więc, że
+  produkcyjna konfiguracja Supabase Auth najprawdopodobniej nie ma aktywnej
+  integracji Turnstile albo nie ma zapisanego sekretu. To wymaga odczytu i
+  ewentualnej konfiguracji w panelu Supabase dla Production oraz Staging.
+- Preferowany jest ten prostszy wariant oparty o Supabase Auth. Własna walidacja
+  `siteverify` w backendzie byłaby osobną zmianą architektoniczną i nie jest
+  obecnie potrzebna ani zatwierdzona.
+- Źródło: [Supabase — Enable CAPTCHA Protection](https://supabase.com/docs/guides/auth/auth-captcha).
+
 ## Reconciliation Supabase Production — odczyt read-only 2026-08-15
 
 Po migracji wykonano ponowny, ograniczony odczyt metadanych i agregatów
