@@ -36,6 +36,7 @@ test('Railway image is pinned and runs the minimal application as non-root', asy
   assert.ok(lines.includes('USER node'));
   assert.ok(lines.includes('CMD ["node", "server.js"]'));
   assert.ok(lines.includes('COPY assets ./assets'));
+  assert.ok(lines.includes('COPY data ./data'));
   assert.doesNotMatch(dockerfile, /^\s*EXPOSE\b/m);
   assert.doesNotMatch(dockerfile, /\bPORT\s*=/);
   assert.doesNotMatch(dockerfile, /COPY[^\n]*\.env/);
