@@ -1126,3 +1126,14 @@ bramki klienta legacy.
 Nie zmieniono danych, ACL, RLS, ledgerów ani ustawień dostawców. Produkcja
 pozostaje `NO-GO`; następne bramki to potwierdzenie zewnętrznych klientów,
 legal-readiness, pełna reconciliacja efektu oraz osobne zgody wykonawcze.
+
+## Handoff — lokalna inwentaryzacja klientów legacy, 2026-08-15
+
+Read-only skan `.github/workflows`, `scripts`, `tools` i skryptów
+`package.json` nie znalazł workflowu z harmonogramem, joba ani skryptu
+wywołującego `insert_yarn_with_limit`. Aplikacja używa versioned RPC, a skrypt
+zaproszeń używa wyłącznie własnych RPC zaproszeń i logów bezpieczeństwa.
+
+Lokalna bramka inwentaryzacji ma `PASS`; nie obejmuje zewnętrznych webhooków,
+jobów poza repozytorium, ręcznych skryptów ani historycznych klientów
+PostgREST. Cleanup produkcyjny pozostaje `OPEN`, a produkcja `NO-GO`.

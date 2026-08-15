@@ -175,6 +175,24 @@ zewnętrznych klientów” pozostaje `OPEN` i ma podwyższone znaczenie. Nie
 wykonywać cleanupu na tej podstawie; przed osobną zgodą wykonawczą potrzebne
 jest potwierdzenie operatora lub kontrolowane wygaszenie/obserwacja zależności.
 
+## Lokalna inwentaryzacja jobów i workflowów — 2026-08-15
+
+Read-only skan repozytorium objął `.github/workflows`, `scripts`, `tools` oraz
+skrypty `package.json`:
+
+- workflowy CI i post-deploy nie mają harmonogramu `schedule` ani kroku
+  wywołującego `insert_yarn_with_limit`;
+- `scripts/manage-invitations.js` używa wyłącznie RPC zaproszeń i logów
+  bezpieczeństwa; `scripts/import-patterns.js` nie używa legacy yarn RPC;
+- runtime aplikacji używa versioned RPC (`insert/update/delete_yarn_versioned`),
+  a nie `insert_yarn_with_limit`;
+- nie znaleziono repozytoryjnej konfiguracji cron/job ani innego lokalnego
+  klienta legacy RPC.
+
+Wynik zamyka lokalny zakres inwentaryzacji jako `PASS`, ale nie potwierdza
+braku klientów poza repozytorium, zewnętrznych webhooków, ręcznych skryptów ani
+historycznych klientów PostgREST. Bramka cleanupu pozostaje `OPEN`.
+
 ## Powiązane dokumenty
 
 - [runbook wdrożenia i regresji](post-deploy-regression.md),
