@@ -1318,6 +1318,12 @@ async function handleAuthApi(req, res, url) {
     });
     if (error) {
       console.warn("Nie udało się wysłać wiadomości odzyskiwania hasła.");
+      if (error.status === 429 || error.code === "over_email_send_rate_limit") {
+        throw new ApiError(
+          429,
+          "Przekroczono limit prób resetu hasła. Odczekaj jakiś czas i spróbuj ponownie później.",
+        );
+      }
       throw new ApiError(503, "Odzyskiwanie hasła jest chwilowo niedostępne. Spróbuj ponownie później.");
     }
 

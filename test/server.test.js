@@ -387,6 +387,7 @@ test("serwer Motek działa bezpiecznie", async (t) => {
   let versionedRpcBatchScheduled = false;
   let nextSyntheticYarnId = 1;
   const recoveryRequests = [];
+  let recoveryRequestError = null;
   const exchangedRecoveryCodes = [];
   const recoveryGrantRpcs = [];
   const recoveryGrantState = {
@@ -532,7 +533,7 @@ test("serwer Motek działa bezpiecznie", async (t) => {
         },
         async resetPasswordForEmail(email, options) {
           recoveryRequests.push({ email, options });
-          return { data: {}, error: null };
+          return { data: {}, error: recoveryRequestError };
         },
         async exchangeCodeForSession(code) {
           exchangedRecoveryCodes.push(code);
@@ -902,6 +903,30 @@ test("serwer Motek działa bezpiecznie", async (t) => {
         email: "a@example.com",
         options: { redirectTo: `${baseUrl}/?recovery=1`, captchaToken: "reset-token" },
       });
+
+      recoveryRequestError = { code: "over_email_send_rate_limit", status: 429 };
+      const rateLimitedResetResponse = await fetch(`${baseUrl}/api/auth/password-reset-request`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Origin: baseUrl },
+        body: JSON.stringify({ email: "a@example.com", captchaToken: "reset-token" }),
+      });
+      assert.equal(rateLimitedResetResponse.status, 429);
+      assert.deepEqual(await rateLimitedResetResponse.json(), {
+        error: "Przekroczono limit prób resetu hasła. Odczekaj jakiś czas i spróbuj ponownie później.",
+      });
+      recoveryRequestError = null;
+
+      recoveryRequestError = { code: "temporary_failure", status: 500 };
+      const unavailableResetResponse = await fetch(`${baseUrl}/api/auth/password-reset-request`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Origin: baseUrl },
+        body: JSON.stringify({ email: "a@example.com", captchaToken: "reset-token" }),
+      });
+      assert.equal(unavailableResetResponse.status, 503);
+      assert.deepEqual(await unavailableResetResponse.json(), {
+        error: "Odzyskiwanie hasła jest chwilowo niedostępne. Spróbuj ponownie później.",
+      });
+      recoveryRequestError = null;
 
       recoveryGrantRpcs.length = 0;
       recoveryGrantState.setSessionArgs.length = 0;

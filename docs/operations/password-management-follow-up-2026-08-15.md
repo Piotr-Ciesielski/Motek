@@ -107,6 +107,11 @@ Przepływ resetu z e-maila pozostaje osobnym kontraktem recovery. Rozszerzono go
 o obsługę tokenów implicit w hash; ręczny test nowego linku stagingowego jest
 jeszcze do wykonania.
 
+Podczas kolejnej próby staging Supabase zwrócił `429 over_email_send_rate_limit`
+po przekroczeniu limitu wysyłki wiadomości resetujących. Backend otrzymuje ten
+konkretny przypadek jako HTTP 429 z generycznym komunikatem o konieczności
+odczekania; pozostałe błędy wysyłki nadal pozostają kontrolowanym 503.
+
 ## Kryteria akceptacji
 
 - Kliknięcie prawidłowego linku z wiadomości ma otwierać formularz ustawienia
