@@ -399,6 +399,8 @@ test("serwer Motek działa bezpiecznie", async (t) => {
     updateUserArgs: [],
     updateUserError: null,
     updateUserException: null,
+    setSessionArgs: [],
+    setSessionError: null,
     signOutError: null,
     verifyPasswordCalls: 0,
     verifyPasswordError: null,
@@ -543,7 +545,10 @@ test("serwer Motek działa bezpiecznie", async (t) => {
           };
         },
         async setSession({ access_token, refresh_token }) {
-          assert.equal(access_token, token);
+          recoveryGrantState.setSessionArgs.push({ access_token, refresh_token });
+          if (recoveryGrantState.setSessionError) {
+            return { data: { session: null }, error: recoveryGrantState.setSessionError };
+          }
           assert.equal(refresh_token, "refresh-user-a");
           return { data: { session: { access_token, refresh_token } }, error: null };
         },
@@ -1145,7 +1150,7 @@ test("serwer Motek działa bezpiecznie", async (t) => {
     });
 
     await t.test("zwykła zmiana hasła wymaga ponownego uwierzytelnienia i bezpiecznie kończy sesję", async (passwordT) => {
-      const sessionCookies = syntheticAuthCookies("token-user-a");
+      const sessionCookies = `${syntheticAuthCookies("token-user-a")}; motek_refresh_token=refresh-user-a`;
       const changePasswordRequest = (overrides = {}) => fetch(`${baseUrl}/api/auth/password/change`, {
         method: "POST",
         headers: {
@@ -1168,6 +1173,8 @@ test("serwer Motek działa bezpiecznie", async (t) => {
         recoveryGrantState.updateUserArgs.length = 0;
         recoveryGrantState.updateUserError = null;
         recoveryGrantState.updateUserException = null;
+        recoveryGrantState.setSessionArgs.length = 0;
+        recoveryGrantState.setSessionError = null;
         recoveryGrantState.signOutError = null;
         authClientFactoryTokens.length = 0;
         passwordChangeEvents.length = 0;
@@ -1231,6 +1238,10 @@ test("serwer Motek działa bezpiecznie", async (t) => {
           current_password: "DeleteHaslo1!",
           password: "NoweHaslo123!",
         }]);
+        assert.deepEqual(recoveryGrantState.setSessionArgs, [{
+          access_token: "token-user-a",
+          refresh_token: "refresh-user-a",
+        }]);
         assert.deepEqual(authClientFactoryTokens, [undefined, undefined, "token-user-a"]);
         assert.deepEqual(signOutScopes, [{ scope: "global" }]);
         assert.doesNotMatch(capturedText, secretPattern);
@@ -1248,6 +1259,10 @@ test("serwer Motek działa bezpiecznie", async (t) => {
           email: syntheticUsers["token-user-a"].email,
           password: "  DeleteHaslo1!  ",
           options: { captchaToken: "test-captcha-token" },
+        }]);
+        assert.deepEqual(recoveryGrantState.setSessionArgs, [{
+          access_token: "token-user-a",
+          refresh_token: "refresh-user-a",
         }]);
         assert.deepEqual(authClientFactoryTokens, [undefined, undefined, "token-user-a"]);
       });
@@ -1322,6 +1337,35 @@ test("serwer Motek działa bezpiecznie", async (t) => {
         await assertJsonErrorResponse(response, 400);
         assert.equal(recoveryGrantState.updateUserCalls, 1);
         assert.deepEqual(signOutScopes, []);
+      });
+
+      await passwordT.test("traktuje błąd chwilowy zwrócony przez updateUser jako niepewny wynik", async () => {
+        const { response, body, capturedText } = await requestWithCapturedOutput(() => {
+          recoveryGrantState.updateUserError = Object.assign(new Error("upstream unavailable"), {
+            name: "AuthRetryableFetchError",
+            status: 503,
+          });
+        });
+
+        const errorBody = assertJsonErrorBody(response, body, 503);
+        assert.equal(errorBody.error, "Wynik zmiany hasła jest niepewny. Zostałeś wylogowany. Zaloguj się ponownie.");
+        assert.deepEqual(passwordChangeEvents.map(({ name }) => name), ["signInWithPassword", "updateUser", "signOut"]);
+        assert.deepEqual(signOutScopes, [{ scope: "global" }]);
+        assert.doesNotMatch(capturedText, secretPattern);
+      });
+
+      await passwordT.test("nie udaje błędnego hasła przy chwilowym błędzie weryfikacji", async () => {
+        const { response, body, capturedText } = await requestWithCapturedOutput(() => {
+          recoveryGrantState.verifyPasswordError = Object.assign(new Error("auth unavailable"), {
+            name: "AuthRetryableFetchError",
+            status: 503,
+          });
+        });
+
+        const errorBody = assertJsonErrorBody(response, body, 503);
+        assert.equal(errorBody.error, "Weryfikacja bieżącego hasła jest chwilowo niedostępna. Spróbuj ponownie później.");
+        assert.equal(recoveryGrantState.updateUserCalls, 0);
+        assert.doesNotMatch(capturedText, secretPattern);
       });
 
       await passwordT.test("traktuje wyjątek transportowy updateUser jako niepewny wynik i kończy sesję", async () => {

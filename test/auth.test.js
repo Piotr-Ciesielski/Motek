@@ -208,6 +208,11 @@ test("limity żądań Auth mają osobne progi i okna", () => {
       maxRequests: 3,
       blockMs: 15 * 60 * 1000,
     },
+    "password-change": {
+      windowMs: 15 * 60 * 1000,
+      maxRequests: 30,
+      blockMs: 15 * 60 * 1000,
+    },
     recovery: { windowMs: 10 * 60 * 1000, maxRequests: 5, blockMs: 10 * 60 * 1000 },
   });
 });
