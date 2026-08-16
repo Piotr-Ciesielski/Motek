@@ -45,11 +45,16 @@ Oba projekty zgłaszają:
 - `auth_leaked_password_protection` — `WARN`;
 - ochrona przed hasłami znalezionymi w bazie HaveIBeenPwned jest wyłączona.
 
+Aktualna dokumentacja Supabase podaje, że ta funkcja jest dostępna dopiero w
+planie Pro lub wyższym. Przy obecnym planie Free ostrzeżenia nie można usunąć
+samą konfiguracją aplikacji; wymagałoby to osobnej decyzji kosztowej o zmianie
+planu.
+
 To jest osobna zmiana ustawienia Supabase Auth. Nie włączano jej bez decyzji
 operatora, ponieważ może zmienić zachowanie rejestracji i zmiany haseł dla
 użytkowników używających haseł znajdujących się w bazie wycieków.
 
-Źródło remediacji: <https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection>.
+Źródło: <https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection>.
 
 ## Dodatkowe informacje stagingu
 
