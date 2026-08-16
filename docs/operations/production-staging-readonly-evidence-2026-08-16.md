@@ -99,3 +99,22 @@ sukcesem. Produkcja nie była zmieniana.
 Ten follow-up nie zamyka HSTS ani legal-readiness. HSTS nadal nie jest
 aktywne, a `npm run legal:check` pozostaje fail-closed z trzema
 niezweryfikowanymi dostawcami.
+
+## Follow-up — staging origin i cache — 2026-08-16
+
+Odczyt domen Railway potwierdził, że produkcja ma wyłącznie domenę własną
+`www.rysia.org`, bez publicznej domeny usługi Railway. Staging ma natomiast
+zarówno `staging.rysia.org`, jak i publiczną domenę usługi
+`motek-staging-motek.up.railway.app`.
+
+Read-only smoke obu adresów stagingu dał ten sam wynik:
+
+- `/health/release`: `200`;
+- anonimowy `/api/patterns`: `401`;
+- `/internal/metrics`: `404`;
+- `/api/patterns`: `Cache-Control: no-store`.
+
+Staging pozostaje w Cloudflare jako `DNS only`, dlatego bezpośrednia
+dostępność hosta Railway jest aktualnie oczekiwanym skutkiem konfiguracji, a
+nie dowodem obejścia proxy produkcyjnego. Nie zamyka to kontroli originu
+produkcji ani pełnej macierzy cache.
