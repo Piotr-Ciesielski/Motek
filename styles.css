@@ -3133,6 +3133,10 @@ body::before {
   gap: 14px;
 }
 
+#accountView.is-authenticated .account-security-zone {
+  grid-column: 1 / -1;
+}
+
 #accountView.is-authenticated #authProfileSummary {
   min-width: 0;
   margin: 0;

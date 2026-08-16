@@ -304,6 +304,13 @@ test("compact auth controls expose their required CSS contracts", () => {
   assert.match(stylesCss, /\.account-danger-disclosure/);
 });
 
+test("authenticated password-change section spans the account grid", () => {
+  assert.match(
+    stylesCss,
+    /#accountView\.is-authenticated \.account-security-zone\s*\{[\s\S]*?grid-column:\s*1\s*\/\s*-1;/,
+  );
+});
+
 test("mobile catalog exposes the filter disclosure and shortens the account hero", () => {
   assert.match(
     stylesCss,
