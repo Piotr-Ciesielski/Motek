@@ -78,6 +78,11 @@ Próba odczytu panelu Cloudflare przez zalogowany Edge nie została wykonana:
 Edge i rozszerzenie są lokalnie dostępne, lecz kanał sterowania przeglądarką
 nie uruchomił sesji. Nie traktujemy tego jako dowodu konfiguracji Cloudflare.
 
+Lokalna bramka `npm run legal:check` pozostaje `LEGAL_PUBLICATION=not ready`;
+niezweryfikowane są dostawcy `supabase`, `railway` i `cloudflare`. Nie wolno
+traktować gotowego runtime'u ani działającego backupu jako zamiennika dowodów
+legal-readiness.
+
 ## Zasada dla migracji
 
 Stagingowy efekt zdalny jest źródłem prawdy. Nie należy wykonywać `db push`,
