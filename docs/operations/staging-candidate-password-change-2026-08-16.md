@@ -5,7 +5,9 @@
 Kandydat lokalny oparty bezpośrednio na `origin/staging` SHA
 `18c1f5c530e0b26984ca2c04abecccceb36788e9`.
 
-Nie został jeszcze wdrożony na Railway ani opublikowany na żadnym środowisku.
+Wdrożony na Railway wyłącznie do środowiska `staging Motek` pod adresem
+`https://staging.rysia.org`. Deployment Railway: `a349d770-54bf-4431-a8cd-25c5d6b807b8`.
+Produkcja nie została zmieniona.
 
 ## Zakres
 
@@ -24,10 +26,14 @@ Nie został jeszcze wdrożony na Railway ani opublikowany na żadnym środowisku
 - `npm run lint`: zaliczony;
 - test kontraktu: 3/3;
 - `git diff --check`: zaliczony.
+- staging `/health/release`: HTTP 200, `status=ready`, `environment=staging`;
+- staging `/api/config`: HTTP 200, Turnstile włączony;
+- log startowy Railway: aplikacja uruchomiona i połączona z Supabase.
 
 ## Następny krok
 
-Po zapisaniu i przeglądzie pakietu należy wykonać osobno zatwierdzone wdrożenie
-na staging, a następnie ręczny test zalogowanego użytkownika z prawdziwą
-CAPTCHA. Dopiero po tym można zamknąć blokadę funkcjonalną w pakiecie
-produkcyjnym.
+Pozostaje ręczny test zalogowanego użytkownika z prawdziwą CAPTCHA oraz
+wizualne sprawdzenie formularza w przeglądarce. Automatyczne połączenie z
+przeglądarką Codex nie uruchomiło się w tej sesji, więc tych dwóch punktów nie
+uznaję za wykonane. Dopiero po ich zaliczeniu można zamknąć blokadę
+funkcjonalną w pakiecie produkcyjnym.
