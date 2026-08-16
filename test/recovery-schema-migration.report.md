@@ -33,5 +33,9 @@
 ## Ograniczenia
 
 - Nie uruchamiano migracji ani nowego testu pgTAP na lokalnej, stagingowej lub produkcyjnej bazie.
-- Nowy test pgTAP wymaga kontrolowanego resetu/replayu lokalnej bazy (`supabase db reset --local` jako część `npm run test:db`), dlatego celowo nie został uruchomiony w tym zakresie prac.
-- Nie wykonywano resetu lokalnej bazy, `migration repair`, deployu ani żadnej operacji zdalnej.
+- Nowy test pgTAP został uruchomiony po kontrolowanym lokalnym replayu:
+  `node node_modules/supabase/dist/supabase.js db reset --local --yes`, a następnie
+  `node node_modules/supabase/dist/supabase.js test db --local`.
+- Wynik replayu: **10 plików, 275/275 testów PASS**. Obejmuje to 30/30 asercji
+  nowego kontraktu recovery schema.
+- Nie wykonywano `migration repair`, deployu ani żadnej operacji zdalnej.
