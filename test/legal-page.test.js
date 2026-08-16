@@ -1,5 +1,7 @@
 const assert = require("node:assert/strict");
 const { JSDOM } = require("jsdom");
+const { readFile } = require("node:fs/promises");
+const path = require("node:path");
 const test = require("node:test");
 
 const { CURRENT_LEGAL_DOCUMENT } = require("../legal-document");
@@ -24,6 +26,14 @@ test("renderer tworzy spis treści i trzy sekcje bez innerHTML", () => {
   assert.equal(documentRoot.querySelector("script"), null);
   assert.match(documentRoot.querySelector(".legal-meta").textContent, /1\.0/);
   assert.match(documentRoot.querySelector(".legal-copyright").textContent, /© 2026 Motek/);
+});
+
+test("statyczna strona prawna udostępnia odnośniki sekcji bez JavaScript", async () => {
+  const html = await readFile(path.join(__dirname, "..", "informacje-prawne.html"), "utf8");
+
+  for (const anchor of ["#regulamin", "#prywatnosc", "#prawa-autorskie"]) {
+    assert.match(html, new RegExp(`href=[\"']${anchor}[\"']`));
+  }
 });
 
 test("renderer pokazuje potencjalny HTML jako zwykły tekst", () => {
