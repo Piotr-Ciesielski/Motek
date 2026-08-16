@@ -82,6 +82,13 @@ Production nadal ma dwa overloady `insert_yarn_with_limit`, których Staging
 nie ma. Przed ewentualnym cleanupem trzeba potwierdzić brak konsumentów;
 automatyczne usuwanie nie jest bezpiecznym sposobem zamykania ledgera.
 
+Read-only audyt repozytorium Motka nie znalazł wywołań `insert_yarn_with_limit`.
+Backend używa wyłącznie aktywnych, jednoargumentowych RPC recovery:
+`create_auth_recovery_grant()`, `claim_auth_recovery_grant(text)`,
+`release_auth_recovery_grant(text)` i `consume_auth_recovery_grant(text)`.
+Status audytu: **brak konsumenta w aplikacji potwierdzony; konsumenci zewnętrzni
+nieznani**. Legacy RPC pozostają bez zmian do osobnej decyzji operacyjnej.
+
 ### 4. Legal i rejestracja
 
 Promocja musi obejmować brakujące efekty legal/publication z kandydata, ale
