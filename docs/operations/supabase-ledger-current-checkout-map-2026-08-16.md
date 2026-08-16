@@ -5,7 +5,7 @@
 Ten dokument dotyczy wyłącznie bieżącego checkoutu Motka:
 
 - branch: `agent/staging-security-merge`;
-- HEAD: `fa3c4b0`;
+- HEAD: `7331632` (`docs: document current ledger effects and legacy RPC conflict`);
 - lokalnie: 26 plików `supabase/migrations/*.sql`;
 - Production: 24 zdalne wpisy migracji;
 - Staging: 28 zdalnych wpisów migracji.
@@ -107,9 +107,16 @@ projektach Supabase. Nie zmieniano danych, ACL ani schematu.
 - Nazwa constraintu klucza obcego versioned store różni się (`user_id_fkey`
   w Production i `user_fk` w Staging), ale efekt referencyjny jest taki sam.
 
-Wniosek: recovery lifecycle można oznaczyć jako `EFFECT_CONFIRMED` na poziomie
-kolumn i constraintów. Versioned store pozostaje `GROUP_UNRESOLVED` z powodu
-różnych historii migracji, definicji funkcji i zachowania `updated_at`.
+Wniosek: recovery lifecycle można oznaczyć jako `EFFECT_CONFIRMED` wyłącznie
+między zdalnym Production i Staging. Bieżący checkout ma konflikt ze zdalnym
+kontraktem: lokalna migracja tworzy `grant_id` jako klucz główny i
+`UNIQUE(jti_hash)`, natomiast oba środowiska zdalne mają klucz główny na
+`jti_hash` i nie mają `grant_id`. To jest `LOCAL_SCHEMA_CONFLICT`, a nie tylko
+różnica nazwy constraintu. Nie wolno wykonywać migracji wyrównującej przed
+decyzją, który kontrakt jest docelowy i przed przygotowaniem preflightu danych.
+
+Versioned store pozostaje `GROUP_UNRESOLVED` z powodu różnych historii
+migracji, definicji funkcji i zachowania `updated_at`.
 
 ### Katalog wzorów
 
@@ -220,5 +227,8 @@ zastosował tego efektu albo późniejsza delta go odtworzyła. Jest to konkretn
 `LEGACY_EFFECT_CONFLICT`, a nie brak użycia w aplikacji.
 
 Status końcowy RPC/ACL: **`BEHAVIOR_CONFIRMED`** dla aktywnego recovery,
-versioned RPC i legal gate; **`OPEN`** dla legacy overloadów oraz pełnej mapy
-migracji.
+versioned RPC i legal gate wyłącznie w porównaniu Production ↔ Staging;
+**`LOCAL_SCHEMA_CONFLICT`** dla recovery checkout ↔ środowiska, **`OPEN`** dla
+legacy overloadów oraz pełnej mapy migracji. Ten dokument opisuje stan
+checkoutu po commicie `7331632`; późniejsze zmiany dokumentacyjne należy
+zapisywać w osobnym, skupionym commicie.
