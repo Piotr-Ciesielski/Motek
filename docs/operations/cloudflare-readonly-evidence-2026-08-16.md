@@ -46,24 +46,35 @@ wcześniejszą zmianę ani nie jest dowodem legalnej weryfikacji dostawcy.
 
 ## Wniosek operacyjny
 
-Warstwa TLS ma potwierdzony bezpieczny stan bazowy, ale ten odczyt nie zamyka
-gotowości produkcyjnej. Nie włączam HSTS ani nie zmieniam innych ustawień bez
-osobnej decyzji i okna produkcyjnego. Brak potwierdzenia legalnego operatora
-pozostaje niezależną blokadą: `npm run legal:check` ma nadal działać
-fail-closed, dopóki nie pojawi się rzeczywisty dowód weryfikacji.
+Warstwa TLS ma potwierdzony bezpieczny stan bazowy. HSTS zostało później
+włączone w ograniczonym wariancie opisanym poniżej. Brak potwierdzenia
+legalnego operatora pozostaje niezależną blokadą: `npm run legal:check` ma
+nadal działać fail-closed, dopóki nie pojawi się rzeczywisty dowód
+weryfikacji.
 
 ## Weryfikacja po zatwierdzeniu wariantu HSTS — 2026-08-16
 
-Operator zatwierdził wariant `max-age=86400`, bez `includeSubDomains` i bez
-`preload`. Przed zmianą potwierdzono przekierowania HTTP → HTTPS dla:
+Operator zatwierdził wariant bez `includeSubDomains` i bez `preload`. Panel
+Cloudflare nie oferował `max-age=86400`, dlatego wybrano najkrótszą dostępną
+wartość `1 month` (`max-age=2592000`). Przed zmianą potwierdzono
+przekierowania HTTP → HTTPS dla:
 
 - `rysia.org`;
 - `www.rysia.org`;
 - `staging.rysia.org`;
 - hosta stagingowego Railway.
 
-W tej sesji nie ma jednak uwierzytelnionego kanału do panelu Cloudflare ani
-skonfigurowanego tokenu API. Nie wykonano więc zewnętrznej zmiany. Odczyt
-publicznych odpowiedzi HTTPS z 16 sierpnia nie wykazał nagłówka
-`Strict-Transport-Security`; HSTS pozostaje **oczekujące na ręczne wykonanie
-w panelu Cloudflare**.
+Zmianę wykonał operator w panelu Cloudflare. Odczyt publicznych odpowiedzi
+HTTPS potwierdził:
+
+- `https://www.rysia.org/` → `200` oraz
+  `Strict-Transport-Security: max-age=2592000`;
+- `https://rysia.org/` → `301` do `https://www.rysia.org/` oraz ten sam
+  nagłówek;
+- nagłówek nie zawiera `includeSubDomains` ani `preload`;
+- `staging.rysia.org` pozostaje DNS-only i nie otrzymuje nagłówka HSTS od
+  Cloudflare.
+
+HSTS jest aktywne dla produkcyjnych odpowiedzi proxied w wariancie
+jednomiesięcznym. Po okresie stabilnej obserwacji można osobno rozważyć
+zwiększenie `max-age`; nie włączać automatycznie subdomen ani preload.

@@ -1331,9 +1331,9 @@ Otwarte bramki przed przygotowaniem osobnej decyzji produkcyjnej:
 - legal-readiness: `npm run legal:check` pozostaje fail-closed, ponieważ
   Supabase, Railway i Cloudflare nie mają jeszcze datowanych, produkcyjnych
   dowodów wymaganych przez manifest;
-- HSTS: wariant został zaakceptowany (`max-age=86400`, bez subdomen i bez
-  preload), ale zmiana w panelu Cloudflare nie została wykonana i publiczny
-  HTTPS nie pokazuje nagłówka `Strict-Transport-Security`;
+- HSTS: aktywne dla produkcyjnych odpowiedzi proxied na 1 miesiąc
+  (`max-age=2592000`), bez `includeSubDomains` i bez `preload`; staging
+  pozostaje DNS-only i nie otrzymuje tego nagłówka od Cloudflare;
 - production preflight: przed jakimkolwiek wdrożeniem trzeba ponownie
   przypiąć exact candidate SHA, potwierdzić świeży backup/restore, zgodność
   konfiguracji Railway i zakres forward-only migracji;
