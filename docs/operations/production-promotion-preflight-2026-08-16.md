@@ -12,13 +12,14 @@ objąć jawnie wskazany kandydat, a nie mechaniczny merge całej gałęzi.
 
 | Zakres | Referencja |
 |---|---|
-| Kandydat stagingowy | `agent/staging-candidate-20260816-v2` / `61e8e9871d50d5b92c2b74e2e759adb90c4880bf` |
+| Kandydat stagingowy | `agent/staging-candidate-20260816-v2` / `0b2311d6af0e30b60d8afc3f7296df7931b8ea4a` |
 | Runtime stagingu | `https://staging.rysia.org`, Railway deployment `ba374ee6-d6d6-4d82-9e9e-6ef4aba395d7` |
 | `origin/staging` | `18c1f5c530e0b26984ca2c04abecccceb36788e9` |
 | `origin/main` / production | `0b3d43347d6b982eb86303db26650cc804ec8cd9` |
 
-Kandydat zawiera trzy commity ponad `origin/staging`: formularz i backend
-zmiany hasła, dokumentację wdrożenia oraz poprawkę układu Karty Konto.
+Kandydat zawiera cztery commity ponad `origin/staging`: formularz i backend
+zmiany hasła, dokumentację wdrożenia, poprawkę układu Karty Konto oraz
+dokumentację kompatybilności produkcji.
 
 ## Świeży preflight stagingu
 
@@ -48,10 +49,10 @@ Funkcjonalny test zmiany hasła został potwierdzony ręcznie na stagingu.
 4. **Produkcja — świeży smoke.** Produkcja zwraca `/health/release` `200`,
    ale `/informacje-prawne` nadal `404`, a anonimowy `/api/patterns` nadal
    `200`. To blokuje promocję niezależnie od zdrowia procesu.
-5. **Backup/restore.** Historyczny pakiet z 2026-08-14 ma warunkowy PASS i
-   pozostaje poza repozytorium jako zaszyfrowany punkt odtworzenia. Przed
-   oknem produkcyjnym potrzebny jest świeży backup oraz ponowne potwierdzenie
-   celu i restore; nie wykonano żadnej zmiany produkcji.
+5. **Backup/restore.** Świeży pakiet z 2026-08-16 ma warunkowy PASS, jest
+   zaszyfrowany poza repozytorium i został odtworzony w zgodnym stacku
+   Supabase/GoTrue. Storage produkcji jest pusty, więc wynik pozostaje
+   warunkowy dla obecnego stanu; nie wykonano żadnej zmiany produkcji.
 6. **Railway/infrastruktura.** Railway Production ma już jawne `node server.js`
    i `/health/ready`; ten punkt jest zamknięty. Nadal nie jest zamknięta pełna
    macierz originu, cache, WAF, rate limiting, monitoringu i alertów.
@@ -88,8 +89,7 @@ Ta decyzja nie jest zgodą na `db push`, migrację ani deploy produkcji.
 1. Zamknąć mapę ledgeru przez read-only porównanie każdej nierozstrzygniętej
    grupy i jawnie opisać, które lokalne migracje nie mogą być użyte bez zmian.
 2. Wyjaśnić konfigurację Railway Production oraz macierz origin/cache/WAF.
-3. Odświeżyć backup produkcji w osobnym, zatwierdzonym oknie i powtórzyć
-   izolowany restore.
+3. Uzupełnić macierz origin/cache/WAF, monitoringu i alertów.
 4. Przygotować pakiet `GO/NO-GO` z dokładnym SHA, zakresem migracji,
    rollbackiem, kryteriami STOP i 30-minutową obserwacją.
 5. Dopiero po osobnej zgodzie wykonać migrację Supabase i deploy produkcji.
