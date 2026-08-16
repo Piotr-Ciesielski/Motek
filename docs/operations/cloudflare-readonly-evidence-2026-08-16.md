@@ -51,3 +51,19 @@ gotowości produkcyjnej. Nie włączam HSTS ani nie zmieniam innych ustawień be
 osobnej decyzji i okna produkcyjnego. Brak potwierdzenia legalnego operatora
 pozostaje niezależną blokadą: `npm run legal:check` ma nadal działać
 fail-closed, dopóki nie pojawi się rzeczywisty dowód weryfikacji.
+
+## Weryfikacja po zatwierdzeniu wariantu HSTS — 2026-08-16
+
+Operator zatwierdził wariant `max-age=86400`, bez `includeSubDomains` i bez
+`preload`. Przed zmianą potwierdzono przekierowania HTTP → HTTPS dla:
+
+- `rysia.org`;
+- `www.rysia.org`;
+- `staging.rysia.org`;
+- hosta stagingowego Railway.
+
+W tej sesji nie ma jednak uwierzytelnionego kanału do panelu Cloudflare ani
+skonfigurowanego tokenu API. Nie wykonano więc zewnętrznej zmiany. Odczyt
+publicznych odpowiedzi HTTPS z 16 sierpnia nie wykazał nagłówka
+`Strict-Transport-Security`; HSTS pozostaje **oczekujące na ręczne wykonanie
+w panelu Cloudflare**.
