@@ -32,7 +32,7 @@ test("statyczna strona prawna udostępnia odnośniki sekcji bez JavaScript", asy
   const html = await readFile(path.join(__dirname, "..", "informacje-prawne.html"), "utf8");
 
   for (const anchor of ["#regulamin", "#prywatnosc", "#prawa-autorskie"]) {
-    assert.match(html, new RegExp(`href=[\"']${anchor}[\"']`));
+    assert.match(html, new RegExp(String.raw`href=["']${anchor}["']`));
   }
 });
 
