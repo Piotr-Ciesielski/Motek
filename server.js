@@ -1419,7 +1419,7 @@ async function handleAuthApi(req, res, url) {
     const client = supabaseAuthClientFactory(supabaseAuthConfig, session.accessToken);
     let updateResult;
     try {
-      updateResult = await client.auth.updateUser({ password });
+      updateResult = await client.auth.updateUser({ current_password: currentPassword, password });
     } catch {
       try {
         await client.auth.signOut({ scope: "global" });

@@ -2233,6 +2233,7 @@ changePasswordForm.addEventListener("submit", async (event) => {
     }
     setAuthMessage("Nie udało się zmienić hasła. Spróbuj ponownie.", "error");
   } finally {
+    resetCaptchaForForm(changePasswordForm);
     setAuthBusy(changePasswordForm, false);
   }
 });

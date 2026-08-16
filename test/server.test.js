@@ -396,6 +396,7 @@ test("serwer Motek działa bezpiecznie", async (t) => {
     releaseResult: true,
     consumeResult: true,
     updateUserCalls: 0,
+    updateUserArgs: [],
     updateUserError: null,
     updateUserException: null,
     signOutError: null,
@@ -546,11 +547,13 @@ test("serwer Motek działa bezpiecznie", async (t) => {
           assert.equal(refresh_token, "refresh-user-a");
           return { data: { session: { access_token, refresh_token } }, error: null };
         },
-        async updateUser({ password }) {
+        async updateUser(args) {
+          const { password } = args;
           assert.equal(password, "NoweHaslo123!");
           recoveryGrantState.updateUserCalls += 1;
+          recoveryGrantState.updateUserArgs.push(args);
           recoveryGrantEvents.push({ name: "updateUser" });
-          passwordChangeEvents.push({ name: "updateUser", args: { password } });
+          passwordChangeEvents.push({ name: "updateUser", args });
           if (recoveryGrantState.updateUserException) throw recoveryGrantState.updateUserException;
           return { data: { user: syntheticUsers[token] }, error: recoveryGrantState.updateUserError };
         },
@@ -1162,6 +1165,7 @@ test("serwer Motek działa bezpiecznie", async (t) => {
         recoveryGrantState.verifyPasswordError = null;
         recoveryGrantState.signInWithPasswordArgs.length = 0;
         recoveryGrantState.updateUserCalls = 0;
+        recoveryGrantState.updateUserArgs.length = 0;
         recoveryGrantState.updateUserError = null;
         recoveryGrantState.updateUserException = null;
         recoveryGrantState.signOutError = null;
@@ -1222,6 +1226,10 @@ test("serwer Motek działa bezpiecznie", async (t) => {
           email: syntheticUsers["token-user-a"].email,
           password: "DeleteHaslo1!",
           options: { captchaToken: "test-captcha-token" },
+        }]);
+        assert.deepEqual(recoveryGrantState.updateUserArgs, [{
+          current_password: "DeleteHaslo1!",
+          password: "NoweHaslo123!",
         }]);
         assert.deepEqual(authClientFactoryTokens, [undefined, undefined, "token-user-a"]);
         assert.deepEqual(signOutScopes, [{ scope: "global" }]);

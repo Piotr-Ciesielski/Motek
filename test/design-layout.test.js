@@ -207,6 +207,7 @@ test("frontend obsługuje panel zmiany hasła bez wysyłania potwierdzenia", () 
   assert.match(appJs, /changePasswordToggle\.addEventListener\("click", \(\) => \{[\s\S]*?if \(!isOpen\) \{[\s\S]*?changePasswordForm\.reset\(\);[\s\S]*?\}[\s\S]*?changePasswordForm\.hidden = !isOpen;/);
   assert.match(appJs, /if \(formValues\.newSecret !== passwordConfirmation\) \{[\s\S]*?setAuthMessage\([^\n]+, "error"\);[\s\S]*?return;/);
   assert.match(appJs, /api\("\/api\/auth\/password\/change", \{[\s\S]*?method: "POST",[\s\S]*?buildAuthPayload\(\{[\s\S]*?currentPassword: formValues\.currentSecret,[\s\S]*?password: formValues\.newSecret,[\s\S]*?captchaToken: captchaTokens\.passwordChange/);
+  assert.match(appJs, /finally \{[\s\S]*?resetCaptchaForForm\(changePasswordForm\);[\s\S]*?setAuthBusy\(changePasswordForm, false\);/);
 });
 
 test("ukryte formularze logowania są wyłączane dla menedżera haseł", () => {
