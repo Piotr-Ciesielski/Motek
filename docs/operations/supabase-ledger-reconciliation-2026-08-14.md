@@ -365,3 +365,243 @@ W obu środowiskach `anon` nie ma wykonania odczytanych RPC recovery, a prywatna
 tabela recovery pozostaje poza bezpośrednim dostępem klienta. To zamyka tylko
 te granice dostępu; nie zmniejsza konfliktu kontraktu. Wynik jest dowodem efektu
 schematu, nie zgodą na zastosowanie delty. Produkcja pozostaje `NO-GO`.
+## Rewalidacja zdalna po delcie — 2026-08-16
+
+Ten wpis aktualizuje wyłącznie stan odczytowy; wcześniejsze sekcje pozostają
+historycznym snapshotem z 2026-08-14.
+
+- Production ma obecnie 24 wpisy migracji i kończy się na
+  `20260815115028 production_legal_versioned_recovery_delta`.
+- Staging ma obecnie 28 wpisów migracji i kończy się na
+  `20260815152553 restore_recovery_grant_creator`.
+- W obu środowiskach `private.auth_recovery_grants` ma `claimed_at` oraz
+  constraint `char_length(jti_hash) = 64`.
+- Aktywne overloady używane przez aplikację — `create()`,
+  `claim(text)`, `release(text)` i `consume(text)` — mają zgodne definicje
+  oraz wykonanie dla roli `authenticated`.
+- Historyczne overloady z parametrami użytkownika/hash nadal istnieją i
+  wymagają osobnego porównania oraz decyzji o cleanupie.
+
+Wniosek: historyczny konflikt recovery 43 znaki vs 64 i brak `claimed_at` nie
+opisuje już bieżącego stanu zdalnego. Ledger pozostaje `OPEN`, ponieważ nadal
+brakuje pełnej mapy: zdalna wersja → lokalny plik → hash treści → efekt
+schematu/RPC, a historia Production i Staging ma różne podziały migracji.
+Odczyt nie wykonywał migracji, `migration repair`, grantów ani zmian danych.
+
+### Rewalidacja RPC i ACL — 2026-08-16
+
+- `has_current_terms_acceptance()` istnieje w obu środowiskach i jest dostępna
+  dla `authenticated`, ale jej definicja nie jest identyczna.
+- `get_yarn_store_version()`, `insert_yarn_versioned()`,
+  `update_yarn_versioned()` i `delete_yarn_versioned()` mają zgodne sygnatury
+  oraz ACL (`anon = false`, `authenticated = true`), lecz różne fingerprinty
+  definicji.
+- Production nadal ma dwa overloady `insert_yarn_with_limit`, a Staging nie ma
+  żadnego. Lokalny kod nie korzysta z tego legacy RPC, ale jego cleanup wymaga
+  osobnej decyzji i postflightu.
+
+Wniosek: recovery lifecycle jest funkcjonalnie wyrównany, natomiast legal gate,
+versioned RPC i legacy cleanup pozostają otwartą częścią ledgera. Nie wolno
+oznaczać pełnej zgodności produkcji ze stagingiem ani wykonywać cleanupu na
+podstawie samego braku użycia w repozytorium.
+
+### Pełna lista zdalnych wpisów migracji — rewalidacja 2026-08-16
+
+Poniższa lista jest odczytem `supabase_migrations.schema_migrations` z obu
+projektów. Nie jest próbą „naprawy” ledgera i nie oznacza, że wpis z jednego
+środowiska można bezpośrednio odtworzyć w drugim.
+
+| Środowisko | Liczba wpisów | Najstarszy wpis | Najnowszy wpis |
+|---|---:|---|---|
+| Production | 24 | `20260804123738 create_patterns` | `20260815115028 production_legal_versioned_recovery_delta` |
+| Staging | 28 | `20260803144824 create_patterns` | `20260815152553 restore_recovery_grant_creator` |
+
+Production ma następujące wpisy:
+
+```text
+20260804123738 create_patterns
+20260804123742 create_profiles_auth
+20260804123744 harden_profiles_trigger_functions
+20260804123747 create_yarns
+20260804123749 harden_yarns_trigger
+20260804123754 add_pattern_matching_requirements
+20260804123756 add_atomic_yarn_insert_limit
+20260804123807 enforce_pattern_catalog_limit
+20260804123814 validate_pattern_matching_requirements
+20260804123837 harden_rls_auto_enable_permissions
+20260804123844 align_pattern_requirement_validation
+20260804123846 add_pattern_project_type
+20260804123850 expand_yarn_materials
+20260804123854 validate_pattern_matching_v2
+20260804123902 email_login_and_remove_full_name
+20260804190613 add_versioned_yarn_inventory
+20260807113952 add_recovery_grants
+20260807113953 revoke_yarns_sequence_acl
+20260807113955 harden_profile_avatar_url
+20260807114103 move_yarn_store_versions_private
+20260807114131 restrict_yarn_mutations_acl
+20260807114716 document_patterns_service_role_policy
+20260807114728 document_recovery_grants_no_client_policy
+20260815115028 production_legal_versioned_recovery_delta
+```
+
+Staging ma następujące wpisy:
+
+```text
+20260803144824 create_patterns
+20260803144850 create_profiles_auth
+20260803144854 harden_profiles_trigger_functions
+20260803144859 create_yarns
+20260803144907 harden_yarns_trigger
+20260803144911 add_pattern_matching_requirements
+20260803144920 add_atomic_yarn_insert_limit
+20260803144926 enforce_pattern_catalog_limit
+20260803144931 validate_pattern_matching_requirements
+20260803144942 align_pattern_requirement_validation
+20260803145008 add_pattern_project_type
+20260803145013 expand_yarn_materials
+20260803145017 validate_pattern_matching_v2
+20260803145021 email_login_and_remove_full_name
+20260803192748 add_versioned_yarn_inventory
+20260803193245 fix_yarn_version_conflict_code
+20260803194324 restore_atomic_yarn_store_versions_contract
+20260803194809 fix_yarn_version_conflict_retry
+20260806223153 restrict_yarn_mutations
+20260806223212 add_recovery_grants
+20260806233940 revoke_yarns_sequence_acl
+20260811115312 add_pattern_publication_audit
+20260811115324 add_invited_registration_and_legal_acceptance
+20260811115339 enforce_current_terms_for_private_data
+20260811115351 revoke_registration_invitation
+20260812135011 add_recovery_grant_claim
+20260813103831 harden_recovery_grant_release
+20260815152553 restore_recovery_grant_creator
+```
+
+Wynik mapowania:
+
+- wpisy bazowe katalogu, profili, włóczek i walidacji mają odpowiedniki
+  funkcjonalne, ale różne timestampy i historyczne grupowanie;
+- Staging ma dodatkowe grupy versioned-yarn, legal/publication i recovery,
+  które w Production zostały częściowo scalone w późniejszą deltę;
+- Production ma dodatkowe wpisy ACL/utrzymaniowe, których Staging nie ma jako
+  osobnych wpisów;
+- lokalny katalog ma 26 plików migracji, więc nie jest kopią 1:1 żadnego z
+  dwóch zdalnych ledgerów;
+- o zgodności można wnioskować dopiero z połączenia: nazwa i kolejność wpisu,
+  fingerprint zdalnej instrukcji, lokalny plik oraz efekt obiektów SQL.
+
+Status bramki pozostaje `OPEN`. Do zamknięcia brakuje tabeli mapującej każdy
+zdalny wpis na lokalny plik albo jawnie udokumentowane scalone/produkcyjne
+odstępstwo, wraz z hashem/fingerprintem i efektem schematu. Nie wykonano
+`migration repair`, ręcznych grantów, cleanupu legacy ani kolejnej migracji.
+
+### Pełny eksport fingerprintów zdalnych — 2026-08-16
+
+Poniższy read-only eksport jest materiałem wejściowym do finalnej macierzy.
+Format: `wersja nazwa md5(statements::text) bajty`.
+
+Production:
+
+```text
+20260804123738 create_patterns 4ff571c7b94d8cad8ceeae7187ede62e 1562
+20260804123742 create_profiles_auth eed7247c2cee9e98404331028817d8c2 4986
+20260804123744 harden_profiles_trigger_functions cb7747ff8b8c65a0deb07ff9c8a770ca 554
+20260804123747 create_yarns 4a1fcf09dcdd91db40d953b3801d610f 3594
+20260804123749 harden_yarns_trigger 2d773e68af4de3da72df75c347a1e1ba 205
+20260804123754 add_pattern_matching_requirements e52421dfb150b18aead4d6a7f5058d97 498
+20260804123756 add_atomic_yarn_insert_limit 503b5ba0867d261b9fc85e4acff86d32 1799
+20260804123807 enforce_pattern_catalog_limit 73cec74f968e18db37ed35d7e86db734 1383
+20260804123814 validate_pattern_matching_requirements a8b8ed04e7a11423f962ac524687771f 3655
+20260804123837 harden_rls_auto_enable_permissions 7fb381dd9e864782354455e79e415c0b 141
+20260804123844 align_pattern_requirement_validation c73dcd2ad90b4a4e8438b988a13b637c 6314
+20260804123846 add_pattern_project_type fc524b2466875cadacd8f220f6cf7114 499
+20260804123850 expand_yarn_materials a81e29f5173d1841b7fed1fd1bd9ab8e 4570
+20260804123854 validate_pattern_matching_v2 43b32a982f64b433a59ae6fbea22a600 9240
+20260804123902 email_login_and_remove_full_name fd5c57fcbf518c5eb9d1563d7b520f26 3615
+20260804190613 add_versioned_yarn_inventory 57d33bfb350f62b2d57cb36be357d28e 6951
+20260807113952 add_recovery_grants cf26ea9958facdf1affe6c594e9ad3f1 2229
+20260807113953 revoke_yarns_sequence_acl 625baec6878166539b32c3f27ba006e2 91
+20260807113955 harden_profile_avatar_url b77875b25f407239ef3d1b92a719f2fe 230
+20260807114103 move_yarn_store_versions_private a86ce6f1a0a8459ffe7db2d7a2c47cdf 6682
+20260807114131 restrict_yarn_mutations_acl 6e08bbc8893406acef84a33fbd38a42b 1027
+20260807114716 document_patterns_service_role_policy 0dbee86381808351d11f1bbceb017d94 200
+20260807114728 document_recovery_grants_no_client_policy 04a4967027fb6ba5610bdeb8b1799abf 247
+20260815115028 production_legal_versioned_recovery_delta 0f4d977c38f95ca0e6b627f7f61ad4c0 37364
+```
+
+Staging:
+
+```text
+20260803144824 create_patterns b93402d958fbb4433362d073f1a83563 1467
+20260803144850 create_profiles_auth eed7247c2cee9e98404331028817d8c2 4986
+20260803144854 harden_profiles_trigger_functions cb7747ff8b8c65a0deb07ff9c8a770ca 554
+20260803144859 create_yarns 4a1fcf09dcdd91db40d953b3801d610f 3594
+20260803144907 harden_yarns_trigger 2d773e68af4de3da72df75c347a1e1ba 205
+20260803144911 add_pattern_matching_requirements e52421dfb150b18aead4d6a7f5058d97 498
+20260803144920 add_atomic_yarn_insert_limit 503b5ba0867d261b9fc85e4acff86d32 1799
+20260803144926 enforce_pattern_catalog_limit 73cec74f968e18db37ed35d7e86db734 1383
+20260803144931 validate_pattern_matching_requirements a8b8ed04e7a11423f962ac524687771f 3655
+20260803144942 align_pattern_requirement_validation c73dcd2ad90b4a4e8438b988a13b637c 6314
+20260803145008 add_pattern_project_type fc524b2466875cadacd8f220f6cf7114 499
+20260803145013 expand_yarn_materials a81e29f5173d1841b7fed1fd1bd9ab8e 4570
+20260803145017 validate_pattern_matching_v2 43b32a982f64b433a59ae6fbea22a600 9240
+20260803145021 email_login_and_remove_full_name fd5c57fcbf518c5eb9d1563d7b520f26 3615
+20260803192748 add_versioned_yarn_inventory 621403595dc4c1f04cf3a9fc64f511c4 6954
+20260803193245 fix_yarn_version_conflict_code b848a5a15918c97d00e61682eb2ed436 6954
+20260803194324 restore_atomic_yarn_store_versions_contract 13e9a8c870a383bdc7ca48dff73a21f2 6665
+20260803194809 fix_yarn_version_conflict_retry 453fbf6eda09819ca438b9d2e9a8e403 6665
+20260806223153 restrict_yarn_mutations 89eef55fbe21e193d7d6b51aa8ed0853 2005
+20260806223212 add_recovery_grants cc315eff4fc16e62929f61a6b4c95773 2366
+20260806233940 revoke_yarns_sequence_acl 60476dc414fc76ac952cb72d268bbe1f 166
+20260811115312 add_pattern_publication_audit ebbaa8f901ae94348db01aeb2ec281dc 677
+20260811115324 add_invited_registration_and_legal_acceptance e3be1161dbdc3f1b24e826fd517dafea 18984
+20260811115339 enforce_current_terms_for_private_data 371d5c58c749a9d1da24aef86eea1365 9388
+20260811115351 revoke_registration_invitation 7cd6b2d3733eea2da4fdcb80a99f68bd 1753
+20260812135011 add_recovery_grant_claim f87479d802e0f6c379c348f1457959da 2259
+20260813103831 harden_recovery_grant_release 183119e910bdb6b805e24a2a66c25762 1784
+20260815152553 restore_recovery_grant_creator b141cbb53bc93ce298168da00777efb8 734
+```
+
+Fingerprinty pokazują kilka bezpośrednich zgodności treści między Stagingiem
+i Production (m.in. profile, yarns, walidacje i część RPC), ale także różne
+instrukcje dla recovery, legal gate, ACL i versioned store. To wystarcza do
+zamknięcia dowodu „pełny eksport zdalny”, lecz nie do zamknięcia zgodności
+release’u. Następny krok ledgera to mapowanie tych fingerprintów do 26 plików
+aktualnego checkoutu i efektów obiektów SQL; ta część pozostaje `OPEN`.
+
+### Hashy aktualnego checkoutu — 2026-08-16
+
+SHA-256 policzono dla dokładnie 26 plików obecnych w `supabase/migrations` na
+branchu `agent/staging-security-merge`, HEAD `3b07f6c`. To są hashe plików
+lokalnych, a nie fingerprinty zdalnych pól `statements`; nie należy ich
+porównywać znak w znak bez jawnej normalizacji treści i mapowania grup.
+
+```text
+20260723000000_create_patterns.sql 078D9F9DF615EBF1C2ED558E788E2D7D67AF13C18760F5ADE92607E62CA46868
+20260724000000_create_profiles_auth.sql C25696502CA6982E889FEB5D8A97F256496AAE0D81881E712B3327D8B4967EA5
+20260724000001_harden_profiles_trigger_functions.sql B244BEABE851ABC395A390BD585DECD149C70BA2EE3289AFED24589D3D1D3C92
+20260727000000_create_yarns.sql CBF4EADE6D1B53814A0F508161AB8908F5F6E0D51F36E42982882E4856208F86
+20260727000001_harden_yarns_trigger.sql 0DB92A7A56CA032A5791512B99CE7A1025ECE094CE91777A54BB0AFEA8A078EF
+20260727000002_add_pattern_matching_requirements.sql 930EDD23C049EA57F14C6E7E7B76994BEE8712D60A543BFA78F719C518A72330
+20260728000000_add_atomic_yarn_insert_limit.sql 690C1C17D2DEA0C950AB1AF3A351CF2C3B890387CD427B65E8CC8C51F458367E
+20260728000001_enforce_pattern_catalog_limit.sql 78C9D02E6008DA83018B22223C808D7459D5EABEEE4D1240F22354A6DBBCCED9
+20260728000002_validate_pattern_matching_requirements.sql 0AF35BBBCFE5B5CFC9987D6E26ED770FCADE59EA647B79E8A05CB02290FD5B04
+20260728000003_harden_rls_auto_enable_permissions.sql 0CCCF412A83A32A0AAB3C58B0AD80F2AFEE0D005D70D327B63A4DD799B1693A8
+20260728000004_align_pattern_requirement_validation.sql 544BB571743CC89E55BFA1E8941961080086FC4E493DD18B9AA4655871F2CBDF
+20260730000000_add_pattern_project_type.sql 7648E0C976AE4C1EFCF02C61D5C701ECCBAFF97EDAD0853991FE03CE07EBE52B
+20260730211136_expand_yarn_materials.sql 0FF37163978A08485642C7C83265BC4ADB9558FB4F11831B6D74E6B566264A2C
+20260730213157_validate_pattern_matching_v2.sql 43B918F6ACE05D46595AA9B0DA2588C600461EB8DEEC107C27425CD012417B00
+20260731104741_email_login_and_remove_full_name.sql 3000B96A22EB99293502C128A5A649752316B22AAF2A97CB560FE420DC91127D
+20260803113832_harden_matching_requirements_validation.sql 34930AF8871F618C350F10D62552FC48BCE1E1FA2B32211E4C7C849C56D25599
+20260803125010_add_atomic_yarn_store_versions.sql 8C840A3AE2781FC5210F104B0CD69A50C8AAFDDF77ED1B8FFBF8F3AA97
+20260803150000_remove_unsupported_matching_groups.sql 7E6DC0B4BDBC7BC6532D1E73DB3187E0064F5BB5CFC91FE96837E790C323A7EF
+20260803200000_fix_yarn_version_conflict_retry.sql DF988919F77ED37AA1E94329A2A05469D23A029D8195C9FD8D8875E0DD042496
+20260807150000_reconcile_yarn_acl_and_recovery.sql 90D57D6C2FFDD091F4F46BE5E20D4628643399EAC6F6C719832C7156A19E677E
+20260809165750_add_pattern_publication_audit.sql 882FBD2C323BE9197A8E31E0986B562A3B9DE5B98E058D9FB27FFDBD33C592AD
+20260809185511_add_invited_registration_and_legal_acceptance.sql D06DB9841619605125E7ED1496F163AA9C174F83ED959DED9969CB2FFEC294C9
+20260810120111_enforce_current_terms_for_private_data.sql A8C74274E8843E66E4532D6ED6C134298F7C4CB35CB9C62059DBBCC14300B14E
+20260810123000_revoke_registration_invitation.sql 0376E9C998CD2A375FA9BCC6E98AC1F261E614D399FBA5BD06AE9123ECB689CB
+20260812122131_add_recovery_grant_claim.sql A025A53CA7E12BC903AA484754F4D225B1378F4FBF18BE269568252D24324829
+20260815152553_restore_recovery_grant_creator.sql CDC6B71A11881FF20C5CCAE0F958FF1603B24A2AEBF11573EBF25A488A3029D3
+```

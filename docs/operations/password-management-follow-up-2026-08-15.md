@@ -1,7 +1,8 @@
 # Pakiet: zarządzanie hasłem
 
 Data zapisu: 2026-08-15; aktualizacja: 2026-08-16
-Status: pakiet wdrożony i potwierdzony na stagingu; produkcja pozostała nietknięta
+Status: pakiet wdrożony i potwierdzony na stagingu; pełny pakiet haseł nie został
+promowany na produkcję, która otrzymała wyłącznie osobny pakiet wizualny
 
 ## Finalizacja pakietu — 2026-08-15–16
 
@@ -39,12 +40,12 @@ Wdrożenie:
 
 ## Obserwacja ze stagingu
 
-Link „Reset password” z wiadomości kieruje użytkownika do karty „Konto”, ale
-nie udostępnia mu formularza ustawienia nowego hasła. W zwykłej karcie „Konto”
-nie ma również formularza ani akcji do zmiany już istniejącego hasła.
+Link „Reset password” z wiadomości kieruje użytkownika do karty „Konto” i po
+ostatnich poprawkach poprawnie pokazuje formularz ustawienia nowego hasła.
+W zwykłej karcie „Konto” dostępny jest również osobny panel zmiany istniejącego
+hasła dla zalogowanego użytkownika.
 
-To jest brakująca funkcja produktowa, ale nie blokuje domknięcia bieżącego
-etapu naprawy kontraktu recovery na stagingu. Nie zmieniamy jej w tym pakiecie.
+Pozostaje pełny test zapisu nowego hasła po wejściu z wiadomości recovery.
 
 ## Stan implementacji
 
@@ -63,18 +64,15 @@ etapu naprawy kontraktu recovery na stagingu. Nie zmieniamy jej w tym pakiecie.
 - Recovery nadal korzysta wyłącznie z `POST /api/auth/recovery` oraz
   `POST /api/auth/password`; kontrakty nie zostały połączone.
 
-## Zakres następnego pakietu
+## Zakres pakietu — aktualny stan
 
-1. Ustalić i naprawić obsługę linku z wiadomości tak, aby poprawny link zawsze
-   otwierał widoczny formularz ustawienia nowego hasła, a błędny lub wygasły
-   link pokazywał jasny komunikat i bezpiecznie wracał do logowania.
-2. Dodać w karcie „Konto” osobny formularz/okno „Zmień hasło” dla zalogowanego
-   użytkownika.
-3. Rozdzielić kontrakt resetu hasła od kontraktu zmiany istniejącego hasła;
-   nie używać uprawnień recovery do zwykłej zmiany hasła.
-4. Dodać testy backendowe, frontendowe oraz przeglądarką dla obu ścieżek,
-   włącznie z błędami walidacji, wygaśnięciem linku, wylogowaniem po resecie
-   i czytelnymi komunikatami dla użytkownika.
+1. Obsługa poprawnego linku recovery i widocznego formularza — wykonana;
+   pozostaje pełny test zapisu nowego hasła.
+2. Osobny panel „Zmień hasło” dla zalogowanego użytkownika — wykonany i
+   potwierdzony ręcznie na stagingu.
+3. Rozdzielenie kontraktu resetu od zwykłej zmiany hasła — wykonane.
+4. Testy backendowe i frontendowe — wykonane; ręczny test recovery z
+   poprawnym, innym hasłem pozostaje otwarty z powodu limitu prób.
 
 ## Decyzje przyjęte
 
@@ -101,16 +99,41 @@ w pakiecie; pełny zestaw kontroli przechodzi.
 
 Pakiet został wdrożony na staging i ręcznie potwierdzono zwykłą zmianę hasła:
 formularz działa, hasło jest zmieniane, a użytkownik może zalogować się nowym
-hasłem. Produkcja nie była wdrażana ani modyfikowana.
+hasłem. Pełny pakiet haseł nie był wdrażany na produkcję; produkcja otrzymała
+wyłącznie osobny, bezpieczny pakiet wizualny.
 
 Przepływ resetu z e-maila pozostaje osobnym kontraktem recovery. Rozszerzono go
-o obsługę tokenów implicit w hash; ręczny test nowego linku stagingowego jest
-jeszcze do wykonania.
+o obsługę tokenów implicit w hash; ręczny test wejścia z nowego linku potwierdził
+poprawne otwarcie formularza, ale pełny test zapisu hasła pozostaje otwarty.
 
 Podczas kolejnej próby staging Supabase zwrócił `429 over_email_send_rate_limit`
 po przekroczeniu limitu wysyłki wiadomości resetujących. Backend otrzymuje ten
 konkretny przypadek jako HTTP 429 z generycznym komunikatem o konieczności
-odczekania; pozostałe błędy wysyłki nadal pozostają kontrolowanym 503.
+odczekania; pozostałe błędy wysyłki nadal pozostają kontrolowanym 503. Ostatnia
+próba wysyłki objęta limitem wystąpiła o 10:18:19 UTC.
+
+## Handoff — 2026-08-16
+
+- Link recovery na stagingu otwiera formularz „Ustaw nowe hasło”.
+- Próba zapisu dotarła do Supabase Auth, ale `PUT /user` zwrócił `422` z
+  komunikatem `New password should be different from the old password.`
+  Test należy powtórzyć z hasłem rzeczywiście różnym od poprzedniego.
+- Próba została odłożona po ponownym wejściu w limit wysyłki wiadomości
+  recovery. Nie wykonywać kolejnych prób przed kolejnym oknem testowym.
+- Stagingowy pakiet wizualny pozostaje wdrożony z commitem
+  `3b07f6c71c32a068e12412ea30481f667bfd140c`.
+- Produkcja ma wyłącznie bezpieczny pakiet wizualny z commitem
+  `0b3d43347d6b982eb86303db26650cc804ec8cd9`; pełny pakiet recovery i
+  funkcja zmiany hasła nie zostały promowane na produkcję.
+
+### Otwarte następne kroki
+
+1. Po zwolnieniu limitu wykonać jeden test: link recovery → inne nowe hasło →
+   logowanie nowym hasłem.
+2. Jeśli nowe hasło będzie inne, a `PUT /user` nadal zwróci błąd, zebrać
+   jednocześnie status żądania `POST /api/auth/password` i wpis Supabase Auth.
+3. Dopiero po pozytywnym teście recovery rozważyć osobny pakiet promocji
+   funkcji zarządzania hasłem na produkcję.
 
 ## Kryteria akceptacji
 

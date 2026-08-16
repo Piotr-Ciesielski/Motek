@@ -8,6 +8,29 @@ Pakiet jest gotowy do przeglądu i uzyskania osobnych zgód planistycznych, ale
 nie do wykonania operacji. Produkcja i staging nie są obecnie tym samym
 artefaktem.
 
+## Aktualny baseline — 2026-08-16
+
+Poniższy dokument zawiera również historyczne snapshoty z 2026-08-14–15.
+Dla bieżącej decyzji obowiązuje ten stan:
+
+- aplikacja produkcyjna działa na bezpiecznym pakiecie wizualnym
+  `0b3d43347d6b982eb86303db26650cc804ec8cd9`, z pominięciem pełnego pakietu
+  recovery/password-management;
+- produkcyjna baza Supabase ma 24 wpisy migracji, staging 28;
+- aktywna ścieżka recovery używana przez aplikację (`create()` plus
+  `claim/release/consume(text)`) oraz `claimed_at` i hash 64 znaków są obecne
+  i zgodne między środowiskami;
+- pełny release aplikacyjny nadal pozostaje `NO-GO` przez niezamknięty ledger,
+  legal-readiness, Cloudflare/origin/WAF i brak osobnych zgód wykonawczych.
+- świeży odczyt publiczny potwierdził: Production `/health/release` = 200,
+  commit `0b3d43347d6b982eb86303db26650cc804ec8cd9`, ale
+  `/informacje-prawne` = 404 i anonimowe `/api/patterns` = 200; Staging
+  `/health/release` = 200, commit `3b07f6c71c32a068e12412ea30481f667bfd140c`,
+  `/informacje-prawne` = 200 i anonimowe `/api/patterns` = 401.
+
+Szczegółowy odczyt zdalny znajduje się w sekcji „Odczytowa rewalidacja
+kontraktu recovery — 2026-08-16” na końcu dokumentu.
+
 ## Decyzja produktowo-prawna — potwierdzona 2026-08-14
 
 Zaakceptowano, że Production ma wymagać aktualnej akceptacji warunków prawnych
@@ -29,14 +52,17 @@ osobna zgoda na migrację i postflight.
 ## Stan przed operacją
 
 - produkcyjny SHA aplikacji: `c4b777a5f8a96277c0e7fb7ca6ec52d425a0900b`;
-- produkcyjny ledger: 23 migracje;
+- produkcyjny ledger: 23 migracje (snapshot historyczny z 2026-08-14; bieżący
+  odczyt po późniejszej delcie: 24);
 - snapshot pełnego ledgera Production/Staging: [supabase-ledger-reconciliation-2026-08-14.md](supabase-ledger-reconciliation-2026-08-14.md);
 - robocza macierz stagingowych wpisów: [supabase-staging-migration-matrix-2026-08-14.md](supabase-staging-migration-matrix-2026-08-14.md);
 - zdalne porównanie recovery/RLS/ACL: [supabase-remote-definition-comparison-2026-08-14.md](supabase-remote-definition-comparison-2026-08-14.md);
 - produkcja `/informacje-prawne`: `404`;
 - produkcja `/api/patterns` anonimowo: `200` z odpowiedzią JSON — naruszenie
   decyzji „katalog wyłącznie przez backend”;
-- produkcja nie ma kompletnego kontraktu recovery stagingu.
+- historyczny snapshot z tej sekcji nie miał kompletnego kontraktu recovery
+  stagingu; późniejsza delta i rewalidacja z 2026-08-16 zamknęły tę konkretną
+  różnicę.
 
 ## Kandydat docelowy
 
@@ -308,3 +334,25 @@ i release 200, katalog 200, `/informacje-prawne` 404 jako cecha starszego
 release’u. Cleanup legacy RPC nie został wykonany; promocja nowego release’u
 pozostaje zablokowana przez legal readiness i kontrakt katalogu. Produkcja
 działa na rollbacku `c4b777a`; nie jest to akceptacja pakietu recovery.
+## Odczytowa rewalidacja kontraktu recovery — 2026-08-16
+
+Wykonano wyłącznie odczyt zdalnych definicji Supabase Production i Staging;
+nie wykonano SQL zmieniającego dane, migracji ani zmian ACL.
+
+- Production ma obecnie 24 wpisy migracji, a Staging 28; najnowsze wpisy to
+  odpowiednio `production_legal_versioned_recovery_delta` oraz
+  `restore_recovery_grant_creator`.
+- W obu środowiskach `private.auth_recovery_grants` ma `claimed_at` oraz
+  constraint `char_length(jti_hash) = 64`.
+- Aktywna ścieżka używana przez aplikację jest zgodna w obu środowiskach:
+  `create_auth_recovery_grant()` i `consume_auth_recovery_grant(text)` oraz
+  `claim_auth_recovery_grant(text)` i `release_auth_recovery_grant(text)` mają
+  zgodne definicje i wykonanie dla roli `authenticated`.
+- Pozostają historyczne overloady z parametrami użytkownika/hash, dlatego ich
+  pełne porównanie i ewentualny cleanup nadal należy do osobnego ledgeru, a nie
+  do bieżącego wdrożenia aplikacji.
+
+Wniosek: wcześniejsza blokada „Production nie ma kontraktu claim/release/64”
+jest zamknięta przez późniejszy stan zdalny. Produkcja nadal pozostaje `NO-GO`
+dla pełnego release’u z powodu niezamkniętego ledgera migracji, legal-readiness,
+Cloudflare/origin/WAF oraz osobnych zgód na wykonanie migracji/deployu.
