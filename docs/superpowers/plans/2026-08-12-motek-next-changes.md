@@ -1309,3 +1309,39 @@ legal readiness i przygotowania release’u zawierającego zarówno katalog
 `data`, jak i poprawny manifest prawny; dopiero potem można powtórzyć deploy,
 obserwację 30-minutową i osobny cleanup. Rollback do `c4b777a` jest stanem
 ratunkowym, nie akceptacją pakietu recovery.
+
+## Handoff — aktualny punkt pracy, 2026-08-16
+
+Staging jest obecnie źródłem prawdy dla sprawdzonego kodu aplikacji na SHA
+`18c1f5c530e0b26984ca2c04abecccceb36788e9` (`2.0.0-alpha.39`). Deployment
+Railway `1b0609b1-5b3e-48b3-88e8-2d6c39343c3c` zakończył się sukcesem, a CI i
+post-deploy regression są zielone. Publiczny `/health/release` potwierdza
+środowisko `staging`, exact SHA i stan `ready`; strona prawna oraz ochrona
+katalogu są obecne na tym release’ie. Produkcja nie była przez ten stagingowy
+follow-up zmieniana.
+
+Odczyt produkcji potwierdza nadal osobny, starszy release na SHA
+`0b3d43347d6b982eb86303db26650cc804ec8cd9`. `/health/release` zwraca 200,
+ale `/informacje-prawne` zwraca 404, a anonimowy `/api/patterns` zwraca 200.
+Różnica wynika z rozjazdu release’u aplikacji, nie z Cloudflare. Produkcja
+pozostaje `NO-GO`.
+
+Otwarte bramki przed przygotowaniem osobnej decyzji produkcyjnej:
+
+- legal-readiness: `npm run legal:check` pozostaje fail-closed, ponieważ
+  Supabase, Railway i Cloudflare nie mają jeszcze datowanych, produkcyjnych
+  dowodów wymaganych przez manifest;
+- HSTS: wariant został zaakceptowany (`max-age=86400`, bez subdomen i bez
+  preload), ale zmiana w panelu Cloudflare nie została wykonana i publiczny
+  HTTPS nie pokazuje nagłówka `Strict-Transport-Security`;
+- production preflight: przed jakimkolwiek wdrożeniem trzeba ponownie
+  przypiąć exact candidate SHA, potwierdzić świeży backup/restore, zgodność
+  konfiguracji Railway i zakres forward-only migracji;
+- produkcyjny deploy, migracja lub cleanup legacy RPC wymagają osobnej zgody
+  wysokiego ryzyka. Nie wykonywać ich na podstawie samego zielonego stagingu.
+
+Najbezpieczniejsza kolejność dalszych prac to: (1) zebrać brakujące dowody
+legal/infrastructure, (2) ręcznie wykonać i publicznie zweryfikować wcześniej
+zaakceptowany HSTS, (3) przygotować jeden kandydat produkcyjny i powtórzyć
+preflight backup/restore, (4) przedstawić użytkownikowi pakiet GO/NO-GO, a
+dopiero po osobnej zgodzie wykonać migrację i deploy produkcyjny.
