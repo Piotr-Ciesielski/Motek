@@ -68,6 +68,16 @@ Read-only dowód DNS/HTTP z 2026-08-16 doprecyzował tę blokadę:
 równoważnych reguł WAF, rate limiting, cache ani alertów; przed promocją
 trzeba mieć zrzut konfiguracji obu ścieżek i testy negatywne.
 
+W read-only próbce HTTP logów Railway Production z tego samego okna nie
+wystąpiły odpowiedzi `5xx`. Widoczne `404` dotyczyły automatycznych prób
+`/robots.txt`, `/sitemap.xml` i `/wp-admin/install.php`; nie są dowodem awarii,
+ale pokazują, że monitoring musi rozróżniać skanowanie botów od błędów aplikacji.
+Nie potwierdzono jeszcze konfiguracji alertów ani progów powiadomień.
+
+Próba odczytu panelu Cloudflare przez zalogowany Edge nie została wykonana:
+Edge i rozszerzenie są lokalnie dostępne, lecz kanał sterowania przeglądarką
+nie uruchomił sesji. Nie traktujemy tego jako dowodu konfiguracji Cloudflare.
+
 ## Zasada dla migracji
 
 Stagingowy efekt zdalny jest źródłem prawdy. Nie należy wykonywać `db push`,
