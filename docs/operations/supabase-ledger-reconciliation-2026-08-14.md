@@ -605,3 +605,7 @@ porównywać znak w znak bez jawnej normalizacji treści i mapowania grup.
 20260812122131_add_recovery_grant_claim.sql A025A53CA7E12BC903AA484754F4D225B1378F4FBF18BE269568252D24324829
 20260815152553_restore_recovery_grant_creator.sql CDC6B71A11881FF20C5CCAE0F958FF1603B24A2AEBF11573EBF25A488A3029D3
 ```
+
+Szczegółowa mapa bieżącego checkoutu, wraz z rozdzieleniem grup scalonych i
+historycznych odpowiedników RC, znajduje się w
+[supabase-ledger-current-checkout-map-2026-08-16.md](supabase-ledger-current-checkout-map-2026-08-16.md).
