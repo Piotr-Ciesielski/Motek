@@ -731,6 +731,11 @@ h1 {
   font: inherit;
 }
 
+#loginForm .password-field input {
+  height: 44px;
+  min-height: 44px;
+}
+
 .auth-logged-in {
   display: flex;
   align-items: center;
@@ -2292,6 +2297,15 @@ body::before {
   object-position: 72% center;
   opacity: 0.28;
   pointer-events: none;
+}
+
+#accountView:not(.is-authenticated) .auth-visual > .auth-visual__image {
+  opacity: 1;
+}
+
+[data-theme="dark"] #accountView:not(.is-authenticated) .auth-visual,
+[data-theme="dark"] #accountView:not(.is-authenticated) .auth-visual h1 {
+  color: var(--on-hero);
 }
 
 #accountView.is-authenticated .auth-layout {
