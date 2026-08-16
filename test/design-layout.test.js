@@ -189,8 +189,9 @@ test("inventory hero matches the shared hero height and keeps actions below the 
 });
 
 test("captcha remains available in every auth flow", () => {
-  assert.equal((indexHtml.match(/data-turnstile-for=/g) || []).length, 3);
+  assert.equal((indexHtml.match(/data-turnstile-for=/g) || []).length, 4);
   assert.match(indexHtml, /data-turnstile-for="passwordReset"/);
+  assert.match(indexHtml, /data-turnstile-for="passwordChange"/);
   assert.match(appJs, /challenges\.cloudflare\.com\/turnstile\/v0\/api\.js\?render=explicit/);
 });
 

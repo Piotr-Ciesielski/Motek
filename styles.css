@@ -820,6 +820,38 @@ h1 {
   justify-self: start;
 }
 
+.account-security-zone {
+  display: grid;
+  flex-basis: 100%;
+  gap: 1rem;
+  margin-top: 1.5rem;
+  padding: 1rem;
+  border: 1px solid var(--border);
+  border-radius: 1rem;
+  background: var(--panel);
+}
+
+.account-security-zone__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.account-security-zone h3,
+.account-security-zone p {
+  margin: 0;
+}
+
+.account-security-zone__panel {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.account-security-zone__panel > .button {
+  justify-self: start;
+}
+
 .auth-profile__name,
 .auth-profile__email {
   display: block;

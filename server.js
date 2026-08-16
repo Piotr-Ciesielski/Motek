@@ -76,6 +76,11 @@ const AUTH_REQUEST_LIMITS = Object.freeze({
     maxRequests: 3,
     blockMs: 15 * 60 * 1000,
   },
+  "password-change": {
+    windowMs: 15 * 60 * 1000,
+    maxRequests: 30,
+    blockMs: 15 * 60 * 1000,
+  },
   recovery: { windowMs: 10 * 60 * 1000, maxRequests: 5, blockMs: 10 * 60 * 1000 },
 });
 const YARN_WRITE_WINDOW_MS = 60 * 1000;
@@ -615,6 +620,18 @@ function genericAuthError(operation) {
   return new ApiError(400, "Nie udało się utworzyć konta. Sprawdź dane i spróbuj ponownie.");
 }
 
+function isTransientAuthError(error) {
+  const status = Number(error?.status);
+  return error?.name === "AuthRetryableFetchError"
+    || status === 408
+    || status === 429
+    || status >= 500;
+}
+
+function isUncertainPasswordChangeError(error) {
+  return error?.name === "AuthSessionMissingError" || isTransientAuthError(error);
+}
+
 async function updateLastLogin(userId) {
   if (!supabaseConnection?.client || !userId) return;
   const { error } = await supabaseConnection.client
@@ -640,6 +657,7 @@ async function getAuthenticatedSession(req, res) {
 
   const client = supabaseAuthClientFactory(supabaseAuthConfig);
   let activeAccessToken = accessToken;
+  let activeRefreshToken = refreshToken;
   let userResult = accessToken
     ? await client.auth.getUser(accessToken)
     : { data: null, error: new Error("Brak tokenu dostępu") };
@@ -649,6 +667,7 @@ async function getAuthenticatedSession(req, res) {
     if (refreshed.data?.session) {
       setAuthCookies(res, refreshed.data.session);
       activeAccessToken = refreshed.data.session.access_token;
+      activeRefreshToken = refreshed.data.session.refresh_token || activeRefreshToken;
       userResult = await client.auth.getUser(activeAccessToken);
     }
   }
@@ -700,6 +719,7 @@ async function getAuthenticatedSession(req, res) {
     user: userResult.data.user,
     profile: profileResult.data,
     accessToken: activeAccessToken,
+    refreshToken: activeRefreshToken,
     legal,
   };
 }
@@ -1449,6 +1469,106 @@ async function handleAuthApi(req, res, url) {
     if (globalSignOutFailed) {
       throw new ApiError(503, "Hasło zostało zmienione, ale nie udało się unieważnić pozostałych sesji.");
     }
+    return sendJson(res, 200, { passwordUpdated: true, authenticated: false });
+  }
+
+  if (req.method === "POST" && url.pathname === "/api/auth/password/change") {
+    const session = await requireAuthenticatedSession(req, res);
+    const body = await readBody(req);
+    const currentPassword = body.currentPassword;
+    if (typeof currentPassword !== "string" || !currentPassword.trim()) {
+      throw new ApiError(400, "Podaj bieżące hasło.");
+    }
+    const password = validateAuthPassword(body.password);
+
+    let captchaToken;
+    try {
+      captchaToken = normalizeCaptchaToken(body.captchaToken, captchaConfig.enabled);
+    } catch (error) {
+      throw new ApiError(400, error.message);
+    }
+
+    const rateLimitKeys = getAuthRateLimitKeys(req, session.user.email);
+    enforceRequestRateLimit([`ip:${getClientAddress(req)}`], authRequestRateLimiters["password-change"], res);
+    enforceAuthRateLimit(rateLimitKeys, res);
+
+    const verifier = supabaseAuthClientFactory(supabaseAuthConfig);
+    const { data: verificationData, error: verificationError } = await verifier.auth.signInWithPassword({
+      email: session.user.email,
+      password: currentPassword,
+      ...(captchaToken ? { options: { captchaToken } } : {}),
+    });
+    if (verificationError || verificationData?.user?.id !== session.user.id) {
+      if (verificationError && isTransientAuthError(verificationError)) {
+        throw new ApiError(503, "Weryfikacja bieżącego hasła jest chwilowo niedostępna. Spróbuj ponownie później.");
+      }
+      recordAuthFailure(rateLimitKeys);
+      throw new ApiError(403, "Nie udało się zmienić hasła. Spróbuj ponownie.");
+    }
+    clearAuthFailures(rateLimitKeys);
+
+    if (!session.refreshToken) {
+      clearAuthCookies(res);
+      throw new ApiError(503, "Sesja logowania jest niepełna. Zaloguj się ponownie i spróbuj jeszcze raz.");
+    }
+
+    const client = supabaseAuthClientFactory(supabaseAuthConfig, session.accessToken);
+    const { error: sessionError } = await client.auth.setSession({
+      access_token: session.accessToken,
+      refresh_token: session.refreshToken,
+    });
+    if (sessionError) {
+      try {
+        await client.auth.signOut({ scope: "global" });
+      } catch {
+        // Nie przesłaniaj niepewnego stanu sesji dodatkowym błędem.
+      } finally {
+        clearAuthCookies(res);
+      }
+      throw new ApiError(503, "Sesja logowania jest chwilowo niedostępna. Zaloguj się ponownie.");
+    }
+
+    let updateResult;
+    try {
+      updateResult = await client.auth.updateUser({ current_password: currentPassword, password });
+    } catch {
+      try {
+        await client.auth.signOut({ scope: "global" });
+      } catch {
+        // Nie przesłaniaj niepewnego stanu aktualizacji dodatkowym błędem.
+      } finally {
+        clearAuthCookies(res);
+      }
+      throw new ApiError(503, "Wynik zmiany hasła jest niepewny. Zaloguj się ponownie.");
+    }
+
+    const { error: updateError } = updateResult;
+    if (updateError) {
+      if (isUncertainPasswordChangeError(updateError)) {
+        try {
+          await client.auth.signOut({ scope: "global" });
+        } catch {
+          // Nie przesłaniaj niepewnego stanu aktualizacji dodatkowym błędem.
+        } finally {
+          clearAuthCookies(res);
+        }
+        throw new ApiError(503, "Wynik zmiany hasła jest niepewny. Zaloguj się ponownie.");
+      }
+      throw new ApiError(400, "Nie udało się zmienić hasła. Sprawdź hasło i spróbuj ponownie.");
+    }
+
+    try {
+      const signOutResult = await client.auth.signOut({ scope: "global" });
+      if (signOutResult?.error) {
+        throw new ApiError(503, "Hasło zostało zmienione. Nie udało się wylogować wszystkich sesji.");
+      }
+    } catch (error) {
+      if (error instanceof ApiError) throw error;
+      throw new ApiError(503, "Hasło zostało zmienione. Nie udało się wylogować wszystkich sesji.");
+    } finally {
+      clearAuthCookies(res);
+    }
+
     return sendJson(res, 200, { passwordUpdated: true, authenticated: false });
   }
 

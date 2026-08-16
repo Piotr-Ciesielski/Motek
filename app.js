@@ -55,6 +55,8 @@ const forgotPasswordBtn = document.getElementById("forgotPasswordBtn");
 const passwordResetForm = document.getElementById("passwordResetForm");
 const passwordUpdateForm = document.getElementById("passwordUpdateForm");
 const cancelPasswordResetBtn = document.getElementById("cancelPasswordResetBtn");
+const changePasswordToggle = document.getElementById("changePasswordToggle");
+const changePasswordForm = document.getElementById("changePasswordForm");
 const accountView = document.getElementById("accountView");
 const headerAuthAction = document.getElementById("headerAuthAction");
 const themeToggle = document.getElementById("themeToggle");
@@ -204,9 +206,9 @@ let preservedDraftRequiresSave = false;
 let hasCalculatedMatches = false;
 let inventoryChangedSinceMatch = false;
 let authCaptchaConfig = { enabled: false, provider: null, siteKey: null };
-const captchaTokens = { login: null, register: null, passwordReset: null };
-const captchaWidgetIds = { login: null, register: null, passwordReset: null };
-const captchaRenderPromises = { login: null, register: null, passwordReset: null };
+const captchaTokens = { login: null, register: null, passwordReset: null, passwordChange: null };
+const captchaWidgetIds = { login: null, register: null, passwordReset: null, passwordChange: null };
+const captchaRenderPromises = { login: null, register: null, passwordReset: null, passwordChange: null };
 let turnstileScriptPromise = null;
 
 function canAccessPrivateData() {
@@ -263,7 +265,13 @@ function loadTurnstileScript() {
 }
 
 function authFormKind(form) {
-  return form === registerForm ? "register" : form === passwordResetForm ? "passwordReset" : "login";
+  return form === registerForm
+    ? "register"
+    : form === passwordResetForm
+      ? "passwordReset"
+      : form === changePasswordForm
+        ? "passwordChange"
+        : "login";
 }
 
 async function renderCaptchaForForm(form) {
@@ -276,7 +284,8 @@ async function renderCaptchaForForm(form) {
   captchaRenderPromises[kind] = (async () => {
     await loadTurnstileScript();
     const visibleForm = document.querySelector(".auth-form:not([hidden])");
-    if (visibleForm !== form || form.hidden || !form.isConnected) return;
+    const isVisible = form === changePasswordForm ? !form.hidden : visibleForm === form;
+    if (!isVisible || !form.isConnected) return;
     const container = form.querySelector(`[data-turnstile-for="${kind}"]`);
     if (!container || captchaWidgetIds[kind] !== null) return;
     captchaWidgetIds[kind] = window.turnstile.render(container, {
@@ -303,7 +312,7 @@ async function initializeCaptcha() {
 }
 
 function resetCaptchaForForm(form) {
-  const kind = form === registerForm ? "register" : form === passwordResetForm ? "passwordReset" : "login";
+  const kind = authFormKind(form);
   captchaTokens[kind] = null;
   if (captchaWidgetIds[kind] !== null && window.turnstile) {
     window.turnstile.reset(captchaWidgetIds[kind]);
@@ -1927,7 +1936,8 @@ async function startPasswordRecovery() {
       return true;
     }
   }
-  if (!code || query.get("recovery") !== "1") {
+  const isRecoveryCallback = Boolean(code) && !(accessToken && refreshToken && hash.get("type") === "signup");
+  if (!isRecoveryCallback) {
     return false;
   }
   // Usuń jednorazowy kod z adresu przed pierwszym żądaniem sieciowym.
@@ -2216,6 +2226,52 @@ passwordResetForm.addEventListener("submit", async (event) => {
   } finally {
     resetCaptchaForForm(passwordResetForm);
     setAuthBusy(passwordResetForm, false);
+  }
+});
+
+changePasswordToggle.addEventListener("click", () => {
+  const isOpen = changePasswordForm.hidden;
+  if (!isOpen) {
+    changePasswordForm.reset();
+  }
+  changePasswordForm.hidden = !isOpen;
+  changePasswordToggle.setAttribute("aria-expanded", String(isOpen));
+  if (isOpen) {
+    changePasswordForm.querySelector('input[name="currentPassword"]').focus();
+    renderCaptchaForForm(changePasswordForm).catch((error) => setAuthMessage(error.message, "error"));
+  }
+});
+
+changePasswordForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const body = Object.fromEntries(new FormData(changePasswordForm).entries());
+  const passwordConfirmation = body.passwordConfirmation;
+  if (body.password !== passwordConfirmation) {
+    setAuthMessage("Wpisane hasła nie są zgodne.", "error");
+    changePasswordForm.querySelector('input[name="passwordConfirmation"]').focus();
+    return;
+  }
+
+  setAuthBusy(changePasswordForm, true);
+  setAuthMessage("Zmieniam hasło...");
+  try {
+    await api("/api/auth/password/change", {
+      method: "POST",
+      body: JSON.stringify(buildAuthPayload({ currentPassword: body.currentPassword, password: body.password }, {
+        captchaEnabled: authCaptchaConfig.enabled,
+        captchaToken: captchaTokens.passwordChange,
+      })),
+    });
+    changePasswordForm.reset();
+    changePasswordForm.hidden = true;
+    changePasswordToggle.setAttribute("aria-expanded", "false");
+    renderAuthState({ authenticated: false });
+    showAuthForm(loginForm);
+    setAuthMessage("Hasło zmienione. Zaloguj się nowym hasłem.", "success");
+  } catch {
+    setAuthMessage("Nie udało się zmienić hasła. Spróbuj ponownie.", "error");
+  } finally {
+    setAuthBusy(changePasswordForm, false);
   }
 });
 
