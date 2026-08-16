@@ -135,3 +135,23 @@ Staging na `18c1f5c` pozostaje kontraktowo inny w dwóch istotnych punktach:
 publiczna strona prawna działa, a anonimowy katalog zwraca `401`. Produkcja
 pozostaje `NO-GO` dla promocji pakietu recovery do czasu wyjaśnienia różnicy
 release'u i ochrony katalogu.
+
+## Root cause — różnica produkcja–staging — 2026-08-16
+
+Porównanie referencji aplikacji potwierdziło, że rozbieżność jest skutkiem
+starego release'u produkcyjnego, a nie błędu routingu Cloudflare:
+
+- `0b3d433` nie zawiera w mapie plików statycznych serwera tras
+  `/informacje-prawne`, `/legal-document.js` i powiązanych skryptów, dlatego
+  produkcja zwraca `404`;
+- `0b3d433` obsługuje `GET /api/patterns` bez wywołania
+  `requireAuthenticatedSession`, dlatego anonimowy katalog zwraca `200`;
+- `18c1f5c` zawiera trasę strony prawnej oraz wymuszenie bieżącej sesji i
+  akceptacji warunków przed katalogiem, dlatego staging zwraca odpowiednio
+  `200` i `401`.
+
+To jest rozjazd release'u aplikacji. Nie należy naprawiać go pojedynczym
+plikem ani ręcznym cherry-pickiem na produkcji. Następny kandydat produkcyjny
+musi przejść pełny preflight legal/infrastructure, potwierdzenie zgodności
+ze schematem Supabase, backup/restore i osobną zgodę na wdrożenie. Produkcja
+pozostaje `NO-GO`.
