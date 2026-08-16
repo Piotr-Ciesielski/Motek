@@ -8,6 +8,12 @@ mechanicznego odtwarzania numerów migracji i bez usuwania danych.
 To jest dokument projektowy. Nie jest instrukcją wykonawczą i nie daje zgody
 na `db push`, `migration repair`, ręczne SQL ani deploy.
 
+## Świeży odczyt zdalny
+
+Read-only snapshot z 2026-08-16 potwierdził 24 wpisy migracji w Production i
+28 w Stagingu. Nie są to mapowania 1:1 plików lokalnych; o promocji decyduje
+efekt SQL, nie zgodność numerów.
+
 ## Zakres promowany
 
 ### 1. Katalog publikowany
@@ -24,27 +30,37 @@ promować:
 Istniejące rekordy muszą pozostać nieopublikowane do czasu potwierdzenia ich
 audytu. Nie zmieniamy `description NOT NULL` w Production.
 
+Staging ma dodatkowo `description NULL`, `publication_status`,
+`content_audit_version`, `content_audited_at` i `official_source_url`.
+Production zachowuje `description NOT NULL`; tę różnicę trzeba uwzględnić w
+precondition migracji.
+
 ### 2. Recovery
 
 Oba zdalne projekty mają już zgodny aktywny efekt recovery: `jti_hash` jako
 klucz, `claimed_at` i funkcje claim/release/consume. Nie dodajemy `grant_id`
 i nie wykonujemy migracji z lokalnego wariantu, który tworzy inną strukturę.
 
-Pozostają do osobnego audytu i ewentualnego cleanupu legacy overloady:
+Świeży odczyt funkcji wykazał w obu projektach zgodne stare overloady:
 
 - `create_auth_recovery_grant(uuid, text, timestamptz)`;
-- `claim_auth_recovery_grant(uuid, text)`;
-- `release_auth_recovery_grant(uuid, text)`;
 - `consume_auth_recovery_grant(uuid, text)`.
 
-Cleanup wymaga potwierdzenia, że żaden zewnętrzny konsument ich nie używa.
+Nie wykazano świeżym zapytaniem dodatkowych overloadów claim/release. Każdy
+cleanup wymaga osobnego audytu konsumentów i nie jest częścią wyrównania
+katalogu.
 
 ### 3. Versioned yarn store
 
-Zachowujemy produkcyjne `updated_at`. Nie wykonujemy destrukcyjnego usuwania
-kolumny tylko dla zgodności ze stagingiem. Przed promocją należy potwierdzić
-definicje RPC, RLS i ACL; ich zachowanie jest obecnie potwierdzone, ale historia
-migracji jest różna.
+Production ma `private.yarn_store_versions.updated_at NOT NULL DEFAULT now()`;
+Staging tej kolumny nie ma. Zachowujemy produkcyjne `updated_at`. Nie
+wykonujemy destrukcyjnego usuwania kolumny tylko dla zgodności ze stagingiem.
+RPC versioned store są w obu projektach `SECURITY DEFINER`, z pustym
+`search_path` i grantem dla `authenticated`/`service_role`.
+
+Production nadal ma dwa overloady `insert_yarn_with_limit`, których Staging
+nie ma. Przed ewentualnym cleanupem trzeba potwierdzić brak konsumentów;
+automatyczne usuwanie nie jest bezpiecznym sposobem zamykania ledgera.
 
 ### 4. Legal i rejestracja
 

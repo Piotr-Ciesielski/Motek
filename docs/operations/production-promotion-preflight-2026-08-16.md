@@ -60,6 +60,14 @@ Funkcjonalny test zmiany hasła został potwierdzony ręcznie na stagingu.
    `SECURITY DEFINER`, ochrony przed wyciekłymi hasłami oraz dodatkowych
    polityk RLS stagingu.
 
+Read-only dowód DNS/HTTP z 2026-08-16 doprecyzował tę blokadę:
+`www.rysia.org` jest proxied przez Cloudflare (`Server: cloudflare`,
+`CF-Cache-Status: DYNAMIC`, `Cache-Control: no-store`), natomiast
+`staging.rysia.org` wskazuje CNAME bezpośrednio na Railway i zwraca
+`Server: railway-hikari`, bez warstwy Cloudflare. Nie jest to dowód
+równoważnych reguł WAF, rate limiting, cache ani alertów; przed promocją
+trzeba mieć zrzut konfiguracji obu ścieżek i testy negatywne.
+
 ## Zasada dla migracji
 
 Stagingowy efekt zdalny jest źródłem prawdy. Nie należy wykonywać `db push`,
