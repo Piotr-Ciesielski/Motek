@@ -35,6 +35,26 @@ Staging ma dodatkowo `description NULL`, `publication_status`,
 Production zachowuje `description NOT NULL`; tę różnicę trzeba uwzględnić w
 precondition migracji.
 
+Aktualny odczyt danych potwierdził `0/15` rekordów z pustym opisem w Production
+oraz `103/111` rekordów z pustym opisem w Stagingu. Z tego powodu pakiet
+promocyjny katalogu jest produkcyjny i celowo zatrzymuje się przed zmianą, gdy
+wykryje `NULL` w `description`; nie może być automatycznie wykonywany na
+Stagingu.
+
+Przygotowany pakiet wykonawczy znajduje się w
+`supabase/production-deltas/20260816_add_pattern_publication_audit_compatible.sql`.
+Jest celowo poza `supabase/migrations`: nie może zostać przypadkowo uruchomiony
+przez zwykły replay stagingu. Ma precondition istnienia tabeli, blokadę na
+`NULL`, idempotentne dodawanie kolumn i constraintów oraz transakcję.
+
+Weryfikacja lokalna pakietu:
+
+- produkcyjny kształt: pola dodane, 15 rekordów otrzymało `pending_review`,
+  `description` pozostał `NOT NULL`;
+- stagingowy kształt: pakiet zatrzymał się przed zmianą i nie zostawił kolumn;
+- kontrakt migracji: `PASS`;
+- pełny zestaw aplikacji: `394/394`, lint, check i `git diff --check`: `PASS`.
+
 ### 2. Recovery
 
 Oba zdalne projekty mają już zgodny aktywny efekt recovery: `jti_hash` jako
@@ -72,6 +92,7 @@ migracji na produkcji.
 ## Bramy przed napisaniem migracji wykonawczej
 
 - [ ] każdy obiekt SQL ma przypisany efekt, precondition i sposób rollbacku;
+- [x] pakiet katalogu ma osobny precondition i nie usuwa `description NOT NULL`;
 - [ ] istniejące dane katalogu przechodzą preflight bez publikowania rekordów;
 - [ ] aktywny recovery nie wymaga zmiany tabeli ani klucza;
 - [ ] legacy overloady mają potwierdzony brak konsumentów albo osobny plan;

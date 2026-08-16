@@ -184,3 +184,28 @@ test("migracja zaproszeń udostępnia revoke wyłącznie service_role", () => {
   assert.match(sql, /revoke all on function public\.create_registration_invitation\(text, text, timestamptz\) from public, anon, authenticated/i);
   assert.match(sql, /grant execute on function public\.create_registration_invitation\(text, text, timestamptz\) to service_role/i);
 });
+
+test("produkcyjny pakiet katalogu zachowuje description NOT NULL i zatrzymuje się na stagingowych NULL-ach", () => {
+  const migrationPath = path.join(
+    __dirname,
+    "..",
+    "supabase",
+    "production-deltas",
+    "20260816_add_pattern_publication_audit_compatible.sql",
+  );
+  assert.ok(fs.existsSync(migrationPath), "produkcyjny pakiet migracyjny istnieje");
+
+  const sql = fs.readFileSync(migrationPath, "utf8");
+
+  assert.match(sql, /PRODUCTION-ONLY/i);
+  assert.match(sql, /add column if not exists publication_status text/i);
+  assert.match(sql, /default 'pending_review'/i);
+  assert.match(sql, /content_audit_version text/i);
+  assert.match(sql, /content_audited_at timestamptz/i);
+  assert.match(sql, /official_source_url text/i);
+  assert.match(sql, /description is null[\s\S]*raise exception/i);
+  assert.match(sql, /alter column description set not null/i);
+  assert.match(sql, /patterns_publication_status_check/i);
+  assert.match(sql, /patterns_published_audit_check/i);
+  assert.doesNotMatch(sql, /description\s+drop\s+not\s+null/i);
+});
