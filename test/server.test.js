@@ -903,6 +903,28 @@ test("serwer Motek działa bezpiecznie", async (t) => {
         options: { redirectTo: `${baseUrl}/?recovery=1`, captchaToken: "reset-token" },
       });
 
+      recoveryGrantRpcs.length = 0;
+      recoveryGrantState.setSessionArgs.length = 0;
+      const tokenRecoveryResponse = await fetch(`${baseUrl}/api/auth/recovery`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Origin: baseUrl },
+        body: JSON.stringify({
+          access_token: "token-user-a",
+          refresh_token: "refresh-user-a",
+        }),
+      });
+      assert.equal(tokenRecoveryResponse.status, 200);
+      assert.deepEqual(recoveryGrantState.setSessionArgs, [{
+        access_token: "token-user-a",
+        refresh_token: "refresh-user-a",
+      }]);
+      assert.deepEqual(recoveryGrantRpcs, [{
+        name: "create_auth_recovery_grant",
+        args: {},
+        userId: syntheticUsers["token-user-a"].id,
+      }]);
+
+      recoveryGrantRpcs.length = 0;
       const recoveryResponse = await fetch(`${baseUrl}/api/auth/recovery`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Origin: baseUrl },

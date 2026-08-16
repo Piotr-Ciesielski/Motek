@@ -1,7 +1,41 @@
 # Pakiet: zarządzanie hasłem
 
-Data zapisu: 2026-08-15
-Status: implementacja zakończona lokalnie; ręczna weryfikacja stagingu oczekuje na zalogowaną sesję QA i wiadomość resetującą
+Data zapisu: 2026-08-15; aktualizacja: 2026-08-16
+Status: pakiet wdrożony i potwierdzony na stagingu; produkcja pozostała nietknięta
+
+## Finalizacja pakietu — 2026-08-15–16
+
+Wczoraj domknięto interfejs i podstawowy backend zwykłej zmiany hasła.
+Weryfikacja stagingu ujawniła następnie, że sama obecność `current_password`
+w `updateUser` nie wystarcza: klient `@supabase/supabase-js` musi mieć przed
+`updateUser` ustawioną pełną sesję użytkownika.
+
+Wykonane poprawki:
+
+- `597cf02` — backend przekazuje bieżące hasło jako `current_password`, zgodnie
+  z polityką Supabase wymagającą ponownego uwierzytelnienia;
+- `fc1650d` — backend odtwarza sesję przez `auth.setSession` z bieżącym
+  access tokenem i refresh tokenem przed `updateUser`;
+- błędy `AuthSessionMissingError` i chwilowe błędy transportowe nie są już
+  przedstawiane jako „błędne bieżące hasło”; wynik niepewny kończy sesję i
+  zwraca kontrolowany `503`;
+- dodano osobny limiter żądań dla `POST /api/auth/password/change` oraz
+  limit nieudanych prób weryfikacji hasła;
+- frontend odświeża CAPTCHA po każdej próbie zmiany hasła.
+- callback resetu obsługuje zarówno `?code=...`, jak i standardowy dla
+  Supabase hash `#access_token=...&refresh_token=...&type=recovery`; tokeny są
+  wymieniane na sesję recovery po stronie backendu i usuwane z adresu przed
+  żądaniem sieciowym.
+
+Wdrożenie:
+
+- Railway deployment: `2157d2af-3380-450a-9274-07547512c4ab`;
+- środowisko: staging, `https://staging.rysia.org`;
+- źródło: branch `agent/staging-security-merge`, commit
+  `fc1650d30dc85f9c7df99b6446bbfa885e5de6fb`;
+- status deploymentu: `SUCCESS`;
+- `/health/ready`: `200`, `{"status":"ready"}`;
+- ręcznie potwierdzono poprawną zmianę hasła na stagingu.
 
 ## Obserwacja ze stagingu
 
@@ -20,6 +54,8 @@ etapu naprawy kontraktu recovery na stagingu. Nie zmieniamy jej w tym pakiecie.
   przed żądaniem sieciowym i pokazuje formularz ustawienia nowego hasła.
 - Zwykła zmiana hasła korzysta z osobnego `POST /api/auth/password/change`,
   wymaga dotychczasowego hasła, a po udanej zmianie unieważnia wszystkie sesje.
+- Przed `updateUser` backend ustawia sesję klienta Supabase z access tokenem i
+  refresh tokenem bieżącego użytkownika oraz przekazuje `current_password`.
 - Błąd niepewnego wyniku `updateUser` kończy się kontrolowanym 503, próbą
   globalnego wylogowania i wyczyszczeniem cookies.
 - Każde wylogowanie czyści pola formularza zmiany hasła, a błąd 503 prowadzi
@@ -58,19 +94,18 @@ Nie dodano nowej migracji ani RPC dla zwykłej zmiany hasła.
 - Niezależna recenzja po poprawkach: `ACCEPT`, bez blokad wysokiego ani
   średniego priorytetu.
 
-Pozostają niskopriorytetowe usprawnienia: bezpośredni test DOM całego handlera
-formularza oraz osobny limiter prób weryfikacji dotychczasowego hasła.
+Test DOM formularza oraz osobny limiter prób weryfikacji zostały uwzględnione
+w pakiecie; pełny zestaw kontroli przechodzi.
 
 ## Stan weryfikacji stagingu
 
-Staging jest dostępny, ale podczas ostatniej próby karta Edge była wylogowana.
-Nie wpisywano danych uwierzytelniających ani nie wykonywano zmiany hasła.
-Do zamknięcia pakietu pozostaje test z kontem QA:
+Pakiet został wdrożony na staging i ręcznie potwierdzono zwykłą zmianę hasła:
+formularz działa, hasło jest zmieniane, a użytkownik może zalogować się nowym
+hasłem. Produkcja nie była wdrażana ani modyfikowana.
 
-1. zalogować się w stagingu i sprawdzić panel „Zmień hasło”, błędne hasło,
-   poprawną zmianę, ponowne logowanie i brak działania starego hasła;
-2. sprawdzić reset z prawdziwej wiadomości oraz link wykorzystany/wygasły;
-3. potwierdzić zachowanie drugiej sesji i brak zmian w magazynie włóczek.
+Przepływ resetu z e-maila pozostaje osobnym kontraktem recovery. Rozszerzono go
+o obsługę tokenów implicit w hash; ręczny test nowego linku stagingowego jest
+jeszcze do wykonania.
 
 ## Kryteria akceptacji
 
@@ -82,5 +117,7 @@ Do zamknięcia pakietu pozostaje test z kontem QA:
   a użytkownik może zalogować się nowym hasłem.
 - Zalogowany użytkownik może z karty „Konto” rozpocząć zmianę istniejącego
   hasła i otrzymuje jasny wynik sukcesu albo błąd bez ujawniania wrażliwych
-  informacji — potwierdzone testami lokalnymi, staging oczekuje na test QA.
-- Obie ścieżki mają test automatyczny oraz sprawdzenie na stagingu.
+  informacji — potwierdzone testami lokalnymi i ręcznie na stagingu.
+- Zwykła zmiana hasła ma test automatyczny i ręczne potwierdzenie na stagingu;
+  reset recovery pozostaje osobną ścieżką z własnym testem stagingowym do
+  wykonania przy kolejnym sprawdzeniu.

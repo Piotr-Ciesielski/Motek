@@ -1868,7 +1868,9 @@ async function startPasswordRecovery() {
       return true;
     }
   }
-  const isRecoveryCallback = Boolean(code) && !(accessToken && refreshToken && hash.get("type") === "signup");
+  const isHashRecoveryCallback = Boolean(accessToken && refreshToken && hash.get("type") === "recovery");
+  const isRecoveryCallback = (Boolean(code) || isHashRecoveryCallback)
+    && !(accessToken && refreshToken && hash.get("type") === "signup");
   if (!isRecoveryCallback) {
     return false;
   }
@@ -1877,9 +1879,12 @@ async function startPasswordRecovery() {
 
   try {
     setAuthMessage("Sprawdzam link odzyskiwania hasła...");
+    const recoveryBody = code
+      ? { code }
+      : { access_token: accessToken, refresh_token: refreshToken };
     await api("/api/auth/recovery", {
       method: "POST",
-      body: JSON.stringify({ code }),
+      body: JSON.stringify(recoveryBody),
     });
     window.history.replaceState({}, document.title, window.location.pathname);
     authForms.hidden = false;

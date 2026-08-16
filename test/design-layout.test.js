@@ -114,7 +114,10 @@ test("captcha initializes even when the page opens from password recovery", () =
 
 test("password recovery exchanges only a one-time code while signup handles URL tokens", () => {
   assert.match(appJs, /const code = query\.get\("code"\)/);
-  assert.match(appJs, /body: JSON\.stringify\(\{ code \}\)/);
+  assert.match(appJs, /const accessToken = hash\.get\("access_token"\)/);
+  assert.match(appJs, /const refreshToken = hash\.get\("refresh_token"\)/);
+  assert.match(appJs, /hash\.get\("type"\) === "recovery"/);
+  assert.match(appJs, /const recoveryBody = code[\s\S]*?body: JSON\.stringify\(recoveryBody\)/);
   assert.match(appJs, /hash\.get\("access_token"\)/);
   assert.match(appJs, /access_token: accessToken/);
 });
@@ -258,7 +261,8 @@ test("błąd 503 zmiany hasła wylogowuje i pokazuje bezpieczny komunikat logowa
 });
 
 test("callback recovery przyjmuje kod bez markera i usuwa dane adresu", () => {
-  assert.match(appJs, /const isRecoveryCallback = Boolean\(code\) && !\(accessToken && refreshToken && hash\.get\("type"\) === "signup"\);/);
+  assert.match(appJs, /const isHashRecoveryCallback = Boolean\(accessToken && refreshToken && hash\.get\("type"\) === "recovery"\);/);
+  assert.match(appJs, /const isRecoveryCallback = \(Boolean\(code\) \|\| isHashRecoveryCallback\)/);
   assert.match(appJs, /if \(!isRecoveryCallback\) \{[\s\S]*?return false;/);
   assert.match(appJs, /window\.history\.replaceState\(\{\}, document\.title, window\.location\.pathname\);[\s\S]*?await api\("\/api\/auth\/recovery"/);
 });

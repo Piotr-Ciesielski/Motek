@@ -8,6 +8,11 @@
 
 **Tech Stack:** Node.js HTTP server, Supabase Auth przez `@supabase/supabase-js`, statyczny frontend `index.html`/`app.js`, testy `node:test`, testy integracyjne HTTP i testy statycznego layoutu.
 
+**Status realizacji (2026-08-16):** implementacja planu wykonana. Kod zapisano w commitach
+`597cf02` i `fc1650d`, opublikowano na GitHub oraz wdrożono na stagingu.
+Ręczna zmiana hasła na `https://staging.rysia.org` zakończyła się sukcesem;
+osobny ręczny test recovery pozostaje do wykonania.
+
 ## Global Constraints
 
 - Nie zmieniać istniejącego kontraktu recovery ani nie używać grantu recovery do zwykłej zmiany hasła.
@@ -86,7 +91,7 @@ testy Auth pozostają zielone.
 - Test: `test/server.test.js` — testy z Task 1.
 
 **Interfaces:**
-- Consumes: `requireAuthenticatedSession(req, res)`, `validateAuthPassword`, `parseCookies`, `clearAuthCookies`, `supabaseAuthClientFactory` i bieżący `session.accessToken`.
+- Consumes: `requireAuthenticatedSession(req, res)`, `validateAuthPassword`, `parseCookies`, `clearAuthCookies`, `supabaseAuthClientFactory` oraz bieżące access/refresh tokeny sesji.
 - Produces: `POST /api/auth/password/change` przyjmujący `{ currentPassword, password }` i zwracający `{ passwordUpdated: true, authenticated: false }`.
 
 - [ ] **Step 1: Utwórz izolowany klient do weryfikacji dotychczasowego hasła**
@@ -117,7 +122,8 @@ const body = await readBody(req);
 const currentPassword = normalizePassword(body.currentPassword, "dotychczasowe");
 const password = validateAuthPassword(body.password);
 // signInWithPassword na izolowanym kliencie
-// updateUser({ password }) na kliencie z session.accessToken
+// setSession({ access_token, refresh_token }) na kliencie bieżącej sesji
+// updateUser({ current_password, password }) na tym kliencie
 // signOut({ scope: "global" }) po udanej zmianie
 // clearAuthCookies(res) po udanej zmianie, także w ścieżce błędu signOut
 ```
@@ -126,7 +132,14 @@ Użyj istniejącego wzorca klienta z bearer tokenem:
 
 ```js
 const client = supabaseAuthClientFactory(supabaseAuthConfig, session.accessToken);
-const { error: updateError } = await client.auth.updateUser({ password });
+await client.auth.setSession({
+  access_token: session.accessToken,
+  refresh_token: session.refreshToken,
+});
+const { error: updateError } = await client.auth.updateUser({
+  current_password: currentPassword,
+  password,
+});
 ```
 
 Jeżeli `updateUser` się nie powiedzie, zwróć kontrolowany błąd i nie wykonuj
@@ -293,7 +306,7 @@ zakresu na przebudowę `client/auth-controller.js` ani inne niezwiązane refakto
 - Consumes: zweryfikowany kod i raport recenzenta.
 - Produces: lokalnie zielony pakiet gotowy do ręcznego sprawdzenia na stagingu.
 
-- [ ] **Step 1: Uruchom pełny zestaw kontroli**
+- [x] **Step 1: Uruchom pełny zestaw kontroli**
 
 Run: `npm run check`
 
@@ -312,7 +325,7 @@ Run: `git diff --check`
 Expected: brak błędów whitespace; ostrzeżenia CRLF dotyczące istniejącego
 worktree nie są traktowane jako błąd treści.
 
-- [ ] **Step 2: Sprawdź brak niezamierzonych plików w pakiecie**
+- [x] **Step 2: Sprawdź brak niezamierzonych plików w pakiecie**
 
 Run: `git diff --stat` oraz `git status --short`
 
@@ -320,7 +333,7 @@ Staged diff ma zawierać wyłącznie pliki tego pakietu; `README.md`, `SPEC.md`,
 materiały `AUDYT_*`, `Designs/`, `tools/` i wcześniejsze niezapisane zmiany
 pozostają poza checkpointem.
 
-- [ ] **Step 3: Zaproponuj osobny checkpoint Git**
+- [x] **Step 3: Zaproponuj osobny checkpoint Git**
 
 Po lokalnej weryfikacji zaproponuj commit o nazwie:
 
@@ -343,7 +356,7 @@ zdalnej migracji ani zmian produkcyjnych w ramach tego planu.
 - Consumes: opublikowany, lokalnie zweryfikowany checkpoint i zalogowana sesja stagingowa.
 - Produces: potwierdzenie obu ścieżek bez zmiany produkcji.
 
-- [ ] **Step 1: Sprawdź zwykłą zmianę hasła**
+- [x] **Step 1: Sprawdź zwykłą zmianę hasła**
 
 Na stagingu otwórz „Konto”, rozwiń „Zmień hasło”, sprawdź odrzucenie błędnego
 starego hasła, następnie wykonaj zmianę poprawnym starym hasłem. Potwierdź

@@ -1329,13 +1329,46 @@ async function handleAuthApi(req, res, url) {
   if (req.method === "POST" && url.pathname === "/api/auth/recovery") {
     enforceRequestRateLimit([`ip:${getClientAddress(req)}`], authRequestRateLimiters.recovery, res, "recovery");
     const body = await readBody(req);
-    const code = normalizeRecoveryToken(body.code, "jednorazowy");
-    const client = authClient();
-    const { data, error } = await client.auth.exchangeCodeForSession(code);
-    if (error || !data?.user || !data?.session) {
+    const hasCode = typeof body.code === "string" && body.code.trim() !== "";
+    const hasAccessToken = typeof body.access_token === "string" && body.access_token.trim() !== "";
+    const hasRefreshToken = typeof body.refresh_token === "string" && body.refresh_token.trim() !== "";
+    const hasTokenPair = hasAccessToken || hasRefreshToken;
+    if (hasCode === hasTokenPair || (hasTokenPair && (!hasAccessToken || !hasRefreshToken))) {
       throw new ApiError(400, "Link odzyskiwania hasła jest nieprawidłowy lub wygasł.");
     }
-    const authenticatedClient = supabaseAuthClientFactory(supabaseAuthConfig, data.session.access_token);
+
+    let recoveryUser;
+    let recoverySession;
+    let authenticatedClient;
+    if (hasCode) {
+      const code = normalizeRecoveryToken(body.code, "jednorazowy");
+      const client = authClient();
+      const { data, error } = await client.auth.exchangeCodeForSession(code);
+      if (error || !data?.user || !data?.session) {
+        throw new ApiError(400, "Link odzyskiwania hasła jest nieprawidłowy lub wygasł.");
+      }
+      recoveryUser = data.user;
+      recoverySession = data.session;
+      authenticatedClient = supabaseAuthClientFactory(supabaseAuthConfig, recoverySession.access_token);
+    } else {
+      const accessToken = normalizeRecoveryToken(body.access_token, "dostępu");
+      const refreshToken = normalizeRecoveryToken(body.refresh_token, "odświeżania");
+      authenticatedClient = supabaseAuthClientFactory(supabaseAuthConfig, accessToken);
+      const { data, error } = await authenticatedClient.auth.setSession({
+        access_token: accessToken,
+        refresh_token: refreshToken,
+      });
+      if (error || !data?.session) {
+        throw new ApiError(400, "Link odzyskiwania hasła jest nieprawidłowy lub wygasł.");
+      }
+      const userResult = await authenticatedClient.auth.getUser(data.session.access_token);
+      if (userResult.error || !userResult.data?.user) {
+        throw new ApiError(400, "Link odzyskiwania hasła jest nieprawidłowy lub wygasł.");
+      }
+      recoveryUser = userResult.data.user;
+      recoverySession = data.session;
+    }
+
     const { data: grantJti, error: grantError } = await authenticatedClient.rpc(
       "create_auth_recovery_grant",
       {}
@@ -1343,9 +1376,9 @@ async function handleAuthApi(req, res, url) {
     if (grantError || typeof grantJti !== "string" || !grantJti) {
       throw new ApiError(503, "Odzyskiwanie hasła jest chwilowo niedostępne. Spróbuj ponownie później.");
     }
-    setAuthCookies(res, data.session);
-    appendSetCookie(res, buildRecoveryGrantCookie(data.user.id, { jti: grantJti }));
-    return sendJson(res, 200, { user: sanitizeAuthUser(data.user) });
+    setAuthCookies(res, recoverySession);
+    appendSetCookie(res, buildRecoveryGrantCookie(recoveryUser.id, { jti: grantJti }));
+    return sendJson(res, 200, { user: sanitizeAuthUser(recoveryUser) });
   }
 
   if (req.method === "POST" && url.pathname === "/api/auth/password") {
