@@ -32,7 +32,7 @@ odpowiednio `node server.js` oraz `/health/ready`. Jest to otwarta różnica
 konfiguracyjna do wyjaśnienia przed kolejnym oknem produkcyjnym; nie należy
 zakładać, że konfiguracja produkcji jest identyczna ze stagingiem.
 
-### Staging
+### Staging — odczyt początkowy
 
 - środowisko: `staging Motek`;
 - branch: `staging`;
@@ -79,3 +79,23 @@ Produkcja ma obecnie identyfikowalny release, ale pozostaje `NO-GO`:
 
 Nie traktować udanego deploymentu `0b3d433` jako zatwierdzenia promocji naszego
 branchu recovery. Jest to osobny, odczytany stan gałęzi `main`.
+
+## Follow-up — staging legal anchors and CI — 2026-08-16
+
+Po wykryciu, że wdrożony wcześniej staging działał na starym SHA
+`3b07f6c71c32a068e12412ea30481f667bfd140c`, gałąź `staging` została
+zaktualizowana do przygotowanego stanu `18c1f5c`.
+
+Railway zakończył wdrożenie `1b0609b1-5b3e-48b3-88e8-2d6c39343c3c` statusem
+`SUCCESS`. Publiczny `/health/release` zwraca `ready`, wersję
+`2.0.0-alpha.39`, commit `18c1f5c530e0b26984ca2c04abecccceb36788e9` i
+środowisko `staging`.
+
+Publiczne `GET /informacje-prawne` zawiera statyczne odnośniki:
+`#regulamin`, `#prywatnosc` i `#prawa-autorskie`. GitHub Actions potwierdził
+zielone joby `test` i `database`, a post-deploy regression zakończyła się
+sukcesem. Produkcja nie była zmieniana.
+
+Ten follow-up nie zamyka HSTS ani legal-readiness. HSTS nadal nie jest
+aktywne, a `npm run legal:check` pozostaje fail-closed z trzema
+niezweryfikowanymi dostawcami.
