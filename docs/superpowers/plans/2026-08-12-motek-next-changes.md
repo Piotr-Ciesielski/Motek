@@ -1326,11 +1326,11 @@ ale `/informacje-prawne` zwraca 404, a anonimowy `/api/patterns` zwraca 200.
 Różnica wynika z rozjazdu release’u aplikacji, nie z Cloudflare. Produkcja
 pozostaje `NO-GO`.
 
-Otwarte bramki przed przygotowaniem osobnej decyzji produkcyjnej:
+Zamknięte i otwarte bramki przed przygotowaniem osobnej decyzji produkcyjnej:
 
-- legal-readiness: `npm run legal:check` pozostaje fail-closed, ponieważ
-  Supabase, Railway i Cloudflare nie mają jeszcze datowanych, produkcyjnych
-  dowodów wymaganych przez manifest;
+- legal-readiness: zamknięte po uzupełnieniu manifestu o datowane podstawy
+  weryfikacji dostawców i osobne zakresy Cloudflare; świeże
+  `npm run legal:check` zwraca `LEGAL_PUBLICATION=ready`;
 - HSTS: aktywne dla produkcyjnych odpowiedzi proxied na 1 miesiąc
   (`max-age=2592000`), bez `includeSubDomains` i bez `preload`; staging
   pozostaje DNS-only i nie otrzymuje tego nagłówka od Cloudflare;
@@ -1340,8 +1340,7 @@ Otwarte bramki przed przygotowaniem osobnej decyzji produkcyjnej:
 - produkcyjny deploy, migracja lub cleanup legacy RPC wymagają osobnej zgody
   wysokiego ryzyka. Nie wykonywać ich na podstawie samego zielonego stagingu.
 
-Najbezpieczniejsza kolejność dalszych prac to: (1) zebrać brakujące dowody
-legal/infrastructure, (2) ręcznie wykonać i publicznie zweryfikować wcześniej
-zaakceptowany HSTS, (3) przygotować jeden kandydat produkcyjny i powtórzyć
-preflight backup/restore, (4) przedstawić użytkownikowi pakiet GO/NO-GO, a
-dopiero po osobnej zgodzie wykonać migrację i deploy produkcyjny.
+Najbezpieczniejsza kolejność dalszych prac to: (1) przygotować jeden kandydat
+produkcyjny, (2) powtórzyć preflight backup/restore oraz zgodność migracji i
+konfiguracji Railway, (3) przedstawić użytkownikowi pakiet GO/NO-GO, a dopiero
+po osobnej zgodzie wykonać migrację i deploy produkcyjny.

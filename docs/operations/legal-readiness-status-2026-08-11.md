@@ -763,3 +763,38 @@ przypisania datowanych źródeł do konkretnych pól manifestu. Dlatego:
 
 Potwierdzenie obejmuje również decyzję, aby nie zmieniać obecnej konfiguracji
 Cloudflare. Nie jest to zgoda na zmianę Cloudflare ani na publikację produkcji.
+
+## Domknięcie bramki legal-readiness — 2026-08-16
+
+Na podstawie wcześniejszych odczytów konkretnych środowisk Motka, oficjalnych
+dokumentów dostawców, publicznej weryfikacji HTTPS po włączeniu HSTS oraz
+potwierdzenia operatora z 2026-08-15 uzupełniono
+`data/legal-data-providers.json`.
+
+Manifest opisuje teraz jawnie:
+
+- Supabase Production i Staging w `eu-north-1`, plan Free, retencję logów,
+  brak automatycznych backupów na Free, zasady usunięcia projektu oraz
+  mechanizm transferów wynikający z DPA;
+- Railway Production i Staging w `sfo`, przetwarzanie podstawowe w USA,
+  retencję logów Hobby wynoszącą 7 dni, transfery zgodnie z DPA oraz zasady
+  usunięcia lub zwrotu danych;
+- Cloudflare edge dla proxied `rysia.org`/`www.rysia.org` oraz Turnstile dla
+  produkcji i stagingu jako usługi globalne, bez skonfigurowanej lokalizacji
+  metadanych, z osobnymi zakresami dowodów, transferów i retencji.
+
+Każdy dostawca oraz zakres Cloudflare ma `status: verified`, konkretny
+`verifiedAt: 2026-08-16` i opis podstawy weryfikacji. Nie oznacza to zawarcia
+nowej umowy ani zmiany planu u dostawcy; jest to zapis zaakceptowanego przez
+operatora zakresu przetwarzania i warunków wynikających z aktualnych źródeł.
+
+Weryfikacja końcowa:
+
+```text
+LEGAL_PUBLICATION=ready
+```
+
+Bramka legal-readiness jest zamknięta. Nie zamyka to pozostałych bramek
+produkcyjnych: zgodności migracji Supabase, świeżego backup/restore preflight,
+zgodności release’u produkcji ze stagingiem, monitoringu oraz osobnej zgody
+na migrację i deploy produkcyjny.

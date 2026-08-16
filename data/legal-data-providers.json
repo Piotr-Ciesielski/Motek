@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "status": "draft",
+  "status": "verified",
   "providers": {
     "supabase": {
       "categories": ["konto", "magazyn", "sesja"],
@@ -8,35 +8,45 @@
       "plan": "Free",
       "scope": "production-and-staging",
       "location": "eu-north-1 (produkcja i staging)",
-      "transfer": "do potwierdzenia dla produkcji",
-      "retention": "Logi API i bazy danych: 1 dzień; logi audytowe Auth: 1 godzina (plan Free)",
-      "evidenceScope": "do potwierdzenia dla produkcji",
-      "status": "unverified",
+      "transfer": "Transfery poza EOG zgodnie z aktualnym DPA Supabase i właściwym mechanizmem transferowym; zakres projektu produkcyjnego potwierdzony przez operatora.",
+      "retention": "Plan Free: logi API i bazy danych 1 dzień; automatyczne backupy nie są dostępne; usunięcie projektu usuwa powiązane dane i backupy; kopie operacyjne Motka są obsługiwane poza Supabase zgodnie z runbookiem.",
+      "evidenceScope": "Motek Production i Motek Staging: odczyt panelu/API oraz dokumenty regionu, planu, backupów i DPA; potwierdzenie operatora z 2026-08-16.",
+      "status": "verified",
       "evidence": [
         "https://supabase.com/docs/guides/platform/regions",
         "https://supabase.com/pricing",
         "https://supabase.com/docs/guides/platform/backups",
         "https://supabase.com/downloads/docs/Supabase%2BDPA%2B260601.pdf"
       ],
-      "verifiedAt": null
+      "verifiedAt": "2026-08-16",
+      "verificationBasis": [
+        "Odczyt konfiguracji Motek Production i Motek Staging zapisany w docs/operations/legal-readiness-status-2026-08-11.md",
+        "Potwierdzenie operatora zakresu legal z 2026-08-15",
+        "Oficjalne dokumenty Supabase wskazane w evidence"
+      ]
     },
     "railway": {
       "categories": ["logi techniczne"],
       "flows": ["aplikacja -> Railway"],
       "plan": "Hobby",
       "scope": "production-and-staging",
-      "location": "sfo (region wdrożenia produkcji i staging; lokalizacja przetwarzania logów do potwierdzenia)",
-      "transfer": "do uzupełnienia",
-      "retention": "Logi Railway: 7 dni (plan Hobby)",
-      "evidenceScope": "do potwierdzenia dla produkcji",
-      "status": "unverified",
+      "location": "sfo dla wdrożeń produkcji i stagingu; podstawowe operacje przetwarzania Railway odbywają się w USA, a osobna lokalizacja logów nie jest publikowana.",
+      "transfer": "Transfery poza EOG do USA zgodnie z Railway DPA; stosowane mechanizmy obejmują SCC lub DPF, zależnie od transferu.",
+      "retention": "Logi planu Hobby: 7 dni; dane konta, usage i usługi zgodnie z polityką prywatności i DPA; po zakończeniu umowy dane są zwracane lub usuwane z wyjątkami wymaganymi prawem.",
+      "evidenceScope": "Projekt Railway balanced-fulfillment, środowisko production i usługa Motek: odczyt konfiguracji/deploymentu oraz dokumenty logów, prywatności i DPA; potwierdzenie operatora z 2026-08-16.",
+      "status": "verified",
       "evidence": [
         "https://docs.railway.com/observability/logs",
         "https://docs.railway.com/deployments/regions",
         "https://railway.com/legal/privacy",
         "https://railway.com/legal/dpa"
       ],
-      "verifiedAt": null
+      "verifiedAt": "2026-08-16",
+      "verificationBasis": [
+        "Odczyt konfiguracji Railway Production zapisany w docs/operations/legal-readiness-status-2026-08-11.md",
+        "Potwierdzenie operatora zakresu legal z 2026-08-15",
+        "Oficjalne dokumenty Railway wskazane w evidence"
+      ]
     },
     "cloudflare": {
       "services": ["edge", "turnstile"],
@@ -47,47 +57,62 @@
       ],
       "plan": "Free",
       "scope": "production-and-staging",
-      "location": "do uzupełnienia",
-      "transfer": "do uzupełnienia",
-      "retention": "Turnstile: do potwierdzenia; edge: do potwierdzenia",
-      "evidenceScope": "do potwierdzenia osobno dla edge i turnstile",
+      "location": "Edge i Turnstile działają globalnie; Customer Metadata Boundary/Data Localization Suite nie jest skonfigurowane na obecnym planie.",
+      "transfer": "Transfery poza EOG są możliwe; Cloudflare stosuje DPA oraz odpowiednie SCC/DPF zgodnie z warunkami usługi.",
+      "retention": "Edge: retencja i usunięcie według DPA oraz warunków usługi; Turnstile: brak osobnego stałego okresu retencji widgetu w opublikowanych warunkach, obowiązują kryteria DPA i polityki prywatności.",
+      "evidenceScope": "Produkcyjna strefa rysia.org dla edge oraz widgety Turnstile produkcji i stagingu: odczyt panelu, publiczne HTTPS, konfiguracja aplikacji i dokumenty Cloudflare; potwierdzenie operatora z 2026-08-16.",
       "serviceEvidence": {
         "edge": {
           "scope": "production",
-          "location": "do uzupełnienia",
-          "transfer": "do uzupełnienia",
-          "retention": "do potwierdzenia",
-          "evidenceScope": "do potwierdzenia dla produkcyjnej strefy edge",
+          "location": "Globalna sieć Cloudflare edge dla proxied apex i www rysia.org; Customer Metadata Boundary nie jest skonfigurowane, więc metadane ruchu mogą być przechowywane globalnie.",
+          "transfer": "Transfery poza EOG zgodnie z Cloudflare DPA, SCC/DPF i warunkami usługi.",
+          "retention": "Brak własnej reguły retencji potwierdzonej w panelu; kryterium Cloudflare DPA to wcześniejsze zakończenie umowy albo ustanie potrzeby przetwarzania.",
+          "evidenceScope": "Strefa production rysia.org, proxied apex/www, DNS/TLS/HSTS i publiczne nagłówki HTTPS; odczyt z 2026-08-16.",
           "evidence": [
             "https://developers.cloudflare.com/dns/proxy-status/",
             "https://developers.cloudflare.com/fundamentals/security/protect-your-origin-server/",
             "https://developers.cloudflare.com/data-localization/how-to/",
             "https://www.cloudflare.com/en-gb/cloudflare-customer-dpa/"
           ],
-          "verifiedAt": null
+          "verifiedAt": "2026-08-16",
+          "verificationBasis": [
+            "Odczyt Cloudflare zapisany w docs/operations/cloudflare-readonly-evidence-2026-08-16.md",
+            "Publiczna weryfikacja HTTPS po HSTS z 2026-08-16",
+            "Oficjalne dokumenty Cloudflare wskazane w evidence"
+          ]
         },
         "turnstile": {
           "scope": "production-and-staging",
-          "location": "do uzupełnienia",
-          "transfer": "do uzupełnienia",
-          "retention": "do potwierdzenia",
-          "evidenceScope": "do potwierdzenia dla produkcyjnego widgetu Turnstile",
+          "location": "Globalna usługa Cloudflare Challenge Platform używana przez widgety produkcji i stagingu; osobna lokalizacja Turnstile nie jest skonfigurowana.",
+          "transfer": "Transfery poza EOG zgodnie z Cloudflare DPA, SCC/DPF i polityką prywatności Turnstile.",
+          "retention": "Cloudflare nie publikuje osobnego stałego okresu retencji dla konkretnego widgetu; obowiązują kryteria DPA i polityki prywatności, a tokeny są krótkotrwałe i jednorazowe.",
+          "evidenceScope": "Widgety Turnstile produkcji i stagingu oraz serwerowa walidacja Siteverify; konfiguracja aplikacji i dokumenty Cloudflare, potwierdzenie operatora z 2026-08-16.",
           "evidence": [
             "https://www.cloudflare.com/en-in/turnstile-privacy-policy/",
             "https://www.cloudflare.com/en-gb/privacypolicy/",
             "https://developers.cloudflare.com/turnstile/get-started/server-side-validation/",
             "https://www.cloudflare.com/en-gb/cloudflare-customer-dpa/"
           ],
-          "verifiedAt": null
+          "verifiedAt": "2026-08-16",
+          "verificationBasis": [
+            "Konfiguracja Turnstile i server-side Siteverify w Motku",
+            "Potwierdzenie operatora zakresu legal z 2026-08-15",
+            "Oficjalne dokumenty Cloudflare wskazane w evidence"
+          ]
         }
       },
-      "status": "unverified",
+      "status": "verified",
       "evidence": [
         "https://www.cloudflare.com/en-in/turnstile-privacy-policy/",
         "https://www.cloudflare.com/en-gb/privacypolicy/",
         "https://www.cloudflare.com/en-gb/cloudflare-customer-dpa/"
       ],
-      "verifiedAt": null
+      "verifiedAt": "2026-08-16",
+      "verificationBasis": [
+        "Odczyt Cloudflare edge i Turnstile zapisany w dokumentacji operacyjnej",
+        "Potwierdzenie operatora zakresu legal z 2026-08-15",
+        "Oficjalne dokumenty Cloudflare wskazane w evidence"
+      ]
     }
   }
 }
