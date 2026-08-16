@@ -118,3 +118,20 @@ Staging pozostaje w Cloudflare jako `DNS only`, dlatego bezpośrednia
 dostępność hosta Railway jest aktualnie oczekiwanym skutkiem konfiguracji, a
 nie dowodem obejścia proxy produkcyjnego. Nie zamyka to kontroli originu
 produkcji ani pełnej macierzy cache.
+
+## Follow-up — świeży production smoke — 2026-08-16
+
+Ponowny odczyt publiczny potwierdził stan produkcji na release
+`0b3d43347d6b982eb86303db26650cc804ec8cd9`:
+
+- `/health/release`: `200`, `ready`, `production`;
+- `/informacje-prawne`: `404`;
+- anonimowy `/api/patterns`: `200`;
+- `/api/auth/session`: `200`;
+- `/api/config`: `200`;
+- odczytane endpointy API używały `Cache-Control: no-store`.
+
+Staging na `18c1f5c` pozostaje kontraktowo inny w dwóch istotnych punktach:
+publiczna strona prawna działa, a anonimowy katalog zwraca `401`. Produkcja
+pozostaje `NO-GO` dla promocji pakietu recovery do czasu wyjaśnienia różnicy
+release'u i ochrony katalogu.
