@@ -52,6 +52,30 @@ test("inventory keeps the selected design composition", () => {
   assert.match(indexHtml, /data-dark-src="assets\/night-yarn-cat\.v1\.webp"/);
 });
 
+test("niezalogowane Konto pokazuje pełną grafikę kota w obu motywach i biały tekst w dark", () => {
+  const document = new JSDOM(indexHtml).window.document;
+  const accountView = document.getElementById("accountView");
+  const image = document.getElementById("accountThemeImage");
+
+  assert.ok(document.body.classList.contains("auth-logged-out"));
+  assert.ok(accountView.classList.contains("account-view"));
+  assert.equal(image.dataset.lightSrc, "assets/color-yarn-cat.v1.webp");
+  assert.equal(image.dataset.darkSrc, "assets/night-yarn-cat.v1.webp");
+  assert.match(
+    stylesCss,
+    /\.auth-logged-out #accountView \.auth-visual > \.auth-visual__image\s*\{[\s\S]*?opacity:\s*1;/,
+  );
+  assert.match(
+    stylesCss,
+    /\[data-theme="dark"\] \.auth-logged-out #accountView \.auth-visual\s*\{[\s\S]*?color:\s*#fff;/,
+  );
+  assert.match(
+    stylesCss,
+    /\[data-theme="dark"\] \.auth-logged-out #accountView \.auth-visual h1[\s\S]*?color:\s*#fff;/,
+  );
+  assert.match(stylesCss, /#accountView\.is-authenticated \.auth-visual\s*\{[\s\S]*?display:\s*none;/);
+});
+
 test("main navigation uses text labels without decorative symbols", () => {
   const navigation = indexHtml.match(/<nav class="app-nav"[\s\S]*?<\/nav>/)?.[0] || "";
   assert.match(navigation, />Magazyn<\/span>/);
@@ -201,6 +225,36 @@ test("formularz zmiany hasła ma kontrakt pól i nie zmienia recovery", () => {
   assert.equal(form.querySelector('button[type="submit"]').textContent.trim(), "Zmień hasło");
   assert.equal(recovery.reset.getAttribute("action"), "/api/auth/password-reset-request");
   assert.equal(recovery.update.getAttribute("action"), "/api/auth/password");
+});
+
+test("formularz zmiany hasła używa tej samej ikony oka co logowanie", () => {
+  const document = new JSDOM(indexHtml).window.document;
+  const loginIcon = document.querySelector("#loginForm [data-password-reveal] svg");
+  const changePasswordForm = document.getElementById("changePasswordForm");
+  const revealButtons = [...changePasswordForm.querySelectorAll("[data-password-reveal]")];
+
+  assert.ok(loginIcon, "logowanie ma wzorcową ikonę oka");
+  assert.equal(revealButtons.length, 3);
+  assert.deepEqual(
+    revealButtons.map((button) => button.querySelector("svg")?.outerHTML.replace(/\s+/g, " ").trim()),
+    revealButtons.map(() => loginIcon.outerHTML.replace(/\s+/g, " ").trim()),
+  );
+});
+
+test("pola formularza zmiany hasła mają 44 px wysokości i dokładny hint", () => {
+  const document = new JSDOM(indexHtml).window.document;
+  const changePasswordForm = document.getElementById("changePasswordForm");
+  const inputs = changePasswordForm.querySelectorAll(".password-field input");
+
+  assert.equal(inputs.length, 3);
+  assert.equal(
+    document.getElementById("changePasswordHint").textContent,
+    "Nowe hasło: minimum 8 znaków, w tym mała i wielka litera, cyfra oraz znak specjalny.",
+  );
+  assert.match(
+    stylesCss,
+    /#loginForm \.password-field input,[\s\S]*?\.account-security-zone__panel \.password-field input\s*\{[\s\S]*?height:\s*44px;[\s\S]*?min-height:\s*44px;/,
+  );
 });
 
 test("frontend obsługuje panel zmiany hasła bez wysyłania potwierdzenia", () => {
