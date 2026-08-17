@@ -69,6 +69,12 @@ funkcjonalnie zgodna ze stagingiem.
 
 ## Read-only snapshot Supabase — 2026-08-17
 
+Organizacja Motka działa na planie Free. Zgodnie z dokumentacją Supabase
+backupów Free nie można pobrać z panelu; przed zmianą produkcji potrzebny jest
+logiczny eksport przez CLI (`supabase db dump`) i bezpieczne przechowanie go
+poza Supabase. Eksportu nie wykonano w ramach tego preflightu, ponieważ tworzy
+lokalną kopię danych produkcyjnych i wymaga osobnej zgody.
+
 | Obszar | Staging | Production |
 |---|---|---|
 | `public.patterns` | 111 rekordów; 103 `description IS NULL`; 3 `published`; 5 `pending_review`; 103 `hidden` | 15 rekordów; 0 `description IS NULL`; brak pól publikacji |
@@ -89,9 +95,11 @@ wyłączona w obu projektach i pozostaje świadomie zaakceptowanym ryzykiem.
 
 ## Następne bezpieczne kroki
 
-1. Przygotować świeży, odtwarzalny backup produkcji i potwierdzić właściciela
-   oraz 30-minutowe okno obserwacji.
-2. Przygotować osobny pakiet `GO/NO-GO` z dokładnym SHA, zakresem, kolejnością
+1. Wykonać i bezpiecznie przechować logiczny backup produkcji przez CLI oraz
+   potwierdzić możliwość jego odtworzenia; operacja wymaga osobnej zgody na
+   utworzenie lokalnej kopii danych.
+2. Potwierdzić właściciela oraz 30-minutowe okno obserwacji.
+3. Przygotować osobny pakiet `GO/NO-GO` z dokładnym SHA, zakresem, kolejnością
    Pakiet A → deploy kodu → smoke test, rollbackiem i kryteriami STOP.
-3. Dopiero po zamknięciu tych bram i osobnej zgodzie wykonać migrację
+4. Dopiero po zamknięciu tych bram i osobnej zgodzie wykonać migrację
    produkcyjną oraz ręczny deploy Railway z `main`.

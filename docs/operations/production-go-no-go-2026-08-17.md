@@ -28,6 +28,8 @@ Nie wdrażamy backendu przed Pakietem A, ponieważ nowy kod filtruje katalog po
 
 ## Warunki wejścia GO
 
+- organizacja Supabase jest na planie Free, więc wymagany backup musi być
+  logicznym eksportem CLI przechowanym poza Supabase; backupu nie wykonano;
 - precondition Pakietu A: produkcyjne `public.patterns` istnieje, ma kolumnę
   `description` i nie zawiera wartości NULL — odczyt read-only potwierdził
   obecnie 15 rekordów i 0 NULL;
@@ -57,7 +59,8 @@ osobnej procedury awaryjnej i zgody.
 
 ## Decyzje nadal wymagające zamknięcia
 
-1. Kto i kiedy potwierdza backup oraz rozpoczyna okno produkcyjne.
+1. Czy wykonujemy logiczny eksport danych produkcyjnych przez CLI i gdzie
+   bezpiecznie go przechowujemy.
 2. Osobna, jawna zgoda na wykonanie SQL Pakietu A i deploy produkcyjny.
 
 Wyłączona ochrona Supabase przed wyciekłymi hasłami pozostaje świadomie
