@@ -1746,8 +1746,8 @@ async function main(options = {}) {
     });
     if (!publication.ready) {
       if (readLegalPublicationEnforcement()) throw new Error("Publikacja prawna nie jest gotowa.");
-      console.warn(
-        `Publikacja prawna nie jest gotowa; start produkcji kontynuowany przy wyłączonej blokadzie: ${publication.errors.join(" ")}`
+      console.log(
+        `[LEGAL_PUBLICATION_WARNING] Start produkcji kontynuowany przy wyłączonej blokadzie: ${publication.errors.join(" ")}`
       );
     }
   }
