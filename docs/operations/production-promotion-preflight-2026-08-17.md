@@ -80,7 +80,8 @@ Odtworzenie schematu w lokalnej bazie testowej przeszło w całości. Import dan
 rozpoczął się poprawnie, ale zatrzymał na kolejnych tabelach Auth zarządzanych
 przez Supabase (`mfa_amr_claims` i powiązane obiekty), których nie ma w pustej
 bazie. Nie jest to błąd eksportu; pełny restore danych wymaga kompletnego
-szkieletu Auth. Produkcja pozostaje NO-GO do czasu zamknięcia tej bramy.
+szkieletu Auth. Przyjęto, że wykonany logiczny backup jest wystarczający mimo
+braku pełnego testu restore; jest to jawnie zaakceptowane ryzyko.
 
 | Obszar | Staging | Production |
 |---|---|---|
@@ -102,11 +103,8 @@ wyłączona w obu projektach i pozostaje świadomie zaakceptowanym ryzykiem.
 
 ## Następne bezpieczne kroki
 
-1. Zamknąć test odtworzenia danych w środowisku z pełnym szkieletem Auth
-   Supabase; logiczny eksport produkcji został już wykonany, a restore schematu
-   potwierdzony lokalnie.
-2. Potwierdzić właściciela oraz 30-minutowe okno obserwacji.
-3. Przygotować osobny pakiet `GO/NO-GO` z dokładnym SHA, zakresem, kolejnością
+1. Potwierdzić właściciela oraz 30-minutowe okno obserwacji.
+2. Przygotować osobny pakiet `GO/NO-GO` z dokładnym SHA, zakresem, kolejnością
    Pakiet A → deploy kodu → smoke test, rollbackiem i kryteriami STOP.
-4. Dopiero po zamknięciu tych bram i osobnej zgodzie wykonać migrację
+3. Dopiero po zamknięciu tych bram i osobnej zgodzie wykonać migrację
    produkcyjną oraz ręczny deploy Railway z `main`.

@@ -60,10 +60,8 @@ osobnej procedury awaryjnej i zgody.
 
 ## Decyzje nadal wymagające zamknięcia
 
-1. Zamknąć pełny test odtworzenia backupu w środowisku z wewnętrznym
-   szkieletem Auth Supabase; lokalny test odtworzył cały schemat i rozpoczął
-   import danych, ale zatrzymał się na brakujących tabelach zarządzanych przez
-   Auth.
+1. Pełny test restore danych nie został wykonany; zaakceptowano logiczny backup
+   i związane z tym ryzyko.
 2. Osobna, jawna zgoda na wykonanie SQL Pakietu A i deploy produkcyjny.
 
 Wyłączona ochrona Supabase przed wyciekłymi hasłami pozostaje świadomie
