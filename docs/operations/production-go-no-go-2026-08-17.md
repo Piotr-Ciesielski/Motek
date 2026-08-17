@@ -68,3 +68,15 @@ Wyłączona ochrona Supabase przed wyciekłymi hasłami pozostaje świadomie
 zaakceptowanym ryzykiem i nie blokuje tego pakietu.
 
 Ten dokument nie jest zgodą na wykonanie SQL ani wdrożenie.
+
+## Aktualizacja decyzji operatora — 2026-08-17
+
+Operator świadomie zaakceptował uruchomienie produkcji mimo niezamkniętej
+bramki dowodów dostawców (`supabase`, `railway`, `cloudflare`). Nie zmieniamy
+statusów dostawców na `verified` i nie usuwamy walidacji. Proces startowy
+produkcji rejestruje ostrzeżenie i kontynuuje pracę, gdy zmienna
+`ENFORCE_LEGAL_PUBLICATION` nie ma wartości `true`.
+
+Ustawienie `ENFORCE_LEGAL_PUBLICATION=true` przywraca twardą blokadę startu.
+`npm run legal:check` nadal pozostaje niezależną kontrolą i nadal sygnalizuje
+`NO-GO`, dopóki nie zostaną zebrane i zweryfikowane wymagane dowody.
