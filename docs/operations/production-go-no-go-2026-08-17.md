@@ -29,7 +29,8 @@ Nie wdrażamy backendu przed Pakietem A, ponieważ nowy kod filtruje katalog po
 ## Warunki wejścia GO
 
 - organizacja Supabase jest na planie Free, więc wymagany backup musi być
-  logicznym eksportem CLI przechowanym poza Supabase; backupu nie wykonano;
+  logicznym eksportem CLI przechowanym poza Supabase; eksport schematu i danych
+  został wykonany lokalnie i nie jest śledzony przez Git;
 - precondition Pakietu A: produkcyjne `public.patterns` istnieje, ma kolumnę
   `description` i nie zawiera wartości NULL — odczyt read-only potwierdził
   obecnie 15 rekordów i 0 NULL;
@@ -59,8 +60,10 @@ osobnej procedury awaryjnej i zgody.
 
 ## Decyzje nadal wymagające zamknięcia
 
-1. Czy wykonujemy logiczny eksport danych produkcyjnych przez CLI i gdzie
-   bezpiecznie go przechowujemy.
+1. Zamknąć pełny test odtworzenia backupu w środowisku z wewnętrznym
+   szkieletem Auth Supabase; lokalny test odtworzył cały schemat i rozpoczął
+   import danych, ale zatrzymał się na brakujących tabelach zarządzanych przez
+   Auth.
 2. Osobna, jawna zgoda na wykonanie SQL Pakietu A i deploy produkcyjny.
 
 Wyłączona ochrona Supabase przed wyciekłymi hasłami pozostaje świadomie

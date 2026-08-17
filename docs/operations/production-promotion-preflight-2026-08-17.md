@@ -72,8 +72,15 @@ funkcjonalnie zgodna ze stagingiem.
 Organizacja Motka działa na planie Free. Zgodnie z dokumentacją Supabase
 backupów Free nie można pobrać z panelu; przed zmianą produkcji potrzebny jest
 logiczny eksport przez CLI (`supabase db dump`) i bezpieczne przechowanie go
-poza Supabase. Eksportu nie wykonano w ramach tego preflightu, ponieważ tworzy
-lokalną kopię danych produkcyjnych i wymaga osobnej zgody.
+poza Supabase. Eksport wykonano po uzyskaniu zgody: schemat ma 75 034 bajty,
+a dane 66 892 bajty. Pliki pozostają lokalnie w ignorowanym katalogu
+`.tmp-production-backup/` i nie są publikowane.
+
+Odtworzenie schematu w lokalnej bazie testowej przeszło w całości. Import danych
+rozpoczął się poprawnie, ale zatrzymał na kolejnych tabelach Auth zarządzanych
+przez Supabase (`mfa_amr_claims` i powiązane obiekty), których nie ma w pustej
+bazie. Nie jest to błąd eksportu; pełny restore danych wymaga kompletnego
+szkieletu Auth. Produkcja pozostaje NO-GO do czasu zamknięcia tej bramy.
 
 | Obszar | Staging | Production |
 |---|---|---|
@@ -95,9 +102,9 @@ wyłączona w obu projektach i pozostaje świadomie zaakceptowanym ryzykiem.
 
 ## Następne bezpieczne kroki
 
-1. Wykonać i bezpiecznie przechować logiczny backup produkcji przez CLI oraz
-   potwierdzić możliwość jego odtworzenia; operacja wymaga osobnej zgody na
-   utworzenie lokalnej kopii danych.
+1. Zamknąć test odtworzenia danych w środowisku z pełnym szkieletem Auth
+   Supabase; logiczny eksport produkcji został już wykonany, a restore schematu
+   potwierdzony lokalnie.
 2. Potwierdzić właściciela oraz 30-minutowe okno obserwacji.
 3. Przygotować osobny pakiet `GO/NO-GO` z dokładnym SHA, zakresem, kolejnością
    Pakiet A → deploy kodu → smoke test, rollbackiem i kryteriami STOP.
