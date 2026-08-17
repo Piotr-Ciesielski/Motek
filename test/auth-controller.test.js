@@ -302,6 +302,42 @@ test("zwykłe logowanie pokazuje Magazyn przed zakończeniem odświeżania danyc
   resolveYarns([]);
 });
 
+test("logowanie nie pokazuje przejściowej bramy prawnej przed odczytem sesji", async (t) => {
+  const email = "jan@example.test";
+  let sessionCalls = 0;
+  let resolveSession;
+  const pendingSession = new Promise((resolve) => { resolveSession = resolve; });
+  const dom = loadApp({
+    onRequest: async ({ pathname }) => {
+      if (pathname === "/api/auth/login") return { user: { id: "u1", email } };
+      if (pathname === "/api/auth/session") {
+        sessionCalls += 1;
+        if (sessionCalls === 1) return { authenticated: false, user: null };
+        return pendingSession;
+      }
+      if (pathname === "/api/yarns") return [];
+      return undefined;
+    },
+  });
+  t.after(() => dom.window.close());
+
+  await waitFor(() => sessionCalls === 1, dom);
+  dom.window.document.getElementById("login-email").value = email;
+  dom.window.document.getElementById("login-password").value = "Secret1!";
+  dom.window.document.getElementById("loginForm").requestSubmit();
+
+  await waitFor(() => sessionCalls === 2, dom);
+  assert.equal(dom.window.document.getElementById("legalAcceptanceGate").hidden, true);
+
+  resolveSession({
+    authenticated: true,
+    user: { id: "u1", email },
+    profile: { email },
+    legal: { currentVersion: "1.0", acceptedVersion: "1.0", acceptanceRequired: false },
+  });
+  await waitFor(() => dom.window.document.getElementById("inventoryView").hidden === false, dom);
+});
+
 test("akceptacja dokumentów przenosi użytkownika do Magazynu", async (t) => {
   let accepted = false;
   const dom = loadApp({

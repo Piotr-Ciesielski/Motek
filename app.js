@@ -2124,12 +2124,8 @@ async function submitAuthForm(form, endpoint, successMessage) {
       body: JSON.stringify(body),
     });
     applyIdleTimeout(payload);
-    renderAuthState({
-      authenticated: Boolean(payload.user && !payload.requiresEmailConfirmation),
-      user: payload.user,
-      profile: null,
-    });
     if (payload.requiresEmailConfirmation) {
+      renderAuthState({ authenticated: false });
       setAuthMessage("Konto utworzone. Potwierdź adres e-mail, aby się zalogować.");
     } else {
       setAuthMessage(successMessage, "success");
