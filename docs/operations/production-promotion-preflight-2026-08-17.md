@@ -137,7 +137,24 @@ publikacji danych.
 - bezpośredni adres Railway zwraca `404` z `x-railway-fallback`, nie ujawnia
   aplikacji Motek i nie omija publicznej warstwy Cloudflare.
 
-Nie potwierdzono odczytem panelu Cloudflare szczegółowych reguł WAF, limitów
-brzegowych ani alertów. Nie wykonano ich zmiany. Ten element pozostaje otwarty
-do chwili uzyskania dostępu odczytowego do panelu albo równoważnego dowodu z
-API.
+Historyczny odczyt panelu Cloudflare z 2026-08-16 potwierdził dodatkowo:
+
+- `Full (strict)` między Cloudflare i originem;
+- `Always Use HTTPS` włączone;
+- minimalny TLS 1.2 oraz TLS 1.3 włączony;
+- `rysia.org` i `www.rysia.org` jako rekordy `Proxied`, a staging jako
+  `DNS only`;
+- 0 z 5 własnych reguł bezpieczeństwa oraz 0 z 1 reguł rate limiting;
+- brak skonfigurowanych reguł zarządzanych w bieżącym planie — panel wskazywał
+  przejście na plan Pro;
+- brak aktywnych wpisów Cache Rules i Cache Response Rules, przy słabszym
+  dowodzie, ponieważ tabela była wtedy w trakcie ładowania.
+
+Późniejszy odczyt publiczny potwierdził włączenie HSTS w wariancie
+`max-age=2592000`, bez `includeSubDomains` i bez `preload`.
+
+Pozostaje otwarte wyłącznie pełne potwierdzenie ochrony originu w panelu oraz
+konfiguracji alertów/monitoringu. Nie zmieniano tych ustawień. Bezpośredni
+odczyt adresu Railway wykonany 2026-08-17 zwrócił `404` z
+`x-railway-fallback`, a nie aplikację Motek, co jest dodatkowym dowodem, że
+origin nie omija obecnie publicznej warstwy Cloudflare.
