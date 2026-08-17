@@ -12,11 +12,11 @@ rollbacku. Ten dokument nie jest zgodą na wykonanie SQL ani wdrożenie.
 |---|---|---|---|
 | Publikacja katalogu | `publication_status`, audyt treści, źródło oficjalne i constraint publikacji | `public.patterns` nie ma tych pól; 15 rekordów, 0 pustych opisów | Przygotować i przetestować osobny pakiet kompatybilny z `description NOT NULL`; nie replayować migracji stagingu |
 | Dane katalogu | 111 rekordów, 103 puste opisy, 3 `published`, 5 `pending_review`, 103 `hidden` | 15 rekordów bez pustych opisów | Nie przenosić danych ani statusów stagingu w ramach promocji kodu |
-| Legal / rejestracja | wersjonowane dokumenty, akceptacje, zaproszenia, próby rejestracji i service-only RPC | brak potwierdzonego efektu tych obiektów w produkcji | Wygenerować osobny, produkcyjnie kompatybilny pakiet po audycie danych i decyzji legalnej |
+| Legal / rejestracja | wersjonowane dokumenty, akceptacje, zaproszenia, próby rejestracji i service-only RPC | ten sam efekt tabel, RPC, polityk oraz wersji `terms=1.0`, `privacy=1.0` | Nie tworzyć migracji legal; sprawdzić wyłącznie zgodność artefaktu aplikacji i testy po deployu |
 | Recovery | aktywny kontrakt `jti_hash`, `claimed_at`, claim/release/consume | ten sam kształt tabeli i aktywnych RPC | Nie wykonywać migracji recovery; zmapować tylko stagingowy wpis `restore_recovery_grant_creator` i jego właściciela |
 | Versioned yarn store | `user_id`, `version`; backend używa wersjonowanych RPC | dodatkowo `updated_at NOT NULL DEFAULT now()` | Zachować produkcyjną kolumnę; nie wykonywać destrukcyjnego ujednolicania |
 | Legacy yarn RPC | brak `insert_yarn_with_limit` w stagingu | dwa overloady w produkcji | Nie usuwać bez potwierdzenia zewnętrznych konsumentów; pozostawić jako osobny cleanup |
-| Auth/UI routing | natychmiastowy Magazyn i brak migotania bramy prawnej | produkcja ma starszy artefakt aplikacji | Promować dopiero razem z wymaganym backendowym kontraktem legal/rejestracji |
+| Auth/UI routing | natychmiastowy Magazyn i brak migotania bramy prawnej | produkcja ma starszy artefakt aplikacji, ale backend legal jest zgodny | Promować razem z pakietem kodu i kompatybilnym pakietem katalogu |
 
 ## Pakiety i zależności
 
@@ -30,14 +30,15 @@ potwierdził, że ten konkretny precondition danych jest obecnie spełniony.
 Przed wykonaniem nadal wymagane są: test na kopii danych, pgTAP, backup,
 rollback oraz osobna zgoda na SQL produkcyjny.
 
-### Pakiet B — legal i rejestracja
+### Pakiet B — legal i rejestracja — zamknięty jako migracja
 
-Migracje stagingu tworzą m.in. `private.legal_document_versions`,
-`private.terms_acceptances`, `private.registration_invitations`,
-`private.registration_attempts` i `private.privacy_notice_deliveries`, a także
-service-only RPC rejestracji. Nie wolno zastosować ich jako mechanicznego
-replayu na produkcji, dopóki nie zostanie sprawdzone istnienie profili,
-triggerów Auth, wersji dokumentów oraz brak konfliktów z istniejącym kontraktem.
+Read-only porównanie potwierdziło w obu projektach tabele
+`private.legal_document_versions`, `private.terms_acceptances`,
+`private.registration_invitations`, `private.registration_attempts` i
+`private.privacy_notice_deliveries`, te same service-only RPC, te same polityki
+oraz bieżące wersje `terms=1.0` i `privacy=1.0`. Po normalizacji końców linii
+definicje funkcji są zgodne. Nie przygotowujemy dla tego obszaru osobnej
+migracji; pozostaje test zachowania po promocji kodu.
 
 ### Pakiet C — recovery i magazyn
 
@@ -52,7 +53,7 @@ muszą być jawnie opisane w decyzji GO/NO-GO.
 Promocję zatrzymujemy, jeśli wystąpi którekolwiek z poniższych:
 
 - nie ma potwierdzonego backupu i odtworzenia na izolowanym celu;
-- pakiet legal/rejestracja nie ma zgodnego precondition produkcyjnego;
+- read-only porównanie legal/rejestracja nie potwierdza zgodnego efektu;
 - migracja zmienia lub usuwa dane, których zakres nie został policzony;
 - test pgTAP lub smoke po migracji nie przechodzi;
 - nie ma jasnego rollbacku dla kodu i bazy;
@@ -65,4 +66,3 @@ Promocję zatrzymujemy, jeśli wystąpi którekolwiek z poniższych:
 Przygotować izolowany test Pakietu A oraz analizę efektu Pakietu B na kopii
 produkcji. Żadnego SQL produkcyjnego ani deployu nie wykonywać przed osobnym
 pakietem GO/NO-GO.
-

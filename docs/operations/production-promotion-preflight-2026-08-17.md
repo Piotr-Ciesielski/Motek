@@ -48,8 +48,9 @@ funkcjonalnie zgodna ze stagingiem.
    jako mapa efektów SQL. Staging ma 29 wpisów, Production 24. Staging ma też
    zdalny wpis `20260815152553_restore_recovery_grant_creator`, którego nie ma
    w lokalnym katalogu migracji. Numery i nazwy migracji nie są mapowaniem 1:1.
-2. Pakiet katalogu wymaga read-only preflightu danych produkcyjnych i testu na
-   izolowanej kopii. Nie wolno odtwarzać całego łańcucha migracji stagingu.
+2. Pakiet katalogu ma spełniony read-only precondition danych produkcyjnych,
+   ale wymaga testu na izolowanej kopii. Nie wolno odtwarzać całego łańcucha
+   migracji stagingu.
 3. Recovery ma pozostać przy aktywnym kontrakcie `jti_hash`; wariant lokalny z
    `grant_id` nie może być promowany bez osobnego audytu. Produkcja zachowuje
    dodatkowo dwa legacy overloady `insert_yarn_with_limit`, których staging nie
@@ -71,6 +72,7 @@ funkcjonalnie zgodna ze stagingiem.
 | `private.yarn_store_versions` | `user_id`, `version` | dodatkowo `updated_at NOT NULL DEFAULT now()` |
 | `insert_yarn_with_limit` | brak | dwa legacy overloady |
 | aktywne RPC recovery | kontrakt `jti_hash`, funkcje claim/release/consume | ten sam aktywny kontrakt |
+| legal/rejestracja | tabele, RPC, polityki; `terms=1.0`, `privacy=1.0` | ten sam efekt i wersje; znormalizowane definicje funkcji zgodne |
 
 Odczyt nie modyfikował danych. Wspólne ostrzeżenia Security Advisors o
 `SECURITY DEFINER` nie są automatycznie naprawiane w ramach promocji, ponieważ
