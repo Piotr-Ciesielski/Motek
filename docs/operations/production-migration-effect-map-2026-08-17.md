@@ -27,13 +27,21 @@ Pakiet zachowuje `description NOT NULL`, ustawia bezpieczny stan początkowy i
 ma precondition blokujący dane z pustym opisem. Read-only odczyt produkcji
 potwierdził, że ten konkretny precondition danych jest obecnie spełniony.
 
-Przed wykonaniem nadal wymagane są: test na kopii danych, pgTAP, backup,
-rollback oraz osobna zgoda na SQL produkcyjny.
+Przed wykonaniem nadal wymagane są: test lokalny na reprezentatywnych danych,
+pgTAP, backup, rollback oraz osobna zgoda na SQL produkcyjny. Nie tworzymy
+płatnego brancha ani kopii Supabase.
 
 Kolejność jest obowiązkowa: `server.js` filtruje katalog po
 `publication_status` i pobiera `official_source_url`, więc wdrożenie nowego
 backendu przed zastosowaniem kompatybilnego efektu Pakietu A może zakończyć się
 błędem zapytania do produkcyjnego `public.patterns`.
+
+Plan rollbacku: jeśli smoke po wdrożeniu kodu nie przejdzie, najpierw cofamy
+artefakt aplikacji do poprzedniego commitu i pozostawiamy dodatnie kolumny
+Pakietu A. Stary backend ich nie odczytuje, więc taki rollback nie kasuje
+nowych danych audytowych. Nie usuwamy kolumn w ramach zwykłego rollbacku;
+pełne odtworzenie bazy z backupu jest osobną procedurą awaryjną i wymaga
+wcześniej potwierdzonego backupu oraz osobnej zgody.
 
 ### Pakiet B — legal i rejestracja — zamknięty jako migracja
 
@@ -44,6 +52,14 @@ Read-only porównanie potwierdziło w obu projektach tabele
 oraz bieżące wersje `terms=1.0` i `privacy=1.0`. Po normalizacji końców linii
 definicje funkcji są zgodne. Nie przygotowujemy dla tego obszaru osobnej
 migracji; pozostaje test zachowania po promocji kodu.
+
+### Środowiska walidacji
+
+Staging i produkcja są jedynymi środowiskami Supabase. Staging służy do
+walidacji artefaktu aplikacji, smoke testów i zachowania już istniejącego
+schematu; nie jest kopią danych produkcyjnych i nie zastępuje testu SQL na
+lokalnym, reprezentatywnym zbiorze danych. Produkcja pozostaje bez zmian do
+czasu zamknięcia kryteriów GO/NO-GO.
 
 ### Pakiet C — recovery i magazyn
 
@@ -68,6 +84,7 @@ Promocję zatrzymujemy, jeśli wystąpi którekolwiek z poniższych:
 
 ## Następny krok
 
-Przygotować izolowany test Pakietu A oraz analizę efektu Pakietu B na kopii
-produkcji. Żadnego SQL produkcyjnego ani deployu nie wykonywać przed osobnym
-pakietem GO/NO-GO.
+Przygotować lokalny, reprezentatywny test Pakietu A oraz końcowy pakiet
+GO/NO-GO. Staging wykorzystać do walidacji aplikacji i smoke testów. Żadnego
+SQL produkcyjnego ani deployu nie wykonywać przed osobną zgodą na okno
+produkcyjne.
