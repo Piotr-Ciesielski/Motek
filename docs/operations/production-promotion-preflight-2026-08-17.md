@@ -108,3 +108,36 @@ wyłączona w obu projektach i pozostaje świadomie zaakceptowanym ryzykiem.
    Pakiet A → deploy kodu → smoke test, rollbackiem i kryteriami STOP.
 3. Dopiero po zamknięciu tych bram i osobnej zgodzie wykonać migrację
    produkcyjną oraz ręczny deploy Railway z `main`.
+
+## Aktualizacja po wdrożeniu produkcyjnym — 2026-08-17
+
+Promocja została wykonana po osobnej zgodzie operatora. Produkcja działa na
+commicie `a625bccbec827fd07965f476259f39836fc84b90` (`2.0.0-alpha.39`), a
+Pakiet A został zastosowany na produkcyjnym Supabase.
+
+Po publikacji testowego katalogu produkcyjny stan `public.patterns` wynosi:
+
+- 15 rekordów `published`;
+- 0 rekordów `pending_review`;
+- 0 rekordów `hidden`;
+- 0 pustych opisów.
+
+Wzory są syntetycznymi rekordami testowymi i mają znacznik audytu
+`synthetic-production-test-2026-08-17`. Nie zmieniano kodu aplikacji przy tej
+publikacji danych.
+
+## Aktualizacja kontroli HTTPS, originu i Cloudflare
+
+- `https://www.rysia.org/` odpowiada przez Cloudflare (`Server: cloudflare`,
+  `CF-RAY`);
+- żądanie HTTP przekierowuje do HTTPS (`301`);
+- HSTS jest aktywny z `max-age=2592000`;
+- certyfikat domeny Railway jest ważny, a domena niestandardowa ma status
+  `ACTIVE` i `Verified: yes`;
+- bezpośredni adres Railway zwraca `404` z `x-railway-fallback`, nie ujawnia
+  aplikacji Motek i nie omija publicznej warstwy Cloudflare.
+
+Nie potwierdzono odczytem panelu Cloudflare szczegółowych reguł WAF, limitów
+brzegowych ani alertów. Nie wykonano ich zmiany. Ten element pozostaje otwarty
+do chwili uzyskania dostępu odczytowego do panelu albo równoważnego dowodu z
+API.
