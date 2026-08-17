@@ -8,6 +8,8 @@ const { createAuthController } = require("../client/auth-controller");
 
 const indexHtml = fs.readFileSync(path.join(__dirname, "..", "index.html"), "utf8");
 const browserScripts = [
+  "legal-document.js",
+  "client/legal-acceptance-controller.js",
   "theme-policy.js",
   "material-policy.js",
   "client-policy.js",
@@ -51,6 +53,14 @@ function loadApp({
   browserScripts.forEach((source) => window.eval(source));
   dom.requests = requests;
   return dom;
+}
+
+async function waitFor(condition, dom, timeoutMs = 500) {
+  const deadline = Date.now() + timeoutMs;
+  while (!condition()) {
+    if (Date.now() >= deadline) throw new Error("Warunek testu nie został spełniony na czas.");
+    await new Promise((resolve) => dom.window.setTimeout(resolve, 5));
+  }
 }
 
 function target() {
@@ -231,7 +241,12 @@ test("pomyślne logowanie z formularza nadal przenosi do magazynu", async () => 
       }
       if (pathname === "/api/auth/session") {
         return authenticated
-          ? { authenticated: true, user: { id: "u1", email }, profile: { email } }
+          ? {
+            authenticated: true,
+            user: { id: "u1", email },
+            profile: { email },
+            legal: { currentVersion: "1.0", acceptedVersion: "1.0", acceptanceRequired: false },
+          }
           : { authenticated: false, user: null };
       }
       return undefined;
@@ -250,6 +265,116 @@ test("pomyślne logowanie z formularza nadal przenosi do magazynu", async () => 
   dom.window.close();
 });
 
+test("zwykłe logowanie pokazuje Magazyn przed zakończeniem odświeżania danych", async (t) => {
+  const email = "jan@example.test";
+  let authenticated = false;
+  let resolveYarns;
+  const pendingYarns = new Promise((resolve) => { resolveYarns = resolve; });
+  const dom = loadApp({
+    onRequest: async ({ pathname }) => {
+      if (pathname === "/api/auth/login") {
+        authenticated = true;
+        return { user: { id: "u1", email } };
+      }
+      if (pathname === "/api/auth/session") {
+        return authenticated
+          ? {
+            authenticated: true,
+            user: { id: "u1", email },
+            profile: { email },
+            legal: { currentVersion: "1.0", acceptedVersion: "1.0", acceptanceRequired: false },
+          }
+          : { authenticated: false, user: null };
+      }
+      if (pathname === "/api/yarns") return pendingYarns;
+      return undefined;
+    },
+  });
+  t.after(() => dom.window.close());
+
+  await new Promise((resolve) => dom.window.setTimeout(resolve, 20));
+  dom.window.document.getElementById("login-email").value = email;
+  dom.window.document.getElementById("login-password").value = "Secret1!";
+  dom.window.document.getElementById("loginForm").requestSubmit();
+
+  await waitFor(() => dom.requests.some(({ pathname }) => pathname === "/api/yarns"), dom);
+  assert.equal(dom.window.document.getElementById("inventoryView").hidden, false);
+  resolveYarns([]);
+});
+
+test("akceptacja dokumentów przenosi użytkownika do Magazynu", async (t) => {
+  let accepted = false;
+  const dom = loadApp({
+    session: {
+      authenticated: true,
+      user: { id: "u1", email: "jan@example.test" },
+      profile: { email: "jan@example.test" },
+      legal: { currentVersion: "1.0", acceptedVersion: null, acceptanceRequired: true },
+    },
+    onRequest: async ({ pathname }) => {
+      if (pathname === "/api/auth/session") {
+        return {
+          authenticated: true,
+          user: { id: "u1", email: "jan@example.test" },
+          profile: { email: "jan@example.test" },
+          legal: { currentVersion: "1.0", acceptedVersion: accepted ? "1.0" : null, acceptanceRequired: !accepted },
+        };
+      }
+      if (pathname === "/api/legal/acceptance") {
+        accepted = true;
+        return {};
+      }
+      if (pathname === "/api/yarns") return [];
+      return undefined;
+    },
+  });
+  t.after(() => dom.window.close());
+
+  await waitFor(() => dom.window.document.getElementById("legalAcceptanceGate").hidden === false, dom);
+  const terms = dom.window.document.getElementById("legal-acceptance-terms");
+  terms.checked = true;
+  dom.window.document.getElementById("legalAcceptanceForm").requestSubmit();
+
+  await waitFor(() => dom.requests.filter(({ pathname }) => pathname === "/api/auth/session").length >= 2, dom);
+  await waitFor(() => dom.window.document.getElementById("inventoryView").hidden === false, dom);
+});
+
+test("rejestracja z akceptacją formularza przechodzi do Magazynu", async (t) => {
+  let registered = false;
+  const dom = loadApp({
+    onRequest: async ({ pathname }) => {
+      if (pathname === "/api/auth/register") {
+        registered = true;
+        return { user: { id: "u2", email: "nowy@example.test" } };
+      }
+      if (pathname === "/api/auth/session") {
+        return registered
+          ? {
+            authenticated: true,
+            user: { id: "u2", email: "nowy@example.test" },
+            profile: { email: "nowy@example.test" },
+            legal: { currentVersion: "1.0", acceptedVersion: "1.0", acceptanceRequired: false },
+          }
+          : { authenticated: false, user: null };
+      }
+      if (pathname === "/api/yarns") return [];
+      return undefined;
+    },
+  });
+  t.after(() => dom.window.close());
+
+  await new Promise((resolve) => dom.window.setTimeout(resolve, 20));
+  const document = dom.window.document;
+  document.getElementById("registerModeBtn").click();
+  document.getElementById("register-login").value = "nowy@example.test";
+  document.getElementById("register-password").value = "Secret1!";
+  document.getElementById("register-terms-accepted").checked = true;
+  document.getElementById("registerForm").requestSubmit();
+
+  await waitFor(() => dom.requests.filter(({ pathname }) => pathname === "/api/auth/session").length >= 2, dom);
+  await waitFor(() => document.getElementById("inventoryView").hidden === false, dom);
+});
+
 test("powrót do Konta po logowaniu nie zachowuje ogólnego komunikatu sukcesu", async (t) => {
   const email = "jan@example.test";
   let authenticated = false;
@@ -261,7 +386,12 @@ test("powrót do Konta po logowaniu nie zachowuje ogólnego komunikatu sukcesu",
       }
       if (pathname === "/api/auth/session") {
         return authenticated
-          ? { authenticated: true, user: { id: "u1", email }, profile: { email } }
+          ? {
+            authenticated: true,
+            user: { id: "u1", email },
+            profile: { email },
+            legal: { currentVersion: "1.0", acceptedVersion: "1.0", acceptanceRequired: false },
+          }
           : { authenticated: false, user: null };
       }
       return undefined;

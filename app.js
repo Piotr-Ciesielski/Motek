@@ -477,7 +477,7 @@ const legalAcceptanceController = createLegalAcceptanceController({
   request: (path, options) => api(path, options),
   legalDocument: CURRENT_LEGAL_DOCUMENT,
   onAccepted: async () => {
-    await refreshAuthSession();
+    await refreshAuthSession({ navigateToInventory: true });
   },
 });
 
@@ -2033,7 +2033,7 @@ function renderAuthState(payload) {
   }
 }
 
-async function refreshAuthSession() {
+async function refreshAuthSession({ navigateToInventory = false } = {}) {
   let payload;
   try {
     payload = await api("/api/auth/session");
@@ -2059,6 +2059,10 @@ async function refreshAuthSession() {
   if (requiresLegalAcceptance) {
     setActiveView("account", { focus: false });
     return payload;
+  }
+
+  if (navigateToInventory) {
+    setActiveView("inventory", { focus: false });
   }
 
   if (preserveDraftAfterLogin) {
@@ -2129,11 +2133,10 @@ async function submitAuthForm(form, endpoint, successMessage) {
       setAuthMessage("Konto utworzone. Potwierdź adres e-mail, aby się zalogować.");
     } else {
       setAuthMessage(successMessage, "success");
-      await refreshAuthSession();
+      await refreshAuthSession({ navigateToInventory: true });
       if (form === loginForm && authMessage.textContent === successMessage) {
         setAuthMessage("");
       }
-      setActiveView("inventory");
     }
     form.reset();
   } catch (error) {
