@@ -80,3 +80,11 @@ produkcji rejestruje ostrzeżenie i kontynuuje pracę, gdy zmienna
 Ustawienie `ENFORCE_LEGAL_PUBLICATION=true` przywraca twardą blokadę startu.
 `npm run legal:check` nadal pozostaje niezależną kontrolą i nadal sygnalizuje
 `NO-GO`, dopóki nie zostaną zebrane i zweryfikowane wymagane dowody.
+
+## Końcowe potwierdzenie operatora — 2026-08-17
+
+Smoke test produkcji zakończył się poprawnie. Alerty Cloudflare zostały
+sprawdzone i są czyste. Otwarty stan legal readiness, ograniczenie pełnego
+testu restore oraz ostrzeżenia Security Advisors pozostają świadomie
+zaakceptowanymi ryzykami. Produkcyjny katalog pozostaje przy 15 syntetycznych
+wzorach demo do czasu osobnej zmiany produktowej.

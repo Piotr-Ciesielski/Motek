@@ -153,8 +153,17 @@ Historyczny odczyt panelu Cloudflare z 2026-08-16 potwierdził dodatkowo:
 Późniejszy odczyt publiczny potwierdził włączenie HSTS w wariancie
 `max-age=2592000`, bez `includeSubDomains` i bez `preload`.
 
-Pozostaje otwarte wyłącznie pełne potwierdzenie ochrony originu w panelu oraz
-konfiguracji alertów/monitoringu. Nie zmieniano tych ustawień. Bezpośredni
+Panelowa konfiguracja ochrony originu nie była ponownie zmieniana. Bezpośredni
 odczyt adresu Railway wykonany 2026-08-17 zwrócił `404` z
 `x-railway-fallback`, a nie aplikację Motek, co jest dodatkowym dowodem, że
-origin nie omija obecnie publicznej warstwy Cloudflare.
+origin nie omija obecnie publicznej warstwy Cloudflare. Operator potwierdził
+również, że alerty Cloudflare są czyste.
+
+## Końcowe potwierdzenie operatora — 2026-08-17
+
+- produkcyjny smoke test został wykonany i zakończył się poprawnie;
+- dokumentacja ma zostać opublikowana razem z tym checkpointem;
+- legal readiness, ograniczenia backupu oraz ostrzeżenia Security Advisors
+  pozostają świadomie zaakceptowanymi ryzykami i nie są teraz domykane;
+- 15 opublikowanych rekordów pozostaje katalogiem syntetycznych wzorów demo do
+  czasu planowanej zmiany produktowej.

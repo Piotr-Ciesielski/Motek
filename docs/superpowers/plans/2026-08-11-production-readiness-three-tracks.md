@@ -285,3 +285,16 @@ Plan jest zakończony dopiero wtedy, gdy:
 - produkcyjne HTTPS/HSTS, WAF, rate limiting, monitoring i rollback są udokumentowane;
 - katalog nie publikuje niezaudytowanych treści;
 - operator osobno zatwierdził albo odrzucił wdrożenie produkcyjne.
+
+## Aktualizacja po wdrożeniu — 2026-08-17
+
+Produkcja została wdrożona i przeszła smoke test operatora. HTTPS, HSTS,
+Cloudflare proxy oraz brak bezpośredniego dostępu do aplikacji przez adres
+Railway są potwierdzone; alerty Cloudflare są czyste. Legal readiness, pełny
+test restore oraz ostrzeżenia Security Advisors pozostają świadomie
+zaakceptowanymi ryzykami. Katalog produkcyjny zawiera 15 syntetycznych wzorów
+demo, które pozostają tymczasowo opublikowane do czasu planowanej zmiany
+produktowej.
+
+Nie traktujemy tych decyzji jako zamknięcia dowodów prawnych ani jako zgody na
+publikację rzeczywistych wzorów zewnętrznych.
