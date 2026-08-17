@@ -121,6 +121,25 @@ test("light and dark variants define the prototype layout rules", () => {
   assert.match(stylesCss, /object-position: center/);
 });
 
+test("logged-out account keeps vivid artwork and aligned login password control", () => {
+  const document = new JSDOM(indexHtml).window.document;
+  const accountView = document.getElementById("accountView");
+  assert.ok(accountView);
+  assert.equal(accountView.classList.contains("is-authenticated"), false);
+  assert.match(
+    stylesCss,
+    /#accountView:not\(\.is-authenticated\) \.auth-visual > \.auth-visual__image\s*\{[\s\S]*?opacity:\s*1;/,
+  );
+  assert.match(
+    stylesCss,
+    /#loginForm \.password-field input\s*\{[\s\S]*?height:\s*44px;[\s\S]*?min-height:\s*44px;/,
+  );
+  assert.match(
+    stylesCss,
+    /\[data-theme="dark"\] #accountView:not\(\.is-authenticated\) \.auth-visual h1[\s\S]*?color:\s*var\(--on-hero\);/,
+  );
+});
+
 test("dark hero panel keeps readable text on its dark gradient", () => {
   assert.match(stylesCss, /--on-hero:\s*#f3eadc/);
   assert.match(stylesCss, /\.auth-visual\s*\{[\s\S]*?color:\s*var\(--on-hero\)/);
