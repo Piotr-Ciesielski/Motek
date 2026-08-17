@@ -44,12 +44,14 @@ funkcjonalnie zgodna ze stagingiem.
 
 ## Nadal otwarte blokady
 
-1. Read-only ledger Supabase został odczytany, ale nie został jeszcze zamknięty
-   jako mapa efektów SQL. Staging ma 29 wpisów, Production 24. Staging ma też
-   zdalny wpis `20260815152553_restore_recovery_grant_creator`, którego nie ma
-   w lokalnym katalogu migracji. Numery i nazwy migracji nie są mapowaniem 1:1.
+1. Read-only ledger Supabase został zamknięty jako mapa efektów SQL. Staging ma
+   29 wpisów, Production 24. Staging ma też zdalny wpis
+   `20260815152553_restore_recovery_grant_creator`, którego nie ma w lokalnym
+   katalogu migracji; pozostaje on informacją o historii środowiska i nie jest
+   automatycznie promowany. Numery i nazwy migracji nie są mapowaniem 1:1.
 2. Pakiet katalogu ma spełniony read-only precondition danych produkcyjnych,
-   ale wymaga testu na izolowanej kopii. Nie wolno odtwarzać całego łańcucha
+   a lokalny test reprezentatywnego fixture przeszedł `1/1`. Nie tworzymy
+   płatnego brancha ani kopii Supabase. Nie wolno odtwarzać całego łańcucha
    migracji stagingu.
 3. Recovery ma pozostać przy aktywnym kontrakcie `jti_hash`; wariant lokalny z
    `grant_id` nie może być promowany bez osobnego audytu. Produkcja zachowuje
@@ -85,14 +87,11 @@ natomiast wyłączona w obu projektach i pozostaje osobną decyzją bezpieczeńs
 
 ## Następne bezpieczne kroki
 
-1. Sporządzić mapę efektów migracji, w tym zdalnego stagingowego wpisu
-   `restore_recovery_grant_creator`, oraz przypisać każdy efekt do precondition,
-   rollbacku i testu.
-2. Zweryfikować precondition pakietu katalogu na produkcyjnych danych bez
-   wykonywania migracji.
-3. Rozstrzygnąć ostrzeżenia Security Advisors i potwierdzić, które RPC są
-   celowo dostępne dla backendu.
-4. Przygotować osobny pakiet `GO/NO-GO` z dokładnym SHA, zakresem, rollbackiem,
-   kryteriami STOP i planem smoke testu.
-5. Dopiero po zamknięciu bram i osobnej zgodzie wykonać migrację produkcyjną
-   oraz ręczny deploy Railway z `main`.
+1. Zamknąć decyzję bezpieczeństwa dotyczącą wyłączonej ochrony przed wyciekłymi
+   hasłami; celowe RPC pozostawić bez zmian zgodnie z wcześniejszą decyzją.
+2. Przygotować świeży, odtwarzalny backup produkcji i potwierdzić właściciela
+   oraz 30-minutowe okno obserwacji.
+3. Przygotować osobny pakiet `GO/NO-GO` z dokładnym SHA, zakresem, kolejnością
+   Pakiet A → deploy kodu → smoke test, rollbackiem i kryteriami STOP.
+4. Dopiero po zamknięciu tych bram i osobnej zgodzie wykonać migrację
+   produkcyjną oraz ręczny deploy Railway z `main`.
