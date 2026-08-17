@@ -62,8 +62,10 @@ funkcjonalnie zgodna ze stagingiem.
    obserwacji po ewentualnym wdrożeniu.
 6. Security Advisors obu projektów zgłaszają wykonywalne przez `authenticated`
    funkcje `SECURITY DEFINER` oraz wyłączoną ochronę przed wyciekłymi hasłami.
+   Celowe RPC pozostają bez zmian zgodnie z wcześniejszą decyzją, a wyłączona
+   ochrona przed wyciekłymi hasłami jest świadomie zaakceptowanym ryzykiem.
    Staging dodatkowo zgłasza RLS bez polityk dla `private.auth_recovery_grants`
-   i `public.patterns`. To wymaga decyzji bezpieczeństwa przed GO.
+   i `public.patterns`; nie jest to automatycznie zmieniane w ramach promocji.
 
 ## Read-only snapshot Supabase — 2026-08-17
 
@@ -83,15 +85,13 @@ część RPC jest celowo używana jako kontrolowany backendowy kontrakt. Decyzja
 Oba projekty mają dla tych funkcji pusty `search_path`, brak wykonania przez
 `anon` i wykonanie przez `authenticated`/`service_role`; pod tym względem nie
 ma dodatkowego driftu między środowiskami. Ochrona przed wyciekłymi hasłami jest
-natomiast wyłączona w obu projektach i pozostaje osobną decyzją bezpieczeństwa.
+wyłączona w obu projektach i pozostaje świadomie zaakceptowanym ryzykiem.
 
 ## Następne bezpieczne kroki
 
-1. Zamknąć decyzję bezpieczeństwa dotyczącą wyłączonej ochrony przed wyciekłymi
-   hasłami; celowe RPC pozostawić bez zmian zgodnie z wcześniejszą decyzją.
-2. Przygotować świeży, odtwarzalny backup produkcji i potwierdzić właściciela
+1. Przygotować świeży, odtwarzalny backup produkcji i potwierdzić właściciela
    oraz 30-minutowe okno obserwacji.
-3. Przygotować osobny pakiet `GO/NO-GO` z dokładnym SHA, zakresem, kolejnością
+2. Przygotować osobny pakiet `GO/NO-GO` z dokładnym SHA, zakresem, kolejnością
    Pakiet A → deploy kodu → smoke test, rollbackiem i kryteriami STOP.
-4. Dopiero po zamknięciu tych bram i osobnej zgodzie wykonać migrację
+3. Dopiero po zamknięciu tych bram i osobnej zgodzie wykonać migrację
    produkcyjną oraz ręczny deploy Railway z `main`.

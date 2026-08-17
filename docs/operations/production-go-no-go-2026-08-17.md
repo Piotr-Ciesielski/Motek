@@ -57,9 +57,10 @@ osobnej procedury awaryjnej i zgody.
 
 ## Decyzje nadal wymagające zamknięcia
 
-1. Czy pozostawiamy wyłączoną ochronę Supabase przed wyciekłymi hasłami, czy
-   włączamy ją jako osobną zmianę bezpieczeństwa.
-2. Kto i kiedy potwierdza backup oraz rozpoczyna okno produkcyjne.
-3. Osobna, jawna zgoda na wykonanie SQL Pakietu A i deploy produkcyjny.
+1. Kto i kiedy potwierdza backup oraz rozpoczyna okno produkcyjne.
+2. Osobna, jawna zgoda na wykonanie SQL Pakietu A i deploy produkcyjny.
+
+Wyłączona ochrona Supabase przed wyciekłymi hasłami pozostaje świadomie
+zaakceptowanym ryzykiem i nie blokuje tego pakietu.
 
 Ten dokument nie jest zgodą na wykonanie SQL ani wdrożenie.
