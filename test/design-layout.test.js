@@ -273,6 +273,14 @@ test("account keeps only real authentication and account-management surfaces", (
   assert.doesNotMatch(indexHtml, /data-account-action=/);
 });
 
+test("logged-out account keeps the cat artwork vivid in both themes", () => {
+  assert.match(indexHtml, /id="accountThemeImage"[\s\S]*data-light-src="assets\/color-yarn-cat\.v1\.webp"[\s\S]*data-dark-src="assets\/night-yarn-cat\.v1\.webp"/);
+  assert.match(
+    stylesCss,
+    /#accountView:not\(\.is-authenticated\) \.auth-visual > \.auth-visual__image\s*\{[\s\S]*?opacity:\s*1;/,
+  );
+});
+
 test("authenticated header and account disclosure use the compact DOM contract", () => {
   const document = new JSDOM(indexHtml).window.document;
   const actions = [...document.querySelectorAll(".app-header__actions > *")];

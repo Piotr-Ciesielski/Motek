@@ -2607,6 +2607,10 @@ body::before {
   pointer-events: none;
 }
 
+#accountView:not(.is-authenticated) .auth-visual > .auth-visual__image {
+  opacity: 1;
+}
+
 #accountView.is-authenticated .auth-layout {
   display: grid;
   grid-template-columns: 1fr;
