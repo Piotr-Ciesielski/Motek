@@ -30,6 +30,11 @@ potwierdził, że ten konkretny precondition danych jest obecnie spełniony.
 Przed wykonaniem nadal wymagane są: test na kopii danych, pgTAP, backup,
 rollback oraz osobna zgoda na SQL produkcyjny.
 
+Kolejność jest obowiązkowa: `server.js` filtruje katalog po
+`publication_status` i pobiera `official_source_url`, więc wdrożenie nowego
+backendu przed zastosowaniem kompatybilnego efektu Pakietu A może zakończyć się
+błędem zapytania do produkcyjnego `public.patterns`.
+
 ### Pakiet B — legal i rejestracja — zamknięty jako migracja
 
 Read-only porównanie potwierdziło w obu projektach tabele
