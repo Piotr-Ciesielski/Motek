@@ -11,42 +11,61 @@ index.html + styles.css
 
 server.js
   ├── server/static-files.js
-  ├── server/*-routes.js
+  ├── server/yarn-routes.js
+  ├── server/pattern-routes.js
   ├── server/matching-service.js
-  └── Supabase Data API / Auth
+  ├── *-policy.js / *-service.js
+  └── Supabase Data API / Auth / RPC
+
+supabase/
+  ├── migrations/
+  └── tests/database/
 ```
 
-`index.html` opisuje strukturę interfejsu, `styles.css` jego wygląd, a `app.js` składa kontrolery i renderuje stan. Kontrolery klienta zarządzają pojedynczymi obszarami UI; API client centralizuje timeout, bezpieczny retry odczytów i reakcję na wygaśnięcie sesji.
+`index.html` definiuje cztery widoki i stabilne uchwyty DOM. `styles.css` odpowiada za dwa motywy i układ responsywny. `app.js` składa kontrolery, a moduły `client/` izolują komunikację HTTP, komunikaty DOM, katalog i bramkę prawną.
 
-Backend nie używa frameworka HTTP. `server.js` jest punktem składania: sprawdza origin, sesję i limity, a routery delegują szczegóły endpointów. `matching-policy.js` waliduje wymagania, `server/matching-service.js` liczy dopasowania, a `server/static-files.js` obsługuje wyłącznie jawnie dozwolone zasoby.
+Backend nie używa frameworka HTTP. `server.js` składa konfigurację, origin, sesję, limity, nagłówki bezpieczeństwa i główne trasy. Routery obsługują włóczki oraz katalog, a serwis dopasowania korzysta ze wspólnej polityki walidacji wymagań.
+
+## Granice zaufania
+
+- Przeglądarka zna publiczny origin i opcjonalny klucz witryny Turnstile, ale nie zna sekretnego klucza Supabase.
+- Backend waliduje dane, sesję, bieżącą akceptację prawa, limity i uprawnienia przed wywołaniem Supabase.
+- Supabase egzekwuje własność profilu i włóczek przez RLS. Bezpośrednie zapisy tabel przez rolę użytkownika są ograniczone na rzecz wersjonowanych RPC.
+- Migracje są źródłem prawdy schematu, ACL, RLS i RPC. Testy pgTAP sprawdzają wykonany kontrakt bazy.
 
 ## Przepływ sesji
 
-1. Frontend wysyła żądanie do API Motka; nie zna sekretnego klucza Supabase.
-2. Backend odczytuje ciasteczka `HttpOnly`, odświeża sesję, pobiera profil i sprawdza status konta.
-3. Token użytkownika jest przekazywany do Supabase, gdzie RLS egzekwuje własność danych.
-4. Wylogowanie i błędna sesja czyszczą ciasteczka. Błąd `401` powoduje powrót UI do formularza logowania.
+1. Frontend wysyła żądanie do API Motka z cookies `HttpOnly`.
+2. Backend sprawdza origin dla zapisów, podpis aktywności, limit bezczynności i tokeny Supabase.
+3. Backend pobiera profil oraz stan akceptacji regulaminu.
+4. Token użytkownika trafia do Supabase dla operacji chronionych RLS.
+5. Wylogowanie, wygaśnięcie albo niepewny wynik zmiany hasła czyszczą cookies. Odpowiedź `401` przywraca UI do stanu logowania.
 
-## Zapis włóczki i współbieżność
+## Rejestracja i legal gate
 
-Magazyn używa wersji kolekcji oraz nagłówka `ETag: "yarn-vN"`. Zapis wysyła `If-Match`; wersjonowane RPC Supabase blokują wiersz wersji i zwracają `409`, gdy klient ma nieaktualną wersję. Zapis nie jest automatycznie ponawiany, ponieważ odpowiedź może być niepewna.
+Operator tworzy zaproszenie przez RPC dostępne tylko dla `service_role`. Backend hashuje token, rezerwuje zaproszenie, tworzy konto Auth, wiąże próbę rejestracji i finalizuje akceptację dokumentów. Nieaktualny regulamin ogranicza sesję do informacji prawnych, ponownej akceptacji, wylogowania i usunięcia konta.
+
+## Zapis włóczek i współbieżność
+
+Magazyn używa wersji kolekcji oraz `ETag: "yarn-vN"`. Mutacje wysyłają `If-Match`. Wersjonowane RPC blokują wiersz wersji i zwracają `409`, gdy klient zapisuje na nieaktualnym stanie. Zapis nie jest automatycznie ponawiany, bo wynik operacji mógłby być niepewny.
+
+Właściciel rekordu wynika z sesji, nie z danych formularza. Limit 500 włóczek jest egzekwowany wspólnie przez aplikację i bazę.
 
 ## Katalog i dopasowania
 
-`/api/patterns` zwraca stronę katalogu (`limit`/`offset`), a klient pobiera kolejne strony dopiero na żądanie. `/api/matches` pobiera prywatne włóczki, waliduje limity złożoności i używa wspólnego serwisu dopasowania. Wzory z niepełnymi wymaganiami pozostają widoczne, ale nie są przedstawiane jako pewne dopasowania.
+`GET /api/patterns` zwraca strony katalogu przez `limit` i `offset`; klient doładowuje je kontrolowanie. `GET /api/matches` pobiera prywatne włóczki, odrzuca niekompletne wymagania i uruchamia ograniczone wyszukiwanie przypisań.
 
-## Granica Supabase
+Wspólny katalog ma limit 300 wzorów. API nie zwraca prywatnych pól importu. Dopasowanie nie zgaduje brakujących danych i nie przypisuje jednego motka do kilku ról.
 
-Supabase przechowuje Auth, profile, prywatne włóczki i wspólny katalog. Migracje w `supabase/migrations/` są źródłem prawdy schematu, RLS, walidatorów i wersjonowanych RPC. Testy pgTAP w `supabase/tests/database/` sprawdzają kontrakty bazy; wymagają Docker/Podman.
+## Skalowanie
 
-## Weryfikacja
+Przy kontrakcie 500 włóczek na użytkownika i 300 wzorów nie ma podstaw, aby wymagać workera, kolejki zadań ani dalszej paginacji. Bieżąca paginacja katalogu ogranicza rozmiar odpowiedzi, ale nie stanowi sygnału do rozbudowy infrastruktury.
 
-```bash
-npm run check
-npm run lint
-npm run format:check
-npm run coverage
-git diff --check
-```
+Nowy mechanizm skalowania można dodać dopiero po benchmarku pokazującym realne opóźnienie lub po zmianie limitów produktu. Najpierw należy zmierzyć czas API, liczbę odwiedzonych węzłów rankingu i pamięć procesu; dopiero potem wybierać optymalizację, rozszerzoną paginację albo worker.
 
-Aplikacja lokalna działa na `http://127.0.0.1:3001`. Przed wdrożeniem należy dodatkowo uruchomić testy pgTAP, sprawdzić konfigurację stagingu i wykonać funkcjonalny smoke test bez usuwania prawdziwego konta.
+## Diagnostyka
+
+- `/health/live` — proces działa;
+- `/health/ready` — aplikacja i Supabase są gotowe;
+- `/health/release` — wersja, SHA i środowisko;
+- `/internal/metrics` — metryki tylko po włączeniu i w zaufanej sieci.

@@ -20,7 +20,7 @@
       ],
       "verifiedAt": "2026-08-16",
       "verificationBasis": [
-        "Odczyt konfiguracji Motek Production i Motek Staging zapisany w docs/operations/legal-readiness-status-2026-08-11.md",
+        "Weryfikacja operatora z 2026-08-16: odczyt konfiguracji Motek Production i Motek Staging w panelu/API",
         "Potwierdzenie operatora zakresu legal z 2026-08-15",
         "Oficjalne dokumenty Supabase wskazane w evidence"
       ]
@@ -43,7 +43,7 @@
       ],
       "verifiedAt": "2026-08-16",
       "verificationBasis": [
-        "Odczyt konfiguracji Railway Production zapisany w docs/operations/legal-readiness-status-2026-08-11.md",
+        "Weryfikacja operatora z 2026-08-16: odczyt konfiguracji i wdrożenia Railway Production oraz Staging",
         "Potwierdzenie operatora zakresu legal z 2026-08-15",
         "Oficjalne dokumenty Railway wskazane w evidence"
       ]
@@ -76,7 +76,7 @@
           ],
           "verifiedAt": "2026-08-16",
           "verificationBasis": [
-            "Odczyt Cloudflare zapisany w docs/operations/cloudflare-readonly-evidence-2026-08-16.md",
+            "Weryfikacja operatora z 2026-08-16: odczyt strefy rysia.org, proxy apex/www, DNS, TLS i HSTS oraz publicznych nagłówków HTTPS",
             "Publiczna weryfikacja HTTPS po HSTS z 2026-08-16",
             "Oficjalne dokumenty Cloudflare wskazane w evidence"
           ]
@@ -109,7 +109,7 @@
       ],
       "verifiedAt": "2026-08-16",
       "verificationBasis": [
-        "Odczyt Cloudflare edge i Turnstile zapisany w dokumentacji operacyjnej",
+        "Weryfikacja z 2026-08-16 objęła produkcyjną strefę rysia.org dla edge oraz widgety Turnstile produkcji i stagingu na podstawie odczytu panelu, publicznego HTTPS, konfiguracji aplikacji i oficjalnych dokumentów wskazanych w evidence",
         "Potwierdzenie operatora zakresu legal z 2026-08-15",
         "Oficjalne dokumenty Cloudflare wskazane w evidence"
       ]
