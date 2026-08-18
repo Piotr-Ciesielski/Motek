@@ -2,15 +2,10 @@
 
 ## 1. Status projektu
 
-- bieżący release candidate: branch `release/motek-recovery-rc`, pełny SHA
-  `504d33ba8becd4e596f7451b3ce7f40bf972e1fc`, wersja `2.0.0-alpha.39`, data
-  `2026-08-13`; szczegóły i dowody: [`docs/operations/staging-status-2026-08-07.md`](docs/operations/staging-status-2026-08-07.md)
-- staging i produkcja: `NOT CONFIRMED` na tym SHA; nie jest to potwierdzenie wdrożenia
-- ostatnia wersja wydana: `1.0.2`
+- staging działa pod `https://staging.rysia.org` i służy wyłącznie do testów wewnętrznych;
+- produkcja działa pod `https://www.rysia.org`;
 - aktualne źródło danych: Supabase
 - lokalny SQLite: usunięty z aplikacji
-- następny zakres: domknięcie U-16, U-17, U-19 oraz pełne uporządkowanie U-22; produkcja pozostaje bez zmian
-- aktualny stan gotowości prawnej i lista braków: `docs/operations/legal-readiness-status-2026-08-11.md`
 
 Migracja e-mailowego loginu znajduje się w repozytorium; jej zastosowanie i
 kontrola na zdalnym Supabase są osobnym krokiem operacyjnym.
@@ -130,7 +125,8 @@ nie ma lokalnego trybu SQLite ani fallbacku do pliku lokalnego.
 - odpowiedzi API nie zawierają sekretów ani tokenów,
 - `.env` i lokalny folder `Wzory` nie trafiają do Git.
 
-Szczegółowe ryzyka przed wdrożeniem produkcyjnym opisuje `AUDYT.md`.
+Zasady bezpieczeństwa i ryzyka operacyjne opisuje `docs/SECURITY.md`, a aktualne
+procedury wdrożeniowe `docs/OPERATIONS.md`.
 
 ## 6. Model danych
 
@@ -247,17 +243,13 @@ wersji informacji o prywatności. Sekret Supabase nigdy nie trafia do frontendu.
 
 ## 9. Katalog wzorów i import
 
-Katalog powstał na podstawie audytu 116 lokalnych dokumentów PDF w folderze
-`Wzory`. Zawiera 103 samodzielne wzory z tych plików oraz 3 rekordy
-demonstracyjne. Trzynaście plików wykluczono jako duplikaty, kupony dostępu,
-instrukcję techniczną albo materiały pomocnicze do innego wzoru. Folder jest
-roboczy, ignorowany przez Git i nie jest serwowany przez aplikację.
+Katalog wzorów jest przechowywany w Supabase. Lokalne materiały źródłowe są
+robocze, ignorowane przez Git i nie są serwowane przez aplikację.
 
 Proces przygotowania danych obejmuje:
 
-1. audyt dokumentów,
-2. przygotowanie kandydatów,
-3. ręczne poprawki przypadków niejednoznacznych,
+1. przygotowanie kandydatów,
+2. ręczne poprawki przypadków niejednoznacznych,
 4. walidację danych,
 5. kontrolę podsumowania importu,
 6. selektywny import do Supabase.
@@ -272,8 +264,8 @@ Audyt odróżnia:
 - elastyczny dobór włóczki określony przez autora wzoru.
 
 Brak jednej wartości `meters_per_100g` nie oznacza braku danych, jeżeli wzór
-zawiera kilka alternatyw lub świadomie dopuszcza dowolną włóczkę. Szczegółowy
-wynik i lista wykluczeń znajdują się w `WZORY_AUDYT_DANYCH.md`.
+zawiera kilka alternatyw lub świadomie dopuszcza dowolną włóczkę. Do wyników
+trafiają wyłącznie warianty z kompletnymi, zweryfikowanymi wymaganiami.
 
 ## 10. Uruchomienie i sprawdzanie
 
@@ -385,15 +377,8 @@ produkt będzie wymagał większych magazynów lub katalogu. Możliwe kierunki t
 - dalsza optymalizacja wyboru podzbioru włóczek,
 - przeniesienie rankingu do workera lub kolejki zadań.
 
-## 12. Historia migracji
-
-Wersja `1.0.x` była lokalną aplikacją z SQLite. W wersji `2.0.0` rozpoczęto
-migrację katalogu wzorów do Supabase. Kolejne wersje alpha dodały Auth,
-profile, prywatny magazyn włóczek, role włóczek w rankingu i ostatecznie
-usunęły SQLite z aplikacji.
-
-Szczegółową historię zmian zawiera `CHANGELOG.txt`, a uzasadnienie ryzyk
-bezpieczeństwa i jakości — `AUDYT.md`.
+Aktualne zasady bezpieczeństwa i jakości opisują `docs/SECURITY.md` oraz
+`docs/QUALITY.md`.
 ## Kompozycja wariantów wizualnych
 
 Wariant jasny („Koloroterapia”) i ciemny („Nocny Motek”) używają tej samej
@@ -410,4 +395,7 @@ nakładek i ramek.
 
 Backend jest źródłem prawdy dla sesji, recovery, limitów i autoryzacji. Bezpośrednie mutacje tabeli `yarns` są odbierane użytkownikom, a zapis odbywa się przez kontrolowane RPC. Obrazy WAF i Prometheusa w stagingu są przypięte digestami SHA-256. Brak funkcji Supabase „Leaked Password Protection” jest znanym ograniczeniem planu Free; nie wykonujemy upgrade'u Pro.
 
-Po każdej zmianie bezpieczeństwa należy uruchomić `npm run lint`, `npm run format:check`, `npm run check`, `npm audit --json` oraz dostępne testy pgTAP. Aktualny status audytu znajduje się w `docs/operations/security-audit-status-2026-08-07.md`, a plan prac w `docs/superpowers/plans/2026-08-07-security-hardening-free-plan.md`.
+Po każdej zmianie bezpieczeństwa należy uruchomić `npm run lint`,
+`npm run format:check`, `npm run check`, `npm audit --json` oraz dostępne testy
+pgTAP. Procedury operacyjne i kryteria weryfikacji znajdują się w
+`docs/OPERATIONS.md`.
