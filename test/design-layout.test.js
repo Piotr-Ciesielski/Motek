@@ -145,9 +145,6 @@ test("dark hero panel keeps readable text on its dark gradient", () => {
   assert.match(stylesCss, /\.auth-visual\s*\{[\s\S]*?color:\s*var\(--on-hero\)/);
   assert.match(stylesCss, /\.auth-visual::after\s*\{[\s\S]*?var\(--on-hero\)/);
   assert.match(stylesCss, /\.auth-visual h1\s*\{[\s\S]*?color:\s*var\(--on-hero\)/);
-  assert.match(stylesCss, /\.auth-visual \.lead\s*\{[\s\S]*?var\(--on-hero\)/);
-  assert.match(stylesCss, /\.hero-cta\s*\{[\s\S]*?color:\s*var\(--on-hero\)/);
-  assert.match(stylesCss, /\.hero-cta\s*\{[\s\S]*?color-mix\(in srgb, var\(--on-hero\)/);
 });
 
 test("inventory shelves collapse from two columns to one on mobile", () => {
@@ -161,15 +158,48 @@ test("inventory shelves collapse from two columns to one on mobile", () => {
   );
 });
 
-test("hero copy stays focused and uses the Dopasowanie heading type", () => {
+test("hero zachowują tylko wskazane nagłówki, akcje, grafiki i krój pisma", () => {
   const document = new JSDOM(indexHtml).window.document;
+  const normalizeText = (element) => element.textContent.replace(/\s+/g, " ").trim();
+  const accountHero = document.querySelector("#accountView .auth-visual");
+  const matchesCopy = document.querySelector("#matchesView .matches-hero__copy");
+  const catalogCopy = document.querySelector("#catalogView .catalog-hero__copy");
 
   assert.equal(document.querySelector("#inventoryView .inventory-heading .eyebrow"), null);
   assert.equal(document.querySelector("#inventoryView .inventory-heading > div:first-child > p:not(.eyebrow)"), null);
-  assert.equal(document.querySelector("#matchesView .matches-hero__copy .eyebrow")?.textContent, "Pomysły z Twojego zapasu");
-  assert.equal(document.querySelector("#matchesView .matches-hero__copy .page-heading > div > p:not(.eyebrow)")?.textContent, "Ustaw kryteria i zobacz pasujące wzory na żywo.");
-  assert.equal(document.querySelector("#catalogView .catalog-hero__copy .eyebrow")?.textContent, "Biblioteka inspiracji");
-  assert.equal(document.querySelector("#catalogView .catalog-hero__copy > p:not(.eyebrow)")?.textContent, "Znajdź wzór, który pasuje do Twojej włóczki i kolejnego projektu.");
+
+  assert.equal(accountHero.querySelector("#heroTitle").textContent.trim(), "Twoja włóczka ma już swój następny projekt");
+  assert.equal(accountHero.querySelector(".auth-visual__brand"), null);
+  assert.equal(accountHero.querySelector(".lead"), null);
+  assert.equal(accountHero.querySelector("#heroAuthBtn"), null);
+  assert.equal([...accountHero.children].some((element) => normalizeText(element) === "Motek"), false);
+  assert.doesNotMatch(
+    normalizeText(accountHero),
+    /Uporządkuj domowy zapas, znajdź pasujący wzór i wróć do tego, co najprzyjemniejsze — tworzenia\./,
+  );
+  assert.doesNotMatch(normalizeText(accountHero), /Zacznij w Motku/);
+
+  assert.equal(matchesCopy.querySelector("#matchesPageTitle").textContent.trim(), "Dopasuj włóczkę");
+  assert.equal(matchesCopy.querySelector(".eyebrow"), null);
+  assert.equal(matchesCopy.querySelector(".page-heading > div > p"), null);
+  assert.doesNotMatch(normalizeText(matchesCopy), /Pomysły z Twojego zapasu/);
+  assert.doesNotMatch(normalizeText(matchesCopy), /Ustaw kryteria i zobacz pasujące wzory na żywo\./);
+  assert.equal(matchesCopy.querySelector("#backToInventoryBtn").textContent.trim(), "Wróć do magazynu");
+
+  assert.equal(catalogCopy.querySelector("#catalogTitle").textContent.trim(), "Katalog wzorów");
+  assert.equal(catalogCopy.querySelector(".eyebrow"), null);
+  assert.equal(catalogCopy.querySelector("p"), null);
+  assert.doesNotMatch(normalizeText(catalogCopy), /Biblioteka inspiracji/);
+  assert.doesNotMatch(
+    normalizeText(catalogCopy),
+    /Znajdź wzór, który pasuje do Twojej włóczki i kolejnego projektu\./,
+  );
+
+  for (const imageId of ["accountThemeImage", "matchesThemeImage", "catalogThemeImage"]) {
+    const image = document.getElementById(imageId);
+    assert.equal(image.dataset.lightSrc, "assets/color-yarn-cat.v1.webp");
+    assert.equal(image.dataset.darkSrc, "assets/night-yarn-cat.v1.webp");
+  }
 
   assert.doesNotMatch(
     stylesCss,
