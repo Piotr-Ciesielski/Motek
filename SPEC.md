@@ -5,8 +5,7 @@
 Motek używa Supabase jako jedynego źródła danych. Aplikacja nie ma trybu SQLite ani lokalnego fallbacku danych.
 
 - źródło lokalne: `2.0.0-alpha.38`;
-- kanoniczny staging: `https://www.staging.rysia.org`, obecnie bez publicznego DNS;
-- osiągalny staging przejściowy: `https://staging.rysia.org`, release `2.0.0-alpha.39`, SHA `d7409a408351dc0a8f78f53eb5861c3db6eca627`;
+- staging: `https://staging.rysia.org`, release `2.0.0-alpha.39`, SHA `d7409a408351dc0a8f78f53eb5861c3db6eca627`; staging nie jest produkcją i nie jest dostępny dla użytkowników;
 - produkcja: `https://www.rysia.org`, release `2.0.0-alpha.39`, SHA `a625bccbec827fd07965f476259f39836fc84b90`;
 - limit magazynu: 500 włóczek na użytkownika;
 - limit katalogu: 300 wzorów.
@@ -121,7 +120,6 @@ Usunięcie konta wymaga aktywnej sesji, poprawnego hasła i dokładnej frazy `US
 
 ## Bieżąca praca produktowa
 
-- utworzenie publicznego DNS dla kanonicznego `www.staging.rysia.org` i przełączenie kontroli stagingu z endpointu przejściowego;
 - wyrównanie lokalnego kandydata i wdrożonych SHA przed kolejną promocją;
 - domknięcie callbacku potwierdzenia e-mailu między frontendem i backendem;
 - rozszerzanie kompletnych, zweryfikowanych wymagań na kolejne wzory;

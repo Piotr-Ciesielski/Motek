@@ -7,11 +7,10 @@ Stan potwierdzony 2026-08-18:
 | Środowisko | Domena i rola | Gałąź | Supabase | Stan release |
 | --- | --- | --- | --- | --- |
 | Lokalne źródło | `http://127.0.0.1:3001` | bieżący checkout | cel z lokalnej konfiguracji | `2.0.0-alpha.38` |
-| Staging kanoniczny | `https://www.staging.rysia.org` — domena wybrana przez właściciela | `staging` | osobny projekt staging | brak publicznego rekordu DNS; endpoint nieosiągalny |
-| Staging przejściowy | `https://staging.rysia.org` — obecnie osiągalny endpoint | `staging` | osobny projekt staging | ready, `2.0.0-alpha.39`, SHA `d7409a408351dc0a8f78f53eb5861c3db6eca627`, environment `staging` |
+| Staging | `https://staging.rysia.org` — jedyny bieżący endpoint stagingu; staging nie jest produkcją i nie jest dostępny dla użytkowników | `staging` | osobny projekt staging | ready, `2.0.0-alpha.39`, SHA `d7409a408351dc0a8f78f53eb5861c3db6eca627`, environment `staging` |
 | Produkcja | `https://www.rysia.org` | `main` | osobny projekt produkcyjny | ready, `2.0.0-alpha.39`, SHA `a625bccbec827fd07965f476259f39836fc84b90`, environment `production` |
 
-Na obu osiągalnych środowiskach `/informacje-prawne` zwraca `200`, a anonimowe `/api/patterns` zwraca `401`. Do czasu utworzenia DNS dla domeny kanonicznej testy stagingu używają endpointu przejściowego bez `www`. Nie wolno przedstawiać go jako docelowej domeny właściciela.
+Na stagingu i produkcji `/informacje-prawne` zwraca `200`, a anonimowe `/api/patterns` zwraca `401`. Staging służy wyłącznie do weryfikacji przed promocją i nie jest dostępny dla użytkowników.
 
 Lokalne źródło, staging i produkcja mogą mieć różne wersje oraz SHA. Każdą decyzję operacyjną wiąże się z pełnym SHA, nie tylko numerem wersji.
 

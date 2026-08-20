@@ -66,8 +66,7 @@ Wersja źródła lokalnego to `2.0.0-alpha.38` w `VERSION` i `package.json`.
 
 | Środowisko | Adres | Stan 2026-08-18 | Release |
 | --- | --- | --- | --- |
-| Staging kanoniczny | `https://www.staging.rysia.org` | domena wybrana przez właściciela; brak publicznego rekordu DNS | niedostępny do odczytu |
-| Staging przejściowy | `https://staging.rysia.org` | osiągalny, `/health/release` gotowy | `2.0.0-alpha.39`, SHA `d7409a408351dc0a8f78f53eb5861c3db6eca627`, `staging` |
+| Staging | `https://staging.rysia.org` | osiągalny, `/health/release` gotowy; staging nie jest produkcją i nie jest dostępny dla użytkowników | `2.0.0-alpha.39`, SHA `d7409a408351dc0a8f78f53eb5861c3db6eca627`, `staging` |
 | Produkcja | `https://www.rysia.org` | osiągalna, `/health/release` gotowy | `2.0.0-alpha.39`, SHA `a625bccbec827fd07965f476259f39836fc84b90`, `production` |
 
 Na obu osiągalnych środowiskach `/informacje-prawne` zwraca `200`, a anonimowe `/api/patterns` zwraca `401`. Manifest dostawców jest zweryfikowany, a `npm run legal:check` zwraca `LEGAL_PUBLICATION=ready`.
