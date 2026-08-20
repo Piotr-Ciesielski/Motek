@@ -76,6 +76,48 @@ test("niezalogowane Konto pokazuje pełną grafikę kota w obu motywach i biały
   assert.match(stylesCss, /#accountView\.is-authenticated \.auth-visual\s*\{[\s\S]*?display:\s*none;/);
 });
 
+test("hero zachowują tylko wskazane nagłówki, akcje i grafiki", () => {
+  const document = new JSDOM(indexHtml).window.document;
+  const normalizeText = (element) => element.textContent.replace(/\s+/g, " ").trim();
+  const accountHero = document.querySelector("#accountView .auth-visual");
+  const matchesHero = document.querySelector("#matchesView .matches-hero");
+  const matchesCopy = matchesHero.querySelector(".matches-hero__copy");
+  const catalogHero = document.querySelector("#catalogView .catalog-hero");
+  const catalogCopy = catalogHero.querySelector(".catalog-hero__copy");
+
+  assert.equal(accountHero.querySelector("#heroTitle").textContent.trim(), "Twoja włóczka ma już swój następny projekt");
+  assert.equal(accountHero.querySelector(".auth-visual__brand"), null);
+  assert.equal(accountHero.querySelector(".lead"), null);
+  assert.equal(accountHero.querySelector("#heroAuthBtn"), null);
+  assert.equal([...accountHero.children].some((element) => normalizeText(element) === "Motek"), false);
+  assert.doesNotMatch(
+    normalizeText(accountHero),
+    /Uporządkuj domowy zapas, znajdź pasujący wzór i wróć do tego, co najprzyjemniejsze — tworzenia\./,
+  );
+  assert.doesNotMatch(normalizeText(accountHero), /Zacznij w Motku/);
+  assert.equal(document.getElementById("accountThemeImage").dataset.lightSrc, "assets/color-yarn-cat.v1.webp");
+  assert.equal(document.getElementById("accountThemeImage").dataset.darkSrc, "assets/night-yarn-cat.v1.webp");
+
+  assert.equal(matchesCopy.querySelector("#matchesPageTitle").textContent.trim(), "Dopasuj włóczkę");
+  assert.equal(matchesCopy.querySelector(".eyebrow"), null);
+  assert.equal(matchesCopy.querySelector(".page-heading > div > p"), null);
+  assert.doesNotMatch(normalizeText(matchesCopy), /Pomysły z Twojego zapasu/);
+  assert.doesNotMatch(normalizeText(matchesCopy), /Ustaw kryteria i zobacz pasujące wzory na żywo\./);
+  assert.equal(matchesCopy.querySelector("#backToInventoryBtn").textContent.trim(), "Wróć do magazynu");
+  assert.equal(document.getElementById("matchesThemeImage").dataset.darkSrc, "assets/night-yarn-cat.v1.webp");
+
+  assert.equal(catalogCopy.querySelector("#catalogTitle").textContent.trim(), "Katalog wzorów");
+  assert.equal(catalogCopy.querySelector(".eyebrow"), null);
+  assert.equal(catalogCopy.querySelector("p"), null);
+  assert.doesNotMatch(normalizeText(catalogCopy), /Biblioteka inspiracji/);
+  assert.doesNotMatch(
+    normalizeText(catalogCopy),
+    /Znajdź wzór, który pasuje do Twojej włóczki i kolejnego projektu\./,
+  );
+  assert.equal(document.getElementById("catalogThemeImage").dataset.lightSrc, "assets/color-yarn-cat.v1.webp");
+  assert.equal(document.getElementById("catalogThemeImage").dataset.darkSrc, "assets/night-yarn-cat.v1.webp");
+});
+
 test("main navigation uses text labels without decorative symbols", () => {
   const navigation = indexHtml.match(/<nav class="app-nav"[\s\S]*?<\/nav>/)?.[0] || "";
   assert.match(navigation, />Magazyn<\/span>/);

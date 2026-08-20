@@ -76,7 +76,6 @@ const viewButtons = [...document.querySelectorAll("[data-view-target]")];
 const inventoryMatchBtn = document.getElementById("inventoryMatchBtn");
 const inventoryAddYarnBtn = document.getElementById("inventoryAddYarnBtn");
 const backToInventoryBtn = document.getElementById("backToInventoryBtn");
-const heroAuthBtn = document.getElementById("heroAuthBtn");
 const networkStatus = document.getElementById("networkStatus");
 const copyrightNotice = document.getElementById("copyrightNotice");
 const { createApiClient, ApiError, RequestError, isResponseEnvelope } = window.MotekApiClient;
@@ -367,15 +366,6 @@ themeToggle?.addEventListener("click", () => {
 });
 
 renderThemeToggle();
-
-heroAuthBtn.addEventListener("click", () => {
-  showAuthForm(registerForm);
-  setAuthMessage("");
-  authPanel.scrollIntoView({ behavior: scrollBehavior, block: "start" });
-  window.setTimeout(() => {
-    registerForm.querySelector('input[name="login"]').focus({ preventScroll: true });
-  }, 250);
-});
 
 async function detectRuntimeMode() {
   if (window.location.protocol === "file:") {

@@ -159,23 +159,14 @@ test("eksportuje kontroler globalnie w przeglądarce", () => {
   assert.equal(typeof window.createAuthController, "function");
 });
 
-test("Zacznij w Motku otwiera rejestrację, przewija panel i fokusuje e-mail", async (t) => {
-  for (const reducedMotion of [false, true]) {
-    await t.test(reducedMotion ? "bez animacji" : "z płynnym przewijaniem", async () => {
-      const dom = loadApp({ reducedMotion });
-      const { document } = dom.window;
+test("aplikacja uruchamia się bez promocyjnego CTA w hero Konta", async () => {
+  const dom = loadApp();
+  await new Promise((resolve) => dom.window.setTimeout(resolve, 20));
 
-      await new Promise((resolve) => dom.window.setTimeout(resolve, 20));
-      document.getElementById("heroAuthBtn").click();
-      await new Promise((resolve) => dom.window.setTimeout(resolve, 275));
-
-      assert.equal(document.getElementById("registerForm").hidden, false);
-      assert.equal(document.getElementById("registerModeBtn").getAttribute("aria-selected"), "true");
-      assert.equal(document.querySelector(".auth-panel").scrollOptions.behavior, reducedMotion ? "auto" : "smooth");
-      assert.equal(document.activeElement, document.getElementById("register-login"));
-      dom.window.close();
-    });
-  }
+  assert.ok(dom.window.document.getElementById("heroTitle"));
+  assert.ok(dom.window.document.getElementById("accountThemeImage"));
+  assert.equal(dom.window.document.getElementById("heroAuthBtn"), null);
+  dom.window.close();
 });
 
 test("stara akceptacja blokuje prywatne żądania i zostawia wyjście z konta", async () => {
