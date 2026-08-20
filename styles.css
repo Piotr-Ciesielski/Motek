@@ -378,25 +378,11 @@ body {
   z-index: 1;
 }
 
-.auth-visual__brand {
-  margin: 0 0 42px;
-  font-size: clamp(1.45rem, 2.5vw, 2rem);
-  font-weight: 700;
-  letter-spacing: 0.08em;
-}
-
 .auth-visual h1 {
   max-width: 11ch;
   color: var(--on-hero);
   font-size: clamp(3rem, 5vw, 5.4rem);
   line-height: 0.94;
-}
-
-.auth-visual .lead {
-  max-width: 34ch;
-  margin-top: 28px;
-  color: color-mix(in srgb, var(--on-hero) 82%, transparent);
-  font-size: 1.08rem;
 }
 
 .auth-visual__artwork {
@@ -421,19 +407,6 @@ body {
   filter: drop-shadow(0 18px 24px rgb(21 19 52 / 18%));
 }
 
-.hero-cta {
-  align-self: flex-start;
-  min-height: 44px;
-  margin-top: 24px;
-  border: 1px solid color-mix(in srgb, var(--on-hero) 50%, transparent);
-  border-radius: 999px;
-  padding: 11px 16px;
-  color: var(--on-hero);
-  background: color-mix(in srgb, var(--on-hero) 10%, transparent);
-  font: inherit;
-  font-weight: 750;
-  cursor: pointer;
-}
 h1, h2, h3 {
   font-family: "Fraunces", serif;
   margin: 0;
@@ -1747,10 +1720,6 @@ body::before {
     max-height: 260px;
   }
 
-  .auth-visual__brand {
-    margin-bottom: 28px;
-  }
-
   .auth-panel {
     padding: 28px 22px;
   }
@@ -2521,13 +2490,6 @@ body::before {
   padding: clamp(30px, 4vw, 52px);
 }
 
-#catalogView .catalog-hero__copy p:not(.eyebrow) {
-  max-width: 38ch;
-  margin: 16px 0 0;
-  color: var(--muted);
-  line-height: 1.5;
-}
-
 #catalogView .catalog-theme-visual {
   min-width: 0;
   height: 100%;
@@ -2715,25 +2677,12 @@ body::before {
     padding: 24px 22px;
   }
 
-  .account-view .auth-visual__brand {
-    display: none;
-  }
-
   .account-view .auth-visual h1 {
     max-width: 16ch;
     font-size: clamp(2rem, 10vw, 2.75rem);
     line-height: 1;
   }
 
-  .account-view .auth-visual .lead {
-    max-width: 40ch;
-    margin-top: 12px;
-    font-size: 0.95rem;
-  }
-
-  .account-view .hero-cta {
-    margin-top: 16px;
-  }
 }
 
 /*
