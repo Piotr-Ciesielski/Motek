@@ -12,10 +12,12 @@ const REQUIRED_DOCUMENTS = [
 ];
 
 const REQUIRED_OPERATIONS_DOMAINS = [
-  "https://www.staging.rysia.org",
   "https://staging.rysia.org",
   "https://www.rysia.org",
 ];
+
+const FORBIDDEN_ACTIVE_STAGING_HOST_PATTERN =
+  /https:\/\/www\.staging\.rysia\.org(?=$|[/?#\s<>"'`(){},;:!?])/u;
 
 const REQUIRED_ENVIRONMENT_KEYS = [
   "PORT",
@@ -316,6 +318,14 @@ function checkDocumentation(rootDir) {
     if (hasForbiddenHistoricalReference) {
       errors.push(`Forbidden historical reference: ${document.relativePath}`);
     }
+  }
+
+  if (
+    existingDocuments.some((document) =>
+      FORBIDDEN_ACTIVE_STAGING_HOST_PATTERN.test(document.contents),
+    )
+  ) {
+    errors.push("Forbidden active staging domain: https://www.staging.rysia.org");
   }
 
   const specificationDocument = existingDocuments.find(

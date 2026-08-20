@@ -47,16 +47,16 @@ test("przykład lokalnego środowiska dokumentuje dokładnie wymagane klucze", (
   assert.deepEqual(readAssignmentNames(examplePath), expectedLocalKeys);
 });
 
-test("przykład stagingu ustawia kanoniczny APP_ORIGIN z www", () => {
+test("przykład stagingu ustawia APP_ORIGIN bez www", () => {
   const examplePath = path.join(__dirname, "..", "deploy", "staging", ".env.staging.example");
   const assignments = readAssignmentValues(examplePath);
 
-  assert.equal(assignments.get("APP_ORIGIN"), "https://www.staging.rysia.org");
+  assert.equal(assignments.get("APP_ORIGIN"), "https://staging.rysia.org");
 });
 
-test("przykład stagingu ustawia kanoniczny SERVER_NAME z www", () => {
+test("przykład stagingu ustawia SERVER_NAME bez www", () => {
   const examplePath = path.join(__dirname, "..", "deploy", "staging", ".env.staging.example");
   const assignments = readAssignmentValues(examplePath);
 
-  assert.equal(assignments.get("SERVER_NAME"), "www.staging.rysia.org");
+  assert.equal(assignments.get("SERVER_NAME"), "staging.rysia.org");
 });

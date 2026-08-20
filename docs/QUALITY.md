@@ -56,7 +56,7 @@ W ramach `npm run check` skrypt sprawdza:
 - obecność `README.md`, `SPEC.md`, `docs/ARCHITECTURE.md`, `docs/QUALITY.md`, `docs/SECURITY.md`, `docs/OPERATIONS.md` i `docs/DESIGN-QA.md`;
 - poprawność lokalnych linków Markdown;
 - brak odwołań do usuwanych raportów, planów, audytów i materiałów projektowych;
-- macierz domen, w tym różnicę między kanonicznym `www.staging.rysia.org` i osiągalnym `staging.rysia.org`;
+- macierz domen, w tym bieżący staging `staging.rysia.org` i produkcję `www.rysia.org`;
 - zgodność nazw kluczy środowiska z `.env.example` bez odczytu wartości `.env`.
 
 Skrypt jest włączony do `npm run check`; pozostałe bramki działają niezależnie.

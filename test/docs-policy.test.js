@@ -26,7 +26,6 @@ const ENVIRONMENT_KEYS = [
 ];
 
 const OPERATIONS_DOMAINS = [
-  "https://www.staging.rysia.org",
   "https://staging.rysia.org",
   "https://www.rysia.org",
 ];
@@ -408,7 +407,7 @@ test("does not accept a required domain as an evil URL suffix", async () => {
     {
       files: {
         "docs/OPERATIONS.md": `${OPERATIONS_DOMAINS.map((domain) =>
-          domain === "https://www.staging.rysia.org" ? `${domain}.evil` : domain,
+          domain === "https://staging.rysia.org" ? `${domain}.evil` : domain,
         ).join("\n")}\n`,
       },
     },
@@ -416,8 +415,70 @@ test("does not accept a required domain as an evil URL suffix", async () => {
       const { checkDocumentation } = require("../docs-policy.js");
 
       assert.deepEqual(checkDocumentation(rootDir).errors, [
-        "Missing operations domain: https://www.staging.rysia.org",
+        "Missing operations domain: https://staging.rysia.org",
       ]);
+    },
+  );
+});
+
+test("rejects the retired www staging address as an active staging domain", async () => {
+  await withFixture(
+    {
+      files: {
+        "docs/OPERATIONS.md": `${OPERATIONS_DOMAINS.join("\n")}\nhttps://www.staging.rysia.org\n`,
+      },
+    },
+    async (rootDir) => {
+      const { checkDocumentation } = require("../docs-policy.js");
+
+      assert.deepEqual(checkDocumentation(rootDir).errors, [
+        "Forbidden active staging domain: https://www.staging.rysia.org",
+      ]);
+    },
+  );
+});
+
+for (const [activeAddress, description] of [
+  ["https://www.staging.rysia.org/", "with a trailing slash"],
+  ["https://www.staging.rysia.org/health/release", "with a path"],
+  [
+    "https://www.staging.rysia.org/health/release?check=1#status",
+    "with a query and fragment",
+  ],
+  [
+    "[Staging](https://www.staging.rysia.org/health/release)",
+    "inside a Markdown link",
+  ],
+]) {
+  test(`rejects the retired www staging address ${description}`, async () => {
+    await withFixture(
+      {
+        files: {
+          "docs/OPERATIONS.md": `${OPERATIONS_DOMAINS.join("\n")}\n${activeAddress}\n`,
+        },
+      },
+      async (rootDir) => {
+        const { checkDocumentation } = require("../docs-policy.js");
+
+        assert.deepEqual(checkDocumentation(rootDir).errors, [
+          "Forbidden active staging domain: https://www.staging.rysia.org",
+        ]);
+      },
+    );
+  });
+}
+
+test("does not reject a suffix that is not the retired www staging host", async () => {
+  await withFixture(
+    {
+      files: {
+        "docs/OPERATIONS.md": `${OPERATIONS_DOMAINS.join("\n")}\nhttps://www.staging.rysia.org.evil\n`,
+      },
+    },
+    async (rootDir) => {
+      const { checkDocumentation } = require("../docs-policy.js");
+
+      assert.deepEqual(checkDocumentation(rootDir).errors, []);
     },
   );
 });
