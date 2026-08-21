@@ -385,6 +385,10 @@ body {
   line-height: 0.94;
 }
 
+[data-theme="light"] #accountView:not(.is-authenticated) .auth-visual h1 {
+  color: #000;
+}
+
 .auth-visual__artwork {
   position: absolute !important;
   right: -8%;

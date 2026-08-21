@@ -147,6 +147,17 @@ test("dark hero panel keeps readable text on its dark gradient", () => {
   assert.match(stylesCss, /\.auth-visual h1\s*\{[\s\S]*?color:\s*var\(--on-hero\)/);
 });
 
+test("light logged-out account hero uses black title text", () => {
+  assert.match(
+    stylesCss,
+    /\[data-theme="light"\] #accountView:not\(\.is-authenticated\) \.auth-visual h1\s*\{[\s\S]*?color:\s*#000(?:000)?\s*;/,
+  );
+  assert.doesNotMatch(
+    stylesCss,
+    /\[data-theme="dark"\] #accountView:not\(\.is-authenticated\) \.auth-visual h1\s*\{[\s\S]*?color:\s*#000(?:000)?\s*;/,
+  );
+});
+
 test("inventory shelves collapse from two columns to one on mobile", () => {
   assert.match(
     stylesCss,
