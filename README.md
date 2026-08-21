@@ -93,8 +93,6 @@ GitHub Actions uruchamiają testy, lint, formatowanie, audyt npm i testy Supabas
 
 Numer wersji jest w pliku [`VERSION`](VERSION) (obecnie `2.0.0-alpha.39`) i musi odpowiadać wersji w `package.json`. CI kontroluje wersję i SHA; numer wydania aktualizuje się świadomie w repozytorium.
 
-Bieżący release candidate jest opisany wyłącznie w [kanonicznym rekordzie](docs/operations/staging-status-2026-08-07.md): branch `release/motek-recovery-rc`, pełny SHA `504d33ba8becd4e596f7451b3ce7f40bf972e1fc`, wersja `2.0.0-alpha.39`, data `2026-08-13`. Staging i produkcja są `NOT CONFIRMED` na tym SHA; nie jest to twierdzenie o wdrożeniu.
-
 Staging korzysta z krótkotrwałych, podpisanych i jednorazowych grantów recovery.
 Backend atomowo rezerwuje grant przed zmianą hasła, zwalnia rezerwację przy
 błędzie, a po sukcesie zużywa grant i unieważnia pozostałe sesje użytkownika.
@@ -121,21 +119,9 @@ Sesja użytkownika wygasa po 2 godzinach bezczynności (`AUTH_IDLE_TIMEOUT_SECON
 
 ## Dokumentacja
 
-- [Specyfikacja](SPEC.md)
+- [Specyfikacja produktu](SPEC.md)
+- [Architektura](docs/ARCHITECTURE.md)
 - [Jakość i testy](docs/QUALITY.md)
-- [Katalog wzorów](docs/PATTERN-CATALOG.md)
-- [Runbook Railway/Cloudflare i regresji](docs/operations/post-deploy-regression.md)
-- [Zweryfikowany stan stagingu z 2026-08-07](docs/operations/staging-status-2026-08-07.md)
-- [Preflight promocji stagingu na produkcję z 2026-08-17](docs/operations/production-promotion-preflight-2026-08-17.md)
-- [Stan gotowości prawnej z 2026-08-11](docs/operations/legal-readiness-status-2026-08-11.md)
-- [Historia zmian](CHANGELOG.txt)
-# Stan utwardzenia bezpieczeństwa (2026-08-07)
-
-Audyt restrykcyjny został wykonany z założeniem Supabase Free. Repozytorium zawiera migrację odtwarzającą ACL prywatnego licznika włóczek, wymusza podpisane cookie bezczynności, ogranicza publiczne endpointy i chroni zmianę hasła po przepływie recovery. Ochrona przed wyciekłymi hasłami pozostaje niedostępna na planie Free i nie jest zastępowana płatnym upgrade'em.
-
-Grant recovery jest krótkotrwały, podpisany i jednorazowy: jego hash oraz
-znacznik zużycia są przechowywane w prywatnej tabeli Supabase, a po zmianie
-hasła backend unieważnia pozostałe sesje użytkownika. Migracja recovery nie
-jest wykonywana automatycznie przy starcie aplikacji.
-
-Przed wdrożeniem produkcyjnym należy wykonać migracje na kontrolowanym środowisku, uruchomić testy pgTAP oraz potwierdzić konfigurację proxy i limitów na Railway.
+- [Bezpieczeństwo](docs/SECURITY.md)
+- [Operacje i wdrożenia](docs/OPERATIONS.md)
+- [Design QA](docs/DESIGN-QA.md)
