@@ -246,6 +246,14 @@ wersji informacji o prywatności. Sekret Supabase nigdy nie trafia do frontendu.
 Katalog wzorów jest przechowywany w Supabase. Lokalne materiały źródłowe są
 robocze, ignorowane przez Git i nie są serwowane przez aplikację.
 
+## Publikacja treści katalogu
+
+Każdy rekord wymaga wiarygodnego źródła.
+Publikujemy wyłącznie krótki, własny opis faktograficzny.
+Nie publikujemy instrukcji, tłumaczeń, diagramów, zdjęć PDF ani długich cytatów.
+Nie uzupełniamy braków domysłami.
+Niepewne rekordy pozostają ukryte.
+
 Proces przygotowania danych obejmuje:
 
 1. przygotowanie kandydatów,
