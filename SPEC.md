@@ -31,7 +31,7 @@ prywatnym magazynie użytkownika.
 
 Użytkownik może:
 
-- ukończyć rejestrację wyłącznie na podstawie jednorazowego zaproszenia,
+- ukończyć automatyczną rejestrację z potwierdzeniem adresu e-mail,
 - zaakceptować aktualną wersję regulaminu i otrzymać osobno informację o prywatności,
 - zalogować się i korzystać z konta,
 - prowadzić prywatny magazyn motków,
@@ -48,8 +48,8 @@ główną funkcją jest świadome wykorzystanie posiadanego zapasu włóczek.
 
 ## 3. Aktualny przepływ użytkownika
 
-1. Operator tworzy jednorazowe zaproszenie dla znormalizowanego adresu e-mail.
-2. Użytkownik rejestruje konto z linku zaproszenia i akceptuje aktualny regulamin.
+1. Użytkownik podaje e-mail i hasło, akceptuje aktualny regulamin oraz przechodzi CAPTCHA.
+2. Supabase Auth wysyła automatyczny e-mail potwierdzający adres.
 3. Użytkownik dodaje motki, podając nazwę, kolor, jeden lub kilka materiałów, klasę
    grubości, długość i wagę.
 4. Aplikacja zapisuje magazyn prywatnie w Supabase.
@@ -121,8 +121,8 @@ nie ma lokalnego trybu SQLite ani fallbacku do pliku lokalnego.
 - właściciel nowej włóczki wynika z uwierzytelnionej sesji, nie z formularza,
 - dane wejściowe mają limity długości i wartości,
 - logowanie i rejestracja ograniczają serię nieudanych prób per adres klienta i e-mail,
-- zaproszenia są jednorazowe, wygasające i odwoływalne, a baza przechowuje wyłącznie
-  SHA-256 tokenu,
+- rejestracja wymaga CAPTCHA, aktualnej akceptacji dokumentów i potwierdzenia
+  adresu e-mail,
 - aktualna akceptacja regulaminu jest wersjonowana i egzekwowana przez backend, RLS
   oraz uprzywilejowane RPC,
 - usunięcie konta kaskadowo usuwa profil, akceptacje i dane prywatne, ale zachowuje
@@ -171,13 +171,13 @@ dodatkowe, kontrastowe lub alternatywne. `matching_requirements` w wersji 2
 zawiera potwierdzone zużycie, rozmiary, warianty włóczek, role, reguły kolorów
 i liczbę nitek używane przez ranking.
 
-### 6.4 Rejestracja na zaproszenie i akceptacja dokumentów prawnych
+### 6.4 Rejestracja i akceptacja dokumentów prawnych
 
-Rejestracja wymaga ważnego zaproszenia przypisanego do znormalizowanego adresu
-e-mail. System przechowuje w Supabase wyłącznie skrót tokenu zaproszenia;
-rezerwacja i finalizacja tworzą próbę rejestracji, a finalizacja oznacza
-zaproszenie jako zużyte i zapisuje akceptację aktualnego regulaminu oraz
-przekazanie informacji o prywatności.
+Rejestracja używa Supabase Auth `signUp` dla znormalizowanego adresu e-mail.
+Formularz wymaga CAPTCHA, akceptacji aktualnej wersji regulaminu oraz
+potwierdzenia zapoznania się z informacją o prywatności. Supabase wysyła
+automatyczny e-mail potwierdzający adres; do czasu potwierdzenia konto nie ma
+aktywnej sesji.
 
 Sesja bez aktualnej akceptacji regulaminu pozostaje uwierzytelniona, ale dostęp
 do prywatnego profilu, magazynu włóczek, dopasowań i katalogu wzorów jest

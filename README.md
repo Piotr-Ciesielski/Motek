@@ -57,17 +57,17 @@ npm run invite -- purge
 
 ### Zaproszenia operatora
 
-Narzędzie operatora tworzy zaproszenie, odwołuje je albo uruchamia czyszczenie starych logów bezpieczeństwa. Przy tworzeniu zapisuje w bazie wyłącznie hash tokenu; pełny link jest wypisywany tylko raz i nie jest wysyłany automatycznie e-mailem. Do działania wymagane są `SUPABASE_URL`, `SUPABASE_SECRET_KEY` oraz `APP_ORIGIN` w lokalnym `.env`.
+Narzędzie operatora tworzy zaproszenie, odwołuje je albo uruchamia czyszczenie starych logów bezpieczeństwa. Zaproszenia są osobnym narzędziem administracyjnym i nie są wymagane przy zwykłej rejestracji. Przy tworzeniu zapisuje w bazie wyłącznie hash tokenu; pełny link jest wypisywany tylko raz i nie jest wysyłany automatycznie e-mailem. Do działania wymagane są `SUPABASE_URL`, `SUPABASE_SECRET_KEY` oraz `APP_ORIGIN` w lokalnym `.env`.
 
 Nie uruchamiaj komendy `create` na środowisku zdalnym bez świadomej decyzji operatora. Surowego tokenu nie da się później odzyskać.
 
 ### Regulamin i dostęp do konta
 
-Rejestracja działa wyłącznie z ważnym, jednorazowym zaproszeniem. Formularz
-wymaga świadomego zaznaczenia akceptacji bieżącej wersji regulaminu; osobno
-potwierdza przekazanie informacji o prywatności. Backend ponownie sprawdza
-zaproszenie, wersje dokumentów i akceptację, więc samo zmodyfikowanie
-formularza w przeglądarce nie wystarcza do utworzenia konta.
+Rejestracja działa automatycznie przez Supabase Auth: użytkownik podaje e-mail
+i hasło, akceptuje bieżącą wersję regulaminu oraz otrzymuje e-mail z linkiem
+potwierdzającym adres. Backend ponownie sprawdza CAPTCHA, wersje dokumentów
+i akceptację, więc samo zmodyfikowanie formularza w przeglądarce nie wystarcza
+do utworzenia konta.
 
 Jeżeli regulamin zostanie zaktualizowany, zalogowana sesja pozostaje dostępna
 do wyświetlenia informacji prawnych, ponownej akceptacji, wylogowania i

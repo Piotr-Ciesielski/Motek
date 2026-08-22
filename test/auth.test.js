@@ -18,13 +18,11 @@ const {
   parseIdleActivityCookie,
 } = require("../server");
 
-const VALID_INVITATION_TOKEN = "A".repeat(64);
 test("payload rejestracji przekazuje boolean akceptacji i bieżące wersje prawa", () => {
   const payload = buildRegistrationAuthPayload(
     {
       login: "jan@example.com",
       password: "Haslo123!",
-      invitationToken: VALID_INVITATION_TOKEN,
       termsAccepted: true,
       termsVersion: CURRENT_LEGAL_DOCUMENT.termsVersion,
       privacyNoticeVersion: CURRENT_LEGAL_DOCUMENT.privacyVersion,
@@ -35,7 +33,6 @@ test("payload rejestracji przekazuje boolean akceptacji i bieżące wersje prawa
   assert.deepEqual(payload, {
     login: "jan@example.com",
     password: "Haslo123!",
-    invitationToken: VALID_INVITATION_TOKEN,
     termsAccepted: true,
     termsVersion: CURRENT_LEGAL_DOCUMENT.termsVersion,
     privacyNoticeVersion: CURRENT_LEGAL_DOCUMENT.privacyVersion,
@@ -49,7 +46,6 @@ test("payload rejestracji odrzuca nieaktualną wersję dokumentu", () => {
       {
         login: "jan@example.com",
         password: "Haslo123!",
-        invitationToken: VALID_INVITATION_TOKEN,
         termsAccepted: true,
         termsVersion: "0.9",
         privacyNoticeVersion: CURRENT_LEGAL_DOCUMENT.privacyVersion,
@@ -60,29 +56,11 @@ test("payload rejestracji odrzuca nieaktualną wersję dokumentu", () => {
   );
 });
 
-test("payload rejestracji odrzuca token zaproszenia bez pełnego linku", () => {
-  assert.throws(
-    () => buildRegistrationAuthPayload(
-      {
-        login: "jan@example.com",
-        password: "Haslo123!",
-        invitationToken: "niepelny-token",
-        termsAccepted: true,
-        termsVersion: CURRENT_LEGAL_DOCUMENT.termsVersion,
-        privacyNoticeVersion: CURRENT_LEGAL_DOCUMENT.privacyVersion,
-      },
-      { legalDocument: CURRENT_LEGAL_DOCUMENT },
-    ),
-    /pełny link zaproszenia/i,
-  );
-});
-
-test("payload rejestracji akceptuje wyłącznie URL-safe token po trimowaniu", () => {
+test("payload rejestracji nie wymaga tokenu zaproszenia", () => {
   const payload = buildRegistrationAuthPayload(
     {
       login: "jan@example.com",
       password: "Haslo123!",
-      invitationToken: ` ${VALID_INVITATION_TOKEN} `,
       termsAccepted: true,
       termsVersion: CURRENT_LEGAL_DOCUMENT.termsVersion,
       privacyNoticeVersion: CURRENT_LEGAL_DOCUMENT.privacyVersion,
@@ -90,21 +68,24 @@ test("payload rejestracji akceptuje wyłącznie URL-safe token po trimowaniu", (
     { legalDocument: CURRENT_LEGAL_DOCUMENT },
   );
 
-  assert.equal(payload.invitationToken, VALID_INVITATION_TOKEN);
-  assert.throws(
-    () => buildRegistrationAuthPayload(
-      {
-        login: "jan@example.com",
-        password: "Haslo123!",
-        invitationToken: `${"A".repeat(63)}!`,
-        termsAccepted: true,
-        termsVersion: CURRENT_LEGAL_DOCUMENT.termsVersion,
-        privacyNoticeVersion: CURRENT_LEGAL_DOCUMENT.privacyVersion,
-      },
-      { legalDocument: CURRENT_LEGAL_DOCUMENT },
-    ),
-    /pełny link zaproszenia/i,
+  assert.equal(payload.login, "jan@example.com");
+  assert.equal(Object.hasOwn(payload, "invitationToken"), false);
+});
+
+test("payload rejestracji ignoruje pozostały token zaproszenia", () => {
+  const payload = buildRegistrationAuthPayload(
+    {
+      login: "jan@example.com",
+      password: "Haslo123!",
+      invitationToken: "stary-token",
+      termsAccepted: true,
+      termsVersion: CURRENT_LEGAL_DOCUMENT.termsVersion,
+      privacyNoticeVersion: CURRENT_LEGAL_DOCUMENT.privacyVersion,
+    },
+    { legalDocument: CURRENT_LEGAL_DOCUMENT },
   );
+
+  assert.equal(Object.hasOwn(payload, "invitationToken"), false);
 });
 
 test("normalizacja Auth trimuje i ujednolica e-mail oraz login jako e-mail", () => {

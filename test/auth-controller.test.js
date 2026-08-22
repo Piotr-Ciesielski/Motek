@@ -462,21 +462,22 @@ test("aplikacja uruchamia się bez promocyjnego CTA w hero Konta", async () => {
   dom.window.close();
 });
 
-test("ważny link zaproszenia otwiera rejestrację po inicjalizacji niezalogowanej sesji", async () => {
+test("niezalogowany użytkownik może przejść do rejestracji bez linku zaproszenia", async () => {
   const invitation = "A".repeat(64);
   const dom = loadApp({ url: `http://localhost/?invitation=${invitation}` });
 
   try {
-    await waitFor(() => dom.window.document.getElementById("registerForm").hidden === false, dom);
+    await waitFor(() => dom.window.document.getElementById("loginForm").hidden === false, dom);
 
+    assert.equal(dom.window.document.getElementById("registerForm").hidden, true);
+    dom.window.document.getElementById("registerModeBtn").click();
     assert.equal(dom.window.document.getElementById("registerForm").hidden, false);
-    assert.equal(dom.window.document.getElementById("loginForm").hidden, true);
   } finally {
     dom.window.close();
   }
 });
 
-test("rejestracja bez tokenu zatrzymuje żądanie API i wyjaśnia wymaganie linku", async () => {
+test("rejestracja bez tokenu wysyła żądanie API", async () => {
   const dom = loadApp();
 
   try {
@@ -493,10 +494,12 @@ test("rejestracja bez tokenu zatrzymuje żądanie API i wyjaśnia wymaganie link
       bubbles: true,
       cancelable: true,
     }));
-    await waitFor(() => /pełny link zaproszenia/i.test(document.getElementById("authMessage").textContent), dom);
+    await waitFor(() => dom.requests.some(({ pathname }) => pathname === "/api/auth/register"), dom);
 
-    assert.equal(dom.requests.some(({ pathname }) => pathname === "/api/auth/register"), false);
-    assert.match(document.getElementById("authMessage").textContent, /pełny link zaproszenia/i);
+    const registerRequest = dom.requests.find(({ pathname }) => pathname === "/api/auth/register");
+    const payload = JSON.parse(registerRequest.options.body);
+    assert.equal(payload.login, "jan@example.test");
+    assert.equal(Object.hasOwn(payload, "invitationToken"), false);
   } finally {
     dom.window.close();
   }

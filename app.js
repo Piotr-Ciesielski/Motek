@@ -104,7 +104,6 @@ const catalogFilterDisclosure = typeof window.createCatalogFilterDisclosure === 
 const {
   buildAuthPayload,
   buildRegistrationAuthPayload,
-  isValidInvitationToken,
   resolveRequestedView,
   buildPatternFacetCounts,
   buildPatternFacetOptions,
@@ -128,12 +127,8 @@ const {
 function initializeLegalRegistrationFields() {
   const termsVersion = registerForm.elements.termsVersion;
   const privacyNoticeVersion = registerForm.elements.privacyNoticeVersion;
-  const invitationToken = registerForm.elements.invitationToken;
   if (termsVersion) termsVersion.value = CURRENT_LEGAL_DOCUMENT.termsVersion;
   if (privacyNoticeVersion) privacyNoticeVersion.value = CURRENT_LEGAL_DOCUMENT.privacyVersion;
-  if (invitationToken) {
-    invitationToken.value = new URLSearchParams(window.location.search).get("invitation") || "";
-  }
   if (copyrightNotice) {
     copyrightNotice.textContent = formatCopyrightNotice(CURRENT_LEGAL_DOCUMENT);
   }
@@ -2041,16 +2036,12 @@ async function refreshAuthSession({ navigateToInventory = false } = {}) {
     return null;
   }
 
-  const shouldOpenRegistration = !initialSessionResolved
-    && !payload.authenticated
-    && isValidInvitationToken(registerForm.elements.invitationToken?.value);
   renderAuthState(payload);
   if (!initialSessionResolved) {
     setActiveView(payload.authenticated ? "inventory" : "account", { focus: false });
     initialSessionResolved = true;
   }
   if (!payload.authenticated) {
-    if (shouldOpenRegistration) showAuthForm(registerForm);
     setAuthMessage("Możesz założyć konto lub zalogować się.");
     return payload;
   }

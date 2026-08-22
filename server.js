@@ -9,7 +9,6 @@ const {
   readSupabaseAuthConfig,
 } = require("./supabase");
 const { validateRegistrationLegalInput } = require("./registration-policy");
-const { registerInvitedUser } = require("./registration-service");
 const { createLegalAccessService } = require("./legal-access-service");
 const {
   maxYarnsPerUser: MAX_YARNS_PER_USER,
@@ -1208,10 +1207,6 @@ function validateYarn(body) {
   };
 }
 
-async function hashInvitationToken(token) {
-  return crypto.createHash("sha256").update(token, "utf8").digest("hex");
-}
-
 async function handleAuthApi(req, res, url) {
   if (req.method === "POST") {
     requireTrustedOrigin(req);
@@ -1221,9 +1216,8 @@ async function handleAuthApi(req, res, url) {
     const body = await readBody(req);
     const email = normalizeAuthLogin(body.login);
     const password = validateAuthPassword(body.password);
-    let legalInput;
     try {
-      legalInput = validateRegistrationLegalInput(body, CURRENT_LEGAL_DOCUMENT);
+      validateRegistrationLegalInput(body, CURRENT_LEGAL_DOCUMENT);
     } catch (error) {
       throw new ApiError(400, error.message);
     }
@@ -1239,19 +1233,17 @@ async function handleAuthApi(req, res, url) {
 
     let registration;
     try {
-      registration = await registerInvitedUser({
+      const { data, error } = await authClient().auth.signUp({
         email,
         password,
-        ...legalInput,
-        captchaToken,
-        emailRedirectTo: new URL("/?confirmed=1", getExpectedOrigin(req)).toString(),
-      }, {
-        authClient: authClient(),
-        adminClient: supabaseConnection.client,
-        serviceClient: supabaseConnection.client,
-        legalDocument: CURRENT_LEGAL_DOCUMENT,
-        hashInvitationToken,
+        options: {
+          data: { login: email },
+          emailRedirectTo: new URL("/?confirmed=1", getExpectedOrigin(req)).toString(),
+          ...(captchaToken ? { captchaToken } : {}),
+        },
       });
+      if (error || !data?.user) throw error || new Error("Brak użytkownika po rejestracji");
+      registration = data;
     } catch {
       recordAuthFailure(rateLimitKeys);
       throw genericAuthError("register");
