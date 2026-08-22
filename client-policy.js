@@ -28,6 +28,46 @@
     "length",
     "weight",
   ];
+  const yarnMeasurementLabels = {
+    length: {
+      label: "Długość",
+      noun: "długość",
+      unit: "m",
+      example: "200",
+    },
+    weight: {
+      label: "Waga",
+      noun: "wagę",
+      unit: "g",
+      example: "50",
+    },
+  };
+
+  function getYarnMeasurementValidationMessage({
+    field,
+    validity = {},
+    showRequired = false,
+  } = {}) {
+    const config = yarnMeasurementLabels[field];
+    if (!config) return "";
+    if (validity.badInput) {
+      return `${config.label} musi być liczbą całkowitą, np. ${config.example}.`;
+    }
+    if (validity.valueMissing) {
+      if (!showRequired) return "";
+      return `Podaj ${config.noun} w ${field === "length" ? "metrach" : "gramach"}.`;
+    }
+    if (validity.rangeUnderflow) {
+      return `${config.label} musi wynosić co najmniej 1 ${config.unit}.`;
+    }
+    if (validity.rangeOverflow) {
+      return `${config.label} nie może przekraczać 1 000 000 ${config.unit}.`;
+    }
+    if (validity.stepMismatch) {
+      return `${config.label} musi być liczbą całkowitą.`;
+    }
+    return "";
+  }
 
   const projectTypeLabels = {
     socks: { card: "Skarpety", filter: "Skarpety" },
@@ -530,6 +570,7 @@
     getProjectTypeFilterLabel,
     getProjectTypeLabel,
     getExistingYarnState,
+    getYarnMeasurementValidationMessage,
     getMatchFreshnessState,
     getYarnSaveHint,
     readYarnVersionHeader,

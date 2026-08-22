@@ -11,6 +11,21 @@ const appJs = readFileSync(path.join(__dirname, "..", "app.js"), "utf8");
 const serverJs = readFileSync(path.join(__dirname, "..", "server.js"), "utf8");
 const staticFilesJs = readFileSync(path.join(__dirname, "..", "server", "static-files.js"), "utf8");
 
+test("pola długości i wagi wymagają dodatnich liczb całkowitych", () => {
+  const document = new JSDOM(indexHtml).window.document;
+  const template = document.getElementById("yarnTemplate");
+  for (const [field, unit] of [["length", "m"], ["weight", "g"]]) {
+    const input = template.content.querySelector(`[data-field="${field}"]`);
+    assert.equal(input.type, "number");
+    assert.equal(input.min, "1");
+    assert.equal(input.step, "1");
+    assert.equal(input.max, "1000000");
+    assert.match(input.getAttribute("aria-describedby") || "", new RegExp(`${field}-error`));
+    assert.equal(input.nextElementSibling.dataset.fieldError, field);
+    assert.match(input.nextElementSibling.textContent, new RegExp(unit === "m" ? "metr" : "gram"));
+  }
+});
+
 test("mobile reading order keeps hero actions and artwork before each workspace", () => {
   const document = new JSDOM(indexHtml).window.document;
   const precedes = (first, second) => Boolean(

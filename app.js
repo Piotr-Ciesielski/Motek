@@ -115,6 +115,7 @@ const {
   getProjectTypeFilterLabel,
   getProjectTypeLabel,
   getExistingYarnState,
+  getYarnMeasurementValidationMessage,
   getMatchFreshnessState,
   getYarnSaveHint,
   readYarnVersionHeader,
@@ -726,7 +727,30 @@ function updateYarnCardSummary(card) {
   swatch.title = yarn.color ? `Kolor: ${yarn.color}` : "Nowa włóczka";
 }
 
-function isYarnComplete(card) {
+function setYarnMeasurementValidity(field, { showRequired = false } = {}) {
+  if (!field.matches('[data-field="length"], [data-field="weight"]')) return;
+  const message = getYarnMeasurementValidationMessage({
+    field: field.dataset.field,
+    validity: field.validity,
+    showRequired,
+  });
+  field.setCustomValidity(message);
+  field.toggleAttribute("aria-invalid", Boolean(message));
+  const error = field.closest("label")?.querySelector("[data-field-error]");
+  if (error) {
+    error.hidden = !message;
+    error.textContent = message;
+  }
+}
+
+function syncYarnMeasurementValidity(card, options) {
+  card
+    .querySelectorAll('[data-field="length"], [data-field="weight"]')
+    .forEach((field) => setYarnMeasurementValidity(field, options));
+}
+
+function isYarnComplete(card, options) {
+  syncYarnMeasurementValidity(card, options);
   return [...card.querySelectorAll("[data-field]")].every((field) => field.checkValidity()) &&
     card.querySelector('[data-field="name"]').value.trim() !== "" &&
     card.querySelector('[data-field="color"]').value.trim() !== "" &&
@@ -985,8 +1009,15 @@ async function refreshSummaryAfterConfirmedSave(successMessage) {
 }
 
 async function saveNewYarn(card) {
-  if (!isYarnComplete(card)) {
-    card.querySelector('[data-field="name"]').reportValidity();
+  card.querySelectorAll('[data-field="length"], [data-field="weight"]').forEach((field) => {
+    field.dataset.validationAttempted = "true";
+  });
+  if (!isYarnComplete(card, { showRequired: true })) {
+    const invalidField = [...card.querySelectorAll("[data-field]")]
+      .find((field) => !field.checkValidity());
+    const field = invalidField || card.querySelector('[data-field="name"]');
+    field.reportValidity();
+    field.focus({ preventScroll: true });
     return;
   }
 
@@ -1038,7 +1069,17 @@ async function saveNewYarn(card) {
 }
 
 async function saveExistingYarn(card) {
-  if (!isYarnComplete(card) || !isYarnChanged(card)) return;
+  card.querySelectorAll('[data-field="length"], [data-field="weight"]').forEach((field) => {
+    field.dataset.validationAttempted = "true";
+  });
+  if (!isYarnComplete(card, { showRequired: true })) {
+    const invalidField = [...card.querySelectorAll("[data-field]")]
+      .find((field) => !field.checkValidity());
+    invalidField?.reportValidity();
+    invalidField?.focus({ preventScroll: true });
+    return;
+  }
+  if (!isYarnChanged(card)) return;
 
   const draft = collectYarnFromCard(card);
   setYarnCardBusy(card, true);
@@ -1145,6 +1186,11 @@ function addYarnCard(yarn = {}, { isNew = false } = {}) {
   node.querySelectorAll("[data-field]").forEach((field) => {
     field.id = `yarn-${++yarnFormSequence}-${field.dataset.field}`;
     field.closest("label").htmlFor = field.id;
+    const error = field.closest("label")?.querySelector("[data-field-error]");
+    if (error) {
+      error.id = `${field.id}-error`;
+      field.setAttribute("aria-describedby", error.id);
+    }
   });
   const materialOptions = node.querySelector("[data-material-options]");
   MATERIALS.forEach(({ value, label }) => {
@@ -1250,7 +1296,9 @@ function addYarnCard(yarn = {}, { isNew = false } = {}) {
 
   node.querySelectorAll("input, select").forEach((field) => {
     field.addEventListener("input", () => {
+      field.removeAttribute("data-validation-attempted");
       field.removeAttribute("aria-invalid");
+      setYarnMeasurementValidity(field);
       updateYarnSaveButton(node);
     });
     field.addEventListener("change", () => {
@@ -1269,7 +1317,16 @@ function addYarnCard(yarn = {}, { isNew = false } = {}) {
       }
       updateYarnSaveButton(node);
     });
-    field.addEventListener("invalid", () => field.setAttribute("aria-invalid", "true"));
+    field.addEventListener("invalid", () => {
+      if (field.matches('[data-field="length"], [data-field="weight"]')) {
+        setYarnMeasurementValidity(field, {
+          showRequired: field.dataset.validationAttempted === "true"
+            || !field.validity.valueMissing,
+        });
+        return;
+      }
+      field.setAttribute("aria-invalid", "true");
+    });
   });
 
   updateYarnSaveButton(node);
