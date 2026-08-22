@@ -231,7 +231,7 @@ test("inventory hero matches the shared hero height and keeps actions below the 
 });
 
 test("captcha remains available in every auth flow", () => {
-  assert.equal((indexHtml.match(/data-turnstile-for=/g) || []).length, 4);
+  assert.equal((indexHtml.match(/data-turnstile-for=/g) || []).length, 5);
   assert.match(indexHtml, /data-turnstile-for="passwordReset"/);
   assert.match(indexHtml, /data-turnstile-for="passwordChange"/);
   assert.match(appJs, /challenges\.cloudflare\.com\/turnstile\/v0\/api\.js\?render=explicit/);
@@ -361,6 +361,7 @@ test("authenticated header and account disclosure use the compact DOM contract",
   assert.match(disclosureSummary?.textContent ?? "", /Usuń konto/);
   assert.match(disclosureSummary?.textContent ?? "", /Tej operacji nie można cofnąć\./);
   assert.equal(disclosure?.querySelector("#deleteAccountForm")?.id, "deleteAccountForm");
+  assert.equal(disclosure?.querySelector('[data-turnstile-for="deleteAccount"]')?.className, "auth-captcha");
 });
 
 test("compact auth controls expose their required CSS contracts", () => {

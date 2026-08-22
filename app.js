@@ -206,9 +206,9 @@ let preservedDraftRequiresSave = false;
 let hasCalculatedMatches = false;
 let inventoryChangedSinceMatch = false;
 let authCaptchaConfig = { enabled: false, provider: null, siteKey: null };
-const captchaTokens = { login: null, register: null, passwordReset: null, passwordChange: null };
-const captchaWidgetIds = { login: null, register: null, passwordReset: null, passwordChange: null };
-const captchaRenderPromises = { login: null, register: null, passwordReset: null, passwordChange: null };
+const captchaTokens = { login: null, register: null, passwordReset: null, passwordChange: null, deleteAccount: null };
+const captchaWidgetIds = { login: null, register: null, passwordReset: null, passwordChange: null, deleteAccount: null };
+const captchaRenderPromises = { login: null, register: null, passwordReset: null, passwordChange: null, deleteAccount: null };
 let turnstileScriptPromise = null;
 
 function canAccessPrivateData() {
@@ -271,6 +271,8 @@ function authFormKind(form) {
       ? "passwordReset"
       : form === changePasswordForm
         ? "passwordChange"
+        : form === deleteAccountForm
+          ? "deleteAccount"
         : "login";
 }
 
@@ -284,7 +286,11 @@ async function renderCaptchaForForm(form) {
   captchaRenderPromises[kind] = (async () => {
     await loadTurnstileScript();
     const visibleForm = document.querySelector(".auth-form:not([hidden])");
-    const isVisible = form === changePasswordForm ? !form.hidden : visibleForm === form;
+    const isVisible = form === changePasswordForm
+      ? !form.hidden
+      : form === deleteAccountForm
+        ? deleteAccountDisclosure.open
+        : visibleForm === form;
     if (!isVisible || !form.isConnected) return;
     const container = form.querySelector(`[data-turnstile-for="${kind}"]`);
     if (!container || captchaWidgetIds[kind] !== null) return;
@@ -2338,6 +2344,7 @@ deleteAccountForm.addEventListener("submit", async (event) => {
 
   const submitButton = deleteAccountForm.querySelector('button[type="submit"]');
   const body = Object.fromEntries(new FormData(deleteAccountForm).entries());
+  body.captchaToken = captchaTokens.deleteAccount;
   submitButton.disabled = true;
   deleteAccountForm.setAttribute("aria-busy", "true");
   setDeleteAccountMessage("Usuwam konto...");
@@ -2359,8 +2366,15 @@ deleteAccountForm.addEventListener("submit", async (event) => {
   } catch (error) {
     setDeleteAccountMessage(error.message, "error");
   } finally {
+    resetCaptchaForForm(deleteAccountForm);
     deleteAccountForm.removeAttribute("aria-busy");
     submitButton.disabled = false;
+  }
+});
+
+deleteAccountDisclosure.addEventListener("toggle", () => {
+  if (deleteAccountDisclosure.open) {
+    renderCaptchaForForm(deleteAccountForm).catch((error) => setDeleteAccountMessage(error.message, "error"));
   }
 });
 

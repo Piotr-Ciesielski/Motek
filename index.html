@@ -269,6 +269,7 @@
                 Wpisz: <strong>USUŃ KONTO</strong>
                 <input id="account-delete-confirmation" name="confirmation" autocomplete="off" required aria-describedby="deleteAccountHint deleteAccountMessage" />
               </label>
+              <div class="auth-captcha" data-turnstile-for="deleteAccount"></div>
               <p id="deleteAccountHint" class="field-hint">Usunięcie jest natychmiastowe i nie można go cofnąć.</p>
               <button class="button button--danger" type="submit">Usuń konto bezpowrotnie</button>
               <p id="deleteAccountMessage" class="auth-message" role="status" aria-live="polite"></p>
@@ -660,6 +661,6 @@
     <script src="client/dom-utils.js"></script>
     <script src="client/catalog-controller.js?v=2.0.0-alpha.39&rev=855dd0b"></script>
     <script src="client/idle-session-controller.js"></script>
-    <script src="app.js?v=2.0.0-alpha.39&rev=b2cf0f6"></script>
+    <script src="app.js?v=2.0.0-alpha.39&rev=94786a3"></script>
   </body>
 </html>

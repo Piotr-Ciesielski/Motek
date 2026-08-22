@@ -1,4 +1,4 @@
-async function deleteSupabaseAccount({ session, password, authClient, adminClient }) {
+async function deleteSupabaseAccount({ session, password, captchaToken, authClient, adminClient }) {
   const userId = session?.user?.id;
   const email = session?.user?.email;
 
@@ -8,7 +8,11 @@ async function deleteSupabaseAccount({ session, password, authClient, adminClien
 
   let verification;
   try {
-    verification = await authClient.auth.signInWithPassword({ email, password });
+    verification = await authClient.auth.signInWithPassword({
+      email,
+      password,
+      ...(captchaToken ? { options: { captchaToken } } : {}),
+    });
   } catch {
     throw new Error("Nie udało się potwierdzić hasła.");
   }

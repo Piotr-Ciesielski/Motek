@@ -16,6 +16,7 @@ test("weryfikuje hasło dla bieżącego użytkownika przed usunięciem", async (
   await deleteSupabaseAccount({
     session,
     password: "BezpieczneHaslo1!",
+    captchaToken: "delete-account-token",
     authClient: {
       auth: {
         async signInWithPassword(credentials) {
@@ -39,6 +40,7 @@ test("weryfikuje hasło dla bieżącego użytkownika przed usunięciem", async (
   assert.deepEqual(passwordAttempts, [{
     email: "a@example.com",
     password: "BezpieczneHaslo1!",
+    options: { captchaToken: "delete-account-token" },
   }]);
   assert.deepEqual(deletedUserIds, [session.user.id]);
 });

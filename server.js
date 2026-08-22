@@ -1636,6 +1636,12 @@ async function handleApi(req, res, url) {
     } catch (error) {
       throw new ApiError(400, error.message || `Wpisz dokładnie: ${ACCOUNT_DELETION_PHRASE}.`);
     }
+    let captchaToken;
+    try {
+      captchaToken = normalizeCaptchaToken(body.captchaToken, captchaConfig.enabled);
+    } catch (error) {
+      throw new ApiError(400, error.message);
+    }
 
     const retryAfterMs = Math.max(
       ...rateLimitKeys.map((key) => accountDeletionRateLimiter.getRetryAfterMs(key)),
@@ -1649,6 +1655,7 @@ async function handleApi(req, res, url) {
       await deleteSupabaseAccount({
         session,
         password: deletionInput.password,
+        captchaToken,
         authClient: authClient(),
         adminClient: supabaseConnection.client,
       });

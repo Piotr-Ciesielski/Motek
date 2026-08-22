@@ -360,6 +360,7 @@ test("serwer Motek działa bezpiecznie", async (t) => {
     user_metadata: { login: "nowy@example.com" },
   };
   const deletedUserIds = [];
+  const deletionVerificationAttempts = [];
   let profileResultOverride = null;
   let profileQueryFailure = null;
   let authenticatedProfileAccessDenied = false;
@@ -484,11 +485,13 @@ test("serwer Motek działa bezpiecznie", async (t) => {
             error: null,
           };
         },
-        async signInWithPassword({ email, password }) {
+        async signInWithPassword(credentials) {
+          const { email, password } = credentials;
           if (
             email === syntheticUsers["token-user-a"].email &&
             password === "DeleteHaslo1!"
           ) {
+            deletionVerificationAttempts.push(credentials);
             return {
               data: {
                 user: syntheticUsers["token-user-a"],
@@ -1316,12 +1319,18 @@ test("serwer Motek działa bezpiecznie", async (t) => {
         body: JSON.stringify({
           password: "DeleteHaslo1!",
           confirmation: "USUŃ KONTO",
+          captchaToken: "delete-account-token",
         }),
       });
 
       assert.equal(response.status, 204);
       assert.equal(await response.text(), "");
       assert.deepEqual(deletedUserIds, [syntheticUsers["token-user-a"].id]);
+      assert.deepEqual(deletionVerificationAttempts.at(-1), {
+        email: syntheticUsers["token-user-a"].email,
+        password: "DeleteHaslo1!",
+        options: { captchaToken: "delete-account-token" },
+      });
       assert.match(response.headers.get("set-cookie"), /motek_access_token=/);
       assert.match(response.headers.get("set-cookie"), /motek_refresh_token=/);
     });
@@ -1359,6 +1368,7 @@ test("serwer Motek działa bezpiecznie", async (t) => {
         body: JSON.stringify({
           password: "BledneHaslo1!",
           confirmation: "USUŃ KONTO",
+          captchaToken: "delete-account-token",
         }),
       });
 
