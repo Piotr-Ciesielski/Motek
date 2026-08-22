@@ -24,9 +24,10 @@ function loadApp({
   reducedMotion = false,
   session = { authenticated: false, user: null },
   onRequest,
+  url = "http://localhost/",
 } = {}) {
   const dom = new JSDOM(indexHtml, {
-    url: "http://localhost/",
+    url,
     runScripts: "outside-only",
     pretendToBeVisual: true,
   });
@@ -378,6 +379,7 @@ test("akceptacja dokumentów przenosi użytkownika do Magazynu", async (t) => {
 test("rejestracja z akceptacją formularza przechodzi do Magazynu", async (t) => {
   let registered = false;
   const dom = loadApp({
+    url: `http://localhost/?invitation=${"A".repeat(64)}`,
     onRequest: async ({ pathname }) => {
       if (pathname === "/api/auth/register") {
         registered = true;
@@ -450,10 +452,52 @@ test("powrót do Konta po logowaniu nie zachowuje ogólnego komunikatu sukcesu",
 
 test("aplikacja uruchamia się bez promocyjnego CTA w hero Konta", async () => {
   const dom = loadApp();
-  await new Promise((resolve) => dom.window.setTimeout(resolve, 20));
+  await waitFor(() => /Możesz założyć konto lub zalogować się\./.test(
+    dom.window.document.getElementById("authMessage").textContent,
+  ), dom);
 
   assert.ok(dom.window.document.getElementById("heroTitle"));
   assert.ok(dom.window.document.getElementById("accountThemeImage"));
   assert.equal(dom.window.document.getElementById("heroAuthBtn"), null);
   dom.window.close();
+});
+
+test("ważny link zaproszenia otwiera rejestrację po inicjalizacji niezalogowanej sesji", async () => {
+  const invitation = "A".repeat(64);
+  const dom = loadApp({ url: `http://localhost/?invitation=${invitation}` });
+
+  try {
+    await waitFor(() => dom.window.document.getElementById("registerForm").hidden === false, dom);
+
+    assert.equal(dom.window.document.getElementById("registerForm").hidden, false);
+    assert.equal(dom.window.document.getElementById("loginForm").hidden, true);
+  } finally {
+    dom.window.close();
+  }
+});
+
+test("rejestracja bez tokenu zatrzymuje żądanie API i wyjaśnia wymaganie linku", async () => {
+  const dom = loadApp();
+
+  try {
+    await waitFor(() => /Możesz założyć konto lub zalogować się\./.test(
+      dom.window.document.getElementById("authMessage").textContent,
+    ), dom);
+
+    const document = dom.window.document;
+    document.getElementById("registerModeBtn").click();
+    document.querySelector('#registerForm [name="login"]').value = "jan@example.test";
+    document.querySelector('#registerForm [name="password"]').value = "Haslo123!";
+    document.querySelector('#registerForm [name="termsAccepted"]').checked = true;
+    document.getElementById("registerForm").dispatchEvent(new dom.window.Event("submit", {
+      bubbles: true,
+      cancelable: true,
+    }));
+    await waitFor(() => /pełny link zaproszenia/i.test(document.getElementById("authMessage").textContent), dom);
+
+    assert.equal(dom.requests.some(({ pathname }) => pathname === "/api/auth/register"), false);
+    assert.match(document.getElementById("authMessage").textContent, /pełny link zaproszenia/i);
+  } finally {
+    dom.window.close();
+  }
 });
