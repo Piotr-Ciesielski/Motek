@@ -20,13 +20,54 @@ const browserScripts = [
   "app.js",
 ].map((file) => fs.readFileSync(path.join(__dirname, "..", file), "utf8"));
 
-function loadApp({ reducedMotion = false, session = { authenticated: false, user: null } } = {}) {
+function waitForInitialSession(window, session) {
+  const authMessage = window.document.getElementById("authMessage");
+  const authUser = window.document.getElementById("authUser");
+  return new Promise((resolve) => {
+    const check = () => {
+      const ready = session.authenticated
+        ? !authUser.hidden
+        : /Możesz założyć konto lub zalogować się\./.test(authMessage.textContent);
+      if (!ready) return;
+      observer.disconnect();
+      resolve();
+    };
+    const observer = new window.MutationObserver(check);
+    observer.observe(window.document.body, {
+      attributes: true,
+      childList: true,
+      characterData: true,
+      subtree: true,
+    });
+    check();
+  });
+}
+
+function waitForText(window, element, matcher) {
+  return new Promise((resolve) => {
+    const check = () => {
+      if (!matcher.test(element.textContent)) return;
+      observer.disconnect();
+      resolve();
+    };
+    const observer = new window.MutationObserver(check);
+    observer.observe(element, { childList: true, characterData: true, subtree: true });
+    check();
+  });
+}
+
+function loadApp({
+  reducedMotion = false,
+  session = { authenticated: false, user: null },
+  url = "http://localhost/",
+} = {}) {
   const dom = new JSDOM(indexHtml, {
-    url: "http://localhost/",
+    url,
     runScripts: "outside-only",
     pretendToBeVisual: true,
   });
   const { window } = dom;
+  const initialSessionReady = waitForInitialSession(window, session);
   window.matchMedia = () => ({ matches: reducedMotion, addEventListener() {}, removeEventListener() {} });
   window.HTMLElement.prototype.scrollIntoView = function scrollIntoView(options) {
     this.scrollOptions = options;
@@ -47,6 +88,7 @@ function loadApp({ reducedMotion = false, session = { authenticated: false, user
   };
   browserScripts.forEach((source) => window.eval(source));
   dom.fetchCalls = calls;
+  dom.initialSessionReady = initialSessionReady;
   return dom;
 }
 
@@ -161,12 +203,51 @@ test("eksportuje kontroler globalnie w przeglądarce", () => {
 
 test("aplikacja uruchamia się bez promocyjnego CTA w hero Konta", async () => {
   const dom = loadApp();
-  await new Promise((resolve) => dom.window.setTimeout(resolve, 20));
+  await dom.initialSessionReady;
 
   assert.ok(dom.window.document.getElementById("heroTitle"));
   assert.ok(dom.window.document.getElementById("accountThemeImage"));
   assert.equal(dom.window.document.getElementById("heroAuthBtn"), null);
   dom.window.close();
+});
+
+test("ważny link zaproszenia otwiera rejestrację po inicjalizacji niezalogowanej sesji", async () => {
+  const invitation = "A".repeat(64);
+  const dom = loadApp({ url: `http://localhost/?invitation=${invitation}` });
+
+  try {
+    await dom.initialSessionReady;
+
+    assert.equal(dom.window.document.getElementById("registerForm").hidden, false);
+    assert.equal(dom.window.document.getElementById("loginForm").hidden, true);
+  } finally {
+    dom.window.close();
+  }
+});
+
+test("rejestracja bez tokenu zatrzymuje żądanie API i wyjaśnia wymaganie linku", async () => {
+  const dom = loadApp();
+
+  try {
+    await dom.initialSessionReady;
+
+    const document = dom.window.document;
+    document.getElementById("registerModeBtn").click();
+    document.querySelector('#registerForm [name="login"]').value = "jan@example.test";
+    document.querySelector('#registerForm [name="password"]').value = "Haslo123!";
+    document.querySelector('#registerForm [name="termsAccepted"]').checked = true;
+    const messageReady = waitForText(dom.window, document.getElementById("authMessage"), /pełny link zaproszenia/i);
+    document.getElementById("registerForm").dispatchEvent(new dom.window.Event("submit", {
+      bubbles: true,
+      cancelable: true,
+    }));
+    await messageReady;
+
+    assert.equal(dom.fetchCalls.includes("/api/auth/register"), false);
+    assert.match(document.getElementById("authMessage").textContent, /pełny link zaproszenia/i);
+  } finally {
+    dom.window.close();
+  }
 });
 
 test("stara akceptacja blokuje prywatne żądania i zostawia wyjście z konta", async () => {
@@ -178,7 +259,7 @@ test("stara akceptacja blokuje prywatne żądania i zostawia wyjście z konta", 
     },
   });
   try {
-    await new Promise((resolve) => dom.window.setTimeout(resolve, 30));
+    await dom.initialSessionReady;
 
     const document = dom.window.document;
     assert.equal(document.getElementById("legalAcceptanceGate").hidden, false);

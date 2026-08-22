@@ -93,6 +93,7 @@ const catalogFilterDisclosure = createCatalogFilterDisclosure({
 const {
   buildAuthPayload,
   buildRegistrationAuthPayload,
+  isValidInvitationToken,
   resolveRequestedView,
   buildPatternFacetCounts,
   buildPatternFacetOptions,
@@ -1975,12 +1976,16 @@ async function refreshAuthSession() {
     return null;
   }
 
+  const shouldOpenRegistration = !initialSessionResolved
+    && !payload.authenticated
+    && isValidInvitationToken(registerForm.elements.invitationToken?.value);
   renderAuthState(payload);
   if (!initialSessionResolved) {
     setActiveView(payload.authenticated ? "inventory" : "account", { focus: false });
     initialSessionResolved = true;
   }
   if (!payload.authenticated) {
+    if (shouldOpenRegistration) showAuthForm(registerForm);
     setAuthMessage("Możesz założyć konto lub zalogować się.");
     return payload;
   }

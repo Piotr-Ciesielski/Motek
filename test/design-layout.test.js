@@ -1,4 +1,5 @@
 const assert = require("node:assert/strict");
+const { execFileSync } = require("node:child_process");
 const { readFileSync } = require("node:fs");
 const path = require("node:path");
 const test = require("node:test");
@@ -466,6 +467,23 @@ test("inventory artwork panel follows the panoramic hero height", () => {
     stylesCss,
     /@media \(max-width: 420px\)[\s\S]*?#inventoryView \.inventory-layout__visual,[\s\S]*?height: 220px;[\s\S]*?min-height: 220px;/,
   );
+});
+
+function gitBlobHash(file) {
+  return execFileSync("git", ["hash-object", file], {
+    cwd: path.join(__dirname, ".."),
+    encoding: "utf8",
+  }).trim();
+}
+
+test("krytyczne assety rejestracji mają cache-bustery treści", () => {
+  const document = new JSDOM(indexHtml).window.document;
+  for (const file of ["client-policy.js", "app.js"]) {
+    const asset = document.querySelector(`script[src^="${file}?"]`);
+    const url = new URL(asset.getAttribute("src"), "http://localhost");
+
+    assert.equal(url.searchParams.get("rev"), gitBlobHash(file).slice(0, 7));
+  }
 });
 
 test("catalog keeps search first, secondary filters grouped and artwork before results", () => {
