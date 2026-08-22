@@ -347,6 +347,7 @@ test("serwer Motek działa bezpiecznie", async (t) => {
   const recoveryGrants = new Map();
   const signOutScopes = [];
   const signUpRequests = [];
+  const automaticRegistrationFinalizations = [];
   const issuedSignupConfirmationTokens = [];
   const usedSignupConfirmationTokens = new Set();
   const expiredConfirmationTokens = {
@@ -675,6 +676,10 @@ test("serwer Motek działa bezpiecznie", async (t) => {
           }
           return Promise.resolve({ data: "2026-08-09T12:00:00.000Z", error: null });
         }
+        if (name === "finalize_automatic_registration") {
+          automaticRegistrationFinalizations.push(args);
+          return Promise.resolve({ data: "2026-08-09T12:00:00.000Z", error: null });
+        }
         if (name === "create_auth_recovery_grant") {
           recoveryGrantCalls.push(args);
           recoveryGrants.set(args.p_jti_hash, {
@@ -976,6 +981,11 @@ test("serwer Motek działa bezpiecznie", async (t) => {
         }),
       });
       assert.equal(registerResponse.status, 201);
+      assert.deepEqual(automaticRegistrationFinalizations.at(-1), {
+        p_user_id: "33333333-3333-4333-8333-333333333333",
+        p_terms_version: "1.0",
+        p_privacy_version: "1.0",
+      });
       assert.deepEqual(await registerResponse.json(), {
         user: {
           id: "33333333-3333-4333-8333-333333333333",

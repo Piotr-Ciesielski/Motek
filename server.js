@@ -1243,6 +1243,15 @@ async function handleAuthApi(req, res, url) {
         },
       });
       if (error || !data?.user) throw error || new Error("Brak użytkownika po rejestracji");
+      const { error: finalizationError } = await supabaseConnection.client.rpc(
+        "finalize_automatic_registration",
+        {
+          p_user_id: data.user.id,
+          p_terms_version: CURRENT_LEGAL_DOCUMENT.termsVersion,
+          p_privacy_version: CURRENT_LEGAL_DOCUMENT.privacyVersion,
+        },
+      );
+      if (finalizationError) throw finalizationError;
       registration = data;
     } catch {
       recordAuthFailure(rateLimitKeys);
