@@ -1,6 +1,6 @@
 begin;
 
-select plan(81);
+select plan(88);
 
 select has_schema('private', 'Prywatny schemat danych rejestracji istnieje');
 select has_table('private', 'legal_document_versions', 'Wersje dokumentów prawnych istnieją');
@@ -104,6 +104,7 @@ select has_function('public', 'attach_registration_user', array['uuid', 'uuid'],
 select has_function('public', 'finalize_invited_registration', array['uuid', 'uuid', 'text', 'text'], 'RPC finalizacji rejestracji istnieje');
 select has_function('public', 'release_registration_reservation', array['uuid'], 'RPC zwolnienia rezerwacji istnieje');
 select has_function('public', 'record_terms_acceptance', array['uuid', 'text', 'text'], 'RPC zapisu akceptacji istnieje');
+select has_function('public', 'finalize_automatic_registration', array['uuid', 'text', 'text'], 'RPC automatycznej rejestracji istnieje');
 select has_function('public', 'get_account_access_state', array['uuid'], 'RPC stanu dostępu istnieje');
 select has_function('public', 'purge_registration_security_logs', array[]::text[], 'RPC czyszczenia logów istnieje');
 
@@ -118,6 +119,8 @@ select is(has_function_privilege('anon', 'public.release_registration_reservatio
 select is(has_function_privilege('service_role', 'public.release_registration_reservation(uuid)', 'EXECUTE'), true, 'service_role zwalnia rezerwację');
 select is(has_function_privilege('anon', 'public.record_terms_acceptance(uuid,text,text)', 'EXECUTE'), false, 'anon nie zapisuje akceptacji');
 select is(has_function_privilege('service_role', 'public.record_terms_acceptance(uuid,text,text)', 'EXECUTE'), true, 'service_role zapisuje akceptację');
+select is(has_function_privilege('anon', 'public.finalize_automatic_registration(uuid,text,text)', 'EXECUTE'), false, 'anon nie finalizuje automatycznej rejestracji');
+select is(has_function_privilege('service_role', 'public.finalize_automatic_registration(uuid,text,text)', 'EXECUTE'), true, 'service_role finalizuje automatyczną rejestrację');
 select is(has_function_privilege('anon', 'public.get_account_access_state(uuid)', 'EXECUTE'), false, 'anon nie odczytuje stanu prawnego');
 select is(has_function_privilege('service_role', 'public.get_account_access_state(uuid)', 'EXECUTE'), true, 'service_role odczytuje stan prawny');
 select is(has_function_privilege('anon', 'public.purge_registration_security_logs()', 'EXECUTE'), false, 'anon nie czyści logów');
@@ -131,6 +134,16 @@ values (
   '00000000-0000-0000-0000-000000000001', 'authenticated', 'authenticated',
   'invitee@example.com', 'not-a-real-password', now(), '{}'::jsonb, '{}'::jsonb,
   now(), now()
+);
+
+insert into auth.users (
+  id, aud, role, email, encrypted_password, email_confirmed_at,
+  raw_app_meta_data, raw_user_meta_data, created_at, updated_at
+)
+values (
+  '00000000-0000-0000-0000-000000000002', 'authenticated', 'authenticated',
+  'automatic@example.com', 'not-a-real-password', now(),
+  '{}'::jsonb, jsonb_build_object('login', 'automatic@example.com'), now(), now()
 );
 
 insert into private.registration_invitations (id, email, token_hash, expires_at)
@@ -212,11 +225,32 @@ select is(
   'Ponowny zapis akceptacji zachowuje pierwszy czas'
 );
 
+select is(
+  (public.finalize_automatic_registration('00000000-0000-0000-0000-000000000002'::uuid, '1.0', '1.0') is not null),
+  true,
+  'Automatyczna rejestracja zwraca czas finalizacji'
+);
+
 set local role postgres;
 select is(
   (select count(*) from private.terms_acceptances where user_id = '00000000-0000-0000-0000-000000000001' and terms_version = '1.0'),
   1::bigint,
   'Ponowny zapis nie tworzy drugiej akceptacji'
+);
+select is(
+  (select status from public.profiles where id = '00000000-0000-0000-0000-000000000002'),
+  'active',
+  'Automatyczna rejestracja aktywuje profil'
+);
+select is(
+  (select count(*) from private.terms_acceptances where user_id = '00000000-0000-0000-0000-000000000002' and terms_version = '1.0'),
+  1::bigint,
+  'Automatyczna rejestracja zapisuje akceptację regulaminu'
+);
+select is(
+  (select count(*) from private.privacy_notice_deliveries where user_id = '00000000-0000-0000-0000-000000000002' and privacy_version = '1.0'),
+  1::bigint,
+  'Automatyczna rejestracja zapisuje przekazanie prywatności'
 );
 set local role service_role;
 
