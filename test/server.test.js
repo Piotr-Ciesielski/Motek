@@ -206,6 +206,22 @@ test("walidacja włóczki zachowuje kilka materiałów", () => {
   );
 });
 
+test("walidacja włóczki wymaga co najmniej 1 metra i 1 grama", () => {
+  for (const field of ["length", "weight"]) {
+    assert.throws(
+      () => validateYarn({
+        name: "Za mało",
+        color: "biały",
+        materials: ["wełna"],
+        weightClass: "dk",
+        length: field === "length" ? 0 : 1,
+        weight: field === "weight" ? 0 : 1,
+      }),
+      new RegExp(`Pole ${field} musi być liczbą całkowitą od 1 do 1000000\\.`),
+    );
+  }
+});
+
 test("ranking respektuje limity rozmiaru i może użyć kilku motków dla jednej roli", () => {
   assert.doesNotThrow(() => validateYarnStorageCapacity(499));
   assert.throws(() => validateYarnStorageCapacity(500), /500 włóczek/);

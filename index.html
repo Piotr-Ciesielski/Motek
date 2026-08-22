@@ -576,11 +576,17 @@
         <div class="yarn-card__row">
           <label>
             Długość (m)
-            <input type="number" min="0" max="1000000" step="1" data-field="length" value="200" required />
+            <input type="number" min="1" max="1000000" step="1" inputmode="numeric" data-field="length" value="200" aria-describedby="length-error" required />
+            <p class="field-error" data-field-error="length" id="length-error" aria-live="polite" hidden>
+              Podaj długość w metrach.
+            </p>
           </label>
           <label>
             Waga (g)
-            <input type="number" min="0" max="1000000" step="1" data-field="weight" value="50" required />
+            <input type="number" min="1" max="1000000" step="1" inputmode="numeric" data-field="weight" value="50" aria-describedby="weight-error" required />
+            <p class="field-error" data-field-error="weight" id="weight-error" aria-live="polite" hidden>
+              Podaj wagę w gramach.
+            </p>
           </label>
           <div>
             <p class="yarn-save-hint" data-save-hint></p>
@@ -651,11 +657,11 @@
     <script src="material-policy.js?v=2.0.0-alpha.38"></script>
     <script src="legal-document.js"></script>
     <script src="client/legal-acceptance-controller.js"></script>
-    <script src="client-policy.js?v=2.0.0-alpha.38&rev=9b47cab"></script>
+    <script src="client-policy.js?v=2.0.0-alpha.38&rev=c56ffa5"></script>
     <script src="client/api-client.js"></script>
     <script src="client/dom-utils.js"></script>
     <script src="client/catalog-controller.js?v=2.0.0-alpha.38&rev=855dd0b"></script>
     <script src="client/idle-session-controller.js"></script>
-    <script src="app.js?v=2.0.0-alpha.38&rev=15874a0"></script>
+    <script src="app.js?v=2.0.0-alpha.38&rev=ae1d2a3"></script>
   </body>
 </html>

@@ -1175,10 +1175,10 @@ function normalizeMeasurement(value, field) {
   if (
     typeof normalized !== "number" ||
     !Number.isInteger(normalized) ||
-    normalized < 0 ||
+    normalized < 1 ||
     normalized > MAX_MEASUREMENT
   ) {
-    throw new ApiError(400, `Pole ${field} musi być liczbą całkowitą od 0 do ${MAX_MEASUREMENT}.`);
+    throw new ApiError(400, `Pole ${field} musi być liczbą całkowitą od 1 do ${MAX_MEASUREMENT}.`);
   }
   return normalized;
 }
