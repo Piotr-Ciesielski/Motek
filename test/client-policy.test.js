@@ -12,6 +12,7 @@ const {
   formatMatchingRequirement,
   formatPatternYarnFact,
   getExistingYarnState,
+  getYarnMeasurementValidationMessage,
   getMatchFreshnessState,
   getYarnSaveHint,
   readYarnVersionHeader,
@@ -23,6 +24,66 @@ const {
   resolveRequestedView,
   yarnsHaveSameValues,
 } = require("../client-policy");
+
+test("komunikat walidacji metrów rozróżnia tekst, zero i ułamek", () => {
+  assert.equal(
+    getYarnMeasurementValidationMessage({
+      field: "length",
+      validity: { badInput: true },
+    }),
+    "Długość musi być liczbą całkowitą, np. 200.",
+  );
+  assert.equal(
+    getYarnMeasurementValidationMessage({
+      field: "length",
+      validity: { rangeUnderflow: true },
+    }),
+    "Długość musi wynosić co najmniej 1 m.",
+  );
+  assert.equal(
+    getYarnMeasurementValidationMessage({
+      field: "length",
+      validity: { stepMismatch: true },
+    }),
+    "Długość musi być liczbą całkowitą.",
+  );
+});
+
+test("komunikat walidacji wagi wymaga wartości i ogranicza maksimum", () => {
+  assert.equal(
+    getYarnMeasurementValidationMessage({
+      field: "weight",
+      validity: { valueMissing: true },
+    }),
+    "",
+  );
+  assert.equal(
+    getYarnMeasurementValidationMessage({
+      field: "weight",
+      validity: { valueMissing: true },
+      showRequired: true,
+    }),
+    "Podaj wagę w gramach.",
+  );
+  assert.equal(
+    getYarnMeasurementValidationMessage({
+      field: "length",
+      validity: { badInput: true, valueMissing: true },
+    }),
+    "Długość musi być liczbą całkowitą, np. 200.",
+  );
+  assert.equal(
+    getYarnMeasurementValidationMessage({
+      field: "weight",
+      validity: { rangeOverflow: true },
+    }),
+    "Waga nie może przekraczać 1 000 000 g.",
+  );
+  assert.equal(
+    getYarnMeasurementValidationMessage({ field: "weight", validity: {} }),
+    "",
+  );
+});
 
 test("stara akceptacja kieruje chronione widoki do Konta", () => {
   assert.equal(resolveRequestedView({
