@@ -1678,8 +1678,8 @@ async function handleApi(req, res, url) {
   ) {
     const session = await requireCurrentTermsSession(req, res);
     enforceRequestRateLimit(
-      getMatchRateLimitKeys(req, session),
-      matchRateLimiter,
+      [`ip:${getClientAddress(req)}`, `user:${session.user.id}`],
+      matchingRateLimiter,
       res,
     );
     const result = await getSupabaseMatches(session, { diagnostics: true });
