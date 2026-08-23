@@ -1755,6 +1755,49 @@ test("serwer Motek działa bezpiecznie", async (t) => {
       assert.equal(matches[0].pattern.patternId, 21);
       assert.equal(matches[0].total, 100);
 
+      supabasePatterns.push({
+        id: 22,
+        name: "Testowy niedopasowany wzór",
+        description: "Wymaga innej grubości.",
+        project_type: "hat",
+        materials: ["wełna"],
+        matching_requirements: {
+          version: 2,
+          variants: [{
+            id: "one-size",
+            label: "Jeden rozmiar",
+            requirements: [{
+              role: "główna",
+              measurement_basis: "meters",
+              meters_min: 200,
+              materials: ["wełna"],
+              material_match: "all",
+              color_mode: "same",
+              weight_classes: ["worsted"],
+            }],
+          }],
+        },
+        source_language: "pl",
+        needs_review: false,
+      });
+      const diagnosticResponse = await fetch(`${baseUrl}/api/matches?diagnostics=1`, {
+        headers: { Cookie: userACookies },
+      });
+      const diagnosticPayload = await diagnosticResponse.json();
+      supabasePatterns.pop();
+
+      assert.equal(diagnosticResponse.status, 200);
+      assert.equal(Array.isArray(diagnosticPayload), false);
+      assert.equal(diagnosticPayload.matches.length, 1);
+      assert.equal(diagnosticPayload.diagnostics.length, 1);
+      assert.equal(diagnosticPayload.diagnostics[0].pattern.patternId, 22);
+      assert.deepEqual(diagnosticPayload.diagnostics[0].reasons, [{
+        code: "WEIGHT_CLASS",
+        role: "główna",
+        expected: ["worsted"],
+      }]);
+      assert.equal(JSON.stringify(diagnosticPayload).includes(syntheticUsers["token-user-a"].id), false);
+
       const userBList = await fetch(`${baseUrl}/api/yarns`, { headers: { Cookie: userBCookies } });
       assert.deepEqual(await userBList.json(), []);
 

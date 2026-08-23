@@ -20,7 +20,6 @@ const {
   normalizeYarnMaterials,
 } = require("./material-policy");
 const {
-  matchVariant,
   normalizeMatchingDocument,
 } = require("./matching-policy");
 const { ACCOUNT_DELETION_PHRASE, validateAccountDeletionInput } = require("./account-deletion-policy");
@@ -32,6 +31,8 @@ const {
 } = require("./deployment-policy");
 const { createMetricsRegistry } = require("./observability");
 const {
+  evaluateMatchingVariantsWithDiagnostics,
+  evaluateMatchingVariants,
   scorePattern,
   selectMatchingYarns,
 } = require("./server/matching-service");
@@ -878,41 +879,44 @@ async function sendYarnMutationResponse(res, status, mutation) {
   return sendJson(res, status, status === 204 ? null : mutation.yarn);
 }
 
-async function getSupabaseMatches(session) {
+async function getSupabaseMatches(session, { diagnostics: includeDiagnostics = false } = {}) {
   const [yarns, patterns] = await Promise.all([
     getSupabaseYarns(session),
     getCatalogPatterns(),
   ]);
 
-  let remainingVariants = MAX_MATCH_VARIANTS;
+  validateMatchLimits(patterns);
   let limited = false;
-  const boundedPatterns = patterns
-    .map((pattern) => {
-      const requirements = Array.isArray(pattern.matchingRequirements)
-        ? pattern.matchingRequirements.slice(0, Math.max(0, remainingVariants))
-        : [];
-      remainingVariants -= requirements.length;
-      if (requirements.length !== (Array.isArray(pattern.matchingRequirements) ? pattern.matchingRequirements.length : 0)) limited = true;
-      return { ...pattern, matchingRequirements: requirements };
-    })
-    .filter((pattern) => pattern.matchingRequirements.length > 0);
-  const matches = boundedPatterns
+  const diagnostics = [];
+  const matches = patterns
     .filter((pattern) => !pattern.needsReview)
-    .flatMap((pattern) =>
-      pattern.matchingRequirements.flatMap((variant) => {
-        let outcome;
-        try {
-          outcome = matchVariant(variant, yarns);
-        } catch (error) {
-          if (error instanceof RangeError) {
-            throw new ApiError(
-              503,
-              "Dopasowanie jest zbyt złożone. Zmniejsz magazyn lub wybierz prostszy wzór.",
-            );
-          }
-          throw error;
+    .flatMap((pattern) => {
+      const result = includeDiagnostics
+        ? evaluateMatchingVariantsWithDiagnostics(pattern.matchingRequirements, yarns)
+        : evaluateMatchingVariants(pattern.matchingRequirements, yarns);
+      limited ||= result.limited;
+      if (includeDiagnostics && result.matches.length === 0) {
+        if (result.diagnostic) {
+          const { variant, outcome } = result.diagnostic;
+          diagnostics.push({
+            pattern: {
+              id: `${pattern.id}:${variant.id}`,
+              patternId: pattern.id,
+              baseName: pattern.name,
+              name: `${pattern.name} — ${variant.label}`,
+              description: pattern.description,
+              variantLabel: variant.label,
+              label: variant.label,
+              size: variant.size,
+              yarnOption: variant.yarnOption,
+              requirements: variant.requirements,
+            },
+            status: outcome.status,
+            reasons: outcome.reasons,
+          });
         }
-        if (!outcome.doable) return [];
+      }
+      return result.matches.map(({ variant, outcome }) => {
         const allocatedYarns = outcome.allocation.flat();
         const allocation = variant.requirements.map((requirement, index) => ({
           role: requirement.role,
@@ -926,7 +930,7 @@ async function getSupabaseMatches(session) {
             weight: yarn.weight,
           })),
         }));
-        return [{
+        return {
           pattern: {
             ...pattern,
             ...variant,
@@ -948,13 +952,13 @@ async function getSupabaseMatches(session) {
           ),
           matchedYarns: allocatedYarns.length,
           allocation,
-        }];
-      })
-    )
+        };
+      });
+    })
     .filter((item) => item.doable)
     .sort((a, b) => b.total - a.total);
 
-  return { matches, limited };
+  return { matches, diagnostics, limited };
 }
 
 function validateMatchLimits(patterns) {
@@ -1666,6 +1670,25 @@ async function handleApi(req, res, url) {
   }
 
   if (await yarnRouter.handle(req, res, url)) return;
+
+  if (
+    req.method === "GET"
+    && url.pathname === "/api/matches"
+    && url.searchParams.get("diagnostics") === "1"
+  ) {
+    const session = await requireCurrentTermsSession(req, res);
+    enforceRequestRateLimit(
+      getMatchRateLimitKeys(req, session),
+      matchRateLimiter,
+      res,
+    );
+    const result = await getSupabaseMatches(session, { diagnostics: true });
+    res.setHeader("X-Motek-Match-Scope", result.limited ? "subset" : "full");
+    return sendJson(res, 200, {
+      matches: result.matches,
+      diagnostics: result.diagnostics,
+    });
+  }
 
   if (await patternRouter.handle(req, res, url)) return;
 
