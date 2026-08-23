@@ -2122,6 +2122,9 @@ function renderAuthState(payload) {
   authForms.hidden = authenticated;
   authModeSwitch.hidden = authenticated;
   authLoggedIn.hidden = !authenticated;
+  [loginForm, registerForm, passwordResetForm, passwordUpdateForm].forEach((form) => {
+    setAuthFormDisabled(form, authenticated);
+  });
   authUser.hidden = true;
   accountView.classList.toggle("is-authenticated", authenticated);
   document.body.classList.toggle("auth-logged-out", !authenticated);

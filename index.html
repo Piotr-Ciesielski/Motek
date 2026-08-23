@@ -102,6 +102,7 @@
 
           <form id="registerForm" class="auth-form" method="post" action="/api/auth/register" role="tabpanel" aria-labelledby="registerModeBtn" hidden>
             <h3>Nowe konto</h3>
+            <input type="hidden" name="invitationToken" autocomplete="off" />
             <label>
               Login (Twój e-mail)
               <input id="register-login" name="login" type="email" maxlength="254" autocomplete="email" required aria-describedby="registerLoginHint authMessage" />
@@ -661,11 +662,11 @@
     <script src="material-policy.js?v=2.0.0-alpha.39"></script>
     <script src="legal-document.js"></script>
     <script src="client/legal-acceptance-controller.js"></script>
-    <script src="client-policy.js?v=2.0.0-alpha.39&rev=7b72971"></script>
+    <script src="client-policy.js?v=2.0.0-alpha.39&rev=9436af5"></script>
     <script src="client/api-client.js"></script>
     <script src="client/dom-utils.js"></script>
     <script src="client/catalog-controller.js?v=2.0.0-alpha.39&rev=4852fdd"></script>
     <script src="client/idle-session-controller.js"></script>
-    <script src="app.js?v=2.0.0-alpha.39&rev=b1cd559"></script>
+    <script src="app.js?v=2.0.0-alpha.39&rev=93efd60"></script>
   </body>
 </html>

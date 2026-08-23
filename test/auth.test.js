@@ -28,7 +28,7 @@ const appJs = readFileSync(path.join(__dirname, "..", "app.js"), "utf8");
 test("zmiana hasła lokalnie odrzuca niezgodne nowe hasła", () => {
   assert.match(
     appJs,
-    /const passwordConfirmation = formValues\.newSecretConfirmation;[\s\S]*?if \(formValues\.newSecret !== passwordConfirmation\) \{[\s\S]*?return;/,
+/const passwordConfirmation = body\.passwordConfirmation;[\s\S]*?if \(body\.password !== passwordConfirmation\) \{[\s\S]*?return;/,
   );
 });
 

@@ -1471,7 +1471,10 @@ async function handleAuthApi(req, res, url) {
     }
     setAuthCookies(res, recoverySession);
     appendSetCookie(res, buildRecoveryGrantCookie(recoveryUser.id, { jti: grantJti }));
-    return sendJson(res, 200, { user: sanitizeAuthUser(recoveryUser) });
+    return sendJson(res, 200, {
+      user: sanitizeAuthUser(recoveryUser),
+      idleTimeoutMs: getIdleTimeoutMs(),
+    });
   }
 
   if (req.method === "POST" && url.pathname === "/api/auth/password") {
@@ -1498,7 +1501,7 @@ async function handleAuthApi(req, res, url) {
       grant_jti: grantJti,
     });
     if (grantClaimError) {
-      throw new ApiError(503, "Nie udało się bezpiecznie zweryfikować linku odzyskiwania. Spróbuj ponownie.");
+      throw new ApiError(503, "Odzyskiwanie hasła jest chwilowo niedostępne. Spróbuj ponownie później.");
     }
     if (grantClaimed !== true) {
       throw new ApiError(400, "Ten link został już wykorzystany albo wygasł. Rozpocznij odzyskiwanie hasła ponownie.");

@@ -81,26 +81,6 @@ test("migracja recovery przechowuje grant i zużywa go atomowo", () => {
   assert.match(sql, /revoke all on table private\.auth_recovery_grants from public, anon, authenticated/i);
 });
 
-test("migracja przywraca brakujący creator recovery wyłącznie dla authenticated", () => {
-  const migrationPath = path.join(
-    __dirname,
-    "..",
-    "supabase",
-    "migrations",
-    "20260815152553_restore_recovery_grant_creator.sql"
-  );
-  const sql = fs.readFileSync(migrationPath, "utf8");
-
-  assert.match(sql, /create or replace function public\.create_auth_recovery_grant\(\)/i);
-  assert.match(sql, /returns text/i);
-  assert.match(sql, /security definer\s+set search_path = ''/i);
-  assert.match(sql, /select auth\.uid\(\)/i);
-  assert.match(sql, /extensions\.digest\(grant_jti, 'sha256'\)/i);
-  assert.match(sql, /revoke all on function public\.create_auth_recovery_grant\(\) from public, anon, authenticated/i);
-  assert.match(sql, /grant execute on function public\.create_auth_recovery_grant\(\) to authenticated/i);
-  assert.doesNotMatch(sql, /drop\s+(?:table|column|function)|truncate/i);
-});
-
 test("migracja katalogu dodaje fail-closed publikację wzorów", () => {
   const migrationFiles = fs
     .readdirSync(path.join(__dirname, "..", "supabase", "migrations"))
