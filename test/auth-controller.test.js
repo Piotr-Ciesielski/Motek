@@ -263,6 +263,7 @@ test("pomyślne logowanie z formularza nadal przenosi do magazynu", async () => 
 
   assert.equal(document.getElementById("inventoryView").hidden, false);
   assert.equal(document.getElementById("headerAuthAction").textContent, "Wyloguj");
+  assert.ok(dom.requests.some(({ pathname }) => pathname === "/api/patterns"));
   dom.window.close();
 });
 
