@@ -43,7 +43,7 @@ Backend nie używa frameworka HTTP. `server.js` składa konfigurację, origin, s
 
 ## Rejestracja i legal gate
 
-Operator tworzy zaproszenie przez RPC dostępne tylko dla `service_role`. Backend hashuje token, rezerwuje zaproszenie, tworzy konto Auth, wiąże próbę rejestracji i finalizuje akceptację dokumentów. Nieaktualny regulamin ogranicza sesję do informacji prawnych, ponownej akceptacji, wylogowania i usunięcia konta.
+Rejestracja korzysta z Supabase Auth, CAPTCHA i bieżących wersji dokumentów prawnych. Supabase wysyła automatyczny e-mail potwierdzający adres, a backend tworzy profil dopiero dla prawidłowego, potwierdzonego przepływu. Operator nadal może tworzyć jednorazowe zaproszenia przez RPC dostępne tylko dla `service_role` w scenariuszach administracyjnych. Nieaktualny regulamin ogranicza sesję do informacji prawnych, ponownej akceptacji, wylogowania i usunięcia konta.
 
 ## Zapis włóczek i współbieżność
 
@@ -53,7 +53,7 @@ Właściciel rekordu wynika z sesji, nie z danych formularza. Limit 500 włócze
 
 ## Katalog i dopasowania
 
-`GET /api/patterns` zwraca strony katalogu przez `limit` i `offset`; klient doładowuje je kontrolowanie. `GET /api/matches` pobiera prywatne włóczki, odrzuca niekompletne wymagania i uruchamia ograniczone wyszukiwanie przypisań.
+`GET /api/patterns` zwraca strony katalogu przez `limit` i `offset`; klient doładowuje je kontrolowanie. `GET /api/matches` pobiera prywatne włóczki, odrzuca niekompletne wymagania i uruchamia ograniczone wyszukiwanie przypisań. Gdy nie ma potwierdzonego wyniku, backend może zwrócić diagnostykę najbliższego wariantu. Materiał `mieszanka` jest w diagnostyce traktowany jako potencjalnie zgodny z nieznanym składem, ale nie podnosi takiego wariantu do statusu potwierdzonego dopasowania.
 
 Wspólny katalog ma limit 300 wzorów. API nie zwraca prywatnych pól importu. Dopasowanie nie zgaduje brakujących danych i nie przypisuje jednego motka do kilku ról.
 

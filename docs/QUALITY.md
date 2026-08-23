@@ -70,4 +70,11 @@ Skrypt jest włączony do `npm run check`; pozostałe bramki działają niezale�
 - prawo: manifest dostawców, polityka publikacji i `npm run legal:check`;
 - dokumentacja: `npm run docs:check`.
 
+Ostatni pakiet regresyjny obejmował automatyczną rejestrację i potwierdzenie
+adresu e-mail, odświeżenie katalogu po zmianie sesji, dodatnią walidację długości
+i wagi włóczki oraz diagnostykę dopasowania dla nieokreślonego składu. Dla
+zmian dopasowania należy sprawdzać osobno wynik potwierdzony i wynik
+`possible_unknown_material`; drugi informuje o potencjalnej zgodności, ale nie
+jest rekomendacją wykonalności wzoru.
+
 Zmianę uznaje się za zweryfikowaną tylko na podstawie świeżego wyniku poleceń. Zielony test lokalny nie potwierdza stanu usług zewnętrznych ani nie daje zgody na zapis poza repozytorium.

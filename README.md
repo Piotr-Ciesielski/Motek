@@ -2,6 +2,14 @@
 
 Motek to prywatna aplikacja webowa dla osób robiących na drutach i szydełku. Pozwala prowadzić własny magazyn włóczek, przeglądać katalog wzorów i sprawdzać, które projekty można wykonać z posiadanych materiałów.
 
+## Ostatnie zmiany — 2026-08-23
+
+- rejestracja działa automatycznie przez Supabase Auth i wymaga potwierdzenia adresu e-mail;
+- po zalogowaniu lub zaakceptowaniu aktualnych dokumentów prawnych katalog odświeża się bez ręcznego przeładowania strony;
+- długość i waga włóczki muszą być dodatnimi liczbami całkowitymi od 1 do 1 000 000;
+- dopasowanie pokazuje najbliższy powód braku wyniku; włóczka z materiałem `mieszanka` może zostać oznaczona jako możliwa przy nieokreślonym składzie, ale nie jest wtedy prezentowana jako potwierdzone dopasowanie;
+- uproszczono nagłówki ekranów Konta, Dopasowania i Katalogu.
+
 ## Lokalny start
 
 Wymagane są Node.js 24, npm i projekt Supabase.
@@ -64,10 +72,10 @@ npm run regression:full   # pełna regresja stagingu
 
 Wersja źródła lokalnego to `2.0.0-alpha.38` w `VERSION` i `package.json`.
 
-| Środowisko | Adres | Stan 2026-08-18 | Release |
+| Środowisko | Adres | Stan 2026-08-23 | Release |
 | --- | --- | --- | --- |
-| Staging | `https://staging.rysia.org` | osiągalny, `/health/release` gotowy; staging nie jest produkcją i nie jest dostępny dla użytkowników | `2.0.0-alpha.39`, SHA `d7409a408351dc0a8f78f53eb5861c3db6eca627`, `staging` |
-| Produkcja | `https://www.rysia.org` | osiągalna, `/health/release` gotowy | `2.0.0-alpha.39`, SHA `a625bccbec827fd07965f476259f39836fc84b90`, `production` |
+| Staging | `https://staging.rysia.org` | osiągalny, `/health/release` gotowy; staging nie jest produkcją i nie jest dostępny dla użytkowników | `2.0.0-alpha.39`, SHA `03b62e72308770f6d9cc591c4ef1f69016bc437e`, `staging` |
+| Produkcja | `https://www.rysia.org` | osiągalna, `/health/release` gotowy | `2.0.0-alpha.39`, SHA `cc06179bd9481a83c016a4447930ddc3e9f09cb2`, `production` |
 
 Na obu osiągalnych środowiskach `/informacje-prawne` zwraca `200`, a anonimowe `/api/patterns` zwraca `401`. Manifest dostawców jest zweryfikowany, a `npm run legal:check` zwraca `LEGAL_PUBLICATION=ready`.
 

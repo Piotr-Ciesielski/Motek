@@ -5,8 +5,8 @@
 Motek używa Supabase jako jedynego źródła danych. Aplikacja nie ma trybu SQLite ani lokalnego fallbacku danych.
 
 - źródło lokalne: `2.0.0-alpha.38`;
-- staging: `https://staging.rysia.org`, release `2.0.0-alpha.39`, SHA `d7409a408351dc0a8f78f53eb5861c3db6eca627`; staging nie jest produkcją i nie jest dostępny dla użytkowników;
-- produkcja: `https://www.rysia.org`, release `2.0.0-alpha.39`, SHA `a625bccbec827fd07965f476259f39836fc84b90`;
+- staging: `https://staging.rysia.org`, release `2.0.0-alpha.39`, SHA `03b62e72308770f6d9cc591c4ef1f69016bc437e`; staging nie jest produkcją i nie jest dostępny dla użytkowników;
+- produkcja: `https://www.rysia.org`, release `2.0.0-alpha.39`, SHA `cc06179bd9481a83c016a4447930ddc3e9f09cb2`;
 - limit magazynu: 500 włóczek na użytkownika;
 - limit katalogu: 300 wzorów.
 
@@ -14,9 +14,9 @@ Motek używa Supabase jako jedynego źródła danych. Aplikacja nie ma trybu SQL
 
 Motek pomaga znaleźć wzory możliwe do wykonania z prywatnego zapasu włóczek. Nie jest sklepem ani programem do projektowania dzianin.
 
-1. Operator tworzy jednorazowe zaproszenie dla znormalizowanego adresu e-mail.
-2. Użytkownik rejestruje konto, akceptuje bieżący regulamin i otrzymuje osobną informację o prywatności.
-3. Po zalogowaniu dodaje, zmienia i usuwa własne włóczki.
+1. Użytkownik podaje e-mail i hasło, akceptuje bieżący regulamin oraz przechodzi CAPTCHA.
+2. Supabase Auth wysyła automatyczny e-mail potwierdzający adres.
+3. Po potwierdzeniu i zalogowaniu użytkownik dodaje, zmienia i usuwa własne włóczki.
 4. Przegląda wspólny katalog wzorów i łączy wyszukiwanie z filtrami statusu, języka, typu projektu i materiału.
 5. Uruchamia dopasowanie. Backend zwraca wyłącznie warianty z kompletnymi, zweryfikowanymi wymaganiami.
 
@@ -46,7 +46,7 @@ Profil jest powiązany 1:1 z `auth.users`. `login` i `email` zawierają ten sam 
 
 ### `public.yarns`
 
-Prywatna włóczka zawiera `id`, `user_id`, nazwę, kolor, listę materiałów, klasę grubości, długość, wagę oraz znaczniki czasu. `materials` korzysta ze wspólnej kontrolowanej listy. Wartość „mieszanka” oznacza nieokreślony skład i nie jest automatycznie zgodna z konkretnym materiałem. Klasy grubości to `lace`, `fingering`, `sport`, `dk`, `worsted` i `bulky`.
+Prywatna włóczka zawiera `id`, `user_id`, nazwę, kolor, listę materiałów, klasę grubości, długość, wagę oraz znaczniki czasu. `materials` korzysta ze wspólnej kontrolowanej listy. Długość i waga są dodatnimi liczbami całkowitymi od 1 do 1 000 000. Wartość „mieszanka” oznacza nieokreślony skład: nie daje potwierdzonego dopasowania do konkretnego materiału, ale może zostać pokazana w diagnostyce jako możliwa zgodność. Klasy grubości to `lace`, `fingering`, `sport`, `dk`, `worsted` i `bulky`.
 
 ### `public.patterns`
 
@@ -58,12 +58,14 @@ Prywatne tabele przechowują wersję magazynu, granty recovery, wersje dokument�
 
 ## Dopasowanie
 
-Wariant może trafić do wyników tylko wtedy, gdy:
+Wariant może trafić do potwierdzonych wyników tylko wtedy, gdy:
 
 - wzór nie wymaga dodatkowej weryfikacji;
 - wariant ma kompletne wymagania;
 - dostępne włóczki spełniają zużycie, materiały, klasę grubości, role, kolory i liczbę nitek;
 - jeden motek nie zostaje przypisany do dwóch różnych ról.
+
+Jeżeli jedyną przeszkodą jest materiał `mieszanka` o nieokreślonym składzie, aplikacja może zwrócić diagnostykę `possible_unknown_material` z możliwą alokacją. Taki wynik pomaga ocenić wzór, ale nie jest prezentowany jako potwierdzenie wykonalności.
 
 Jedna rola może używać kilku zgodnych motków. Wzór wielomateriałowy jest wyszukiwalny pod każdym swoim materiałem, ale pojawia się raz w wynikach. Alternatywne włóczki i elastyczne warianty pozostają rozdzielone zamiast jednej uśrednionej wartości.
 
@@ -110,7 +112,7 @@ Każdy publikowany rekord musi mieć wiarygodne źródło. Katalog zawiera wył�
 
 ## Konto, sesja i prawo
 
-Rejestracja wymaga zaproszenia przypisanego do e-maila. Baza przechowuje SHA-256 tokenu, a pełny link jest dostępny operatorowi tylko przy tworzeniu. Zaproszenie jest jednorazowe, wygasające i odwoływalne.
+Rejestracja działa automatycznie przez Supabase Auth. Użytkownik podaje e-mail, hasło, CAPTCHA, akceptację regulaminu i potwierdzenie zapoznania się z informacją o prywatności. Supabase wysyła automatyczny e-mail potwierdzający adres. Narzędzie operatora nadal obsługuje jednorazowe zaproszenia dla scenariuszy administracyjnych, ale zaproszenie nie jest wymagane przy zwykłej rejestracji.
 
 Sesja używa cookies `HttpOnly`, `SameSite=Lax`; środowiska publiczne wymagają `Secure`. Podpisana aktywność wygasa domyślnie po 2 godzinach bezczynności. Nieaktualna akceptacja regulaminu blokuje profil, magazyn, dopasowania i katalog, ale pozostawia stronę prawa, ponowną akceptację, wylogowanie i usunięcie konta.
 
