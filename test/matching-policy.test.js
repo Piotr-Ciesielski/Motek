@@ -3,6 +3,7 @@ const assert = require("node:assert/strict");
 
 const {
   allocateVariantRequirements,
+  diagnoseVariant,
   matchVariant,
   normalizeMatchingDocument,
   validateMatchingDocument,
@@ -227,4 +228,221 @@ test("odrzuca nieobsługiwaną grupę nitek trzymanych razem", () => {
     () => validateMatchingDocument(document, "test"),
     /held_together_group nie jest obsługiwane/,
   );
+});
+
+test("mieszanka pozostaje niedopasowana rygorystycznie, ale może mieć nieznany skład", () => {
+  const variant = {
+    requirements: [{
+      role: "główna",
+      measurementBasis: "meters",
+      metersMin: 400,
+      materials: ["wełna"],
+      materialMatch: "all",
+      colorMode: "same",
+      weightClasses: ["dk"],
+    }],
+  };
+  const yarns = [
+    { id: 1, color: "granat", materials: ["mieszanka"], weightClass: "dk", length: 250, weight: 50 },
+    { id: 2, color: "granat", materials: ["mieszanka"], weightClass: "dk", length: 200, weight: 40 },
+  ];
+
+  assert.equal(matchVariant(variant, yarns).doable, false);
+  assert.deepEqual(diagnoseVariant(variant, yarns), {
+    status: "possible_unknown_material",
+    allocation: [yarns],
+    coverage: 0,
+    reasons: [{ code: "UNKNOWN_MATERIAL", role: "główna" }],
+  });
+});
+
+test("mieszanka nie daje możliwego dopasowania, gdy blokuje je także grubość", () => {
+  const variant = {
+    requirements: [{
+      role: "główna",
+      measurementBasis: "meters",
+      metersMin: 400,
+      materials: ["wełna"],
+      materialMatch: "all",
+      colorMode: "same",
+      weightClasses: ["worsted"],
+    }],
+  };
+  const yarns = [
+    { id: 1, color: "granat", materials: ["mieszanka"], weightClass: "dk", length: 250, weight: 50 },
+    { id: 2, color: "granat", materials: ["mieszanka"], weightClass: "dk", length: 200, weight: 40 },
+  ];
+
+  const diagnosis = diagnoseVariant(variant, yarns);
+
+  assert.equal(diagnosis.status, "no_match");
+  assert.deepEqual(diagnosis.allocation, []);
+  assert.deepEqual(diagnosis.reasons, [{
+    code: "WEIGHT_CLASS",
+    role: "główna",
+    expected: ["worsted"],
+  }]);
+});
+
+test("diagnoza rozróżnia materiał, osobne nitki, ilość i kolor", () => {
+  const base = {
+    role: "główna",
+    measurementBasis: "meters",
+    metersMin: 500,
+    strandCount: 3,
+    materials: ["wełna"],
+    materialMatch: "all",
+    colorMode: "same",
+    weightClasses: ["dk"],
+  };
+  const yarns = [
+    { id: 1, color: "granat", materials: ["bawełna"], weightClass: "dk", length: 200, weight: 50 },
+    { id: 2, color: "biały", materials: ["wełna"], weightClass: "dk", length: 200, weight: 50 },
+  ];
+
+  assert.deepEqual(diagnoseVariant({ requirements: [base] }, yarns).reasons, [
+    { code: "MATERIAL", role: "główna", expected: ["wełna"] },
+    { code: "STRAND_COUNT", role: "główna", required: 3, available: 1 },
+    { code: "QUANTITY", role: "główna", basis: "meters", required: 500, available: 200 },
+  ]);
+
+  const colorDiagnosis = diagnoseVariant({
+    requirements: [{ ...base, strandCount: null, metersMin: 350 }],
+  }, [
+    { ...yarns[1], id: 3, color: "granat" },
+    { ...yarns[1], id: 4, color: "biały" },
+  ]);
+  assert.deepEqual(colorDiagnosis.reasons, [{
+    code: "COLOR",
+    role: "główna",
+    basis: "meters",
+    required: 350,
+    available: 200,
+  }]);
+});
+
+test("diagnoza używa przekazanego wyniku strict zamiast powtarzać matcher", () => {
+  let strictCalls = 0;
+  const strictOutcome = {
+    doable: true,
+    allocation: [[{ id: 1 }]],
+    coverage: 100,
+  };
+
+  const diagnosis = diagnoseVariant({ requirements: [] }, [], {
+    strictOutcome,
+    matcher() {
+      strictCalls += 1;
+      throw new Error("strict nie może zostać powtórzony");
+    },
+  });
+
+  assert.equal(strictCalls, 0);
+  assert.deepEqual(diagnosis, {
+    status: "full_match",
+    ...strictOutcome,
+    reasons: [],
+  });
+});
+
+test("mieszanka nie maskuje innych blokerów i nigdy nie daje wtedy possible", async (t) => {
+  const requirement = (overrides = {}) => ({
+    role: "główna",
+    measurementBasis: "meters",
+    metersMin: 100,
+    materials: ["wełna"],
+    materialMatch: "all",
+    colorMode: "same",
+    weightClasses: ["dk"],
+    ...overrides,
+  });
+  const blend = (id, overrides = {}) => ({
+    id,
+    color: "granat",
+    materials: ["mieszanka"],
+    weightClass: "dk",
+    length: 100,
+    weight: 50,
+    ...overrides,
+  });
+  const cases = [
+    {
+      name: "ilość",
+      variant: { requirements: [requirement()] },
+      yarns: [blend(1, { length: 99 })],
+      code: "QUANTITY",
+    },
+    {
+      name: "liczba motków",
+      variant: { requirements: [requirement({ skeinsMin: 2 })] },
+      yarns: [blend(1, { length: 200 })],
+      code: "SKEIN_COUNT",
+    },
+    {
+      name: "liczba nitek",
+      variant: { requirements: [requirement({ strandCount: 2 })] },
+      yarns: [blend(1, { length: 200 })],
+      code: "STRAND_COUNT",
+    },
+    {
+      name: "jeden kolor",
+      variant: { requirements: [requirement()] },
+      yarns: [blend(1, { length: 60 }), blend(2, { color: "biały", length: 60 })],
+      code: "COLOR",
+    },
+    {
+      name: "różne kolory",
+      variant: {
+        requirements: [
+          requirement({ role: "A", metersMin: 50, distinctColorGroup: "kontrast" }),
+          requirement({ role: "B", metersMin: 50, distinctColorGroup: "kontrast" }),
+        ],
+      },
+      yarns: [blend(1, { length: 50 }), blend(2, { length: 50 })],
+      code: "DISTINCT_COLORS",
+    },
+    {
+      name: "konflikt alokacji",
+      variant: {
+        requirements: [requirement({ role: "A" }), requirement({ role: "B" })],
+      },
+      yarns: [blend(1)],
+      code: "ALLOCATION_CONFLICT",
+    },
+  ];
+
+  for (const scenario of cases) {
+    await t.test(scenario.name, () => {
+      const diagnosis = diagnoseVariant(scenario.variant, scenario.yarns);
+      assert.equal(diagnosis.status, "no_match");
+      assert.ok(
+        diagnosis.reasons.some(({ code }) => code === scenario.code),
+        `Brak powodu ${scenario.code}: ${JSON.stringify(diagnosis.reasons)}`,
+      );
+    });
+  }
+});
+
+test("DK i worsted pozostają niedopasowane do fingering i sport", () => {
+  const diagnosis = diagnoseVariant({
+    requirements: [{
+      role: "główna",
+      measurementBasis: "meters",
+      metersMin: 100,
+      materials: ["wełna"],
+      materialMatch: "all",
+      colorMode: "same",
+      weightClasses: ["fingering", "sport"],
+    }],
+  }, [
+    { id: 1, color: "granat", materials: ["wełna"], weightClass: "dk", length: 100, weight: 50 },
+    { id: 2, color: "biały", materials: ["wełna"], weightClass: "worsted", length: 100, weight: 50 },
+  ]);
+
+  assert.equal(diagnosis.status, "no_match");
+  assert.deepEqual(diagnosis.reasons, [{
+    code: "WEIGHT_CLASS",
+    role: "główna",
+    expected: ["fingering", "sport"],
+  }]);
 });

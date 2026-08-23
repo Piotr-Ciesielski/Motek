@@ -1204,6 +1204,26 @@ input, select {
   margin-top: 14px;
 }
 
+.match-section-title,
+.match-diagnostics > h3 {
+  margin: 0;
+}
+
+.match-diagnostics {
+  display: grid;
+  gap: 1rem;
+}
+
+.diagnostic-card h4 {
+  margin: 0;
+  font-size: 1.05rem;
+}
+
+.diagnostic-reasons {
+  margin: 0;
+  padding-left: 1.25rem;
+}
+
 .result-card__actions {
   display: flex;
   justify-content: flex-end;

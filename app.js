@@ -453,7 +453,7 @@ async function api(path, options = {}) {
     if (path === "/api/yarns" || path.startsWith("/api/yarns/")) {
       yarnVersion = readYarnVersionHeader(response?.headers) || yarnVersion;
     }
-    api.lastMatchScope = path === "/api/matches"
+    api.lastMatchScope = path.startsWith("/api/matches")
       ? response?.headers?.get?.("X-Motek-Match-Scope") || "full"
       : null;
     return payload;
@@ -629,6 +629,62 @@ function groupMatchesByPattern(matches) {
   });
 
   return [...groups.values()];
+}
+
+function formatDiagnosticReason(reason) {
+  const role = reason.role ? ` (${reason.role})` : "";
+  switch (reason.code) {
+    case "UNKNOWN_MATERIAL":
+      return `Skład włóczki „mieszanka” jest nieokreślony; pozostałe wymagania są spełnione${role}.`;
+    case "WEIGHT_CLASS":
+      return `Wymagana grubość: ${(reason.expected || []).join(", ")}${role}.`;
+    case "MATERIAL":
+      return `Wymagany materiał: ${(reason.expected || []).join(", ")}${role}.`;
+    case "STRAND_COUNT":
+      return `Wymagane ${reason.required} osobne motki/nitki, dostępne ${reason.available}${role}.`;
+    case "SKEIN_COUNT":
+      return `Wymagane ${reason.required} osobne motki, dostępne ${reason.available}${role}.`;
+    case "QUANTITY": {
+      const unit = reason.basis === "grams" ? "g" : "m";
+      return `Potrzeba ${formatNumber(reason.required)} ${unit}, dostępne ${formatNumber(reason.available)} ${unit}${role}.`;
+    }
+    case "COLOR":
+      return `Jeden kolor zapewnia najwyżej ${formatNumber(reason.available)} ${reason.basis === "grams" ? "g" : "m"} z wymaganych ${formatNumber(reason.required)} ${reason.basis === "grams" ? "g" : "m"}${role}.`;
+    case "DISTINCT_COLORS":
+      return `Potrzeba ${reason.required} różnych kolorów, dostępne ${reason.available}.`;
+    default:
+      return "Dostępne motki nie mogą zostać rozdzielone między wszystkie wymagania wariantu.";
+  }
+}
+
+function createDiagnosticSection(title, items) {
+  const section = document.createElement("section");
+  section.className = "match-diagnostics";
+  const heading = document.createElement("h3");
+  heading.textContent = title;
+  section.appendChild(heading);
+
+  items.slice(0, 300).forEach((item) => {
+    const card = document.createElement("article");
+    card.className = "result-card diagnostic-card";
+    const name = document.createElement("h4");
+    name.textContent = item.pattern.baseName || item.pattern.name;
+    const meta = document.createElement("p");
+    meta.className = "result-card__meta";
+    meta.textContent = item.pattern.variantLabel
+      ? `Najbliższy wariant: ${item.pattern.variantLabel}`
+      : "Najbliższy wariant";
+    const reasons = document.createElement("ul");
+    reasons.className = "diagnostic-reasons";
+    reasons.replaceChildren(...item.reasons.map((reason) => {
+      const row = document.createElement("li");
+      row.textContent = formatDiagnosticReason(reason);
+      return row;
+    }));
+    card.append(name, meta, reasons);
+    section.appendChild(card);
+  });
+  return section;
 }
 
 function createMatchVariant(item, open = false) {
@@ -1417,7 +1473,7 @@ async function deleteYarn(id) {
 
 async function loadMatches() {
   if (!canAccessPrivateData()) return [];
-  return api("/api/matches");
+  return api("/api/matches?diagnostics=1");
 }
 
 async function loadPatternCatalog({ resume = false, onPage = null } = {}) {
@@ -1829,12 +1885,14 @@ async function renderResults() {
 
   showMessage(results, "Pobieram dopasowane wzory...", "loading");
   try {
-    const matches = await loadMatches();
+    const payload = await loadMatches();
+    const matches = Array.isArray(payload) ? payload : payload.matches || [];
+    const diagnostics = Array.isArray(payload) ? [] : payload.diagnostics || [];
     const matchScopeLimited = api.lastMatchScope === "subset";
     results.replaceChildren();
     markMatchesFresh();
 
-    if (!matches.length) {
+    if (!matches.length && !diagnostics.length) {
       showMessage(
         results,
         matchScopeLimited
@@ -1849,6 +1907,13 @@ async function renderResults() {
       notice.className = "empty-state";
       notice.textContent = "Ranking użył najlepiej pasującego podzbioru motków. Pozostałe włóczki nadal są zapisane w Twoim magazynie.";
       results.appendChild(notice);
+    }
+
+    if (matches.length && diagnostics.length) {
+      const heading = document.createElement("h3");
+      heading.className = "match-section-title";
+      heading.textContent = "Pełne dopasowania";
+      results.appendChild(heading);
     }
 
     groupMatchesByPattern(matches).forEach((group) => {
@@ -1870,6 +1935,21 @@ async function renderResults() {
         );
       results.appendChild(card);
     });
+
+    const possible = diagnostics.filter(({ status }) => status === "possible_unknown_material");
+    const blocked = diagnostics.filter(({ status }) => status === "no_match");
+    if (possible.length) {
+      results.appendChild(createDiagnosticSection(
+        "Możliwe dopasowania — skład nieokreślony",
+        possible,
+      ));
+    }
+    if (blocked.length) {
+      results.appendChild(createDiagnosticSection(
+        "Dlaczego pozostałe wzory nie pasują",
+        blocked,
+      ));
+    }
   } finally {
     results.removeAttribute("aria-busy");
   }

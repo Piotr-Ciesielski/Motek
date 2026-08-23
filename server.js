@@ -30,6 +30,7 @@ const {
 } = require("./deployment-policy");
 const { createMetricsRegistry } = require("./observability");
 const {
+  evaluateMatchingVariantsWithDiagnostics,
   evaluateMatchingVariants,
   scorePattern,
   selectMatchingYarns,
@@ -903,7 +904,7 @@ async function sendYarnMutationResponse(res, status, mutation) {
   return sendJson(res, status, status === 204 ? null : mutation.yarn);
 }
 
-async function getSupabaseMatches(session) {
+async function getSupabaseMatches(session, { diagnostics: includeDiagnostics = false } = {}) {
   const [yarns, patterns] = await Promise.all([
     getSupabaseYarns(session),
     getCatalogPatterns(),
@@ -911,11 +912,35 @@ async function getSupabaseMatches(session) {
 
   validateMatchLimits(patterns);
   let limited = false;
+  const diagnostics = [];
   const matches = patterns
     .filter((pattern) => !pattern.needsReview)
     .flatMap((pattern) => {
-      const result = evaluateMatchingVariants(pattern.matchingRequirements, yarns);
+      const result = includeDiagnostics
+        ? evaluateMatchingVariantsWithDiagnostics(pattern.matchingRequirements, yarns)
+        : evaluateMatchingVariants(pattern.matchingRequirements, yarns);
       limited ||= result.limited;
+      if (includeDiagnostics && result.matches.length === 0) {
+        if (result.diagnostic) {
+          const { variant, outcome } = result.diagnostic;
+          diagnostics.push({
+            pattern: {
+              id: `${pattern.id}:${variant.id}`,
+              patternId: pattern.id,
+              baseName: pattern.name,
+              name: `${pattern.name} — ${variant.label}`,
+              description: pattern.description,
+              variantLabel: variant.label,
+              label: variant.label,
+              size: variant.size,
+              yarnOption: variant.yarnOption,
+              requirements: variant.requirements,
+            },
+            status: outcome.status,
+            reasons: outcome.reasons,
+          });
+        }
+      }
       return result.matches.map(({ variant, outcome }) => {
         const allocatedYarns = outcome.allocation.flat();
         const allocation = variant.requirements.map((requirement, index) => ({
@@ -958,7 +983,7 @@ async function getSupabaseMatches(session) {
     .filter((item) => item.doable)
     .sort((a, b) => b.total - a.total);
 
-  return { matches, limited };
+  return { matches, diagnostics, limited };
 }
 
 function validateMatchLimits(patterns) {
@@ -1697,6 +1722,25 @@ async function handleApi(req, res, url) {
   }
 
   if (await yarnRouter.handle(req, res, url)) return;
+
+  if (
+    req.method === "GET"
+    && url.pathname === "/api/matches"
+    && url.searchParams.get("diagnostics") === "1"
+  ) {
+    const session = await requireCurrentTermsSession(req, res);
+    enforceRequestRateLimit(
+      getMatchRateLimitKeys(req, session),
+      matchRateLimiter,
+      res,
+    );
+    const result = await getSupabaseMatches(session, { diagnostics: true });
+    res.setHeader("X-Motek-Match-Scope", result.limited ? "subset" : "full");
+    return sendJson(res, 200, {
+      matches: result.matches,
+      diagnostics: result.diagnostics,
+    });
+  }
 
   if (await patternRouter.handle(req, res, url)) return;
 
