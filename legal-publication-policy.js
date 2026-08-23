@@ -134,4 +134,8 @@ function validateLegalPublication({ legalDocument, providers, patternAudit, depl
   return { ready: errors.length === 0, errors };
 }
 
-module.exports = { REQUIRED_PROVIDERS, validateLegalPublication };
+function readLegalPublicationEnforcement(env = process.env) {
+  return String(env.ENFORCE_LEGAL_PUBLICATION || "").trim().toLowerCase() === "true";
+}
+
+module.exports = { REQUIRED_PROVIDERS, readLegalPublicationEnforcement, validateLegalPublication };

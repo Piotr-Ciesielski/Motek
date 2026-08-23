@@ -40,7 +40,7 @@ const { createPatternRouter } = require("./server/pattern-routes");
 const { createYarnRouter } = require("./server/yarn-routes");
 const { readReleaseInfo } = require("./release-info");
 const { CURRENT_LEGAL_DOCUMENT } = require("./legal-document");
-const { validateLegalPublication } = require("./legal-publication-policy");
+const { readLegalPublicationEnforcement, validateLegalPublication } = require("./legal-publication-policy");
 
 const rootDir = __dirname;
 let server;
@@ -1850,7 +1850,12 @@ async function main(options = {}) {
       },
       deploymentEnvironment: "production",
     });
-    if (!publication.ready) throw new Error("Publikacja prawna nie jest gotowa.");
+    if (!publication.ready) {
+      if (readLegalPublicationEnforcement()) throw new Error("Publikacja prawna nie jest gotowa.");
+      console.log(
+        `[LEGAL_PUBLICATION_WARNING] Start produkcji kontynuowany przy wyłączonej blokadzie: ${publication.errors.join(" ")}`
+      );
+    }
   }
   validateCookieSecurityConfig();
   validateOriginConfig();

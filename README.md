@@ -93,7 +93,6 @@ GitHub Actions uruchamiają testy, lint, formatowanie, audyt npm i testy Supabas
 
 Numer wersji jest w pliku [`VERSION`](VERSION) (obecnie `2.0.0-alpha.39`) i musi odpowiadać wersji w `package.json`. CI kontroluje wersję i SHA; numer wydania aktualizuje się świadomie w repozytorium.
 
-
 Staging korzysta z krótkotrwałych, podpisanych i jednorazowych grantów recovery.
 Backend atomowo rezerwuje grant przed zmianą hasła, zwalnia rezerwację przy
 błędzie, a po sukcesie zużywa grant i unieważnia pozostałe sesje użytkownika.
@@ -124,7 +123,7 @@ Zielone testy lub zweryfikowane wdrozenie nie sa zgoda na migracje, import z zap
 
 - [Specyfikacja produktu](SPEC.md)
 - [Architektura](docs/ARCHITECTURE.md)
-- [Jakosc i testy](docs/QUALITY.md)
-- [Bezpieczenstwo](docs/SECURITY.md)
-- [Operacje i wdrozenia](docs/OPERATIONS.md)
+- [Jakość i testy](docs/QUALITY.md)
+- [Bezpieczeństwo](docs/SECURITY.md)
+- [Operacje i wdrożenia](docs/OPERATIONS.md)
 - [Design QA](docs/DESIGN-QA.md)

@@ -1,8 +1,8 @@
 # Wydanie produkcji i parity stagingu — 2026-08-08
 
-## Zakres
+## Historyczny baseline produkcji alpha.39
 
-To jest zapis wydania wizualnego alpha.39 oraz kontroli, że produkcja dostarcza ten sam pakiet frontendu co staging. Kod aplikacji nie był zmieniany podczas końcowej naprawy rozjazdu — problem dotyczył artefaktu serwowanego przez produkcję.
+To jest zapis wcześniejszego wydania wizualnego alpha.39 oraz kontroli, że produkcja dostarcza ten sam pakiet frontendu co staging. Kod aplikacji nie był zmieniany podczas końcowej naprawy rozjazdu — problem dotyczył artefaktu serwowanego przez produkcję.
 
 ## Źródła i wdrożenia
 
@@ -33,6 +33,18 @@ W produkcyjnym CSS obecne są również kluczowe reguły końcowego treatmentu g
 - wspólna kompozycja grafik z Katalogiem w jasnym i ciemnym motywie.
 
 Różny ekran startowy użytkownika (np. zalogowany Magazyn na stagingu i formularz Konta na produkcji) wynika z sesji przeglądarki, a nie z różnicy kodu.
+
+## Finalne wdrożenie auth-header-account-ux
+
+| Element | Stan potwierdzony dla finalnego wdrożenia |
+| --- | --- |
+| Commit | `c4b777a5f8a96277c0e7fb7ca6ec52d425a0900b` (`ui: align auth action typography`) |
+| Staging | `https://staging.rysia.org/` — wdrożony finalny commit |
+| Produkcja | `https://www.rysia.org/` — wdrożony finalny commit |
+| Health i release | `/health/ready` oraz `/health/release` — ready |
+| CI i regresja | potwierdzone jako zielone dla finalnego wdrożenia |
+
+Zmiana finalna dotyczy wyłącznie typografii przycisku `Zaloguj`/`Wyloguj`: kolor jest pomocniczy, rozmiar wynosi `0.9rem`, a grubość `650`. Nie zapisano nowego Browser QA dla tego commitu; wpisy wizualne i parity alpha.39 powyżej są historycznym baseline.
 
 ## Procedura na przyszłość
 

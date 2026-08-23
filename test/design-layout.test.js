@@ -221,6 +221,23 @@ test("light and dark variants define the prototype layout rules", () => {
   assert.match(stylesCss, /object-position: center/);
 });
 
+test("logged-out account keeps the aligned login password control", () => {
+  assert.match(
+    stylesCss,
+    /#loginForm \.password-field input[^{]*\{[\s\S]*?height:\s*44px;[\s\S]*?min-height:\s*44px;/,
+  );
+});
+
+
+test("dark hero panel keeps readable text on its dark gradient", () => {
+  assert.match(stylesCss, /--on-hero:\s*#f3eadc/);
+  assert.match(stylesCss, /\.auth-visual\s*\{[\s\S]*?color:\s*var\(--on-hero\)/);
+  assert.match(stylesCss, /\.auth-visual::after\s*\{[\s\S]*?var\(--on-hero\)/);
+  assert.match(stylesCss, /\.auth-visual h1\s*\{[\s\S]*?color:\s*var\(--on-hero\)/);
+});
+
+
+
 test("inventory shelves collapse from two columns to one on mobile", () => {
   assert.match(
     stylesCss,

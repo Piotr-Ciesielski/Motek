@@ -6,9 +6,17 @@ Branch staging: `staging`
 Commit: `cf60ce65`
 Adres: `https://staging.rysia.org/`
 
-## Lokalny kandydat `auth-header-account-ux`
+## Finalne wdrożenie `auth-header-account-ux`
 
-Zmiany nagłówka i konta są lokalnym kandydatem do wydania. Nie są w tym dokumencie deklarowane jako wdrożone na stagingu ani produkcji; dotyczą ich wyłącznie lokalne sprawdzenia automatyczne poniżej.
+| Element | Stan potwierdzony dla finalnego wdrożenia |
+| --- | --- |
+| Commit | `c4b777a5f8a96277c0e7fb7ca6ec52d425a0900b` (`ui: align auth action typography`) |
+| Staging | `https://staging.rysia.org/` — wdrożony finalny commit |
+| Produkcja | `https://www.rysia.org/` — wdrożony finalny commit |
+| Gotowość | `/health/ready` oraz `/health/release` — ready |
+| CI i regresja | potwierdzone jako zielone dla finalnego wdrożenia |
+
+Finalny commit dopasowuje typografię przycisku `Zaloguj`/`Wyloguj` do nagłówka: używa koloru pomocniczego, rozmiaru `0.9rem` i grubości `650`, przy zachowaniu kontraktu 44 px obszaru interakcji.
 
 ## Macierz wizualna
 
@@ -31,7 +39,7 @@ Makieta Katalogu pokazuje bibliotekę włóczek i fotografie motków, a działaj
 - `git diff --check` — bez błędów białych znaków (Git zgłosił tylko istniejące ostrzeżenia normalizacji LF/CRLF w zmienionych plikach).
 - `npm run staging:check` — 15/15.
 - CI staging — test i migracje bazy zakończone powodzeniem.
-- Historyczny Browser QA poprzedniego etapu (niepowtarzany dla auth-header-account-ux): desktop oraz 390×844; `scrollWidth === clientWidth` dla Magazynu, Dopasowania, Katalogu i Konta.
+- Historyczny Browser QA poprzedniego etapu (niepowtarzany dla auth-header-account-ux ani finalnego commitu `c4b777a`): desktop oraz 390×844; `scrollWidth === clientWidth` dla Magazynu, Dopasowania, Katalogu i Konta.
 - Parity QA po publikacji: staging i produkcja wskazują `styles.css`, `app.js` oraz `catalog-controller.js` w wersji `2.0.0-alpha.39`; oba środowiska mają aktualne reguły pełnej ekspozycji grafik bez overlayu.
 - `npm run format:check` nadal zgłasza cztery niezmienione pliki konfiguracyjne (`eslint.config.js`, `.prettierrc.json`, `package.json`, `.github/workflows/ci.yml`).
 

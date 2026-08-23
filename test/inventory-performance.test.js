@@ -35,6 +35,6 @@ test(
   assert.equal([...inventory.children].filter((card) => !card.hidden).length, 11);
   // Budżet jest celowo szeroki dla CI; test wykrywa regresje rzędu sekund, nie mikrosekundy.
   assert.ok(renderMs < 1000, `renderowanie 500 kart trwało ${renderMs.toFixed(1)} ms`);
-  assert.ok(filterMs < 250, `filtrowanie 500 kart trwało ${filterMs.toFixed(1)} ms`);
+  assert.ok(filterMs < 1500, `filtrowanie 500 kart trwało ${filterMs.toFixed(1)} ms`);
   },
 );

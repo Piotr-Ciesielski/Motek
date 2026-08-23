@@ -4,6 +4,7 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci --omit=dev
 COPY *.js *.json *.html *.css *.svg VERSION ./
+COPY data ./data
 COPY client ./client
 COPY server ./server
 COPY assets ./assets

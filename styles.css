@@ -3309,6 +3309,10 @@ body::before {
   opacity: 1;
 }
 
+[data-theme="dark"] #accountView:not(.is-authenticated) .auth-visual,
+[data-theme="dark"] #accountView:not(.is-authenticated) .auth-visual h1 {
+  color: var(--on-hero);
+}
 #accountView.is-authenticated .auth-layout {
   display: grid;
   grid-template-columns: 1fr;
