@@ -10,8 +10,7 @@
  * Small state controller for catalog screens.
  *
  * The controller deliberately knows nothing about the DOM.  Consumers provide
- * a `load` function (or an API object exposing one of the supported methods)
- * and may subscribe to state changes with `onStateChange`.
+ * a `load` function and may observe state changes with `onStateChange`.
  */
 function createCatalogController(options) {
   const config = options || {};
@@ -24,16 +23,6 @@ function createCatalogController(options) {
     total: 0,
     loading: false,
     error: null,
-    selectedPattern: null
-  };
-  const listeners = [];
-
-  const emit = () => {
-    const snapshot = getState();
-    if (typeof config.onStateChange === 'function') config.onStateChange(snapshot);
-    listeners.slice().forEach((listener) => listener(snapshot));
-    if (typeof config.render === 'function') config.render(snapshot);
-    return snapshot;
   };
 
   const getState = () => Object.assign({}, state, {
@@ -41,15 +30,14 @@ function createCatalogController(options) {
     filters: Object.assign({}, state.filters)
   });
 
-  const resolveLoader = () => {
-    if (typeof config.load === 'function') return config.load;
-    if (typeof config.fetchCatalog === 'function') return config.fetchCatalog;
-    const api = config.api || config.client || {};
-    return api.listCatalog || api.fetchCatalog || api.getCatalog || api.loadCatalog;
+  const emit = () => {
+    const snapshot = getState();
+    if (typeof config.onStateChange === 'function') config.onStateChange(snapshot);
+    return snapshot;
   };
 
   const loadPage = async (page, replace) => {
-    const loader = resolveLoader();
+    const loader = config.load;
     state.loading = true;
     state.error = null;
     emit();
@@ -58,7 +46,7 @@ function createCatalogController(options) {
         ? await loader({ page, filters: Object.assign({}, state.filters), pageSize: config.pageSize })
         : { items: [], hasMore: false };
       const payload = Array.isArray(result) ? { items: result, hasMore: false } : (result || {});
-      const items = Array.isArray(payload.items) ? payload.items : (Array.isArray(payload.data) ? payload.data : []);
+      const items = Array.isArray(payload.items) ? payload.items : [];
       if (replace) {
         state.items = items;
       } else {
@@ -89,10 +77,7 @@ function createCatalogController(options) {
     }
   };
 
-  const controller = {
-    initialize() {
-      return this.refresh();
-    },
+  return {
     refresh() {
       return loadPage(1, true);
     },
@@ -100,32 +85,8 @@ function createCatalogController(options) {
       if (state.loading || !state.hasMore) return Promise.resolve(getState());
       return loadPage(state.page + 1, false);
     },
-    resetFilters(nextFilters) {
-      state.filters = Object.assign({}, defaults, nextFilters || {});
-      return this.refresh();
-    },
-    showPattern(patternOrId) {
-      const id = patternOrId && typeof patternOrId === 'object' ? patternOrId.id : patternOrId;
-      const item = typeof patternOrId === 'object'
-        ? patternOrId
-        : state.items.find((candidate) => candidate && (candidate.id === id || candidate.patternId === id));
-      state.selectedPattern = item || null;
-      if (typeof config.onShowPattern === 'function') config.onShowPattern(item || null);
-      emit();
-      return item || null;
-    },
     getState,
-    subscribe(listener) {
-      if (typeof listener !== 'function') return () => {};
-      listeners.push(listener);
-      return () => {
-        const index = listeners.indexOf(listener);
-        if (index >= 0) listeners.splice(index, 1);
-      };
-    }
   };
-
-  return controller;
 }
 
 function createCatalogFilterDisclosure({ toggle, panel, mobileQuery }) {

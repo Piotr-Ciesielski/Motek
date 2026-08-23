@@ -32,8 +32,6 @@ const { createMetricsRegistry } = require("./observability");
 const {
   evaluateMatchingVariantsWithDiagnostics,
   evaluateMatchingVariants,
-  scorePattern,
-  selectMatchingYarns,
 } = require("./server/matching-service");
 const { createStaticFileHandler } = require("./server/static-files");
 const { createPatternRouter } = require("./server/pattern-routes");
@@ -97,7 +95,7 @@ const AUTH_REQUEST_LIMITS = Object.freeze({
   recovery: { windowMs: 10 * 60 * 1000, maxRequests: 5, blockMs: 10 * 60 * 1000 },
 });
 const authRateLimiter = createAuthRateLimiter();
-const accountDeletionRateLimiter = createAccountDeletionRateLimiter();
+const accountDeletionRateLimiter = createAuthRateLimiter();
 const authRequestRateLimiter = createRequestRateLimiter({
   windowMs: AUTH_REQUEST_WINDOW_MS,
   maxRequests: AUTH_REQUEST_MAX,
@@ -312,15 +310,6 @@ function createAuthRateLimiter(options = {}) {
       return entries.size;
     },
   };
-}
-
-function createAccountDeletionRateLimiter(options = {}) {
-  return createAuthRateLimiter({
-    windowMs: 15 * 60 * 1000,
-    maxFailures: 5,
-    blockMs: 15 * 60 * 1000,
-    ...options,
-  });
 }
 
 function createRequestRateLimiter(options = {}) {
@@ -578,10 +567,6 @@ function normalizeRecoveryToken(value, field) {
   return value.trim();
 }
 
-function normalizeAuthLogin(value) {
-  return normalizeAuthEmail(value);
-}
-
 function validateAuthPassword(value) {
   if (typeof value !== "string" || value.length < 8 || value.length > 256) {
     throw new ApiError(400, "Hasło musi mieć od 8 do 256 znaków.");
@@ -685,16 +670,24 @@ async function getAuthenticatedSession(req, res) {
   if (!profileClient) {
     throw new ApiError(503, "Nie udało się teraz zweryfikować konta. Spróbuj ponownie.");
   }
-  let profileResult;
-  try {
-    profileResult = await profileClient
-      .from("profiles")
-      .select("id,login,email,avatar_url,status,role,created_at,updated_at,last_login_at")
-      .eq("id", userResult.data.user.id)
-      .maybeSingle();
-  } catch {
-    throw new ApiError(503, "Nie udało się teraz zweryfikować konta. Spróbuj ponownie.");
-  }
+  let legalError = null;
+  const readProfile = async () => {
+    try {
+      return await profileClient
+        .from("profiles")
+        .select("id,login,email,avatar_url,status,role,created_at,updated_at,last_login_at")
+        .eq("id", userResult.data.user.id)
+        .maybeSingle();
+    } catch {
+      return { error: { message: "Nie udało się odczytać profilu." } };
+    }
+  };
+  const readLegalState = () =>
+    legalAccessService.getAccountAccessState(userResult.data.user.id).catch((error) => {
+      legalError = error;
+      return null;
+    });
+  const [profileResult, legal] = await Promise.all([readProfile(), readLegalState()]);
 
   if (profileResult.error) {
     throw new ApiError(503, "Nie udało się teraz zweryfikować konta. Spróbuj ponownie.");
@@ -710,10 +703,7 @@ async function getAuthenticatedSession(req, res) {
     throw new ApiError(403, "Konto jest zawieszone lub zablokowane.");
   }
 
-  let legal;
-  try {
-    legal = await legalAccessService.getAccountAccessState(userResult.data.user.id);
-  } catch {
+  if (legalError) {
     throw new ApiError(503, "Stan dokumentów prawnych jest chwilowo niedostępny.");
   }
 
@@ -1105,34 +1095,22 @@ function normalizeMatchingRequirements(value) {
 }
 
 async function getCatalogPatterns({ limit = null, offset = 0 } = {}, connection = supabaseConnection) {
-  const patternClient = connection.client.from("patterns");
-  const countQuery = patternClient.select("id", { count: "exact", head: true });
-  const { count, error: countError } = await (typeof countQuery.eq === "function"
-    ? countQuery.eq("publication_status", "published")
-    : countQuery);
-
-  if (countError) {
-    throw new Error(`Nie udało się sprawdzić liczby wzorów w Supabase: ${countError.message}`);
-  }
-
-  validatePatternCatalogSize(count ?? 0);
-
-  const effectiveLimit = limit ?? count ?? 0;
-  const dataQuery = connection.client
+  const effectiveLimit = limit ?? MAX_PATTERN_CATALOG_RECORDS;
+  const { data, count, error } = await connection.client
     .from("patterns")
     .select(
-      "id,name,description,project_type,materials,meters_per_100g,yarn_requirements,matching_requirements,source_language,needs_review,official_source_url"
-    );
-  const publishedQuery = typeof dataQuery.eq === "function"
-    ? dataQuery.eq("publication_status", "published")
-    : dataQuery;
-  const { data, error } = await publishedQuery
+      "id,name,description,project_type,materials,meters_per_100g,yarn_requirements,matching_requirements,source_language,needs_review,official_source_url",
+      { count: "exact" }
+    )
+    .eq("publication_status", "published")
     .range(offset, Math.max(offset, offset + effectiveLimit - 1))
     .order("name", { ascending: true });
 
   if (error) {
     throw new Error(`Nie udało się pobrać wzorów z Supabase: ${error.message}`);
   }
+
+  validatePatternCatalogSize(count ?? 0);
 
   const patterns = data.map(normalizeCatalogPattern);
   if (limit === null) return patterns;
@@ -1243,7 +1221,7 @@ async function handleAuthApi(req, res, url) {
 
   if (req.method === "POST" && url.pathname === "/api/auth/register") {
     const body = await readBody(req);
-    const email = normalizeAuthLogin(body.login);
+    const email = normalizeAuthEmail(body.login);
     const password = validateAuthPassword(body.password);
     try {
       validateRegistrationLegalInput(body, CURRENT_LEGAL_DOCUMENT);
@@ -2072,18 +2050,14 @@ module.exports = {
   getRuntimeConfig,
   main,
   normalizeAuthEmail,
-  normalizeAuthLogin,
   normalizeCatalogPattern,
   getCatalogPatterns,
   normalizeSupabaseYarn,
-  scorePattern,
-  selectMatchingYarns,
   validatePatternCatalogSize,
   validateYarn,
   validateYarnStorageCapacity,
   toSupabaseYarn,
   buildAuthCookie,
-  createAccountDeletionRateLimiter,
   createAuthRateLimiter,
   createAuthRequestRateLimiters,
   createRequestRateLimiter,

@@ -518,7 +518,9 @@ test("wyniki pokazują możliwe dopasowanie i polskie przyczyny pozostałych blo
   });
   t.after(() => dom.window.close());
 
-  await waitFor(() => /Możliwe dopasowania/.test(dom.window.document.getElementById("results").textContent), dom);
+  await waitFor(() => dom.window.document.getElementById("authLoggedIn").hidden === false, dom);
+  dom.window.document.querySelector('.app-nav [data-view-target="matches"]').click();
+  await waitFor(() => /Możliwe dopasowania/.test(dom.window.document.getElementById("results").textContent), dom, 4000);
 
   const text = dom.window.document.getElementById("results").textContent;
   assert.match(text, /Możliwe dopasowania — skład nieokreślony/);

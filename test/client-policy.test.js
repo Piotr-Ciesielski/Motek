@@ -18,9 +18,6 @@ const {
   readYarnVersionHeader,
   withYarnVersionRetry,
   isDeleteConfirmed,
-  loadPaginatedItems,
-  loadNextPaginatedPage,
-  shouldRetryRead,
   resolveRequestedView,
   yarnsHaveSameValues,
 } = require("../client-policy");
@@ -180,39 +177,6 @@ test("nie odświeża wersji, gdy bieżąca wersja jest poprawna", async () => {
 
   assert.equal(result, "saved");
   assert.equal(refreshes, 0);
-});
-
-test("ładuje dokładnie jedną stronę katalogu i deduplikuje elementy", async () => {
-  const calls = [];
-  const result = await loadNextPaginatedPage(
-    async (offset) => {
-      calls.push(offset);
-      return { items: [{ id: 2 }, { id: 3 }], total: 3, hasMore: false };
-    },
-    { items: [{ id: 1 }, { id: 2 }], offset: 2, total: 3 },
-  );
-  assert.deepEqual(calls, [2]);
-  assert.deepEqual(result.items, [{ id: 1 }, { id: 2 }, { id: 3 }]);
-  assert.equal(result.complete, true);
-});
-
-test("pusta strona nie oznacza ukończenia, gdy serwer sygnalizuje dalsze dane", async () => {
-  const result = await loadNextPaginatedPage(
-    async () => ({ items: [], total: 4, hasMore: true }),
-    { items: [{ id: 1 }], offset: 1, total: 4 },
-  );
-  assert.equal(result.complete, false);
-  assert.equal(result.nextOffset, 1);
-});
-
-test("zachowuje częściowy wynik i błąd bez fałszywego complete", async () => {
-  const error = new Error("chwilowy błąd");
-  const result = await loadNextPaginatedPage(async () => { throw error; }, {
-    items: [{ id: 1 }], offset: 1, total: 2,
-  });
-  assert.deepEqual(result.items, [{ id: 1 }]);
-  assert.equal(result.complete, false);
-  assert.equal(result.error, error);
 });
 
 test("payload Auth dodaje token tylko przy włączonej CAPTCHA", () => {
@@ -398,46 +362,6 @@ test("wzór z kilkoma alternatywami nie jest opisany jako brak danych", () => {
   );
 });
 
-test("ponawia tylko bezpieczny odczyt po przejściowym błędzie", () => {
-  assert.equal(
-    shouldRetryRead({
-      method: "GET",
-      errorName: "TypeError",
-      attempt: 1,
-      maxAttempts: 2,
-    }),
-    true
-  );
-  assert.equal(
-    shouldRetryRead({
-      method: "GET",
-      status: 503,
-      attempt: 1,
-      maxAttempts: 2,
-    }),
-    true
-  );
-  assert.equal(
-    shouldRetryRead({
-      method: "POST",
-      errorName: "TypeError",
-      attempt: 1,
-      maxAttempts: 2,
-    }),
-    false
-  );
-  assert.equal(
-    shouldRetryRead({
-      method: "GET",
-      errorName: "TypeError",
-      externallyAborted: true,
-      attempt: 1,
-      maxAttempts: 2,
-    }),
-    false
-  );
-});
-
 test("rozpoznaje nowy motek zapisany mimo utraconej odpowiedzi", () => {
   const knownIds = new Set(["1"]);
   const yarns = [
@@ -458,78 +382,6 @@ test("rozpoznaje wynik przerwanej modyfikacji i usunięcia", () => {
   assert.equal(getExistingYarnState([], 7, draft).state, "missing");
   assert.equal(isDeleteConfirmed([], 7), true);
   assert.equal(isDeleteConfirmed([{ id: 7, ...draft }], 7), false);
-});
-
-test("zachowuje częściowo pobrany katalog i wznawia od miejsca błędu", async () => {
-  const firstAttempt = await loadPaginatedItems(async (offset) => {
-    if (offset === 0) {
-      return {
-        items: [{ id: 1 }, { id: 2 }],
-        hasMore: true,
-      };
-    }
-    throw new Error("chwilowy błąd");
-  });
-
-  assert.deepEqual(firstAttempt.items, [{ id: 1 }, { id: 2 }]);
-  assert.equal(firstAttempt.nextOffset, 2);
-  assert.equal(firstAttempt.complete, false);
-  assert.match(firstAttempt.error.message, /chwilowy błąd/);
-
-  const resumed = await loadPaginatedItems(
-    async (offset) => {
-      assert.equal(offset, 2);
-      return {
-        items: [{ id: 2 }, { id: 3 }],
-        hasMore: false,
-      };
-    },
-    {
-      items: firstAttempt.items,
-      offset: firstAttempt.nextOffset,
-    }
-  );
-
-  assert.deepEqual(resumed.items, [{ id: 1 }, { id: 2 }, { id: 3 }]);
-  assert.equal(resumed.complete, true);
-  assert.equal(resumed.error, null);
-});
-
-test("nie przedstawia błędu pierwszej strony jako częściowego sukcesu", async () => {
-  await assert.rejects(
-    loadPaginatedItems(async () => {
-      throw new Error("brak katalogu");
-    }),
-    /brak katalogu/
-  );
-});
-
-test("udostępnia kolejne strony katalogu od razu po ich pobraniu", async () => {
-  const progress = [];
-  const result = await loadPaginatedItems(
-    async (offset) => ({
-      items: offset === 0 ? [{ id: 1 }, { id: 2 }] : [{ id: 3 }],
-      total: 3,
-      hasMore: offset === 0,
-    }),
-    {
-      onPage: (page) => progress.push(page),
-    },
-  );
-
-  assert.deepEqual(
-    progress.map((page) => ({
-      ids: page.items.map((item) => item.id),
-      total: page.total,
-      complete: page.complete,
-    })),
-    [
-      { ids: [1, 2], total: 3, complete: false },
-      { ids: [1, 2, 3], total: 3, complete: true },
-    ],
-  );
-  assert.deepEqual(result.items, [{ id: 1 }, { id: 2 }, { id: 3 }]);
-  assert.equal(result.total, 3);
 });
 
 test("łączy typ projektu i materiał jako wspólne kryteria", () => {

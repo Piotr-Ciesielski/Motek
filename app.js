@@ -352,6 +352,7 @@ function setActiveView(requestedView, { focus = true } = {}) {
   if (!target) return;
 
   const returningFromCatalogToInventory = activeView === "catalog" && view === "inventory";
+  const enteringMatchesView = view === "matches" && activeView !== "matches";
   yarnRefreshGeneration += 1;
   activeView = view;
   appViews.forEach((candidate) => {
@@ -373,6 +374,10 @@ function setActiveView(requestedView, { focus = true } = {}) {
     refresh().catch((error) => {
       setStorageMessage(`${error.message} Nie udało się odświeżyć magazynu — spróbuj ponownie za chwilę.`, "error");
     });
+  }
+
+  if (enteringMatchesView && isAuthenticated && !requiresLegalAcceptance && results.childElementCount === 0) {
+    queueMicrotask(() => findBtn.click());
   }
 }
 
@@ -420,7 +425,9 @@ function updateNavigationState() {
 }
 
 viewButtons.forEach((button) => {
-  button.addEventListener("click", () => setActiveView(button.dataset.viewTarget));
+  button.addEventListener("click", () => {
+    setActiveView(button.dataset.viewTarget);
+  });
 });
 
 themeToggle?.addEventListener("click", () => {
@@ -1498,27 +1505,25 @@ function formatRatio(value) {
     : "brak danych";
 }
 
-function formatSkeinCount(value) {
-  const count = Number(value) || 0;
-  const formattedCount = formatNumber(count);
+function pluralPolish(count, forms) {
+  if (count === 1) return forms[0];
   const lastTwo = count % 100;
   const last = count % 10;
-  if (count === 1) return "1 motek";
-  if (last >= 2 && last <= 4 && !(lastTwo >= 12 && lastTwo <= 14)) {
-    return `${formattedCount} motki`;
-  }
-  return `${formattedCount} motków`;
+  if (last >= 2 && last <= 4 && !(lastTwo >= 12 && lastTwo <= 14)) return forms[1];
+  return forms[2];
+}
+
+function formatSkeinCount(value) {
+  const count = Number(value) || 0;
+  return `${formatNumber(count)} ${pluralPolish(count, ["motek", "motki", "motków"])}`;
 }
 
 function formatVariantCount(value) {
-  const formattedValue = formatNumber(value);
-  const lastTwo = value % 100;
-  const last = value % 10;
-  if (value === 1) return "1 pasujący rozmiar";
-  if (last >= 2 && last <= 4 && !(lastTwo >= 12 && lastTwo <= 14)) {
-    return `${formattedValue} pasujące rozmiary`;
-  }
-  return `${formattedValue} pasujących rozmiarów`;
+  return `${formatNumber(value)} ${pluralPolish(value, [
+    "pasujący rozmiar",
+    "pasujące rozmiary",
+    "pasujących rozmiarów",
+  ])}`;
 }
 
 function formatRequirement(requirement, index) {
@@ -1716,13 +1721,7 @@ function renderPatternCatalog() {
   loadMorePatternsBtn.hidden = visiblePatterns.length >= matchingPatterns.length;
   const revealCount = Math.min(12, Math.max(0, matchingPatterns.length - visiblePatterns.length));
   if (revealCount > 0) {
-    const lastTwo = revealCount % 100;
-    const last = revealCount % 10;
-    const noun = revealCount === 1
-      ? "kolejny wzór"
-      : last >= 2 && last <= 4 && !(lastTwo >= 12 && lastTwo <= 14)
-        ? "kolejne wzory"
-        : "kolejnych wzorów";
+    const noun = pluralPolish(revealCount, ["kolejny wzór", "kolejne wzory", "kolejnych wzorów"]);
     loadMorePatternsBtn.textContent = `Pokaż ${formatNumber(revealCount)} ${noun}`;
   }
 
@@ -1999,22 +1998,21 @@ async function renderSummary(loadedYarns = null) {
   );
 }
 
-function setAuthMessage(message, kind = "") {
-  authMessage.textContent = message;
-  authMessage.dataset.kind = kind;
-  authMessage.setAttribute("role", kind === "error" ? "alert" : "status");
+function setAuthMessageOn(element, message, kind) {
+  element.textContent = message;
+  element.dataset.kind = kind;
+  element.setAttribute("role", kind === "error" ? "alert" : "status");
   if (kind === "error" && message) {
-    authMessage.focus({ preventScroll: true });
+    element.focus({ preventScroll: true });
   }
 }
 
+function setAuthMessage(message, kind = "") {
+  setAuthMessageOn(authMessage, message, kind);
+}
+
 function setDeleteAccountMessage(message, kind = "") {
-  deleteAccountMessage.textContent = message;
-  deleteAccountMessage.dataset.kind = kind;
-  deleteAccountMessage.setAttribute("role", kind === "error" ? "alert" : "status");
-  if (kind === "error" && message) {
-    deleteAccountMessage.focus({ preventScroll: true });
-  }
+  setAuthMessageOn(deleteAccountMessage, message, kind);
 }
 
 function setAuthBusy(form, busy) {
@@ -2592,7 +2590,6 @@ async function refresh() {
     }
     renderOnboarding(yarns);
     await renderSummary(yarns);
-    await renderResults();
   } finally {
     if (busyGeneration === yarnRefreshBusyGeneration) {
       yarnList.removeAttribute("aria-busy");
@@ -2658,6 +2655,7 @@ findBtn.addEventListener("click", async () => {
     findBtn.textContent = "Dobieram...";
     showMessage(results, "Pobieram dopasowane wzory...", "loading");
     await refresh();
+    await renderResults();
     document.getElementById("matchesTitle").scrollIntoView({ behavior: scrollBehavior, block: "start" });
   } catch (error) {
     showResultsError(error.message);

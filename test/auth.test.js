@@ -8,10 +8,8 @@ const { CURRENT_LEGAL_DOCUMENT } = require("../legal-document");
 
 const {
   normalizeAuthEmail,
-  normalizeAuthLogin,
   validateAuthPassword,
   buildAuthCookie,
-  createAccountDeletionRateLimiter,
   createAuthRateLimiter,
   createAuthRequestRateLimiters,
   createRequestRateLimiter,
@@ -124,13 +122,12 @@ test("payload rejestracji akceptuje wyłącznie URL-safe token po trimowaniu", (
 
 test("normalizacja Auth trimuje i ujednolica e-mail oraz login jako e-mail", () => {
   assert.equal(normalizeAuthEmail("  JAN+test@Domena.pl  "), "jan+test@domena.pl");
-  assert.equal(normalizeAuthLogin("  JAN+test@Domena.pl  "), "jan+test@domena.pl");
 });
 
 test("walidacja Auth odrzuca niepoprawny e-mail i login", () => {
   assert.throws(() => normalizeAuthEmail("jan@"), /prawidłowy adres/);
-  assert.throws(() => normalizeAuthLogin("ab"), /prawidłowy adres/);
-  assert.throws(() => normalizeAuthLogin("Piotr_01"), /prawidłowy adres/);
+  assert.throws(() => normalizeAuthEmail("ab"), /prawidłowy adres/);
+  assert.throws(() => normalizeAuthEmail("Piotr_01"), /prawidłowy adres/);
 });
 
 test("walidacja hasła wymaga podstawowej różnorodności znaków", () => {
@@ -234,7 +231,7 @@ test("limiter żądań blokuje zalewanie endpointu i wygasa", () => {
 
 test("limiter usuwania konta blokuje po pięciu błędnych hasłach przez 15 minut", () => {
   let now = 0;
-  const limiter = createAccountDeletionRateLimiter({ now: () => now });
+  const limiter = createAuthRateLimiter({ now: () => now });
 
   for (let attempt = 0; attempt < 4; attempt += 1) {
     limiter.recordFailure("user:user-a");
