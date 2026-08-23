@@ -409,6 +409,7 @@ const legalAcceptanceController = createLegalAcceptanceController({
   legalDocument: CURRENT_LEGAL_DOCUMENT,
   onAccepted: async () => {
     await refreshAuthSession();
+    await refreshPatternCatalog().catch(showPatternCatalogError);
   },
 });
 
@@ -2122,6 +2123,7 @@ async function submitAuthForm(form, endpoint, successMessage) {
     } else {
       setAuthMessage(successMessage, "success");
       await refreshAuthSession();
+      await refreshPatternCatalog().catch(showPatternCatalogError);
       setActiveView("inventory");
     }
     form.reset();

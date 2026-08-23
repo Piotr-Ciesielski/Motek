@@ -56,9 +56,30 @@ function waitForText(window, element, matcher) {
   });
 }
 
+function waitForCondition(window, predicate, message, timeoutMs = 250) {
+  return new Promise((resolve, reject) => {
+    const startedAt = Date.now();
+    const check = () => {
+      if (predicate()) {
+        resolve();
+        return;
+      }
+      if (Date.now() - startedAt >= timeoutMs) {
+        reject(new Error(message));
+        return;
+      }
+      window.setTimeout(check, 5);
+    };
+    check();
+  });
+}
+
 function loadApp({
   reducedMotion = false,
   session = { authenticated: false, user: null },
+  loginSession = null,
+  loginResponse = null,
+  catalogPayload = { items: [], total: 0 },
   url = "http://localhost/",
 } = {}) {
   const dom = new JSDOM(indexHtml, {
@@ -73,13 +94,18 @@ function loadApp({
     this.scrollOptions = options;
   };
   const calls = [];
+  let activeSession = session;
   window.fetch = async (input) => {
     const pathname = new URL(input, window.location.href).pathname;
     calls.push(pathname);
     const payload = pathname === "/api/config"
       ? { captcha: { enabled: false } }
+      : pathname === "/api/auth/login"
+        ? ((activeSession = loginSession || session), loginResponse || { user: activeSession.user })
       : pathname === "/api/auth/session"
-        ? session
+        ? activeSession
+        : pathname === "/api/patterns"
+          ? catalogPayload
         : { items: [], total: 0 };
     return new Response(JSON.stringify(payload), {
       status: 200,
@@ -209,6 +235,54 @@ test("aplikacja uruchamia się bez promocyjnego CTA w hero Konta", async () => {
   assert.ok(dom.window.document.getElementById("accountThemeImage"));
   assert.equal(dom.window.document.getElementById("heroAuthBtn"), null);
   dom.window.close();
+});
+
+test("po udanym logowaniu odświeża katalog wzorów", async () => {
+  const dom = loadApp({
+    loginSession: {
+      authenticated: true,
+      user: { id: "logged-in-user", email: "logged-in@example.test" },
+      legal: {
+        currentVersion: "1.0",
+        acceptedVersion: "1.0",
+        acceptanceRequired: false,
+      },
+    },
+    catalogPayload: {
+      items: [{
+        id: 1,
+        name: "Test pattern",
+        projectType: "other",
+        materials: [],
+        yarnRequirements: [],
+        sourceLanguage: "unknown",
+        needsReview: false,
+      }],
+      total: 1,
+      hasMore: false,
+    },
+  });
+
+  try {
+    await dom.initialSessionReady;
+    assert.equal(dom.fetchCalls.includes("/api/patterns"), false);
+
+    const document = dom.window.document;
+    document.getElementById("login-email").value = "logged-in@example.test";
+    document.getElementById("login-password").value = "Secret123!";
+    document.getElementById("loginForm").dispatchEvent(new dom.window.Event("submit", {
+      bubbles: true,
+      cancelable: true,
+    }));
+
+    await waitForCondition(
+      dom.window,
+      () => dom.fetchCalls.includes("/api/patterns"),
+      "logowanie nie odświeżyło katalogu wzorów",
+    );
+  } finally {
+    dom.window.close();
+  }
 });
 
 test("ważny link zaproszenia otwiera rejestrację po inicjalizacji niezalogowanej sesji", async () => {
