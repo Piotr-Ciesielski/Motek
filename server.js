@@ -9,7 +9,6 @@ const {
   readSupabaseAuthConfig,
 } = require("./supabase");
 const { validateRegistrationLegalInput } = require("./registration-policy");
-const { registerInvitedUser } = require("./registration-service");
 const { createLegalAccessService } = require("./legal-access-service");
 const {
   maxYarnsPerUser: MAX_YARNS_PER_USER,
@@ -31,6 +30,7 @@ const {
 } = require("./deployment-policy");
 const { createMetricsRegistry } = require("./observability");
 const {
+  evaluateMatchingVariantsWithDiagnostics,
   evaluateMatchingVariants,
   scorePattern,
   selectMatchingYarns,
@@ -904,7 +904,7 @@ async function sendYarnMutationResponse(res, status, mutation) {
   return sendJson(res, status, status === 204 ? null : mutation.yarn);
 }
 
-async function getSupabaseMatches(session) {
+async function getSupabaseMatches(session, { diagnostics: includeDiagnostics = false } = {}) {
   const [yarns, patterns] = await Promise.all([
     getSupabaseYarns(session),
     getCatalogPatterns(),
@@ -912,11 +912,35 @@ async function getSupabaseMatches(session) {
 
   validateMatchLimits(patterns);
   let limited = false;
+  const diagnostics = [];
   const matches = patterns
     .filter((pattern) => !pattern.needsReview)
     .flatMap((pattern) => {
-      const result = evaluateMatchingVariants(pattern.matchingRequirements, yarns);
+      const result = includeDiagnostics
+        ? evaluateMatchingVariantsWithDiagnostics(pattern.matchingRequirements, yarns)
+        : evaluateMatchingVariants(pattern.matchingRequirements, yarns);
       limited ||= result.limited;
+      if (includeDiagnostics && result.matches.length === 0) {
+        if (result.diagnostic) {
+          const { variant, outcome } = result.diagnostic;
+          diagnostics.push({
+            pattern: {
+              id: `${pattern.id}:${variant.id}`,
+              patternId: pattern.id,
+              baseName: pattern.name,
+              name: `${pattern.name} — ${variant.label}`,
+              description: pattern.description,
+              variantLabel: variant.label,
+              label: variant.label,
+              size: variant.size,
+              yarnOption: variant.yarnOption,
+              requirements: variant.requirements,
+            },
+            status: outcome.status,
+            reasons: outcome.reasons,
+          });
+        }
+      }
       return result.matches.map(({ variant, outcome }) => {
         const allocatedYarns = outcome.allocation.flat();
         const allocation = variant.requirements.map((requirement, index) => ({
@@ -959,7 +983,7 @@ async function getSupabaseMatches(session) {
     .filter((item) => item.doable)
     .sort((a, b) => b.total - a.total);
 
-  return { matches, limited };
+  return { matches, diagnostics, limited };
 }
 
 function validateMatchLimits(patterns) {
@@ -1181,10 +1205,10 @@ function normalizeMeasurement(value, field) {
   if (
     typeof normalized !== "number" ||
     !Number.isInteger(normalized) ||
-    normalized < 0 ||
+    normalized < 1 ||
     normalized > MAX_MEASUREMENT
   ) {
-    throw new ApiError(400, `Pole ${field} musi być liczbą całkowitą od 0 do ${MAX_MEASUREMENT}.`);
+    throw new ApiError(400, `Pole ${field} musi być liczbą całkowitą od 1 do ${MAX_MEASUREMENT}.`);
   }
   return normalized;
 }
@@ -1208,10 +1232,6 @@ function validateYarn(body) {
   };
 }
 
-async function hashInvitationToken(token) {
-  return crypto.createHash("sha256").update(token, "utf8").digest("hex");
-}
-
 async function handleAuthApi(req, res, url) {
   if (req.method === "POST") {
     requireTrustedOrigin(req);
@@ -1221,9 +1241,8 @@ async function handleAuthApi(req, res, url) {
     const body = await readBody(req);
     const email = normalizeAuthLogin(body.login);
     const password = validateAuthPassword(body.password);
-    let legalInput;
     try {
-      legalInput = validateRegistrationLegalInput(body, CURRENT_LEGAL_DOCUMENT);
+      validateRegistrationLegalInput(body, CURRENT_LEGAL_DOCUMENT);
     } catch (error) {
       throw new ApiError(400, error.message);
     }
@@ -1239,19 +1258,26 @@ async function handleAuthApi(req, res, url) {
 
     let registration;
     try {
-      registration = await registerInvitedUser({
+      const { data, error } = await authClient().auth.signUp({
         email,
         password,
-        ...legalInput,
-        captchaToken,
-        emailRedirectTo: new URL("/?confirmed=1", getExpectedOrigin(req)).toString(),
-      }, {
-        authClient: authClient(),
-        adminClient: supabaseConnection.client,
-        serviceClient: supabaseConnection.client,
-        legalDocument: CURRENT_LEGAL_DOCUMENT,
-        hashInvitationToken,
+        options: {
+          data: { login: email },
+          emailRedirectTo: new URL("/?confirmed=1", getExpectedOrigin(req)).toString(),
+          ...(captchaToken ? { captchaToken } : {}),
+        },
       });
+      if (error || !data?.user) throw error || new Error("Brak użytkownika po rejestracji");
+      const { error: finalizationError } = await supabaseConnection.client.rpc(
+        "finalize_automatic_registration",
+        {
+          p_user_id: data.user.id,
+          p_terms_version: CURRENT_LEGAL_DOCUMENT.termsVersion,
+          p_privacy_version: CURRENT_LEGAL_DOCUMENT.privacyVersion,
+        },
+      );
+      if (finalizationError) throw finalizationError;
+      registration = data;
     } catch {
       recordAuthFailure(rateLimitKeys);
       throw genericAuthError("register");
@@ -1636,6 +1662,12 @@ async function handleApi(req, res, url) {
     } catch (error) {
       throw new ApiError(400, error.message || `Wpisz dokładnie: ${ACCOUNT_DELETION_PHRASE}.`);
     }
+    let captchaToken;
+    try {
+      captchaToken = normalizeCaptchaToken(body.captchaToken, captchaConfig.enabled);
+    } catch (error) {
+      throw new ApiError(400, error.message);
+    }
 
     const retryAfterMs = Math.max(
       ...rateLimitKeys.map((key) => accountDeletionRateLimiter.getRetryAfterMs(key)),
@@ -1649,6 +1681,7 @@ async function handleApi(req, res, url) {
       await deleteSupabaseAccount({
         session,
         password: deletionInput.password,
+        captchaToken,
         authClient: authClient(),
         adminClient: supabaseConnection.client,
       });
@@ -1689,6 +1722,25 @@ async function handleApi(req, res, url) {
   }
 
   if (await yarnRouter.handle(req, res, url)) return;
+
+  if (
+    req.method === "GET"
+    && url.pathname === "/api/matches"
+    && url.searchParams.get("diagnostics") === "1"
+  ) {
+    const session = await requireCurrentTermsSession(req, res);
+    enforceRequestRateLimit(
+      getMatchRateLimitKeys(req, session),
+      matchRateLimiter,
+      res,
+    );
+    const result = await getSupabaseMatches(session, { diagnostics: true });
+    res.setHeader("X-Motek-Match-Scope", result.limited ? "subset" : "full");
+    return sendJson(res, 200, {
+      matches: result.matches,
+      diagnostics: result.diagnostics,
+    });
+  }
 
   if (await patternRouter.handle(req, res, url)) return;
 

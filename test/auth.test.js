@@ -23,7 +23,6 @@ test("payload rejestracji przekazuje boolean akceptacji i bieżące wersje prawa
     {
       login: "jan@example.com",
       password: "Haslo123!",
-      invitationToken: "invite-token",
       termsAccepted: true,
       termsVersion: CURRENT_LEGAL_DOCUMENT.termsVersion,
       privacyNoticeVersion: CURRENT_LEGAL_DOCUMENT.privacyVersion,
@@ -34,7 +33,6 @@ test("payload rejestracji przekazuje boolean akceptacji i bieżące wersje prawa
   assert.deepEqual(payload, {
     login: "jan@example.com",
     password: "Haslo123!",
-    invitationToken: "invite-token",
     termsAccepted: true,
     termsVersion: CURRENT_LEGAL_DOCUMENT.termsVersion,
     privacyNoticeVersion: CURRENT_LEGAL_DOCUMENT.privacyVersion,
@@ -48,7 +46,6 @@ test("payload rejestracji odrzuca nieaktualną wersję dokumentu", () => {
       {
         login: "jan@example.com",
         password: "Haslo123!",
-        invitationToken: "invite-token",
         termsAccepted: true,
         termsVersion: "0.9",
         privacyNoticeVersion: CURRENT_LEGAL_DOCUMENT.privacyVersion,
@@ -57,6 +54,38 @@ test("payload rejestracji odrzuca nieaktualną wersję dokumentu", () => {
     ),
     /Odśwież stronę|wersj/i,
   );
+});
+
+test("payload rejestracji nie wymaga tokenu zaproszenia", () => {
+  const payload = buildRegistrationAuthPayload(
+    {
+      login: "jan@example.com",
+      password: "Haslo123!",
+      termsAccepted: true,
+      termsVersion: CURRENT_LEGAL_DOCUMENT.termsVersion,
+      privacyNoticeVersion: CURRENT_LEGAL_DOCUMENT.privacyVersion,
+    },
+    { legalDocument: CURRENT_LEGAL_DOCUMENT },
+  );
+
+  assert.equal(payload.login, "jan@example.com");
+  assert.equal(Object.hasOwn(payload, "invitationToken"), false);
+});
+
+test("payload rejestracji ignoruje pozostały token zaproszenia", () => {
+  const payload = buildRegistrationAuthPayload(
+    {
+      login: "jan@example.com",
+      password: "Haslo123!",
+      invitationToken: "stary-token",
+      termsAccepted: true,
+      termsVersion: CURRENT_LEGAL_DOCUMENT.termsVersion,
+      privacyNoticeVersion: CURRENT_LEGAL_DOCUMENT.privacyVersion,
+    },
+    { legalDocument: CURRENT_LEGAL_DOCUMENT },
+  );
+
+  assert.equal(Object.hasOwn(payload, "invitationToken"), false);
 });
 
 test("normalizacja Auth trimuje i ujednolica e-mail oraz login jako e-mail", () => {

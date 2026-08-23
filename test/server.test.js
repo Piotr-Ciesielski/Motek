@@ -162,6 +162,22 @@ test("walidacja włóczki zachowuje kilka materiałów", () => {
   );
 });
 
+test("walidacja włóczki wymaga co najmniej 1 metra i 1 grama", () => {
+  for (const field of ["length", "weight"]) {
+    assert.throws(
+      () => validateYarn({
+        name: "Za mało",
+        color: "biały",
+        materials: ["wełna"],
+        weightClass: "dk",
+        length: field === "length" ? 0 : 1,
+        weight: field === "weight" ? 0 : 1,
+      }),
+      new RegExp(`Pole ${field} musi być liczbą całkowitą od 1 do 1000000\\.`),
+    );
+  }
+});
+
 test("ranking respektuje limity rozmiaru i może użyć kilku motków dla jednej roli", () => {
   assert.doesNotThrow(() => validateYarnStorageCapacity(499));
   assert.throws(() => validateYarnStorageCapacity(500), /500 włóczek/);
@@ -347,6 +363,7 @@ test("serwer Motek działa bezpiecznie", async (t) => {
   const recoveryGrants = new Map();
   const signOutScopes = [];
   const signUpRequests = [];
+  const automaticRegistrationFinalizations = [];
   const issuedSignupConfirmationTokens = [];
   const usedSignupConfirmationTokens = new Set();
   const expiredConfirmationTokens = {
@@ -360,6 +377,7 @@ test("serwer Motek działa bezpiecznie", async (t) => {
     user_metadata: { login: "nowy@example.com" },
   };
   const deletedUserIds = [];
+  const deletionVerificationAttempts = [];
   let profileResultOverride = null;
   let profileQueryFailure = null;
   let authenticatedProfileAccessDenied = false;
@@ -484,11 +502,13 @@ test("serwer Motek działa bezpiecznie", async (t) => {
             error: null,
           };
         },
-        async signInWithPassword({ email, password }) {
+        async signInWithPassword(credentials) {
+          const { email, password } = credentials;
           if (
             email === syntheticUsers["token-user-a"].email &&
             password === "DeleteHaslo1!"
           ) {
+            deletionVerificationAttempts.push(credentials);
             return {
               data: {
                 user: syntheticUsers["token-user-a"],
@@ -670,6 +690,10 @@ test("serwer Motek działa bezpiecznie", async (t) => {
             state.acceptedVersion = args.p_terms_version;
             state.acceptanceRequired = false;
           }
+          return Promise.resolve({ data: "2026-08-09T12:00:00.000Z", error: null });
+        }
+        if (name === "finalize_automatic_registration") {
+          automaticRegistrationFinalizations.push(args);
           return Promise.resolve({ data: "2026-08-09T12:00:00.000Z", error: null });
         }
         if (name === "create_auth_recovery_grant") {
@@ -967,13 +991,17 @@ test("serwer Motek działa bezpiecznie", async (t) => {
           login: " NOWY@EXAMPLE.COM ",
           password: "Haslo123!",
           captchaToken: "register-token",
-          invitationToken: "a".repeat(64),
           termsAccepted: true,
           termsVersion: "1.0",
           privacyNoticeVersion: "1.0",
         }),
       });
       assert.equal(registerResponse.status, 201);
+      assert.deepEqual(automaticRegistrationFinalizations.at(-1), {
+        p_user_id: "33333333-3333-4333-8333-333333333333",
+        p_terms_version: "1.0",
+        p_privacy_version: "1.0",
+      });
       assert.deepEqual(await registerResponse.json(), {
         user: {
           id: "33333333-3333-4333-8333-333333333333",
@@ -1024,7 +1052,6 @@ test("serwer Motek działa bezpiecznie", async (t) => {
           login: "potwierdzenie@example.com",
           password: "Haslo123!",
           captchaToken: "register-confirmation-token",
-          invitationToken: "b".repeat(64),
           termsAccepted: true,
           termsVersion: "1.0",
           privacyNoticeVersion: "1.0",
@@ -1316,12 +1343,18 @@ test("serwer Motek działa bezpiecznie", async (t) => {
         body: JSON.stringify({
           password: "DeleteHaslo1!",
           confirmation: "USUŃ KONTO",
+          captchaToken: "delete-account-token",
         }),
       });
 
       assert.equal(response.status, 204);
       assert.equal(await response.text(), "");
       assert.deepEqual(deletedUserIds, [syntheticUsers["token-user-a"].id]);
+      assert.deepEqual(deletionVerificationAttempts.at(-1), {
+        email: syntheticUsers["token-user-a"].email,
+        password: "DeleteHaslo1!",
+        options: { captchaToken: "delete-account-token" },
+      });
       assert.match(response.headers.get("set-cookie"), /motek_access_token=/);
       assert.match(response.headers.get("set-cookie"), /motek_refresh_token=/);
     });
@@ -1359,6 +1392,7 @@ test("serwer Motek działa bezpiecznie", async (t) => {
         body: JSON.stringify({
           password: "BledneHaslo1!",
           confirmation: "USUŃ KONTO",
+          captchaToken: "delete-account-token",
         }),
       });
 
@@ -1472,6 +1506,49 @@ test("serwer Motek działa bezpiecznie", async (t) => {
       assert.equal(matches[0].pattern.variantLabel, "M");
       assert.equal(matches[0].pattern.patternId, 21);
       assert.equal(matches[0].total, 100);
+
+      supabasePatterns.push({
+        id: 22,
+        name: "Testowy niedopasowany wzór",
+        description: "Wymaga innej grubości.",
+        project_type: "hat",
+        materials: ["wełna"],
+        matching_requirements: {
+          version: 2,
+          variants: [{
+            id: "one-size",
+            label: "Jeden rozmiar",
+            requirements: [{
+              role: "główna",
+              measurement_basis: "meters",
+              meters_min: 200,
+              materials: ["wełna"],
+              material_match: "all",
+              color_mode: "same",
+              weight_classes: ["worsted"],
+            }],
+          }],
+        },
+        source_language: "pl",
+        needs_review: false,
+      });
+      const diagnosticResponse = await fetch(`${baseUrl}/api/matches?diagnostics=1`, {
+        headers: { Cookie: userACookies },
+      });
+      const diagnosticPayload = await diagnosticResponse.json();
+      supabasePatterns.pop();
+
+      assert.equal(diagnosticResponse.status, 200);
+      assert.equal(Array.isArray(diagnosticPayload), false);
+      assert.equal(diagnosticPayload.matches.length, 1);
+      assert.equal(diagnosticPayload.diagnostics.length, 1);
+      assert.equal(diagnosticPayload.diagnostics[0].pattern.patternId, 22);
+      assert.deepEqual(diagnosticPayload.diagnostics[0].reasons, [{
+        code: "WEIGHT_CLASS",
+        role: "główna",
+        expected: ["worsted"],
+      }]);
+      assert.equal(JSON.stringify(diagnosticPayload).includes(syntheticUsers["token-user-a"].id), false);
 
       const userBList = await fetch(`${baseUrl}/api/yarns`, { headers: { Cookie: userBCookies } });
       assert.deepEqual(await userBList.json(), []);

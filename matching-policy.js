@@ -242,10 +242,26 @@ function requirementMinimum(requirement) {
     : requirement.gramsMin;
 }
 
+function isUnknownBlend(yarn) {
+  return Array.isArray(yarn?.materials)
+    && yarn.materials.length === 1
+    && yarn.materials[0] === "mieszanka";
+}
+
+function yarnMatchesRequirementMaterial(yarn, requirement, allowUnknownBlendMaterials = false) {
+  return matchesMaterialRule(yarn.materials, {
+    materialMatch: requirement.materialMatch,
+    materials: requirement.materials,
+  }) || (allowUnknownBlendMaterials && isUnknownBlend(yarn));
+}
+
 function allocateVariantRequirements(
   requirements,
   yarns,
-  { maxSearchNodes = maxMatchSearchNodes } = {},
+  {
+    maxSearchNodes = maxMatchSearchNodes,
+    allowUnknownBlendMaterials = false,
+  } = {},
 ) {
   const sourceRequirements = Array.isArray(requirements) ? requirements : [];
   const sourceYarns = Array.isArray(yarns) ? yarns : [];
@@ -278,10 +294,11 @@ function allocateVariantRequirements(
         !used.has(index)
         && quantity > 0
         && requirement.weightClasses.includes(yarn.weightClass)
-        && matchesMaterialRule(yarn.materials, {
-          materialMatch: requirement.materialMatch,
-          materials: requirement.materials,
-        })
+        && yarnMatchesRequirementMaterial(
+          yarn,
+          requirement,
+          allowUnknownBlendMaterials,
+        )
       );
 
     const pools = new Map();
@@ -386,8 +403,186 @@ function matchVariant(variant, yarns, options) {
   };
 }
 
+function diagnoseRequirement(
+  requirement,
+  yarns,
+  { allowUnknownBlendMaterials = false } = {},
+) {
+  const role = requirement.role;
+  const weightEligible = yarns.filter((yarn) =>
+    requirement.weightClasses.includes(yarn.weightClass)
+  );
+  if (weightEligible.length === 0) {
+    return [{ code: "WEIGHT_CLASS", role, expected: requirement.weightClasses }];
+  }
+
+  const materialEligible = weightEligible.filter((yarn) =>
+    yarnMatchesRequirementMaterial(yarn, requirement, allowUnknownBlendMaterials)
+  );
+  const minimumCount = Math.max(
+    Number(requirement.skeinsMin) || 0,
+    Number(requirement.strandCount) || 0,
+  );
+  const minimum = requirementMinimum(requirement);
+  const available = materialEligible.reduce(
+    (sum, yarn) => sum + requirementQuantity(requirement, yarn),
+    0,
+  );
+  const reasons = [];
+
+  if (
+    materialEligible.length === 0
+    || (
+      materialEligible.length < weightEligible.length
+      && (materialEligible.length < minimumCount || available < minimum)
+    )
+  ) {
+    reasons.push({ code: "MATERIAL", role, expected: requirement.materials });
+  }
+
+  if (materialEligible.length < minimumCount) {
+    reasons.push({
+      code: requirement.strandCount ? "STRAND_COUNT" : "SKEIN_COUNT",
+      role,
+      required: minimumCount,
+      available: materialEligible.length,
+    });
+  }
+
+  if (available < minimum) {
+    reasons.push({
+      code: "QUANTITY",
+      role,
+      basis: requirement.measurementBasis,
+      required: minimum,
+      available,
+    });
+  } else if (requirement.colorMode === "same") {
+    const quantitiesByColor = new Map();
+    materialEligible.forEach((yarn) => {
+      const key = colorKey(yarn.color);
+      quantitiesByColor.set(
+        key,
+        (quantitiesByColor.get(key) || 0) + requirementQuantity(requirement, yarn),
+      );
+    });
+    const bestColorQuantity = Math.max(0, ...quantitiesByColor.values());
+    if (bestColorQuantity < minimum) {
+      reasons.push({
+        code: "COLOR",
+        role,
+        basis: requirement.measurementBasis,
+        required: minimum,
+        available: bestColorQuantity,
+      });
+    }
+  }
+
+  return reasons;
+}
+
+function diagnoseDistinctColors(
+  requirements,
+  yarns,
+  { allowUnknownBlendMaterials = false } = {},
+) {
+  const groups = new Map();
+  requirements.forEach((requirement) => {
+    if (!requirement.distinctColorGroup) return;
+    if (!groups.has(requirement.distinctColorGroup)) {
+      groups.set(requirement.distinctColorGroup, []);
+    }
+    groups.get(requirement.distinctColorGroup).push(requirement);
+  });
+
+  const reasons = [];
+  for (const [group, groupedRequirements] of groups) {
+    const colors = new Set();
+    groupedRequirements.forEach((requirement) => {
+      yarns.forEach((yarn) => {
+        if (
+          requirement.weightClasses.includes(yarn.weightClass)
+          && yarnMatchesRequirementMaterial(
+            yarn,
+            requirement,
+            allowUnknownBlendMaterials,
+          )
+        ) {
+          colors.add(colorKey(yarn.color));
+        }
+      });
+    });
+    if (colors.size < groupedRequirements.length) {
+      reasons.push({
+        code: "DISTINCT_COLORS",
+        group,
+        required: groupedRequirements.length,
+        available: colors.size,
+      });
+    }
+  }
+  return reasons;
+}
+
+function diagnoseVariant(variant, yarns, options = {}) {
+  const {
+    strictOutcome = null,
+    matcher = matchVariant,
+    ...allocationOptions
+  } = options;
+  const strict = strictOutcome || matcher(variant, yarns, allocationOptions);
+  if (strict.doable) {
+    return { status: "full_match", ...strict, reasons: [] };
+  }
+
+  const relaxedAllocation = allocateVariantRequirements(
+    variant?.requirements,
+    yarns,
+    { ...allocationOptions, allowUnknownBlendMaterials: true },
+  );
+  if (relaxedAllocation) {
+    const unknownRoles = variant.requirements
+      .map((requirement, index) => relaxedAllocation[index].some((yarn) =>
+        isUnknownBlend(yarn)
+        && !matchesMaterialRule(yarn.materials, {
+          materialMatch: requirement.materialMatch,
+          materials: requirement.materials,
+        })
+      ) ? { code: "UNKNOWN_MATERIAL", role: requirement.role } : null)
+      .filter(Boolean);
+    if (unknownRoles.length > 0) {
+      return {
+        status: "possible_unknown_material",
+        allocation: relaxedAllocation,
+        coverage: 0,
+        reasons: unknownRoles,
+      };
+    }
+  }
+
+  const requirements = Array.isArray(variant?.requirements) ? variant.requirements : [];
+  const reasons = requirements.flatMap((requirement) =>
+    diagnoseRequirement(
+      requirement,
+      Array.isArray(yarns) ? yarns : [],
+      { allowUnknownBlendMaterials: true },
+    )
+  );
+  if (reasons.length === 0) {
+    reasons.push(...diagnoseDistinctColors(
+      requirements,
+      Array.isArray(yarns) ? yarns : [],
+      { allowUnknownBlendMaterials: true },
+    ));
+  }
+  if (reasons.length === 0) reasons.push({ code: "ALLOCATION_CONFLICT" });
+
+  return { status: "no_match", allocation: [], coverage: 0, reasons };
+}
+
 module.exports = {
   allocateVariantRequirements,
+  diagnoseVariant,
   matchVariant,
   normalizeMatchingDocument,
   validateMatchingDocument,

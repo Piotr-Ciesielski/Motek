@@ -1,4 +1,5 @@
 const assert = require("node:assert/strict");
+const { execFileSync } = require("node:child_process");
 const { readFileSync } = require("node:fs");
 const path = require("node:path");
 const test = require("node:test");
@@ -9,6 +10,21 @@ const stylesCss = readFileSync(path.join(__dirname, "..", "styles.css"), "utf8")
 const appJs = readFileSync(path.join(__dirname, "..", "app.js"), "utf8");
 const serverJs = readFileSync(path.join(__dirname, "..", "server.js"), "utf8");
 const staticFilesJs = readFileSync(path.join(__dirname, "..", "server", "static-files.js"), "utf8");
+
+test("pola długości i wagi wymagają dodatnich liczb całkowitych", () => {
+  const document = new JSDOM(indexHtml).window.document;
+  const template = document.getElementById("yarnTemplate");
+  for (const [field, unit] of [["length", "m"], ["weight", "g"]]) {
+    const input = template.content.querySelector(`[data-field="${field}"]`);
+    assert.equal(input.type, "number");
+    assert.equal(input.min, "1");
+    assert.equal(input.step, "1");
+    assert.equal(input.max, "1000000");
+    assert.match(input.getAttribute("aria-describedby") || "", new RegExp(`${field}-error`));
+    assert.equal(input.nextElementSibling.dataset.fieldError, field);
+    assert.match(input.nextElementSibling.textContent, new RegExp(unit === "m" ? "metr" : "gram"));
+  }
+});
 
 test("mobile reading order keeps hero actions and artwork before each workspace", () => {
   const document = new JSDOM(indexHtml).window.document;
@@ -249,7 +265,7 @@ test("inventory hero matches the shared hero height and keeps actions below the 
 });
 
 test("captcha remains available in every auth flow", () => {
-  assert.equal((indexHtml.match(/data-turnstile-for=/g) || []).length, 4);
+  assert.equal((indexHtml.match(/data-turnstile-for=/g) || []).length, 5);
   assert.match(indexHtml, /data-turnstile-for="passwordReset"/);
   assert.match(indexHtml, /data-turnstile-for="passwordChange"/);
   assert.match(appJs, /challenges\.cloudflare\.com\/turnstile\/v0\/api\.js\?render=explicit/);
@@ -309,6 +325,23 @@ test("inventory artwork panel follows the panoramic hero height", () => {
   );
 });
 
+function gitBlobHash(file) {
+  return execFileSync("git", ["hash-object", file], {
+    cwd: path.join(__dirname, ".."),
+    encoding: "utf8",
+  }).trim();
+}
+
+test("krytyczne assety rejestracji mają cache-bustery treści", () => {
+  const document = new JSDOM(indexHtml).window.document;
+  for (const file of ["client-policy.js", "app.js"]) {
+    const asset = document.querySelector(`script[src^="${file}?"]`);
+    const url = new URL(asset.getAttribute("src"), "http://localhost");
+
+    assert.equal(url.searchParams.get("rev"), gitBlobHash(file).slice(0, 7));
+  }
+});
+
 test("catalog keeps search first, secondary filters grouped and artwork before results", () => {
   const document = new JSDOM(indexHtml).window.document;
   const catalog = document.getElementById("catalogView");
@@ -362,6 +395,7 @@ test("authenticated header and account disclosure use the compact DOM contract",
   assert.match(disclosureSummary?.textContent ?? "", /Usuń konto/);
   assert.match(disclosureSummary?.textContent ?? "", /Tej operacji nie można cofnąć\./);
   assert.equal(disclosure?.querySelector("#deleteAccountForm")?.id, "deleteAccountForm");
+  assert.equal(disclosure?.querySelector('[data-turnstile-for="deleteAccount"]')?.className, "auth-captcha");
 });
 
 test("compact auth controls expose their required CSS contracts", () => {

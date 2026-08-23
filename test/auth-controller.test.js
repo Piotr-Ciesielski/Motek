@@ -24,9 +24,10 @@ function loadApp({
   reducedMotion = false,
   session = { authenticated: false, user: null },
   onRequest,
+  url = "http://localhost/",
 } = {}) {
   const dom = new JSDOM(indexHtml, {
-    url: "http://localhost/",
+    url,
     runScripts: "outside-only",
     pretendToBeVisual: true,
   });
@@ -38,9 +39,10 @@ function loadApp({
   };
   const requests = [];
   window.fetch = async (input, options = {}) => {
-    const pathname = new URL(input, window.location.href).pathname;
-    requests.push({ pathname, options });
-    const payload = await onRequest?.({ pathname, options }) ?? (pathname === "/api/config"
+    const requestUrl = new URL(input, window.location.href);
+    const { pathname, search } = requestUrl;
+    requests.push({ pathname, search, options });
+    const payload = await onRequest?.({ pathname, search, options }) ?? (pathname === "/api/config"
       ? { captcha: { enabled: false } }
       : pathname === "/api/auth/session"
         ? session
@@ -262,6 +264,7 @@ test("pomyślne logowanie z formularza nadal przenosi do magazynu", async () => 
 
   assert.equal(document.getElementById("inventoryView").hidden, false);
   assert.equal(document.getElementById("headerAuthAction").textContent, "Wyloguj");
+  assert.ok(dom.requests.some(({ pathname }) => pathname === "/api/patterns"));
   dom.window.close();
 });
 
@@ -378,6 +381,7 @@ test("akceptacja dokumentów przenosi użytkownika do Magazynu", async (t) => {
 test("rejestracja z akceptacją formularza przechodzi do Magazynu", async (t) => {
   let registered = false;
   const dom = loadApp({
+    url: `http://localhost/?invitation=${"A".repeat(64)}`,
     onRequest: async ({ pathname }) => {
       if (pathname === "/api/auth/register") {
         registered = true;
@@ -450,10 +454,121 @@ test("powrót do Konta po logowaniu nie zachowuje ogólnego komunikatu sukcesu",
 
 test("aplikacja uruchamia się bez promocyjnego CTA w hero Konta", async () => {
   const dom = loadApp();
-  await new Promise((resolve) => dom.window.setTimeout(resolve, 20));
+  await waitFor(() => /Możesz założyć konto lub zalogować się\./.test(
+    dom.window.document.getElementById("authMessage").textContent,
+  ), dom);
 
   assert.ok(dom.window.document.getElementById("heroTitle"));
   assert.ok(dom.window.document.getElementById("accountThemeImage"));
   assert.equal(dom.window.document.getElementById("heroAuthBtn"), null);
   dom.window.close();
+});
+
+test("wyniki pokazują możliwe dopasowanie i polskie przyczyny pozostałych blokad", async (t) => {
+  const diagnostics = {
+    matches: [],
+    diagnostics: [
+      {
+        pattern: {
+          id: "21:m",
+          patternId: 21,
+          name: "Czapka — M",
+          baseName: "Czapka",
+          variantLabel: "M",
+          requirements: [],
+        },
+        status: "possible_unknown_material",
+        reasons: [{ code: "UNKNOWN_MATERIAL", role: "główna" }],
+      },
+      {
+        pattern: {
+          id: "22:s",
+          patternId: 22,
+          name: "Sweter — S",
+          baseName: "Sweter",
+          variantLabel: "S",
+          requirements: [],
+        },
+        status: "no_match",
+        reasons: [
+          { code: "WEIGHT_CLASS", role: "główna", expected: ["worsted"] },
+          { code: "STRAND_COUNT", role: "główna", required: 3, available: 2 },
+          { code: "QUANTITY", role: "główna", basis: "meters", required: 600, available: 450 },
+          { code: "COLOR", role: "główna", required: 400, available: 250 },
+        ],
+      },
+    ],
+  };
+  const dom = loadApp({
+    session: {
+      authenticated: true,
+      user: { id: "u1", email: "jan@example.test" },
+      profile: { email: "jan@example.test" },
+      legal: { currentVersion: "1.0", acceptedVersion: "1.0", acceptanceRequired: false },
+    },
+    onRequest: ({ pathname }) => {
+      if (pathname === "/api/yarns") return [
+        { id: 1, name: "A", color: "granat", materials: ["mieszanka"], weightClass: "dk", length: 200, weight: 50 },
+        { id: 2, name: "B", color: "granat", materials: ["mieszanka"], weightClass: "dk", length: 200, weight: 50 },
+        { id: 3, name: "C", color: "biały", materials: ["mieszanka"], weightClass: "worsted", length: 200, weight: 50 },
+      ];
+      if (pathname === "/api/matches") return diagnostics;
+      return undefined;
+    },
+  });
+  t.after(() => dom.window.close());
+
+  await waitFor(() => /Możliwe dopasowania/.test(dom.window.document.getElementById("results").textContent), dom);
+
+  const text = dom.window.document.getElementById("results").textContent;
+  assert.match(text, /Możliwe dopasowania — skład nieokreślony/);
+  assert.match(text, /Dlaczego pozostałe wzory nie pasują/);
+  assert.match(text, /Wymagana grubość: worsted/);
+  assert.match(text, /Wymagane 3 osobne motki\/nitki, dostępne 2/);
+  assert.match(text, /Potrzeba 600 m, dostępne 450 m/);
+  assert.match(text, /Jeden kolor zapewnia najwyżej 250 m z wymaganych 400 m/);
+  assert.ok(dom.requests.some(({ pathname, search }) => pathname === "/api/matches" && search === "?diagnostics=1"));
+});
+
+test("niezalogowany użytkownik może przejść do rejestracji bez linku zaproszenia", async () => {
+  const invitation = "A".repeat(64);
+  const dom = loadApp({ url: `http://localhost/?invitation=${invitation}` });
+
+  try {
+    await waitFor(() => dom.window.document.getElementById("loginForm").hidden === false, dom);
+
+    assert.equal(dom.window.document.getElementById("registerForm").hidden, true);
+    dom.window.document.getElementById("registerModeBtn").click();
+    assert.equal(dom.window.document.getElementById("registerForm").hidden, false);
+  } finally {
+    dom.window.close();
+  }
+});
+
+test("rejestracja bez tokenu wysyła żądanie API", async () => {
+  const dom = loadApp();
+
+  try {
+    await waitFor(() => /Możesz założyć konto lub zalogować się\./.test(
+      dom.window.document.getElementById("authMessage").textContent,
+    ), dom);
+
+    const document = dom.window.document;
+    document.getElementById("registerModeBtn").click();
+    document.querySelector('#registerForm [name="login"]').value = "jan@example.test";
+    document.querySelector('#registerForm [name="password"]').value = "Haslo123!";
+    document.querySelector('#registerForm [name="termsAccepted"]').checked = true;
+    document.getElementById("registerForm").dispatchEvent(new dom.window.Event("submit", {
+      bubbles: true,
+      cancelable: true,
+    }));
+    await waitFor(() => dom.requests.some(({ pathname }) => pathname === "/api/auth/register"), dom);
+
+    const registerRequest = dom.requests.find(({ pathname }) => pathname === "/api/auth/register");
+    const payload = JSON.parse(registerRequest.options.body);
+    assert.equal(payload.login, "jan@example.test");
+    assert.equal(Object.hasOwn(payload, "invitationToken"), false);
+  } finally {
+    dom.window.close();
+  }
 });

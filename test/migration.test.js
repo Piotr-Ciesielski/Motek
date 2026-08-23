@@ -129,6 +129,22 @@ test("migracja rejestracji zaproszonej chroni prywatne dane i stan profilu", () 
   assert.match(sql, /revoke all on all tables in schema private from public, anon, authenticated/i);
 });
 
+test("migracja automatycznej rejestracji aktywuje profil i zapisuje zgody", () => {
+  const migrationsDirectory = path.join(__dirname, "..", "supabase", "migrations");
+  const sql = fs.readFileSync(
+    path.join(migrationsDirectory, "20260822170000_finalize_automatic_registration.sql"),
+    "utf8",
+  );
+
+  assert.match(sql, /create or replace function public\.finalize_automatic_registration/i);
+  assert.match(sql, /status not in \('pending_registration', 'active'\)/i);
+  assert.match(sql, /insert into private\.terms_acceptances/i);
+  assert.match(sql, /insert into private\.privacy_notice_deliveries/i);
+  assert.match(sql, /set status = 'active'/i);
+  assert.match(sql, /revoke execute on function public\.finalize_automatic_registration/i);
+  assert.match(sql, /grant execute on function public\.finalize_automatic_registration.*service_role/i);
+});
+
 test("migracja bramki regulaminu chroni prywatne dane i RPC magazynu", () => {
   const migrationsDirectory = path.join(__dirname, "..", "supabase", "migrations");
   const migrationFiles = fs

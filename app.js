@@ -115,6 +115,7 @@ const {
   getProjectTypeFilterLabel,
   getProjectTypeLabel,
   getExistingYarnState,
+  getYarnMeasurementValidationMessage,
   getMatchFreshnessState,
   getYarnSaveHint,
   readYarnVersionHeader,
@@ -127,12 +128,8 @@ const {
 function initializeLegalRegistrationFields() {
   const termsVersion = registerForm.elements.termsVersion;
   const privacyNoticeVersion = registerForm.elements.privacyNoticeVersion;
-  const invitationToken = registerForm.elements.invitationToken;
   if (termsVersion) termsVersion.value = CURRENT_LEGAL_DOCUMENT.termsVersion;
   if (privacyNoticeVersion) privacyNoticeVersion.value = CURRENT_LEGAL_DOCUMENT.privacyVersion;
-  if (invitationToken) {
-    invitationToken.value = new URLSearchParams(window.location.search).get("invitation") || "";
-  }
   if (copyrightNotice) {
     copyrightNotice.textContent = formatCopyrightNotice(CURRENT_LEGAL_DOCUMENT);
   }
@@ -205,9 +202,9 @@ let preservedDraftRequiresSave = false;
 let hasCalculatedMatches = false;
 let inventoryChangedSinceMatch = false;
 let authCaptchaConfig = { enabled: false, provider: null, siteKey: null };
-const captchaTokens = { login: null, register: null, passwordReset: null, passwordChange: null };
-const captchaWidgetIds = { login: null, register: null, passwordReset: null, passwordChange: null };
-const captchaRenderPromises = { login: null, register: null, passwordReset: null, passwordChange: null };
+const captchaTokens = { login: null, register: null, passwordReset: null, passwordChange: null, deleteAccount: null };
+const captchaWidgetIds = { login: null, register: null, passwordReset: null, passwordChange: null, deleteAccount: null };
+const captchaRenderPromises = { login: null, register: null, passwordReset: null, passwordChange: null, deleteAccount: null };
 let turnstileScriptPromise = null;
 
 function canAccessPrivateData() {
@@ -270,6 +267,8 @@ function authFormKind(form) {
       ? "passwordReset"
       : form === changePasswordForm
         ? "passwordChange"
+        : form === deleteAccountForm
+          ? "deleteAccount"
         : "login";
 }
 
@@ -283,7 +282,11 @@ async function renderCaptchaForForm(form) {
   captchaRenderPromises[kind] = (async () => {
     await loadTurnstileScript();
     const visibleForm = document.querySelector(".auth-form:not([hidden])");
-    const isVisible = form === changePasswordForm ? !form.hidden : visibleForm === form;
+    const isVisible = form === changePasswordForm
+      ? !form.hidden
+      : form === deleteAccountForm
+        ? deleteAccountDisclosure.open
+        : visibleForm === form;
     if (!isVisible || !form.isConnected) return;
     const container = form.querySelector(`[data-turnstile-for="${kind}"]`);
     if (!container || captchaWidgetIds[kind] !== null) return;
@@ -450,7 +453,7 @@ async function api(path, options = {}) {
     if (path === "/api/yarns" || path.startsWith("/api/yarns/")) {
       yarnVersion = readYarnVersionHeader(response?.headers) || yarnVersion;
     }
-    api.lastMatchScope = path === "/api/matches"
+    api.lastMatchScope = path.startsWith("/api/matches")
       ? response?.headers?.get?.("X-Motek-Match-Scope") || "full"
       : null;
     return payload;
@@ -468,6 +471,7 @@ const legalAcceptanceController = createLegalAcceptanceController({
   legalDocument: CURRENT_LEGAL_DOCUMENT,
   onAccepted: async () => {
     await refreshAuthSession({ navigateToInventory: true });
+    await refreshPatternCatalog().catch(showPatternCatalogError);
   },
 });
 
@@ -627,6 +631,62 @@ function groupMatchesByPattern(matches) {
   return [...groups.values()];
 }
 
+function formatDiagnosticReason(reason) {
+  const role = reason.role ? ` (${reason.role})` : "";
+  switch (reason.code) {
+    case "UNKNOWN_MATERIAL":
+      return `Skład włóczki „mieszanka” jest nieokreślony; pozostałe wymagania są spełnione${role}.`;
+    case "WEIGHT_CLASS":
+      return `Wymagana grubość: ${(reason.expected || []).join(", ")}${role}.`;
+    case "MATERIAL":
+      return `Wymagany materiał: ${(reason.expected || []).join(", ")}${role}.`;
+    case "STRAND_COUNT":
+      return `Wymagane ${reason.required} osobne motki/nitki, dostępne ${reason.available}${role}.`;
+    case "SKEIN_COUNT":
+      return `Wymagane ${reason.required} osobne motki, dostępne ${reason.available}${role}.`;
+    case "QUANTITY": {
+      const unit = reason.basis === "grams" ? "g" : "m";
+      return `Potrzeba ${formatNumber(reason.required)} ${unit}, dostępne ${formatNumber(reason.available)} ${unit}${role}.`;
+    }
+    case "COLOR":
+      return `Jeden kolor zapewnia najwyżej ${formatNumber(reason.available)} ${reason.basis === "grams" ? "g" : "m"} z wymaganych ${formatNumber(reason.required)} ${reason.basis === "grams" ? "g" : "m"}${role}.`;
+    case "DISTINCT_COLORS":
+      return `Potrzeba ${reason.required} różnych kolorów, dostępne ${reason.available}.`;
+    default:
+      return "Dostępne motki nie mogą zostać rozdzielone między wszystkie wymagania wariantu.";
+  }
+}
+
+function createDiagnosticSection(title, items) {
+  const section = document.createElement("section");
+  section.className = "match-diagnostics";
+  const heading = document.createElement("h3");
+  heading.textContent = title;
+  section.appendChild(heading);
+
+  items.slice(0, 300).forEach((item) => {
+    const card = document.createElement("article");
+    card.className = "result-card diagnostic-card";
+    const name = document.createElement("h4");
+    name.textContent = item.pattern.baseName || item.pattern.name;
+    const meta = document.createElement("p");
+    meta.className = "result-card__meta";
+    meta.textContent = item.pattern.variantLabel
+      ? `Najbliższy wariant: ${item.pattern.variantLabel}`
+      : "Najbliższy wariant";
+    const reasons = document.createElement("ul");
+    reasons.className = "diagnostic-reasons";
+    reasons.replaceChildren(...item.reasons.map((reason) => {
+      const row = document.createElement("li");
+      row.textContent = formatDiagnosticReason(reason);
+      return row;
+    }));
+    card.append(name, meta, reasons);
+    section.appendChild(card);
+  });
+  return section;
+}
+
 function createMatchVariant(item, open = false) {
   const details = document.createElement("details");
   details.className = "match-variant";
@@ -724,7 +784,30 @@ function updateYarnCardSummary(card) {
   swatch.title = yarn.color ? `Kolor: ${yarn.color}` : "Nowa włóczka";
 }
 
-function isYarnComplete(card) {
+function setYarnMeasurementValidity(field, { showRequired = false } = {}) {
+  if (!field.matches('[data-field="length"], [data-field="weight"]')) return;
+  const message = getYarnMeasurementValidationMessage({
+    field: field.dataset.field,
+    validity: field.validity,
+    showRequired,
+  });
+  field.setCustomValidity(message);
+  field.toggleAttribute("aria-invalid", Boolean(message));
+  const error = field.closest("label")?.querySelector("[data-field-error]");
+  if (error) {
+    error.hidden = !message;
+    error.textContent = message;
+  }
+}
+
+function syncYarnMeasurementValidity(card, options) {
+  card
+    .querySelectorAll('[data-field="length"], [data-field="weight"]')
+    .forEach((field) => setYarnMeasurementValidity(field, options));
+}
+
+function isYarnComplete(card, options) {
+  syncYarnMeasurementValidity(card, options);
   return [...card.querySelectorAll("[data-field]")].every((field) => field.checkValidity()) &&
     card.querySelector('[data-field="name"]').value.trim() !== "" &&
     card.querySelector('[data-field="color"]').value.trim() !== "" &&
@@ -983,8 +1066,15 @@ async function refreshSummaryAfterConfirmedSave(successMessage) {
 }
 
 async function saveNewYarn(card) {
-  if (!isYarnComplete(card)) {
-    card.querySelector('[data-field="name"]').reportValidity();
+  card.querySelectorAll('[data-field="length"], [data-field="weight"]').forEach((field) => {
+    field.dataset.validationAttempted = "true";
+  });
+  if (!isYarnComplete(card, { showRequired: true })) {
+    const invalidField = [...card.querySelectorAll("[data-field]")]
+      .find((field) => !field.checkValidity());
+    const field = invalidField || card.querySelector('[data-field="name"]');
+    field.reportValidity();
+    field.focus({ preventScroll: true });
     return;
   }
 
@@ -1036,7 +1126,17 @@ async function saveNewYarn(card) {
 }
 
 async function saveExistingYarn(card) {
-  if (!isYarnComplete(card) || !isYarnChanged(card)) return;
+  card.querySelectorAll('[data-field="length"], [data-field="weight"]').forEach((field) => {
+    field.dataset.validationAttempted = "true";
+  });
+  if (!isYarnComplete(card, { showRequired: true })) {
+    const invalidField = [...card.querySelectorAll("[data-field]")]
+      .find((field) => !field.checkValidity());
+    invalidField?.reportValidity();
+    invalidField?.focus({ preventScroll: true });
+    return;
+  }
+  if (!isYarnChanged(card)) return;
 
   const draft = collectYarnFromCard(card);
   setYarnCardBusy(card, true);
@@ -1143,6 +1243,11 @@ function addYarnCard(yarn = {}, { isNew = false } = {}) {
   node.querySelectorAll("[data-field]").forEach((field) => {
     field.id = `yarn-${++yarnFormSequence}-${field.dataset.field}`;
     field.closest("label").htmlFor = field.id;
+    const error = field.closest("label")?.querySelector("[data-field-error]");
+    if (error) {
+      error.id = `${field.id}-error`;
+      field.setAttribute("aria-describedby", error.id);
+    }
   });
   const materialOptions = node.querySelector("[data-material-options]");
   MATERIALS.forEach(({ value, label }) => {
@@ -1248,7 +1353,9 @@ function addYarnCard(yarn = {}, { isNew = false } = {}) {
 
   node.querySelectorAll("input, select").forEach((field) => {
     field.addEventListener("input", () => {
+      field.removeAttribute("data-validation-attempted");
       field.removeAttribute("aria-invalid");
+      setYarnMeasurementValidity(field);
       updateYarnSaveButton(node);
     });
     field.addEventListener("change", () => {
@@ -1267,7 +1374,16 @@ function addYarnCard(yarn = {}, { isNew = false } = {}) {
       }
       updateYarnSaveButton(node);
     });
-    field.addEventListener("invalid", () => field.setAttribute("aria-invalid", "true"));
+    field.addEventListener("invalid", () => {
+      if (field.matches('[data-field="length"], [data-field="weight"]')) {
+        setYarnMeasurementValidity(field, {
+          showRequired: field.dataset.validationAttempted === "true"
+            || !field.validity.valueMissing,
+        });
+        return;
+      }
+      field.setAttribute("aria-invalid", "true");
+    });
   });
 
   updateYarnSaveButton(node);
@@ -1357,7 +1473,7 @@ async function deleteYarn(id) {
 
 async function loadMatches() {
   if (!canAccessPrivateData()) return [];
-  return api("/api/matches");
+  return api("/api/matches?diagnostics=1");
 }
 
 async function loadPatternCatalog({ resume = false, onPage = null } = {}) {
@@ -1769,12 +1885,14 @@ async function renderResults() {
 
   showMessage(results, "Pobieram dopasowane wzory...", "loading");
   try {
-    const matches = await loadMatches();
+    const payload = await loadMatches();
+    const matches = Array.isArray(payload) ? payload : payload.matches || [];
+    const diagnostics = Array.isArray(payload) ? [] : payload.diagnostics || [];
     const matchScopeLimited = api.lastMatchScope === "subset";
     results.replaceChildren();
     markMatchesFresh();
 
-    if (!matches.length) {
+    if (!matches.length && !diagnostics.length) {
       showMessage(
         results,
         matchScopeLimited
@@ -1789,6 +1907,13 @@ async function renderResults() {
       notice.className = "empty-state";
       notice.textContent = "Ranking użył najlepiej pasującego podzbioru motków. Pozostałe włóczki nadal są zapisane w Twoim magazynie.";
       results.appendChild(notice);
+    }
+
+    if (matches.length && diagnostics.length) {
+      const heading = document.createElement("h3");
+      heading.className = "match-section-title";
+      heading.textContent = "Pełne dopasowania";
+      results.appendChild(heading);
     }
 
     groupMatchesByPattern(matches).forEach((group) => {
@@ -1810,6 +1935,21 @@ async function renderResults() {
         );
       results.appendChild(card);
     });
+
+    const possible = diagnostics.filter(({ status }) => status === "possible_unknown_material");
+    const blocked = diagnostics.filter(({ status }) => status === "no_match");
+    if (possible.length) {
+      results.appendChild(createDiagnosticSection(
+        "Możliwe dopasowania — skład nieokreślony",
+        possible,
+      ));
+    }
+    if (blocked.length) {
+      results.appendChild(createDiagnosticSection(
+        "Dlaczego pozostałe wzory nie pasują",
+        blocked,
+      ));
+    }
   } finally {
     results.removeAttribute("aria-busy");
   }
@@ -2120,6 +2260,7 @@ async function submitAuthForm(form, endpoint, successMessage) {
     } else {
       setAuthMessage(successMessage, "success");
       await refreshAuthSession({ navigateToInventory: true });
+      await refreshPatternCatalog().catch(showPatternCatalogError);
       if (form === loginForm && authMessage.textContent === successMessage) {
         setAuthMessage("");
       }
@@ -2333,6 +2474,7 @@ deleteAccountForm.addEventListener("submit", async (event) => {
 
   const submitButton = deleteAccountForm.querySelector('button[type="submit"]');
   const body = Object.fromEntries(new FormData(deleteAccountForm).entries());
+  body.captchaToken = captchaTokens.deleteAccount;
   submitButton.disabled = true;
   deleteAccountForm.setAttribute("aria-busy", "true");
   setDeleteAccountMessage("Usuwam konto...");
@@ -2354,8 +2496,15 @@ deleteAccountForm.addEventListener("submit", async (event) => {
   } catch (error) {
     setDeleteAccountMessage(error.message, "error");
   } finally {
+    resetCaptchaForForm(deleteAccountForm);
     deleteAccountForm.removeAttribute("aria-busy");
     submitButton.disabled = false;
+  }
+});
+
+deleteAccountDisclosure.addEventListener("toggle", () => {
+  if (deleteAccountDisclosure.open) {
+    renderCaptchaForForm(deleteAccountForm).catch((error) => setDeleteAccountMessage(error.message, "error"));
   }
 });
 
