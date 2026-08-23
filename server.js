@@ -2082,8 +2082,6 @@ module.exports = {
   createAuthRateLimiter,
   createAuthRequestRateLimiters,
   createRequestRateLimiter,
-  createAuthRequestRateLimiters,
-  createRequestRateLimiter,
   enforceAuthRateLimit,
   enforceRequestRateLimit,
   AUTH_REQUEST_LIMITS,
