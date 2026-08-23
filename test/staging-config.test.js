@@ -44,11 +44,40 @@ test("proxy blokuje publiczne metryki i Prometheus używa sieci wewnętrznej", (
   assert.match(nginx, /client_max_body_size 16k/);
   assert.match(nginx, /limit_req_zone/);
   assert.match(nginx, /limit_conn_zone/);
-  assert.match(nginx, /login\|register\|password-reset-request/);
+  assert.match(nginx, /location = \/api\/auth\/login/);
+  assert.match(nginx, /location = \/api\/auth\/register/);
+  assert.match(nginx, /location = \/api\/auth\/password-reset-request/);
+  assert.match(nginx, /location = \/api\/auth\/recovery/);
+  assert.match(nginx, /zone=auth_login/);
+  assert.match(nginx, /zone=auth_register/);
+  assert.match(nginx, /zone=auth_password_reset/);
+  assert.match(nginx, /zone=auth_recovery/);
+  assert.match(nginx, /zone=auth_login:10m rate=10r\/m/);
+  assert.match(nginx, /zone=auth_register:10m rate=3r\/m/);
+  assert.match(nginx, /zone=auth_password_reset:10m rate=1r\/m/);
+  assert.match(nginx, /zone=auth_recovery:10m rate=1r\/m/);
+  assert.equal((nginx.match(/error_page 429 = @auth_rate_limited;/g) || []).length, 4);
+  const firstAuthLocation = nginx.indexOf("location = /api/auth/login");
+  assert.equal(nginx.slice(0, firstAuthLocation).includes("error_page 429 = @auth_rate_limited;"), false);
+  for (const location of ["login", "register", "password-reset-request", "recovery"]) {
+    const block = nginx.match(new RegExp(`location = /api/auth/${location} \\{[\\s\\S]*?(?=\\n  location )`))?.[0] || "";
+    assert.match(block, /error_page 429 = @auth_rate_limited;/, location);
+  }
+  assert.match(nginx, /location @auth_rate_limited \{[\s\S]*internal;[\s\S]*add_header Retry-After 60 always;[\s\S]*return 429;[\s\S]*\}/);
+  assert.doesNotMatch(nginx, /proxy_intercept_errors/);
+  assert.match(nginx, /# Bursts are an approximate first edge layer; the application enforces exact caps and windows/);
   assert.match(nginx, /proxy_set_header X-Forwarded-For \$remote_addr/);
   assert.doesNotMatch(nginx, /\$proxy_add_x_forwarded_for/);
   assert.match(prometheus, /app:3000/);
   assert.match(prometheus, /\/internal\/metrics/);
+});
+
+test("staging definiuje alert skoku odrzuceń Auth", () => {
+  const alerts = fs.readFileSync(path.join(root, "prometheus", "alerts.yml"), "utf8");
+  assert.match(alerts, /alert: MotekAuthRateLimitSpike/);
+  assert.match(alerts, /motek_auth_rate_limit_rejections_total/);
+  assert.match(alerts, /for: 5m/);
+  assert.match(alerts, /severity: warning/);
 });
 
 test("CI przypina Supabase CLI do zweryfikowanego pełnego SHA", () => {

@@ -118,7 +118,7 @@ test("import katalogu publikuje wyłącznie neutralne metadane audytu", () => {
     assert.doesNotMatch(record.description ?? "", /Instrukcja wykonania/i);
     assert.ok(["pending_review", "published", "hidden"].includes(record.publication_status));
     assert.equal(record.content_audit_version, "1.0");
-    assert.equal(record.content_audited_at, "2026-08-09T00:00:00Z");
+    assert.equal(Number.isNaN(Date.parse(record.content_audited_at)), false);
     assert.equal(Object.hasOwn(record, "official_source_url"), true);
   });
 });

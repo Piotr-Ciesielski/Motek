@@ -40,13 +40,11 @@ tmp/
 .tmp-production-backup/
 .worktrees/
 .superpowers/
-.cache/
 __pycache__/
 *.py[cod]
 
 Wzory/
-docs/
 PROMPTS.md
 AUDYT.md
-AGENTS.md
 .audit/
+.cache/

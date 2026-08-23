@@ -40,6 +40,7 @@ const legalAcceptanceForm = document.getElementById("legalAcceptanceForm");
 const legalAcceptanceGate = document.getElementById("legalAcceptanceGate");
 const legalAcceptanceMessage = document.getElementById("legalAcceptanceMessage");
 const legalAcceptanceVersion = document.getElementById("legalAcceptanceVersion");
+const legalDeleteAccountLink = document.getElementById("legalDeleteAccountLink");
 const deleteAccountForm = document.getElementById("deleteAccountForm");
 const deleteAccountDisclosure = document.getElementById("deleteAccountDisclosure");
 const deleteAccountMessage = document.getElementById("deleteAccountMessage");
@@ -104,6 +105,7 @@ const catalogFilterDisclosure = typeof window.createCatalogFilterDisclosure === 
 const {
   buildAuthPayload,
   buildRegistrationAuthPayload,
+  isValidInvitationToken,
   resolveRequestedView,
   buildPatternFacetCounts,
   buildPatternFacetOptions,
@@ -2020,9 +2022,16 @@ function setAuthBusy(form, busy) {
   form.toggleAttribute("aria-busy", busy);
 }
 
+function setAuthFormDisabled(form, disabled) {
+  form.querySelectorAll("input, button, select, textarea").forEach((control) => {
+    control.disabled = disabled;
+  });
+}
+
 function showAuthForm(form) {
   [loginForm, registerForm, passwordResetForm, passwordUpdateForm].forEach((candidate) => {
     candidate.hidden = candidate !== form;
+    setAuthFormDisabled(candidate, candidate !== form);
   });
   const isRecoveryForm = form === passwordResetForm || form === passwordUpdateForm;
   authModeSwitch.hidden = isRecoveryForm || isAuthenticated;
@@ -2066,7 +2075,9 @@ async function startPasswordRecovery() {
       return true;
     }
   }
-  const isRecoveryCallback = Boolean(code) && !(accessToken && refreshToken && hash.get("type") === "signup");
+  const isHashRecoveryCallback = Boolean(accessToken && refreshToken && hash.get("type") === "recovery");
+  const isRecoveryCallback = (Boolean(code) || isHashRecoveryCallback)
+    && !(accessToken && refreshToken && hash.get("type") === "signup");
   if (!isRecoveryCallback) {
     return false;
   }
@@ -2075,9 +2086,12 @@ async function startPasswordRecovery() {
 
   try {
     setAuthMessage("Sprawdzam link odzyskiwania hasła...");
+    const recoveryBody = code
+      ? { code }
+      : { access_token: accessToken, refresh_token: refreshToken };
     const recovery = await api("/api/auth/recovery", {
       method: "POST",
-      body: JSON.stringify({ code }),
+      body: JSON.stringify(recoveryBody),
     });
     applyIdleTimeout(recovery);
     window.history.replaceState({}, document.title, window.location.pathname);
@@ -2108,9 +2122,14 @@ function renderAuthState(payload) {
   authForms.hidden = authenticated;
   authModeSwitch.hidden = authenticated;
   authLoggedIn.hidden = !authenticated;
+  [loginForm, registerForm, passwordResetForm, passwordUpdateForm].forEach((form) => {
+    setAuthFormDisabled(form, authenticated);
+  });
   authUser.hidden = true;
   accountView.classList.toggle("is-authenticated", authenticated);
   document.body.classList.toggle("auth-logged-out", !authenticated);
+  headerAuthAction.textContent = authenticated ? "Wyloguj" : "Zaloguj";
+  headerAuthAction.setAttribute("aria-label", authenticated ? "Wyloguj" : "Zaloguj");
   addYarnBtn.disabled = !authenticated;
   inventoryAddYarnBtn.disabled = !authenticated;
   findBtn.disabled = !authenticated;
@@ -2138,6 +2157,10 @@ function renderAuthState(payload) {
     authUser.removeAttribute("title");
     authProfileSummary.textContent = "";
     deleteAccountForm.reset();
+    changePasswordForm.reset();
+    changePasswordForm.hidden = true;
+    changePasswordToggle.setAttribute("aria-expanded", "false");
+    changePasswordToggle.textContent = "Zmień hasło";
     setDeleteAccountMessage("");
     authLead.textContent = "Załóż konto, aby przygotować aplikację do prywatnego magazynu włóczek.";
     showAuthForm(loginForm);
@@ -2174,12 +2197,16 @@ async function refreshAuthSession({ navigateToInventory = false } = {}) {
     return null;
   }
 
+  const shouldOpenRegistration = !initialSessionResolved
+    && !payload.authenticated
+    && isValidInvitationToken(registerForm.elements.invitationToken?.value);
   renderAuthState(payload);
   if (!initialSessionResolved) {
     setActiveView(payload.authenticated ? "inventory" : "account", { focus: false });
     initialSessionResolved = true;
   }
   if (!payload.authenticated) {
+    if (shouldOpenRegistration) showAuthForm(registerForm);
     setAuthMessage("Możesz założyć konto lub zalogować się.");
     return payload;
   }
@@ -2302,6 +2329,22 @@ registerModeBtn.addEventListener("click", () => {
   registerForm.querySelector('input[name="login"]').focus();
 });
 
+headerAuthAction.addEventListener("click", () => {
+  if (isAuthenticated) {
+    logoutBtn.click();
+    return;
+  }
+  setActiveView("account");
+  showAuthForm(loginForm);
+  setAuthMessage("");
+  loginForm.querySelector('input[name="email"]').focus({ preventScroll: true });
+});
+
+legalDeleteAccountLink.addEventListener("click", () => {
+  deleteAccountDisclosure.open = true;
+  deleteAccountDisclosure.querySelector("summary")?.focus({ preventScroll: true });
+});
+
 authModeSwitch.addEventListener("keydown", (event) => {
   const tabs = [loginModeBtn, registerModeBtn];
   const currentIndex = tabs.indexOf(document.activeElement);
@@ -2366,6 +2409,7 @@ changePasswordToggle.addEventListener("click", () => {
   }
   changePasswordForm.hidden = !isOpen;
   changePasswordToggle.setAttribute("aria-expanded", String(isOpen));
+  changePasswordToggle.textContent = isOpen ? "Anuluj" : "Zmień hasło";
   if (isOpen) {
     changePasswordForm.querySelector('input[name="currentPassword"]').focus();
     renderCaptchaForForm(changePasswordForm).catch((error) => setAuthMessage(error.message, "error"));
@@ -2398,9 +2442,32 @@ changePasswordForm.addEventListener("submit", async (event) => {
     renderAuthState({ authenticated: false });
     showAuthForm(loginForm);
     setAuthMessage("Hasło zmienione. Zaloguj się nowym hasłem.", "success");
-  } catch {
+  } catch (error) {
+    if (error instanceof ApiError && error.status === 503) {
+      changePasswordForm.reset();
+      changePasswordForm.hidden = true;
+      changePasswordToggle.setAttribute("aria-expanded", "false");
+      renderAuthState({ authenticated: false });
+      showAuthForm(loginForm);
+      setAuthMessage(error.message, "error");
+      return;
+    }
+    if (error instanceof ApiError && error.status === 403) {
+      setAuthMessage("Bieżące hasło jest nieprawidłowe.", "error");
+      return;
+    }
+    if (error instanceof ApiError && error.status === 401) {
+      changePasswordForm.reset();
+      changePasswordForm.hidden = true;
+      changePasswordToggle.setAttribute("aria-expanded", "false");
+      renderAuthState({ authenticated: false });
+      showAuthForm(loginForm);
+      setAuthMessage("Sesja wygasła. Zaloguj się ponownie.", "error");
+      return;
+    }
     setAuthMessage("Nie udało się zmienić hasła. Spróbuj ponownie.", "error");
   } finally {
+    resetCaptchaForForm(changePasswordForm);
     setAuthBusy(changePasswordForm, false);
   }
 });

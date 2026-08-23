@@ -12,7 +12,7 @@
     "lint": "eslint .",
     "format:check": "prettier --check eslint.config.js .prettierrc.json package.json .github/workflows/ci.yml",
     "coverage": "c8 --check-coverage --lines 60 --functions 60 --branches 50 --statements 60 --reporter=text --reporter=lcov npm test",
-    "test:db": "supabase start && supabase db reset --local && supabase test db --local",
+    "test:db": "node node_modules/supabase/dist/supabase.js start && node node_modules/supabase/dist/supabase.js db reset --local && node node_modules/supabase/dist/supabase.js test db --local",
     "legal:check": "node scripts/check-legal-publication.js",
     "docs:check": "node scripts/check-docs.js",
     "patterns:check": "node --env-file-if-exists=.env scripts/import-patterns.js",

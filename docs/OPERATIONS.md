@@ -2,13 +2,13 @@
 
 ## Macierz środowisk i domen
 
-Stan potwierdzony 2026-08-18:
+Stan potwierdzony 2026-08-23:
 
 | Środowisko | Domena i rola | Gałąź | Supabase | Stan release |
 | --- | --- | --- | --- | --- |
-| Lokalne źródło | `http://127.0.0.1:3001` | bieżący checkout | cel z lokalnej konfiguracji | `2.0.0-alpha.38` |
-| Staging | `https://staging.rysia.org` — jedyny bieżący endpoint stagingu; staging nie jest produkcją i nie jest dostępny dla użytkowników | `staging` | osobny projekt staging | ready, `2.0.0-alpha.39`, SHA `d7409a408351dc0a8f78f53eb5861c3db6eca627`, environment `staging` |
-| Produkcja | `https://www.rysia.org` | `main` | osobny projekt produkcyjny | ready, `2.0.0-alpha.39`, SHA `a625bccbec827fd07965f476259f39836fc84b90`, environment `production` |
+| Lokalne źródło | `http://127.0.0.1:3001` | bieżący checkout | cel z lokalnej konfiguracji | `2.0.0-alpha.39` |
+| Staging | `https://staging.rysia.org` — jedyny bieżący endpoint stagingu; staging nie jest produkcją i nie jest dostępny dla użytkowników | `staging` | osobny projekt staging | ready, `2.0.0-alpha.39`, SHA `03b62e72308770f6d9cc591c4ef1f69016bc437e`, environment `staging` |
+| Produkcja | `https://www.rysia.org` | `main` | osobny projekt produkcyjny | ready, `2.0.0-alpha.39`, SHA `cc06179bd9481a83c016a4447930ddc3e9f09cb2`, environment `production` |
 
 Na stagingu i produkcji `/informacje-prawne` zwraca `200`, a anonimowe `/api/patterns` zwraca `401`. Staging służy wyłącznie do weryfikacji przed promocją i nie jest dostępny dla użytkowników.
 

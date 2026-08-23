@@ -117,6 +117,8 @@ Po publikacji porównuj wersje zasobów w HTML obu domen. Jeśli produkcja nadal
 
 Sesja użytkownika wygasa po 2 godzinach bezczynności (`AUTH_IDLE_TIMEOUT_SECONDS=7200`).
 
+Zielone testy lub zweryfikowane wdrozenie nie sa zgoda na migracje, import z zapisem, zmiane infrastruktury ani deploy produkcji. Kazda taka operacja zewnetrzna wymaga osobnej, swiadomej zgody.
+
 ## Dokumentacja
 
 - [Specyfikacja produktu](SPEC.md)
