@@ -3,7 +3,7 @@ services:
     build:
       context: ../..
       dockerfile: deploy/staging/Dockerfile
-    image: motek:2.0.0-alpha.38
+    image: motek:2.0.0-alpha.39
     env_file:
       - ${MOTEK_ENV_FILE:-./.env.staging}
     environment:

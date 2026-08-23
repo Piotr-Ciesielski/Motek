@@ -70,7 +70,7 @@ npm run regression:full   # pełna regresja stagingu
 
 ## Środowiska
 
-Wersja źródła lokalnego to `2.0.0-alpha.38` w `VERSION` i `package.json`.
+Wersja źródła lokalnego to `2.0.0-alpha.39` w `VERSION` i `package.json`.
 
 | Środowisko | Adres | Stan 2026-08-23 | Release |
 | --- | --- | --- | --- |

@@ -4,7 +4,7 @@
 
 Motek używa Supabase jako jedynego źródła danych. Aplikacja nie ma trybu SQLite ani lokalnego fallbacku danych.
 
-- źródło lokalne: `2.0.0-alpha.38`;
+- źródło lokalne: `2.0.0-alpha.39`;
 - staging: `https://staging.rysia.org`, release `2.0.0-alpha.39`, SHA `03b62e72308770f6d9cc591c4ef1f69016bc437e`; staging nie jest produkcją i nie jest dostępny dla użytkowników;
 - produkcja: `https://www.rysia.org`, release `2.0.0-alpha.39`, SHA `cc06179bd9481a83c016a4447930ddc3e9f09cb2`;
 - limit magazynu: 500 włóczek na użytkownika;
