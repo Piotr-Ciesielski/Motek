@@ -339,11 +339,24 @@
     },
     {
       "source_filename": "HollyBerryCharitySocks.pdf",
-      "status": "hidden",
+      "status": "published",
       "source_kind": "pdf",
-      "audited_at": "2026-08-09T00:00:00Z",
-      "official_source_url": null,
-      "fields": []
+      "audited_at": "2026-08-15T00:00:00Z",
+      "official_source_url": "https://www.ravelry.com/patterns/library/hollyberrycharitysocks",
+      "fields": [
+        {
+          "name": "pattern_identity",
+          "basis": "neutral_fact",
+          "decision": "publish",
+          "source_reference": "https://www.ravelry.com/patterns/library/hollyberrycharitysocks"
+        },
+        {
+          "name": "matching_requirements",
+          "basis": "neutral_fact",
+          "decision": "publish",
+          "source_reference": "https://www.ravelry.com/patterns/library/hollyberrycharitysocks"
+        }
+      ]
     },
     {
       "source_filename": "Hot_chocolat_finishing_sugar_EN.pdf",
@@ -403,11 +416,24 @@
     },
     {
       "source_filename": "Kopia pliku na_pole_wzor.pdf",
-      "status": "hidden",
+      "status": "published",
       "source_kind": "pdf",
-      "audited_at": "2026-08-09T00:00:00Z",
-      "official_source_url": null,
-      "fields": []
+      "audited_at": "2026-08-15T00:00:00Z",
+      "official_source_url": "https://www.ravelry.com/patterns/library/na-pole-tee",
+      "fields": [
+        {
+          "name": "pattern_identity",
+          "basis": "neutral_fact",
+          "decision": "publish",
+          "source_reference": "https://www.ravelry.com/patterns/library/na-pole-tee"
+        },
+        {
+          "name": "matching_requirements",
+          "basis": "neutral_fact",
+          "decision": "publish",
+          "source_reference": "https://www.ravelry.com/patterns/library/na-pole-tee"
+        }
+      ]
     },
     {
       "source_filename": "Leafstream Socks - wzór PL (ang skróty).pdf",
@@ -507,11 +533,24 @@
     },
     {
       "source_filename": "Oslohuen_2.0_ENGELSK.pdf",
-      "status": "hidden",
+      "status": "published",
       "source_kind": "pdf",
-      "audited_at": "2026-08-09T00:00:00Z",
-      "official_source_url": null,
-      "fields": []
+      "audited_at": "2026-08-15T00:00:00Z",
+      "official_source_url": "https://www.petiteknit.com/en/products/oslo-hue",
+      "fields": [
+        {
+          "name": "pattern_identity",
+          "basis": "neutral_fact",
+          "decision": "publish",
+          "source_reference": "https://www.petiteknit.com/en/products/oslo-hue"
+        },
+        {
+          "name": "matching_requirements",
+          "basis": "neutral_fact",
+          "decision": "publish",
+          "source_reference": "https://www.petiteknit.com/en/products/oslo-hue"
+        }
+      ]
     },
     {
       "source_filename": "Pani-Wiosna__wzor_HeartofCotton.pdf",

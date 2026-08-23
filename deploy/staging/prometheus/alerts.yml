@@ -21,3 +21,10 @@ groups:
         for: 10m
         labels: { severity: warning }
         annotations: { summary: "Średni czas odpowiedzi stagingu przekracza sekundę" }
+      - alert: MotekAuthRateLimitSpike
+        expr: sum(rate(motek_auth_rate_limit_rejections_total[5m])) > 0.2
+        for: 5m
+        labels: { severity: warning }
+        annotations:
+          summary: "Podwyższony poziom odrzuceń Auth"
+          description: "Sprawdź Cloudflare/Nginx, limity Auth i logi aplikacji; nie ujawniaj danych użytkowników."

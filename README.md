@@ -119,22 +119,13 @@ Po publikacji porównuj wersje zasobów w HTML obu domen. Jeśli produkcja nadal
 
 Sesja użytkownika wygasa po 2 godzinach bezczynności (`AUTH_IDLE_TIMEOUT_SECONDS=7200`).
 
+Zielone testy lub zweryfikowane wdrozenie nie sa zgoda na migracje, import z zapisem, zmiane infrastruktury ani deploy produkcji. Kazda taka operacja zewnetrzna wymaga osobnej, swiadomej zgody.
+
 ## Dokumentacja
 
-- [Specyfikacja](SPEC.md)
-- [Jakość i testy](docs/QUALITY.md)
-- [Katalog wzorów](docs/PATTERN-CATALOG.md)
-- [Runbook Railway/Cloudflare i regresji](docs/operations/post-deploy-regression.md)
-- [Zweryfikowany stan stagingu z 2026-08-07](docs/operations/staging-status-2026-08-07.md)
-- [Stan gotowości prawnej z 2026-08-11](docs/operations/legal-readiness-status-2026-08-11.md)
-- [Historia zmian](CHANGELOG.txt)
-# Stan utwardzenia bezpieczeństwa (2026-08-07)
-
-Audyt restrykcyjny został wykonany z założeniem Supabase Free. Repozytorium zawiera migrację odtwarzającą ACL prywatnego licznika włóczek, wymusza podpisane cookie bezczynności, ogranicza publiczne endpointy i chroni zmianę hasła po przepływie recovery. Ochrona przed wyciekłymi hasłami pozostaje niedostępna na planie Free i nie jest zastępowana płatnym upgrade'em.
-
-Grant recovery jest krótkotrwały, podpisany i jednorazowy: jego hash oraz
-znacznik zużycia są przechowywane w prywatnej tabeli Supabase, a po zmianie
-hasła backend unieważnia pozostałe sesje użytkownika. Migracja recovery nie
-jest wykonywana automatycznie przy starcie aplikacji.
-
-Przed wdrożeniem produkcyjnym należy wykonać migracje na kontrolowanym środowisku, uruchomić testy pgTAP oraz potwierdzić konfigurację proxy i limitów na Railway.
+- [Specyfikacja produktu](SPEC.md)
+- [Architektura](docs/ARCHITECTURE.md)
+- [Jakosc i testy](docs/QUALITY.md)
+- [Bezpieczenstwo](docs/SECURITY.md)
+- [Operacje i wdrozenia](docs/OPERATIONS.md)
+- [Design QA](docs/DESIGN-QA.md)

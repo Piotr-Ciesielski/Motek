@@ -6,6 +6,13 @@ node_modules/
 !deploy/staging/.env.staging.example
 deploy/staging/certs/
 
+/tools/
+/Designs/
+/AUDYT_*.md
+/docs/superpowers/
+*.pem
+*.key
+
 data/*.sqlite
 data/*.db
 data/*.sqlite-journal
@@ -32,13 +39,11 @@ coverage/
 tmp/
 .worktrees/
 .superpowers/
-.cache/
 __pycache__/
 *.py[cod]
 
 Wzory/
-docs/
 PROMPTS.md
 AUDYT.md
-AGENTS.md
 .audit/
+.cache/

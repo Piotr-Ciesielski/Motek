@@ -316,6 +316,17 @@
     };
   }
 
+  function isValidInvitationToken(value) {
+    return typeof value === "string" && /^[A-Za-z0-9_-]{64}$/.test(value.trim());
+  }
+
+  function normalizeInvitationToken(value) {
+    if (!isValidInvitationToken(value)) {
+      throw new Error("Otwórz pełny link zaproszenia, aby utworzyć konto.");
+    }
+    return value.trim();
+  }
+
   function resolveRequestedView({
     requested = "account",
     authenticated = false,
@@ -559,6 +570,7 @@
     initializePasswordRevealControls,
     buildAuthPayload,
     buildRegistrationAuthPayload,
+    isValidInvitationToken,
     resolveRequestedView,
     buildPatternFacetCounts,
     buildPatternFacetOptions,

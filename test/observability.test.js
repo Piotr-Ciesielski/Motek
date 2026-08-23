@@ -33,3 +33,20 @@ test("ogranicza etykiety metod i przechowuje tylko stałe liczniki histogramu", 
   assert.match(output, /le="0.25"\} 10000/);
   assert.doesNotMatch(output, /CUSTOM-METHOD/);
 });
+
+test("metryka odrzuceń Auth ma wyłącznie stałą etykietę operation", () => {
+  // Rejestr obejmuje odrzucenia aplikacyjnego limitera; edge 429 z Nginx
+  // dostaje własny Retry-After i nie trafia do rejestru aplikacji.
+  const metrics = createMetricsRegistry();
+  assert.equal(typeof metrics.observeAuthRateLimitRejection, "function");
+  if (typeof metrics.observeAuthRateLimitRejection !== "function") return;
+
+  metrics.observeAuthRateLimitRejection("login");
+  metrics.observeAuthRateLimitRejection("login");
+  metrics.observeAuthRateLimitRejection("not-an-operation");
+  const output = metrics.renderPrometheus();
+
+  assert.match(output, /motek_auth_rate_limit_rejections_total\{operation="login"\} 2/);
+  assert.doesNotMatch(output, /not-an-operation/);
+  assert.doesNotMatch(output, /127\.0\.0\.1|email|token/i);
+});

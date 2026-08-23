@@ -1,5 +1,7 @@
 const { test } = require("node:test");
 const assert = require("node:assert/strict");
+const { readFileSync } = require("node:fs");
+const path = require("node:path");
 
 const { buildRegistrationAuthPayload } = require("../client-policy");
 const { CURRENT_LEGAL_DOCUMENT } = require("../legal-document");
@@ -11,18 +13,33 @@ const {
   buildAuthCookie,
   createAccountDeletionRateLimiter,
   createAuthRateLimiter,
+  createAuthRequestRateLimiters,
   createRequestRateLimiter,
+  enforceAuthRateLimit,
+  enforceRequestRateLimit,
+  AUTH_REQUEST_LIMITS,
+  recordAuthFailure,
   shouldUseSecureCookies,
   validateCookieSecurityConfig,
-  buildIdleActivityCookie,
-  parseIdleActivityCookie,
 } = require("../server");
+
+const appJs = readFileSync(path.join(__dirname, "..", "app.js"), "utf8");
+
+test("zmiana hasła lokalnie odrzuca niezgodne nowe hasła", () => {
+  assert.match(
+    appJs,
+    /const passwordConfirmation = formValues\.newSecretConfirmation;[\s\S]*?if \(formValues\.newSecret !== passwordConfirmation\) \{[\s\S]*?return;/,
+  );
+});
+
+const VALID_INVITATION_TOKEN = "A".repeat(64);
 
 test("payload rejestracji przekazuje boolean akceptacji i bieżące wersje prawa", () => {
   const payload = buildRegistrationAuthPayload(
     {
       login: "jan@example.com",
       password: "Haslo123!",
+      invitationToken: VALID_INVITATION_TOKEN,
       termsAccepted: true,
       termsVersion: CURRENT_LEGAL_DOCUMENT.termsVersion,
       privacyNoticeVersion: CURRENT_LEGAL_DOCUMENT.privacyVersion,
@@ -33,6 +50,7 @@ test("payload rejestracji przekazuje boolean akceptacji i bieżące wersje prawa
   assert.deepEqual(payload, {
     login: "jan@example.com",
     password: "Haslo123!",
+    invitationToken: VALID_INVITATION_TOKEN,
     termsAccepted: true,
     termsVersion: CURRENT_LEGAL_DOCUMENT.termsVersion,
     privacyNoticeVersion: CURRENT_LEGAL_DOCUMENT.privacyVersion,
@@ -46,6 +64,7 @@ test("payload rejestracji odrzuca nieaktualną wersję dokumentu", () => {
       {
         login: "jan@example.com",
         password: "Haslo123!",
+        invitationToken: VALID_INVITATION_TOKEN,
         termsAccepted: true,
         termsVersion: "0.9",
         privacyNoticeVersion: CURRENT_LEGAL_DOCUMENT.privacyVersion,
@@ -56,28 +75,29 @@ test("payload rejestracji odrzuca nieaktualną wersję dokumentu", () => {
   );
 });
 
-test("payload rejestracji nie wymaga tokenu zaproszenia", () => {
-  const payload = buildRegistrationAuthPayload(
-    {
-      login: "jan@example.com",
-      password: "Haslo123!",
-      termsAccepted: true,
-      termsVersion: CURRENT_LEGAL_DOCUMENT.termsVersion,
-      privacyNoticeVersion: CURRENT_LEGAL_DOCUMENT.privacyVersion,
-    },
-    { legalDocument: CURRENT_LEGAL_DOCUMENT },
+test("payload rejestracji odrzuca token zaproszenia bez pełnego linku", () => {
+  assert.throws(
+    () => buildRegistrationAuthPayload(
+      {
+        login: "jan@example.com",
+        password: "Haslo123!",
+        invitationToken: "niepelny-token",
+        termsAccepted: true,
+        termsVersion: CURRENT_LEGAL_DOCUMENT.termsVersion,
+        privacyNoticeVersion: CURRENT_LEGAL_DOCUMENT.privacyVersion,
+      },
+      { legalDocument: CURRENT_LEGAL_DOCUMENT },
+    ),
+    /pełny link zaproszenia/i,
   );
-
-  assert.equal(payload.login, "jan@example.com");
-  assert.equal(Object.hasOwn(payload, "invitationToken"), false);
 });
 
-test("payload rejestracji ignoruje pozostały token zaproszenia", () => {
+test("payload rejestracji akceptuje wyłącznie URL-safe token po trimowaniu", () => {
   const payload = buildRegistrationAuthPayload(
     {
       login: "jan@example.com",
       password: "Haslo123!",
-      invitationToken: "stary-token",
+      invitationToken: ` ${VALID_INVITATION_TOKEN} `,
       termsAccepted: true,
       termsVersion: CURRENT_LEGAL_DOCUMENT.termsVersion,
       privacyNoticeVersion: CURRENT_LEGAL_DOCUMENT.privacyVersion,
@@ -85,7 +105,21 @@ test("payload rejestracji ignoruje pozostały token zaproszenia", () => {
     { legalDocument: CURRENT_LEGAL_DOCUMENT },
   );
 
-  assert.equal(Object.hasOwn(payload, "invitationToken"), false);
+  assert.equal(payload.invitationToken, VALID_INVITATION_TOKEN);
+  assert.throws(
+    () => buildRegistrationAuthPayload(
+      {
+        login: "jan@example.com",
+        password: "Haslo123!",
+        invitationToken: `${"A".repeat(63)}!`,
+        termsAccepted: true,
+        termsVersion: CURRENT_LEGAL_DOCUMENT.termsVersion,
+        privacyNoticeVersion: CURRENT_LEGAL_DOCUMENT.privacyVersion,
+      },
+      { legalDocument: CURRENT_LEGAL_DOCUMENT },
+    ),
+    /pełny link zaproszenia/i,
+  );
 });
 
 test("normalizacja Auth trimuje i ujednolica e-mail oraz login jako e-mail", () => {
@@ -105,12 +139,10 @@ test("walidacja hasła wymaga podstawowej różnorodności znaków", () => {
   assert.throws(() => validateAuthPassword("Aa1      "), /wyłącznie ze spacji|znak specjalny/);
 });
 
-test("walidacja hasła akceptuje małe, wielkie litery i cyfry Unicode", () => {
-  assert.equal(validateAuthPassword("Ąą١!Żółw"), "Ąą١!Żółw");
-  assert.throws(
-    () => validateAuthPassword("hasło١!żółw"),
-    /małą i wielką literę Unicode, cyfrę Unicode oraz znak specjalny/,
-  );
+test("walidacja hasła odrzuca brakujące i puste wartości", () => {
+  assert.throws(() => validateAuthPassword(undefined), /8 do 256/);
+  assert.throws(() => validateAuthPassword(null), /8 do 256/);
+  assert.throws(() => validateAuthPassword(""), /8 do 256/);
 });
 
 test("produkcja wymaga jawnego Secure dla ciasteczek sesji", () => {
@@ -134,15 +166,6 @@ test("Secure jest sterowane konfiguracją transportu", () => {
     buildAuthCookie("motek_access_token", "token", 60, { NODE_ENV: "production", COOKIE_SECURE: "true" }),
     /; HttpOnly; SameSite=Lax; Max-Age=60; Secure$/
   );
-});
-
-test("podpis aktywności odrzuca błędne i wygasłe wartości", () => {
-  const env = { IDLE_SESSION_SECRET: "test-idle-secret", AUTH_IDLE_TIMEOUT_SECONDS: "60" };
-  const valid = buildIdleActivityCookie(1_700_000_000, env).split(";", 1)[0].split("=", 2)[1];
-
-  assert.equal(parseIdleActivityCookie(undefined, env, 1_700_000_001), null);
-  assert.equal(parseIdleActivityCookie(`${valid}invalid`, env, 1_700_000_001), null);
-  assert.equal(parseIdleActivityCookie(valid, env, 1_700_000_061), null);
 });
 
 test("rate limiter blokuje serię nieudanych prób i wygasa po czasie", () => {
@@ -223,4 +246,127 @@ test("limiter usuwania konta blokuje po pięciu błędnych hasłach przez 15 min
 
   now = 15 * 60 * 1000;
   assert.equal(limiter.getRetryAfterMs("user:user-a"), 0);
+});
+
+test("limity żądań Auth mają osobne progi i okna", () => {
+  assert.deepEqual(AUTH_REQUEST_LIMITS, {
+    login: { windowMs: 60 * 1000, maxRequests: 10, blockMs: 60 * 1000 },
+    register: { windowMs: 60 * 1000, maxRequests: 3, blockMs: 60 * 1000 },
+    "password-reset-request": {
+      windowMs: 15 * 60 * 1000,
+      maxRequests: 3,
+      blockMs: 15 * 60 * 1000,
+    },
+    "password-change": {
+      windowMs: 15 * 60 * 1000,
+      maxRequests: 30,
+      blockMs: 15 * 60 * 1000,
+    },
+    recovery: { windowMs: 10 * 60 * 1000, maxRequests: 5, blockMs: 10 * 60 * 1000 },
+  });
+});
+
+test("każdy limiter Auth odrzuca po swoim progu", () => {
+  const limiters = createAuthRequestRateLimiters({ now: () => 0 });
+  for (const [operation, limits] of Object.entries(AUTH_REQUEST_LIMITS)) {
+    const limiter = limiters[operation];
+    for (let index = 0; index < limits.maxRequests; index += 1) {
+      limiter.recordRequest(`ip:${operation}`);
+    }
+    assert.equal(limiter.getRetryAfterMs(`ip:${operation}`), limits.blockMs, operation);
+  }
+});
+
+test("lockout nieudanych prób Auth zwiększa metrykę operacji", () => {
+  assert.equal(typeof enforceAuthRateLimit, "function");
+  assert.equal(typeof recordAuthFailure, "function");
+  if (typeof enforceAuthRateLimit !== "function" || typeof recordAuthFailure !== "function") return;
+
+  const keys = ["ip:198.51.100.99", "email:lockout-test@example.com"];
+  const response = { headers: new Map(), setHeader(name, value) { this.headers.set(name, value); } };
+  const observedOperations = [];
+  const metrics = { observeAuthRateLimitRejection(operation) { observedOperations.push(operation); } };
+  for (let attempt = 0; attempt < 5; attempt += 1) recordAuthFailure(keys);
+
+  assert.throws(
+    () => enforceAuthRateLimit(keys, response, "login", metrics),
+    (error) => error.status === 429,
+  );
+  assert.equal(response.headers.get("Retry-After"), "900");
+  assert.deepEqual(observedOperations, ["login"]);
+});
+
+test("limit Auth odpowiada 429 i Retry-After po przekroczeniu progu", () => {
+  assert.equal(typeof createAuthRequestRateLimiters, "function");
+  assert.equal(typeof enforceRequestRateLimit, "function");
+  if (typeof createAuthRequestRateLimiters !== "function" || typeof enforceRequestRateLimit !== "function") return;
+
+  let now = 0;
+  const limiter = createAuthRequestRateLimiters({ now: () => now }).login;
+  const response = { headers: new Map(), setHeader(name, value) { this.headers.set(name, value); } };
+  const observedOperations = [];
+  const metrics = { observeAuthRateLimitRejection(operation) { observedOperations.push(operation); } };
+  for (let index = 0; index < AUTH_REQUEST_LIMITS.login.maxRequests; index += 1) {
+    limiter.recordRequest("ip:127.0.0.1");
+  }
+
+  assert.throws(
+    () => enforceRequestRateLimit(["ip:127.0.0.1"], limiter, response, "login", metrics),
+    (error) => error.status === 429,
+  );
+  assert.equal(response.headers.get("Retry-After"), "60");
+  assert.deepEqual(observedOperations, ["login"]);
+});
+
+test("reset hasła limituje wspólnie po IP i e-mailu, a recovery wyłącznie po IP", () => {
+  let now = 0;
+  const limiters = createAuthRequestRateLimiters({ now: () => now });
+  const response = { headers: new Map(), setHeader(name, value) { this.headers.set(name, value); } };
+
+  for (let index = 0; index < AUTH_REQUEST_LIMITS["password-reset-request"].maxRequests; index += 1) {
+    enforceRequestRateLimit(
+      ["ip:127.0.0.1", "email:a@example.com"],
+      limiters["password-reset-request"],
+      response,
+      "password-reset-request",
+    );
+  }
+  assert.throws(
+    () => enforceRequestRateLimit(
+      ["ip:203.0.113.8", "email:a@example.com"],
+      limiters["password-reset-request"],
+      response,
+      "password-reset-request",
+    ),
+    (error) => error.status === 429,
+  );
+  assert.throws(
+    () => enforceRequestRateLimit(
+      ["ip:127.0.0.1", "email:b@example.com"],
+      limiters["password-reset-request"],
+      response,
+      "password-reset-request",
+    ),
+    (error) => error.status === 429,
+  );
+
+  now = AUTH_REQUEST_LIMITS["password-reset-request"].blockMs;
+  enforceRequestRateLimit(
+    ["ip:127.0.0.1", "email:b@example.com"],
+    limiters["password-reset-request"],
+    response,
+    "password-reset-request",
+  );
+
+  now = 0;
+  const recoveryResponse = { headers: new Map(), setHeader(name, value) { this.headers.set(name, value); } };
+  for (let index = 0; index < AUTH_REQUEST_LIMITS.recovery.maxRequests; index += 1) {
+    enforceRequestRateLimit(["ip:127.0.0.1"], limiters.recovery, recoveryResponse, "recovery");
+  }
+  assert.throws(
+    () => enforceRequestRateLimit(["ip:127.0.0.1"], limiters.recovery, recoveryResponse, "recovery"),
+    (error) => error.status === 429,
+  );
+  assert.equal(recoveryResponse.headers.get("Retry-After"), "600");
+  enforceRequestRateLimit(["ip:203.0.113.8"], limiters.recovery, recoveryResponse, "recovery");
 });

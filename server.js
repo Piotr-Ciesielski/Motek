@@ -70,7 +70,20 @@ const AUTH_RATE_LIMIT_MAX_ENTRIES = 10_000;
 const AUTH_REQUEST_WINDOW_MS = 60 * 1000;
 const AUTH_REQUEST_MAX = 30;
 const AUTH_REQUEST_BLOCK_MS = 60 * 1000;
+const YARN_WRITE_WINDOW_MS = 60 * 1000;
+const YARN_WRITE_MAX = 600;
+const YARN_WRITE_BLOCK_MS = 60 * 1000;
+const MATCH_REQUEST_WINDOW_MS = 60 * 1000;
+const MATCH_REQUEST_MAX = 30;
+const MATCH_REQUEST_BLOCK_MS = 60 * 1000;
+const HTTP_REQUEST_TIMEOUT_MS = 30 * 1000;
+const HTTP_HEADERS_TIMEOUT_MS = 10 * 1000;
+const HTTP_KEEP_ALIVE_TIMEOUT_MS = 5 * 1000;
+const HTTP_BODY_TIMEOUT_MS = 10 * 1000;
+const MAX_PATTERN_PAGE_SIZE = 50;
 const AUTH_REQUEST_LIMITS = Object.freeze({
+  login: { windowMs: 60 * 1000, maxRequests: 10, blockMs: 60 * 1000 },
+  register: { windowMs: 60 * 1000, maxRequests: 3, blockMs: 60 * 1000 },
   "password-reset-request": {
     windowMs: 15 * 60 * 1000,
     maxRequests: 3,
@@ -83,17 +96,6 @@ const AUTH_REQUEST_LIMITS = Object.freeze({
   },
   recovery: { windowMs: 10 * 60 * 1000, maxRequests: 5, blockMs: 10 * 60 * 1000 },
 });
-const YARN_WRITE_WINDOW_MS = 60 * 1000;
-const YARN_WRITE_MAX = 600;
-const YARN_WRITE_BLOCK_MS = 60 * 1000;
-const MATCH_REQUEST_WINDOW_MS = 60 * 1000;
-const MATCH_REQUEST_MAX = 30;
-const MATCH_REQUEST_BLOCK_MS = 60 * 1000;
-const HTTP_REQUEST_TIMEOUT_MS = 30 * 1000;
-const HTTP_HEADERS_TIMEOUT_MS = 10 * 1000;
-const HTTP_KEEP_ALIVE_TIMEOUT_MS = 5 * 1000;
-const HTTP_BODY_TIMEOUT_MS = 10 * 1000;
-const MAX_PATTERN_PAGE_SIZE = 50;
 const authRateLimiter = createAuthRateLimiter();
 const accountDeletionRateLimiter = createAccountDeletionRateLimiter();
 const authRequestRateLimiter = createRequestRateLimiter({
@@ -365,17 +367,19 @@ function getMatchRateLimitKeys(req, session) {
   return [`ip:${getClientAddress(req)}`, `user:${session.user.id}`];
 }
 
-function enforceAuthRateLimit(keys, res) {
+function enforceAuthRateLimit(keys, res, operation, metrics = metricsRegistry) {
   const retryAfterMs = Math.max(...keys.map((key) => authRateLimiter.getRetryAfterMs(key)));
   if (retryAfterMs > 0) {
+    if (operation) metrics.observeAuthRateLimitRejection(operation);
     res?.setHeader("Retry-After", String(Math.ceil(retryAfterMs / 1000)));
     throw new ApiError(429, "Zbyt wiele nieudanych prób. Spróbuj ponownie później.");
   }
 }
 
-function enforceRequestRateLimit(keys, limiter, res) {
+function enforceRequestRateLimit(keys, limiter, res, operation, metrics = metricsRegistry) {
   const retryAfterMs = Math.max(...keys.map((key) => limiter.getRetryAfterMs(key)));
   if (retryAfterMs > 0) {
+    if (operation) metrics.observeAuthRateLimitRejection(operation);
     res?.setHeader("Retry-After", String(Math.ceil(retryAfterMs / 1000)));
     throw new ApiError(429, "Zbyt wiele żądań. Spróbuj ponownie później.");
   }
@@ -1253,8 +1257,8 @@ async function handleAuthApi(req, res, url) {
       throw new ApiError(400, error.message);
     }
     const rateLimitKeys = getAuthRateLimitKeys(req, email);
-    enforceRequestRateLimit(rateLimitKeys, authRequestRateLimiter, res);
-    enforceAuthRateLimit(rateLimitKeys, res);
+    enforceRequestRateLimit([`ip:${getClientAddress(req)}`], authRequestRateLimiters.register, res, "register");
+    enforceAuthRateLimit(rateLimitKeys, res, "register");
 
     let registration;
     try {
@@ -1355,8 +1359,8 @@ async function handleAuthApi(req, res, url) {
       throw new ApiError(400, error.message);
     }
     const rateLimitKeys = getAuthRateLimitKeys(req, email);
-    enforceRequestRateLimit(rateLimitKeys, authRequestRateLimiter, res);
-    enforceAuthRateLimit(rateLimitKeys, res);
+    enforceRequestRateLimit([`ip:${getClientAddress(req)}`], authRequestRateLimiters.login, res, "login");
+    enforceAuthRateLimit(rateLimitKeys, res, "login");
     const { data, error } = await authClient().auth.signInWithPassword({
       email,
       password,
@@ -1387,11 +1391,11 @@ async function handleAuthApi(req, res, url) {
     } catch (error) {
       throw new ApiError(400, error.message);
     }
-    const rateLimitKeys = getAuthRateLimitKeys(req, email);
     enforceRequestRateLimit(
-      rateLimitKeys,
+      [`ip:${getClientAddress(req)}`, `email:${email}`],
       authRequestRateLimiters["password-reset-request"],
       res,
+      "password-reset-request",
     );
 
     const redirectTo = new URL("/?recovery=1", getExpectedOrigin(req)).toString();
@@ -1401,6 +1405,12 @@ async function handleAuthApi(req, res, url) {
     });
     if (error) {
       console.warn("Nie udało się wysłać wiadomości odzyskiwania hasła.");
+      if (error.status === 429 || error.code === "over_email_send_rate_limit") {
+        throw new ApiError(
+          429,
+          "Przekroczono limit prób resetu hasła. Odczekaj jakiś czas i spróbuj ponownie później.",
+        );
+      }
       throw new ApiError(503, "Odzyskiwanie hasła jest chwilowo niedostępne. Spróbuj ponownie później.");
     }
 
@@ -1410,29 +1420,58 @@ async function handleAuthApi(req, res, url) {
   }
 
   if (req.method === "POST" && url.pathname === "/api/auth/recovery") {
-    enforceRequestRateLimit(
-      [`ip:${getClientAddress(req)}`],
-      authRequestRateLimiters.recovery,
-      res,
-    );
+    enforceRequestRateLimit([`ip:${getClientAddress(req)}`], authRequestRateLimiters.recovery, res, "recovery");
     const body = await readBody(req);
-    const code = normalizeRecoveryToken(body.code, "jednorazowy");
-    const client = authClient();
-    const { data, error } = await client.auth.exchangeCodeForSession(code);
-    if (error || !data?.user || !data?.session) {
+    const hasCode = typeof body.code === "string" && body.code.trim() !== "";
+    const hasAccessToken = typeof body.access_token === "string" && body.access_token.trim() !== "";
+    const hasRefreshToken = typeof body.refresh_token === "string" && body.refresh_token.trim() !== "";
+    const hasTokenPair = hasAccessToken || hasRefreshToken;
+    if (hasCode === hasTokenPair || (hasTokenPair && (!hasAccessToken || !hasRefreshToken))) {
       throw new ApiError(400, "Link odzyskiwania hasła jest nieprawidłowy lub wygasł.");
     }
-    const authenticatedClient = supabaseAuthClientFactory(supabaseAuthConfig, data.session.access_token);
-    const { data: grantJti, error: grantError } = await authenticatedClient.rpc("create_auth_recovery_grant", {});
+
+    let recoveryUser;
+    let recoverySession;
+    let authenticatedClient;
+    if (hasCode) {
+      const code = normalizeRecoveryToken(body.code, "jednorazowy");
+      const client = authClient();
+      const { data, error } = await client.auth.exchangeCodeForSession(code);
+      if (error || !data?.user || !data?.session) {
+        throw new ApiError(400, "Link odzyskiwania hasła jest nieprawidłowy lub wygasł.");
+      }
+      recoveryUser = data.user;
+      recoverySession = data.session;
+      authenticatedClient = supabaseAuthClientFactory(supabaseAuthConfig, recoverySession.access_token);
+    } else {
+      const accessToken = normalizeRecoveryToken(body.access_token, "dostępu");
+      const refreshToken = normalizeRecoveryToken(body.refresh_token, "odświeżania");
+      authenticatedClient = supabaseAuthClientFactory(supabaseAuthConfig, accessToken);
+      const { data, error } = await authenticatedClient.auth.setSession({
+        access_token: accessToken,
+        refresh_token: refreshToken,
+      });
+      if (error || !data?.session) {
+        throw new ApiError(400, "Link odzyskiwania hasła jest nieprawidłowy lub wygasł.");
+      }
+      const userResult = await authenticatedClient.auth.getUser(data.session.access_token);
+      if (userResult.error || !userResult.data?.user) {
+        throw new ApiError(400, "Link odzyskiwania hasła jest nieprawidłowy lub wygasł.");
+      }
+      recoveryUser = userResult.data.user;
+      recoverySession = data.session;
+    }
+
+    const { data: grantJti, error: grantError } = await authenticatedClient.rpc(
+      "create_auth_recovery_grant",
+      {}
+    );
     if (grantError || typeof grantJti !== "string" || !grantJti) {
       throw new ApiError(503, "Odzyskiwanie hasła jest chwilowo niedostępne. Spróbuj ponownie później.");
     }
-    setAuthCookies(res, data.session);
-    appendSetCookie(res, buildRecoveryGrantCookie(data.user.id, { jti: grantJti }));
-    return sendJson(res, 200, {
-      user: sanitizeAuthUser(data.user),
-      idleTimeoutMs: getIdleTimeoutMs(),
-    });
+    setAuthCookies(res, recoverySession);
+    appendSetCookie(res, buildRecoveryGrantCookie(recoveryUser.id, { jti: grantJti }));
+    return sendJson(res, 200, { user: sanitizeAuthUser(recoveryUser) });
   }
 
   if (req.method === "POST" && url.pathname === "/api/auth/password") {
@@ -1459,7 +1498,7 @@ async function handleAuthApi(req, res, url) {
       grant_jti: grantJti,
     });
     if (grantClaimError) {
-      throw new ApiError(503, "Odzyskiwanie hasła jest chwilowo niedostępne. Spróbuj ponownie później.");
+      throw new ApiError(503, "Nie udało się bezpiecznie zweryfikować linku odzyskiwania. Spróbuj ponownie.");
     }
     if (grantClaimed !== true) {
       throw new ApiError(400, "Ten link został już wykorzystany albo wygasł. Rozpocznij odzyskiwanie hasła ponownie.");
@@ -1480,6 +1519,13 @@ async function handleAuthApi(req, res, url) {
     });
     if (grantError || grantConsumed !== true) {
       console.error("Nie udało się skonsumować grantu odzyskiwania hasła.");
+      try {
+        await client.auth.signOut({ scope: "global" });
+      } catch {
+        // Błąd wylogowania nie może przesłonić bezpiecznej odpowiedzi o zmianie hasła.
+      } finally {
+        clearAuthCookies(res);
+      }
       throw new ApiError(503, "Hasło zostało zmienione. Nie udało się bezpiecznie zakończyć procesu. Zaloguj się nowym hasłem. Jeśli logowanie nie zadziała, rozpocznij odzyskiwanie ponownie.");
     }
 
@@ -1515,8 +1561,13 @@ async function handleAuthApi(req, res, url) {
     }
 
     const rateLimitKeys = getAuthRateLimitKeys(req, session.user.email);
-    enforceRequestRateLimit([`ip:${getClientAddress(req)}`], authRequestRateLimiters["password-change"], res);
-    enforceAuthRateLimit(rateLimitKeys, res);
+    enforceRequestRateLimit(
+      [`ip:${getClientAddress(req)}`],
+      authRequestRateLimiters["password-change"],
+      res,
+      "password-change",
+    );
+    enforceAuthRateLimit(rateLimitKeys, res, "password-change");
 
     const verifier = supabaseAuthClientFactory(supabaseAuthConfig);
     const { data: verificationData, error: verificationError } = await verifier.auth.signInWithPassword({
@@ -1533,6 +1584,7 @@ async function handleAuthApi(req, res, url) {
     }
     clearAuthFailures(rateLimitKeys);
 
+    
     if (!session.refreshToken) {
       clearAuthCookies(res);
       throw new ApiError(503, "Sesja logowania jest niepełna. Zaloguj się ponownie i spróbuj jeszcze raz.");
@@ -1547,13 +1599,12 @@ async function handleAuthApi(req, res, url) {
       try {
         await client.auth.signOut({ scope: "global" });
       } catch {
-        // Nie przesłaniaj niepewnego stanu sesji dodatkowym błędem.
+        // Błąd wylogowania nie może przesłonić informacji o niepewnym stanie sesji.
       } finally {
         clearAuthCookies(res);
       }
-      throw new ApiError(503, "Sesja logowania jest chwilowo niedostępna. Zaloguj się ponownie.");
+      throw new ApiError(503, "Sesja logowania jest chwilowo niedostępna. Zostałeś wylogowany. Zaloguj się ponownie.");
     }
-
     let updateResult;
     try {
       updateResult = await client.auth.updateUser({ current_password: currentPassword, password });
@@ -1561,11 +1612,11 @@ async function handleAuthApi(req, res, url) {
       try {
         await client.auth.signOut({ scope: "global" });
       } catch {
-        // Nie przesłaniaj niepewnego stanu aktualizacji dodatkowym błędem.
+        // Błąd wylogowania nie może przesłonić bezpiecznej odpowiedzi o niepewnym wyniku.
       } finally {
         clearAuthCookies(res);
       }
-      throw new ApiError(503, "Wynik zmiany hasła jest niepewny. Zaloguj się ponownie.");
+      throw new ApiError(503, "Wynik zmiany hasła jest niepewny. Zostałeś wylogowany. Zaloguj się ponownie.");
     }
 
     const { error: updateError } = updateResult;
@@ -1574,11 +1625,11 @@ async function handleAuthApi(req, res, url) {
         try {
           await client.auth.signOut({ scope: "global" });
         } catch {
-          // Nie przesłaniaj niepewnego stanu aktualizacji dodatkowym błędem.
+          // Błąd wylogowania nie może przesłonić informacji o niepewnym wyniku.
         } finally {
           clearAuthCookies(res);
         }
-        throw new ApiError(503, "Wynik zmiany hasła jest niepewny. Zaloguj się ponownie.");
+        throw new ApiError(503, "Wynik zmiany hasła jest niepewny. Zostałeś wylogowany. Zaloguj się ponownie.");
       }
       throw new ApiError(400, "Nie udało się zmienić hasła. Sprawdź hasło i spróbuj ponownie.");
     }
@@ -1730,7 +1781,7 @@ async function handleApi(req, res, url) {
   ) {
     const session = await requireCurrentTermsSession(req, res);
     enforceRequestRateLimit(
-      getMatchRateLimitKeys(req, session),
+      [`ip:${getClientAddress(req)}`, `user:${session.user.id}`],
       matchRateLimiter,
       res,
     );
@@ -2026,10 +2077,14 @@ module.exports = {
   buildAuthCookie,
   createAccountDeletionRateLimiter,
   createAuthRateLimiter,
+  createAuthRequestRateLimiters,
   createRequestRateLimiter,
   createAuthRequestRateLimiters,
-  AUTH_REQUEST_LIMITS,
+  createRequestRateLimiter,
+  enforceAuthRateLimit,
   enforceRequestRateLimit,
+  AUTH_REQUEST_LIMITS,
+  recordAuthFailure,
   validateMatchLimits,
   shouldUseSecureCookies,
   shutdown,

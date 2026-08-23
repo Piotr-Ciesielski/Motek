@@ -8,7 +8,6 @@ const { JSDOM } = require("jsdom");
 const indexHtml = readFileSync(path.join(__dirname, "..", "index.html"), "utf8");
 const stylesCss = readFileSync(path.join(__dirname, "..", "styles.css"), "utf8");
 const appJs = readFileSync(path.join(__dirname, "..", "app.js"), "utf8");
-const serverJs = readFileSync(path.join(__dirname, "..", "server.js"), "utf8");
 const staticFilesJs = readFileSync(path.join(__dirname, "..", "server", "static-files.js"), "utf8");
 
 test("pola długości i wagi wymagają dodatnich liczb całkowitych", () => {
@@ -69,6 +68,72 @@ test("inventory keeps the selected design composition", () => {
   assert.match(indexHtml, /data-dark-src="assets\/night-yarn-cat\.v1\.webp"/);
 });
 
+test("niezalogowane Konto pokazuje pełną grafikę kota w obu motywach i biały tekst w dark", () => {
+  const document = new JSDOM(indexHtml).window.document;
+  const accountView = document.getElementById("accountView");
+  const image = document.getElementById("accountThemeImage");
+
+  assert.ok(document.body.classList.contains("auth-logged-out"));
+  assert.ok(accountView.classList.contains("account-view"));
+  assert.equal(image.dataset.lightSrc, "assets/color-yarn-cat.v1.webp");
+  assert.equal(image.dataset.darkSrc, "assets/night-yarn-cat.v1.webp");
+  assert.match(
+    stylesCss,
+    /\.auth-logged-out #accountView \.auth-visual > \.auth-visual__image\s*\{[\s\S]*?opacity:\s*1;/,
+  );
+  assert.match(
+    stylesCss,
+    /\[data-theme="dark"\] \.auth-logged-out #accountView \.auth-visual\s*\{[\s\S]*?color:\s*#fff;/,
+  );
+  assert.match(
+    stylesCss,
+    /\[data-theme="dark"\] \.auth-logged-out #accountView \.auth-visual h1[\s\S]*?color:\s*#fff;/,
+  );
+  assert.match(stylesCss, /#accountView\.is-authenticated \.auth-visual\s*\{[\s\S]*?display:\s*none;/);
+});
+
+test("hero zachowują tylko wskazane nagłówki, akcje i grafiki", () => {
+  const document = new JSDOM(indexHtml).window.document;
+  const normalizeText = (element) => element.textContent.replace(/\s+/g, " ").trim();
+  const accountHero = document.querySelector("#accountView .auth-visual");
+  const matchesHero = document.querySelector("#matchesView .matches-hero");
+  const matchesCopy = matchesHero.querySelector(".matches-hero__copy");
+  const catalogHero = document.querySelector("#catalogView .catalog-hero");
+  const catalogCopy = catalogHero.querySelector(".catalog-hero__copy");
+
+  assert.equal(accountHero.querySelector("#heroTitle").textContent.trim(), "Twoja włóczka ma już swój następny projekt");
+  assert.equal(accountHero.querySelector(".auth-visual__brand"), null);
+  assert.equal(accountHero.querySelector(".lead"), null);
+  assert.equal(accountHero.querySelector("#heroAuthBtn"), null);
+  assert.equal([...accountHero.children].some((element) => normalizeText(element) === "Motek"), false);
+  assert.doesNotMatch(
+    normalizeText(accountHero),
+    /Uporządkuj domowy zapas, znajdź pasujący wzór i wróć do tego, co najprzyjemniejsze — tworzenia\./,
+  );
+  assert.doesNotMatch(normalizeText(accountHero), /Zacznij w Motku/);
+  assert.equal(document.getElementById("accountThemeImage").dataset.lightSrc, "assets/color-yarn-cat.v1.webp");
+  assert.equal(document.getElementById("accountThemeImage").dataset.darkSrc, "assets/night-yarn-cat.v1.webp");
+
+  assert.equal(matchesCopy.querySelector("#matchesPageTitle").textContent.trim(), "Dopasuj włóczkę");
+  assert.equal(matchesCopy.querySelector(".eyebrow"), null);
+  assert.equal(matchesCopy.querySelector(".page-heading > div > p"), null);
+  assert.doesNotMatch(normalizeText(matchesCopy), /Pomysły z Twojego zapasu/);
+  assert.doesNotMatch(normalizeText(matchesCopy), /Ustaw kryteria i zobacz pasujące wzory na żywo\./);
+  assert.equal(matchesCopy.querySelector("#backToInventoryBtn").textContent.trim(), "Wróć do magazynu");
+  assert.equal(document.getElementById("matchesThemeImage").dataset.darkSrc, "assets/night-yarn-cat.v1.webp");
+
+  assert.equal(catalogCopy.querySelector("#catalogTitle").textContent.trim(), "Katalog wzorów");
+  assert.equal(catalogCopy.querySelector(".eyebrow"), null);
+  assert.equal(catalogCopy.querySelector("p"), null);
+  assert.doesNotMatch(normalizeText(catalogCopy), /Biblioteka inspiracji/);
+  assert.doesNotMatch(
+    normalizeText(catalogCopy),
+    /Znajdź wzór, który pasuje do Twojej włóczki i kolejnego projektu\./,
+  );
+  assert.equal(document.getElementById("catalogThemeImage").dataset.lightSrc, "assets/color-yarn-cat.v1.webp");
+  assert.equal(document.getElementById("catalogThemeImage").dataset.darkSrc, "assets/night-yarn-cat.v1.webp");
+});
+
 test("main navigation uses text labels without decorative symbols", () => {
   const navigation = indexHtml.match(/<nav class="app-nav"[\s\S]*?<\/nav>/)?.[0] || "";
   assert.match(navigation, />Magazyn<\/span>/);
@@ -77,6 +142,29 @@ test("main navigation uses text labels without decorative symbols", () => {
   assert.match(navigation, />Konto<\/span>/);
   assert.doesNotMatch(navigation, /aria-hidden="true"/);
   assert.doesNotMatch(navigation, /[⌂✦▦○]/);
+});
+
+test("nagłówek zachowuje produkcyjny przycisk logowania i wylogowania", () => {
+  const document = new JSDOM(indexHtml).window.document;
+  const action = document.getElementById("headerAuthAction");
+
+  assert.ok(action, "nagłówek ma przycisk auth");
+  assert.equal(action.type, "button");
+  assert.equal(action.textContent.trim(), "Zaloguj");
+  assert.match(appJs, /headerAuthAction\.addEventListener\("click", \(\) => \{[\s\S]*?logoutBtn\.click\(\);/);
+  assert.match(appJs, /headerAuthAction\.textContent = authenticated \? "Wyloguj" : "Zaloguj";/);
+});
+
+test("karta Konta zachowuje produkcyjny zwijany panel usuwania konta", () => {
+  const document = new JSDOM(indexHtml).window.document;
+  const disclosure = document.getElementById("deleteAccountDisclosure");
+  const form = document.getElementById("deleteAccountForm");
+
+  assert.ok(disclosure, "usuwanie konta jest w panelu disclosure");
+  assert.equal(disclosure.tagName, "DETAILS");
+  assert.ok(disclosure.querySelector("summary"));
+  assert.equal(form.closest("#deleteAccountDisclosure"), disclosure);
+  assert.match(stylesCss, /account-danger-disclosure/);
 });
 
 test("auth forms never fall back to GET query strings", () => {
@@ -101,21 +189,17 @@ test("auth forms never fall back to GET query strings", () => {
 test("captcha initializes even when the page opens from password recovery", () => {
   assert.match(
     appJs,
-    /const recoveryHandled = await startPasswordRecovery\(\);[\s\S]*await initializeCaptcha\(\)/,
+    /const recoveryHandled = await startPasswordRecovery\(\);[\s\S]*await initializeCaptcha\([\s\S]*const session = await refreshAuthSession\(\)/,
   );
   assert.doesNotMatch(appJs, /const recoveryHandled = await startPasswordRecovery\(\);\s*if \(recoveryHandled\) return;/);
 });
 
-test("CSP pozwala widgetowi Turnstile komunikować się z Cloudflare", () => {
-  assert.match(
-    serverJs,
-    /connect-src 'self' https:\/\/challenges\.cloudflare\.com https:\/\/fonts\.googleapis\.com/,
-  );
-});
-
 test("password recovery exchanges only a one-time code while signup handles URL tokens", () => {
   assert.match(appJs, /const code = query\.get\("code"\)/);
-  assert.match(appJs, /body: JSON\.stringify\(\{ code \}\)/);
+  assert.match(appJs, /const accessToken = hash\.get\("access_token"\)/);
+  assert.match(appJs, /const refreshToken = hash\.get\("refresh_token"\)/);
+  assert.match(appJs, /hash\.get\("type"\) === "recovery"/);
+  assert.match(appJs, /const recoveryBody = code[\s\S]*?body: JSON\.stringify\(recoveryBody\)/);
   assert.match(appJs, /hash\.get\("access_token"\)/);
   assert.match(appJs, /access_token: accessToken/);
 });
@@ -137,24 +221,6 @@ test("light and dark variants define the prototype layout rules", () => {
   assert.match(stylesCss, /object-position: center/);
 });
 
-test("dark hero panel keeps readable text on its dark gradient", () => {
-  assert.match(stylesCss, /--on-hero:\s*#f3eadc/);
-  assert.match(stylesCss, /\.auth-visual\s*\{[\s\S]*?color:\s*var\(--on-hero\)/);
-  assert.match(stylesCss, /\.auth-visual::after\s*\{[\s\S]*?var\(--on-hero\)/);
-  assert.match(stylesCss, /\.auth-visual h1\s*\{[\s\S]*?color:\s*var\(--on-hero\)/);
-});
-
-test("light logged-out account hero uses black title text", () => {
-  assert.match(
-    stylesCss,
-    /\[data-theme="light"\] #accountView:not\(\.is-authenticated\) \.auth-visual h1\s*\{[\s\S]*?color:\s*#000(?:000)?\s*;/,
-  );
-  assert.doesNotMatch(
-    stylesCss,
-    /\[data-theme="dark"\] #accountView:not\(\.is-authenticated\) \.auth-visual h1\s*\{[\s\S]*?color:\s*#000(?:000)?\s*;/,
-  );
-});
-
 test("inventory shelves collapse from two columns to one on mobile", () => {
   assert.match(
     stylesCss,
@@ -166,87 +232,199 @@ test("inventory shelves collapse from two columns to one on mobile", () => {
   );
 });
 
-test("hero zachowują tylko wskazane nagłówki, akcje, grafiki i krój pisma", () => {
+test("zalogowane konto udostępnia zwinięty formularz zmiany hasła", () => {
   const document = new JSDOM(indexHtml).window.document;
-  const normalizeText = (element) => element.textContent.replace(/\s+/g, " ").trim();
-  const accountHero = document.querySelector("#accountView .auth-visual");
-  const matchesCopy = document.querySelector("#matchesView .matches-hero__copy");
-  const catalogCopy = document.querySelector("#catalogView .catalog-hero__copy");
+  const loggedIn = document.getElementById("authLoggedIn");
+  const security = loggedIn.querySelector("section.account-security-zone");
+  const toggle = document.getElementById("changePasswordToggle");
+  const form = document.getElementById("changePasswordForm");
 
-  assert.equal(document.querySelector("#inventoryView .inventory-heading .eyebrow"), null);
-  assert.equal(document.querySelector("#inventoryView .inventory-heading > div:first-child > p:not(.eyebrow)"), null);
+  assert.ok(security, "strefa bezpieczeństwa jest w stanie zalogowanym");
+  assert.equal(security.getAttribute("aria-labelledby"), "changePasswordTitle");
+  assert.ok(toggle, "formularz ma widoczny przycisk otwierający panel");
+  assert.equal(toggle.type, "button");
+  assert.equal(toggle.getAttribute("aria-controls"), "changePasswordForm");
+  assert.equal(toggle.getAttribute("aria-expanded"), "false");
+  assert.ok(form);
+  assert.equal(form.hidden, true);
+  assert.equal(form.method, "post");
+  assert.equal(form.getAttribute("action"), "/api/auth/password/change");
+});
 
-  assert.equal(accountHero.querySelector("#heroTitle").textContent.trim(), "Twoja włóczka ma już swój następny projekt");
-  assert.equal(accountHero.querySelector(".auth-visual__brand"), null);
-  assert.equal(accountHero.querySelector(".lead"), null);
-  assert.equal(accountHero.querySelector("#heroAuthBtn"), null);
-  assert.equal([...accountHero.children].some((element) => normalizeText(element) === "Motek"), false);
-  assert.doesNotMatch(
-    normalizeText(accountHero),
-    /Uporządkuj domowy zapas, znajdź pasujący wzór i wróć do tego, co najprzyjemniejsze — tworzenia\./,
-  );
-  assert.doesNotMatch(normalizeText(accountHero), /Zacznij w Motku/);
+test("formularz zmiany hasła ma kontrakt pól i nie zmienia recovery", () => {
+  const document = new JSDOM(indexHtml).window.document;
+  const form = document.getElementById("changePasswordForm");
+  const current = document.getElementById("change-current-password");
+  const password = document.getElementById("change-password");
+  const confirmation = document.getElementById("change-password-confirmation");
+  const recovery = {
+    reset: document.getElementById("passwordResetForm"),
+    update: document.getElementById("passwordUpdateForm"),
+  };
 
-  assert.equal(matchesCopy.querySelector("#matchesPageTitle").textContent.trim(), "Dopasuj włóczkę");
-  assert.equal(matchesCopy.querySelector(".eyebrow"), null);
-  assert.equal(matchesCopy.querySelector(".page-heading > div > p"), null);
-  assert.doesNotMatch(normalizeText(matchesCopy), /Pomysły z Twojego zapasu/);
-  assert.doesNotMatch(normalizeText(matchesCopy), /Ustaw kryteria i zobacz pasujące wzory na żywo\./);
-  assert.equal(matchesCopy.querySelector("#backToInventoryBtn").textContent.trim(), "Wróć do magazynu");
+  assert.equal(form.closest("#authLoggedIn"), document.getElementById("authLoggedIn"));
+  assert.equal(form.getAttribute("autocomplete"), "off");
+  assert.equal(current.name, "currentSecret");
+  assert.equal(current.autocomplete, "one-time-code");
+  assert.equal(current.required, true);
+  assert.equal(password.name, "newSecret");
+  assert.equal(password.autocomplete, "new-password");
+  assert.equal(password.minLength, 8);
+  assert.equal(password.maxLength, 256);
+  assert.equal(password.required, true);
+  assert.equal(confirmation.name, "newSecretConfirmation");
+  assert.equal(confirmation.autocomplete, "new-password");
+  assert.equal(confirmation.minLength, 8);
+  assert.equal(confirmation.maxLength, 256);
+  assert.equal(confirmation.required, true);
+  assert.ok(password.getAttribute("aria-describedby"));
+  assert.ok(confirmation.getAttribute("aria-describedby"));
+  assert.match(form.textContent, /hasła są zgodne|hasła nie są zgodne/i);
+  assert.equal(form.querySelector('button[type="submit"]').textContent.trim(), "Zmień hasło");
+  assert.equal(recovery.reset.getAttribute("action"), "/api/auth/password-reset-request");
+  assert.equal(recovery.update.getAttribute("action"), "/api/auth/password");
+});
 
-  assert.equal(catalogCopy.querySelector("#catalogTitle").textContent.trim(), "Katalog wzorów");
-  assert.equal(catalogCopy.querySelector(".eyebrow"), null);
-  assert.equal(catalogCopy.querySelector("p"), null);
-  assert.doesNotMatch(normalizeText(catalogCopy), /Biblioteka inspiracji/);
-  assert.doesNotMatch(
-    normalizeText(catalogCopy),
-    /Znajdź wzór, który pasuje do Twojej włóczki i kolejnego projektu\./,
-  );
+test("formularz zmiany hasła używa tej samej ikony oka co logowanie", () => {
+  const document = new JSDOM(indexHtml).window.document;
+  const loginIcon = document.querySelector("#loginForm [data-password-reveal] svg");
+  const changePasswordForm = document.getElementById("changePasswordForm");
+  const revealButtons = [...changePasswordForm.querySelectorAll("[data-password-reveal]")];
 
-  for (const imageId of ["accountThemeImage", "matchesThemeImage", "catalogThemeImage"]) {
-    const image = document.getElementById(imageId);
-    assert.equal(image.dataset.lightSrc, "assets/color-yarn-cat.v1.webp");
-    assert.equal(image.dataset.darkSrc, "assets/night-yarn-cat.v1.webp");
-  }
-
-  assert.doesNotMatch(
-    stylesCss,
-    /\[data-theme="light"\] #inventoryView h1,[\s\S]*?font-family: "Inter", sans-serif;/,
-  );
-  assert.match(
-    stylesCss,
-    /#inventoryView \.inventory-heading h1,\s*#matchesView \.matches-hero__copy h1,\s*#catalogView \.catalog-hero__copy h1\s*\{[\s\S]*?font-family: "Fraunces", serif;/,
+  assert.ok(loginIcon, "logowanie ma wzorcową ikonę oka");
+  assert.equal(revealButtons.length, 3);
+  assert.deepEqual(
+    revealButtons.map((button) => button.querySelector("svg")?.outerHTML.replace(/\s+/g, " ").trim()),
+    revealButtons.map(() => loginIcon.outerHTML.replace(/\s+/g, " ").trim()),
   );
 });
 
-test("inventory artwork fills the hero without an opaque copy panel", () => {
-  assert.match(
-    stylesCss,
-    /\[data-theme="light"\] #inventoryView \.inventory-heading,[\s\S]*?\[data-theme="dark"\] #inventoryView \.inventory-heading > div:first-child\s*\{[\s\S]*?background: transparent;/,
+test("pola formularza zmiany hasła mają 44 px wysokości i dokładny hint", () => {
+  const document = new JSDOM(indexHtml).window.document;
+  const changePasswordForm = document.getElementById("changePasswordForm");
+  const inputs = changePasswordForm.querySelectorAll(".password-field input");
+
+  assert.equal(inputs.length, 3);
+  assert.equal(
+    document.getElementById("changePasswordHint").textContent,
+    "Nowe hasło: minimum 8 znaków, w tym mała i wielka litera, cyfra oraz znak specjalny.",
   );
   assert.match(
     stylesCss,
-    /#inventoryView \.inventory-layout__visual img\s*\{[\s\S]*?object-position: 58% center;/,
+    /#loginForm \.password-field input,[\s\S]*?\.account-security-zone__panel \.password-field input\s*\{[\s\S]*?height:\s*44px;[\s\S]*?min-height:\s*44px;/,
   );
 });
 
-test("inventory hero matches the shared hero height and keeps actions below the title", () => {
+test("frontend obsługuje panel zmiany hasła bez wysyłania potwierdzenia", () => {
+  assert.match(appJs, /const changePasswordToggle = document\.getElementById\("changePasswordToggle"\)/);
+  assert.match(appJs, /changePasswordToggle\.addEventListener\("click", \(\) => \{[\s\S]*?changePasswordForm\.hidden = !isOpen;[\s\S]*?changePasswordToggle\.setAttribute\("aria-expanded", String\(isOpen\)\);/);
+  assert.match(appJs, /changePasswordToggle\.textContent = isOpen \? "Anuluj" : "Zmień hasło";/);
+  assert.match(appJs, /changePasswordToggle\.addEventListener\("click", \(\) => \{[\s\S]*?if \(!isOpen\) \{[\s\S]*?changePasswordForm\.reset\(\);[\s\S]*?\}[\s\S]*?changePasswordForm\.hidden = !isOpen;/);
+  assert.match(appJs, /if \(formValues\.newSecret !== passwordConfirmation\) \{[\s\S]*?setAuthMessage\([^\n]+, "error"\);[\s\S]*?return;/);
+  assert.match(appJs, /api\("\/api\/auth\/password\/change", \{[\s\S]*?method: "POST",[\s\S]*?buildAuthPayload\(\{[\s\S]*?currentPassword: formValues\.currentSecret,[\s\S]*?password: formValues\.newSecret,[\s\S]*?captchaToken: captchaTokens\.passwordChange/);
+  assert.match(appJs, /finally \{[\s\S]*?resetCaptchaForForm\(changePasswordForm\);[\s\S]*?setAuthBusy\(changePasswordForm, false\);/);
+});
+
+test("ukryte formularze logowania są wyłączane dla menedżera haseł", () => {
+  assert.match(appJs, /function setAuthFormDisabled\(form, disabled\)/);
+  assert.match(appJs, /candidate\.hidden = candidate !== form;[\s\S]*?setAuthFormDisabled\(candidate, candidate !== form\);/);
+  assert.match(appJs, /authLoggedIn\.hidden = !authenticated;[\s\S]*?setAuthFormDisabled\(form, authenticated\);/);
+});
+
+test("403 zmiany hasła wyjaśnia błąd bieżącego hasła", () => {
+  const changePasswordHandler = appJs.match(
+    /changePasswordForm\.addEventListener\("submit",[\s\S]*?\n\}\);/,
+  )?.[0];
+
+  assert.ok(changePasswordHandler);
+  assert.match(changePasswordHandler, /error\.status === 403[\s\S]*?Bieżące hasło jest nieprawidłowe/);
+  assert.match(changePasswordHandler, /error\.status === 401[\s\S]*?Sesja wygasła\. Zaloguj się ponownie\./);
+});
+
+test("wylogowanie resetuje i zamyka panel zmiany hasła", () => {
+  const renderAuthState = appJs.match(
+    /function renderAuthState\(payload\) \{[\s\S]*?\r?\n\}\r?\n\r?\nasync function refreshAuthSession/,
+  )?.[0];
+
+  assert.ok(renderAuthState, "renderAuthState jest dostępne w kodzie aplikacji");
   assert.match(
-    stylesCss,
-    /#inventoryView \.inventory-hero\s*\{[\s\S]*?min-height: clamp\(360px, 36vw, 500px\);/,
+    renderAuthState,
+    /if \(!authenticated\) \{[\s\S]*?changePasswordForm\.reset\(\);[\s\S]*?changePasswordForm\.hidden = true;[\s\S]*?changePasswordToggle\.setAttribute\("aria-expanded", "false"\);/,
   );
-  assert.match(
-    stylesCss,
-    /#inventoryView \.inventory-heading\s*\{[\s\S]*?min-height: clamp\(360px, 36vw, 500px\);[\s\S]*?flex-direction: column;/,
-  );
-  assert.match(
-    stylesCss,
-    /#inventoryView \.inventory-heading__actions\s*\{[\s\S]*?margin-top: 30px;[\s\S]*?margin-left: 24px;/,
-  );
+});
+
+test("błąd 503 zmiany hasła wylogowuje i pokazuje bezpieczny komunikat logowania", () => {
+  const changePasswordHandler = appJs.match(
+    /changePasswordForm\.addEventListener\("submit",[\s\S]*?\n\}\);/,
+  )?.[0];
+
+  assert.ok(changePasswordHandler, "handler zmiany hasła jest dostępny w kodzie aplikacji");
+  const unavailableBranch = changePasswordHandler.match(
+    /if \(error\s+instanceof\s+ApiError\s+&&\s+error\.status\s+===\s+503\) \{[\s\S]*?\n\s+\}/,
+  )?.[0];
+
+  assert.ok(unavailableBranch, "handler rozpoznaje błąd ApiError 503");
+  assert.match(unavailableBranch, /changePasswordForm\.reset\(\);/);
+  assert.match(unavailableBranch, /changePasswordForm\.hidden = true;/);
+  assert.match(unavailableBranch, /changePasswordToggle\.setAttribute\("aria-expanded", "false"\);/);
+  assert.match(unavailableBranch, /renderAuthState\(\{ authenticated: false \}\);/);
+  assert.match(unavailableBranch, /showAuthForm\(loginForm\);/);
+  assert.match(unavailableBranch, /setAuthMessage\(error\.message, "error"\);/);
+});
+
+test("callback recovery przyjmuje kod bez markera i usuwa dane adresu", () => {
+  assert.match(appJs, /const isHashRecoveryCallback = Boolean\(accessToken && refreshToken && hash\.get\("type"\) === "recovery"\);/);
+  assert.match(appJs, /const isRecoveryCallback = \(Boolean\(code\) \|\| isHashRecoveryCallback\)/);
+  assert.match(appJs, /if \(!isRecoveryCallback\) \{[\s\S]*?return false;/);
+  assert.match(appJs, /window\.history\.replaceState\(\{\}, document\.title, window\.location\.pathname\);[\s\S]*?await api\("\/api\/auth\/recovery"/);
+});
+
+test("reset hasła odświeża CAPTCHA po każdej próbie", () => {
+  assert.match(appJs, /passwordResetForm\.addEventListener\("submit",[\s\S]*?finally \{[\s\S]*?resetCaptchaForForm\(passwordResetForm\);[\s\S]*?setAuthBusy\(passwordResetForm, false\);/);
+});
+
+test("style zmiany hasła jest ograniczony do strefy bezpieczeństwa", () => {
+  assert.match(stylesCss, /\.account-security-zone\s*\{/);
+  assert.match(stylesCss, /\.account-security-zone[\s\S]*?\.account-security-zone__panel/);
+  assert.doesNotMatch(stylesCss, /#changePasswordForm\s*\{/);
+});
+
+test("rejestracja wymaga regulaminu, wersji dokumentu i tokenu zaproszenia", () => {
+  const document = new JSDOM(indexHtml).window.document;
+  const checkbox = document.querySelector('#registerForm [name="termsAccepted"]');
+
+  assert.ok(checkbox, "formularz rejestracji ma checkbox regulaminu");
+  assert.equal(checkbox.required, true);
+  assert.equal(checkbox.checked, false);
+  assert.ok(document.querySelector('#registerForm [name="invitationToken"]'));
+  assert.ok(document.querySelector('#registerForm [name="termsVersion"]'));
+  assert.ok(document.querySelector('#registerForm [name="privacyNoticeVersion"]'));
+  assert.ok(document.querySelector('#copyrightNotice'));
+  assert.equal(document.querySelectorAll('a[href^="/informacje-prawne"]').length >= 3, true);
+  assert.match(indexHtml, /legal-document\.js/);
+  assert.match(appJs, /formatCopyrightNotice/);
+  assert.match(appJs, /copyrightNotice\.textContent/);
+  assert.doesNotMatch(indexHtml.toLocaleLowerCase("pl-PL"), /wyrażam zgodę na przetwarzanie/);
+});
+
+test("konto zawiera ukryty gate aktualnej akceptacji z drogą wyjścia", () => {
+  const document = new JSDOM(indexHtml).window.document;
+  const gate = document.getElementById("legalAcceptanceGate");
+
+  assert.ok(gate);
+  assert.equal(gate.hidden, true);
+  assert.equal(gate.querySelector('[name="termsAccepted"]').required, true);
+  assert.ok(gate.querySelector("#legalAcceptanceVersion"));
+  assert.ok(gate.querySelector('[role="status"]'));
+  assert.equal(gate.querySelector('a[href="#logoutBtn"]').textContent, "Wyloguj się");
+  assert.equal(gate.querySelector('a[href="#deleteAccountForm"]').textContent, "usuń konto");
+  assert.equal(gate.querySelector("#legalDeleteAccountLink").id, "legalDeleteAccountLink");
+  assert.match(appJs, /legalDeleteAccountLink\.addEventListener\("click", \(\) => \{[\s\S]*?deleteAccountDisclosure\.open = true;[\s\S]*?querySelector\("summary"\)\?\.focus\(/);
+  assert.equal(document.querySelectorAll("[data-view]").length, 4);
 });
 
 test("captcha remains available in every auth flow", () => {
-  assert.equal((indexHtml.match(/data-turnstile-for=/g) || []).length, 5);
+  assert.equal((indexHtml.match(/data-turnstile-for=/g) || []).length, 4);
   assert.match(indexHtml, /data-turnstile-for="passwordReset"/);
   assert.match(indexHtml, /data-turnstile-for="passwordChange"/);
   assert.match(appJs, /challenges\.cloudflare\.com\/turnstile\/v0\/api\.js\?render=explicit/);
@@ -295,7 +473,7 @@ test("inventory artwork keeps the prototype crop and focal point", () => {
 
 test("inventory artwork panel follows the panoramic hero height", () => {
   const visualRule = stylesCss.match(
-    /(?:^|\n)#inventoryView \.inventory-layout__visual \{([\s\S]*?)\n\}/,
+    /#inventoryView \.inventory-layout__visual \{([\s\S]*?)\n\}/,
   )?.[1] ?? "";
 
   assert.match(visualRule, /height: 100%;/);
@@ -336,62 +514,6 @@ test("catalog keeps search first, secondary filters grouped and artwork before r
   assert.equal(secondary.querySelectorAll("select").length, 5);
   assert.ok(catalog.querySelector(".catalog-hero").compareDocumentPosition(workspace)
     & catalog.DOCUMENT_POSITION_FOLLOWING);
-});
-
-test("account keeps only real authentication and account-management surfaces", () => {
-  assert.match(indexHtml, /id="accountThemeImage"/);
-  assert.match(indexHtml, /id="authLoggedIn"/);
-  assert.match(indexHtml, /id="deleteAccountForm"/);
-  assert.doesNotMatch(indexHtml, /id="accountProjects"/);
-  assert.doesNotMatch(indexHtml, /id="accountMetrics"/);
-  assert.doesNotMatch(indexHtml, /data-account-action=/);
-});
-
-test("logged-out account keeps the cat artwork vivid in both themes", () => {
-  assert.match(indexHtml, /id="accountThemeImage"[\s\S]*data-light-src="assets\/color-yarn-cat\.v1\.webp"[\s\S]*data-dark-src="assets\/night-yarn-cat\.v1\.webp"/);
-  assert.match(
-    stylesCss,
-    /#accountView:not\(\.is-authenticated\) \.auth-visual > \.auth-visual__image\s*\{[\s\S]*?opacity:\s*1;/,
-  );
-});
-
-test("authenticated header and account disclosure use the compact DOM contract", () => {
-  const document = new JSDOM(indexHtml).window.document;
-  const actions = [...document.querySelectorAll(".app-header__actions > *")];
-
-  assert.deepEqual(actions.map((node) => node.id), ["themeToggle", "headerAuthAction"]);
-  assert.equal(document.getElementById("headerAuthAction")?.getAttribute("type"), "button");
-  assert.equal(document.getElementById("headerAuthAction")?.textContent.trim(), "Zaloguj");
-  assert.equal(document.getElementById("headerUser"), null);
-  assert.match(document.getElementById("authProfileSummary").textContent, /Zalogowano jako:/);
-  assert.equal(document.querySelector("#authLoggedIn > .auth-message"), null);
-
-  const disclosure = document.getElementById("deleteAccountDisclosure");
-  assert.ok(disclosure);
-  assert.equal(disclosure.hasAttribute("open"), false);
-  assert.equal(disclosure?.tagName, "DETAILS");
-  assert.equal(disclosure?.className, "account-danger-disclosure");
-  assert.equal(disclosure?.open, false);
-  const disclosureSummary = disclosure?.querySelector("summary");
-  assert.match(disclosureSummary?.textContent ?? "", /Usuń konto/);
-  assert.match(disclosureSummary?.textContent ?? "", /Tej operacji nie można cofnąć\./);
-  assert.equal(disclosure?.querySelector("#deleteAccountForm")?.id, "deleteAccountForm");
-  assert.equal(disclosure?.querySelector('[data-turnstile-for="deleteAccount"]')?.className, "auth-captcha");
-});
-
-test("compact auth controls expose their required CSS contracts", () => {
-  assert.match(stylesCss, /\.header-auth-action[\s\S]*min-(?:width|height): 44px/);
-  assert.match(stylesCss, /\.header-auth-action[\s\S]*font-size: 0\.9rem/);
-  assert.match(stylesCss, /\.header-auth-action[\s\S]*font-weight: 650/);
-  assert.match(stylesCss, /\.header-auth-action[\s\S]*color: var\(--muted\)/);
-  assert.match(stylesCss, /\.account-danger-disclosure/);
-});
-
-test("authenticated password-change section spans the account grid", () => {
-  assert.match(
-    stylesCss,
-    /#accountView\.is-authenticated \.account-security-zone\s*\{[\s\S]*?grid-column:\s*1\s*\/\s*-1;/,
-  );
 });
 
 test("mobile catalog exposes the filter disclosure and shortens the account hero", () => {

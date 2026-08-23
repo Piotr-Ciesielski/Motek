@@ -1,6 +1,7 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
 const fs = require("node:fs");
+const os = require("node:os");
 const path = require("node:path");
 const { execFileSync } = require("node:child_process");
 const {
@@ -86,10 +87,21 @@ test("publikacja PDF wymaga adresu HTTPS", () => {
 });
 
 test("generator rozpoznaje trzy rekordy syntetyczne po nazwie", () => {
-  execFileSync(process.execPath, [path.join(__dirname, "..", "scripts", "build-pattern-content-audit.js"), "--replace"]);
-  const manifest = JSON.parse(fs.readFileSync(path.join(__dirname, "..", "data", "pattern-content-audit.json"), "utf8"));
-  assert.equal(manifest.records.filter((record) => record.source_kind === "synthetic").length, 3);
-  assert.equal(manifest.records.filter((record) => record.source_filename.endsWith(".synthetic.json")).every((record) => record.source_kind === "synthetic"), true);
+  const tempDirectory = fs.mkdtempSync(path.join(os.tmpdir(), "motek-pattern-audit-"));
+  const outputPath = path.join(tempDirectory, "manifest.json");
+  try {
+    execFileSync(process.execPath, [
+      path.join(__dirname, "..", "scripts", "build-pattern-content-audit.js"),
+      "--replace",
+      "--output",
+      outputPath,
+    ]);
+    const manifest = JSON.parse(fs.readFileSync(outputPath, "utf8"));
+    assert.equal(manifest.records.filter((record) => record.source_kind === "synthetic").length, 3);
+    assert.equal(manifest.records.filter((record) => record.source_filename.endsWith(".synthetic.json")).every((record) => record.source_kind === "synthetic"), true);
+  } finally {
+    fs.rmSync(tempDirectory, { recursive: true, force: true });
+  }
 });
 
 test("odrzuca instruktaż w dowolnym stringu rekordu", () => {
