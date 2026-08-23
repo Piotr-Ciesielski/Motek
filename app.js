@@ -2089,7 +2089,7 @@ async function startPasswordRecovery() {
     const recoveryBody = code
       ? { code }
       : { access_token: accessToken, refresh_token: refreshToken };
-    await api("/api/auth/recovery", {
+    const recovery = await api("/api/auth/recovery", {
       method: "POST",
       body: JSON.stringify(recoveryBody),
     });
