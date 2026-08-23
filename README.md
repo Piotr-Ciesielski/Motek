@@ -1,32 +1,27 @@
 # Motek
 
-Motek to prywatna aplikacja webowa dla osób robiących na drutach i szydełku. Pozwala prowadzić własny magazyn włóczek, przeglądać katalog wzorów i sprawdzać, które projekty można wykonać z posiadanych materiałów.
+Prywatna aplikacja webowa do zarządzania włóczkami, katalogiem wzorów i ich dopasowaniem.
 
-## Ostatnie zmiany — 2026-08-23
-
-- rejestracja działa automatycznie przez Supabase Auth i wymaga potwierdzenia adresu e-mail;
-- po zalogowaniu lub zaakceptowaniu aktualnych dokumentów prawnych katalog odświeża się bez ręcznego przeładowania strony;
-- długość i waga włóczki muszą być dodatnimi liczbami całkowitymi od 1 do 1 000 000;
-- dopasowanie pokazuje najbliższy powód braku wyniku; włóczka z materiałem `mieszanka` może zostać oznaczona jako możliwa przy nieokreślonym składzie, ale nie jest wtedy prezentowana jako potwierdzone dopasowanie;
-- uproszczono nagłówki ekranów Konta, Dopasowania i Katalogu.
+Motek to prywatna aplikacja dla osób robiących na drutach i szydełku, która pomaga zamienić zapas włóczek w konkretne pomysły na projekty. Użytkownik może prowadzić własny magazyn motków, przeglądać i filtrować katalog wzorów oraz sprawdzać, które projekty da się wykonać z materiałów, które już ma — bez ręcznego porównywania wymagań wzoru z zawartością szafy. Dzięki temu łatwiej wykorzystać posiadaną włóczkę, szybciej znaleźć odpowiedni wzór i podejmować decyzje bez kupowania materiałów na zapas.
 
 ## Lokalny start
 
-Wymagane są Node.js 24, npm i projekt Supabase.
+Wymagane: Node.js 24, npm i projekt Supabase.
 
-```powershell
+```bash
 npm install
-if (-not (Test-Path -LiteralPath .env)) {
-  Copy-Item -LiteralPath .env.example -Destination .env
-}
+copy .env.example .env   # PowerShell: Copy-Item .env.example .env
 npm start
 ```
 
-Jeśli `.env` już istnieje, pozostaje bez zmian razem z zapisanymi w nim lokalnymi sekretami.
+Aplikacja: `http://127.0.0.1:3001`.
 
-Aplikacja działa domyślnie pod `http://127.0.0.1:3001`, a publiczne informacje prawne pod `http://127.0.0.1:3001/informacje-prawne`.
+Publiczne informacje prawne są dostępne bez logowania pod adresem
+`http://127.0.0.1:3001/informacje-prawne`. Strona pokazuje bieżącą wersję
+regulaminu, informację o prywatności oraz prawa autorskie i pozwala wrócić do
+aplikacji.
 
-Minimalny profil lokalny używa poniższych nazw kluczy. Wartości Supabase należy pobrać z właściwego projektu; sekretów nie wolno dodawać do Git. Lokalny `SUPABASE_URL` może wskazywać projekt zdalny, więc każdą operację zapisującą trzeba traktować świadomie.
+Minimalne zmienne `.env`:
 
 ```dotenv
 HOST=127.0.0.1
@@ -37,55 +32,92 @@ SUPABASE_PUBLISHABLE_KEY=...
 SUPABASE_SECRET_KEY=...
 APP_ORIGIN=http://127.0.0.1:3001
 COOKIE_SECURE=false
-AUTH_IDLE_TIMEOUT_SECONDS=7200
-IDLE_SESSION_SECRET=...
 DEPLOYMENT_ENV=local
 CAPTCHA_ENABLED=false
 CAPTCHA_PROVIDER=turnstile
 CAPTCHA_SITE_KEY=
 METRICS_ENABLED=false
 TRUST_PROXY=false
+AUTH_IDLE_TIMEOUT_SECONDS=7200
 ```
 
-`IDLE_SESSION_SECRET` jest opcjonalny lokalnie. W środowiskach publicznych powinien być osobnym losowym sekretem.
+## Najważniejsze polecenia
 
-## Polecenia
-
-```powershell
-npm start                 # serwer lokalny
-npm run check             # składnia i wszystkie testy Node
+```bash
+npm run check             # testy i kontrola kodu
 npm run lint              # ESLint
-npm run format:check      # kontrola formatowania
-npm run coverage          # testy z progami pokrycia
-npm run legal:check       # gotowość publikacji prawnej
-npm run patterns:check    # walidacja importu bez zapisu
+npm run format:check      # Prettier
+npm run railway:check     # sprawdzenie konfiguracji Railway
+npm run regression:smoke  # szybki test wdrożenia
+npm run regression:full   # pełna regresja stagingu
 npm run invite -- create --email osoba@example.com --expires-at 2030-01-01T00:00:00Z
 npm run invite -- revoke --id <id-zaproszenia>
 npm run invite -- purge
-npm run test:db           # lokalny Supabase i testy pgTAP
-npm run railway:check     # kontrakt konfiguracji Railway
-npm run regression:smoke  # niedestrukcyjny test wdrożenia
-npm run regression:full   # pełna regresja stagingu
 ```
 
-## Środowiska
+### Zaproszenia operatora
 
-Wersja źródła lokalnego to `2.0.0-alpha.39` w `VERSION` i `package.json`.
+Narzędzie operatora tworzy zaproszenie, odwołuje je albo uruchamia czyszczenie starych logów bezpieczeństwa. Zaproszenia są osobnym narzędziem administracyjnym i nie są wymagane przy zwykłej rejestracji. Przy tworzeniu zapisuje w bazie wyłącznie hash tokenu; pełny link jest wypisywany tylko raz i nie jest wysyłany automatycznie e-mailem. Do działania wymagane są `SUPABASE_URL`, `SUPABASE_SECRET_KEY` oraz `APP_ORIGIN` w lokalnym `.env`.
 
-| Środowisko | Adres | Stan 2026-08-23 | Release |
-| --- | --- | --- | --- |
-| Staging | `https://staging.rysia.org` | osiągalny, `/health/release` gotowy; staging nie jest produkcją i nie jest dostępny dla użytkowników | `2.0.0-alpha.39`, SHA `03b62e72308770f6d9cc591c4ef1f69016bc437e`, `staging` |
-| Produkcja | `https://www.rysia.org` | osiągalna, `/health/release` gotowy | `2.0.0-alpha.39`, SHA `cc06179bd9481a83c016a4447930ddc3e9f09cb2`, `production` |
+Nie uruchamiaj komendy `create` na środowisku zdalnym bez świadomej decyzji operatora. Surowego tokenu nie da się później odzyskać.
 
-Na obu osiągalnych środowiskach `/informacje-prawne` zwraca `200`, a anonimowe `/api/patterns` zwraca `401`. Manifest dostawców jest zweryfikowany, a `npm run legal:check` zwraca `LEGAL_PUBLICATION=ready`.
+### Regulamin i dostęp do konta
 
-## Wdrożenia
+Rejestracja działa automatycznie przez Supabase Auth: użytkownik podaje e-mail
+i hasło, akceptuje bieżącą wersję regulaminu oraz otrzymuje e-mail z linkiem
+potwierdzającym adres. Backend ponownie sprawdza CAPTCHA, wersje dokumentów
+i akceptację, więc samo zmodyfikowanie formularza w przeglądarce nie wystarcza
+do utworzenia konta.
 
-Przepływ kodu to PR → CI → gałąź `staging` → pełna regresja → gałąź `main` → ręczny deploy produkcji → smoke test. Staging wdraża się automatycznie, produkcja wymaga działania operatora. Każde środowisko ma osobny projekt Supabase i osobne sekrety.
+Jeżeli regulamin zostanie zaktualizowany, zalogowana sesja pozostaje dostępna
+do wyświetlenia informacji prawnych, ponownej akceptacji, wylogowania i
+usunięcia konta. Magazyn włóczek, dopasowania i katalog wzorów pozostają
+zablokowane do czasu zaakceptowania bieżącej wersji.
 
-Railway buduje `deploy/railway/Dockerfile`, uruchamia Node.js 24 i sprawdza `/health/ready`. `/health/live` potwierdza działanie procesu, a `/health/release` podaje wersję, SHA i środowisko.
+## Środowiska i wdrożenia
 
-Zielone testy lub zweryfikowane wdrożenie nie są zgodą na migrację, import z zapisem, zmianę infrastruktury ani deploy produkcji. Każda taka operacja zewnętrzna wymaga osobnej, świadomej zgody.
+| Środowisko | Domena | Branch | Test po wdrożeniu |
+|---|---|---|---|
+| Staging | [staging.rysia.org](https://staging.rysia.org) | `staging` | pełna regresja |
+| Produkcja | [www.rysia.org](https://www.rysia.org) | `main` | smoke test |
+
+`rysia.org` przekierowuje do `www.rysia.org`. Każde środowisko ma osobny projekt Supabase i osobne sekrety.
+
+Railway buduje `Dockerfile`, uruchamia Node.js 24 i sprawdza gotowość przez `/health/ready`. Cloudflare obsługuje DNS, proxy, HTTPS/TLS i WAF. API nie powinno być cache'owane.
+
+Przepływ: PR → CI → `staging` → regresja → `main` → produkcja. Wdrożenie z błędnym SHA, niesprawnym healthcheckiem lub nieudaną regresją jest blokowane.
+
+## CI/CD i wersja
+
+GitHub Actions uruchamiają testy, lint, formatowanie, audyt npm i testy Supabase. Po wdrożeniu workflow sprawdza właściwy commit oraz uruchamia regresję.
+
+Numer wersji jest w pliku [`VERSION`](VERSION) (obecnie `2.0.0-alpha.39`) i musi odpowiadać wersji w `package.json`. CI kontroluje wersję i SHA; numer wydania aktualizuje się świadomie w repozytorium.
+
+Staging korzysta z krótkotrwałych, podpisanych i jednorazowych grantów recovery.
+Backend atomowo rezerwuje grant przed zmianą hasła, zwalnia rezerwację przy
+błędzie, a po sukcesie zużywa grant i unieważnia pozostałe sesje użytkownika.
+Ochrona przed wyciekłymi hasłami pozostaje niedostępna na Supabase Free.
+
+## Diagnostyka
+
+- `/health/live` — proces działa;
+- `/health/ready` — aplikacja i zależności są gotowe;
+- `/health/release` — wersja, SHA i środowisko.
+
+Przy błędzie logowania regresji sprawdź sekrety `MOTEK_QA_EMAIL` i `MOTEK_QA_PASSWORD` w GitHub Environment `staging`.
+
+## Railway i środowiska
+
+- staging działa z gałęzi `staging` pod `https://staging.rysia.org` i wdraża się automatycznie;
+- produkcja działa z gałęzi `main` pod `https://www.rysia.org`, a auto-deploy jest wyłączony — publikację uruchamia operator ręcznie z repozytorium źródłowego Railway;
+- Cloudflare obsługuje DNS, proxy/WAF i HTTPS, a każde środowisko korzysta z osobnego Supabase;
+- po deployu stagingu uruchamia się `regression:full`, a po ręcznym deployu produkcji `regression:smoke`.
+
+Po publikacji porównuj wersje zasobów w HTML obu domen. Jeśli produkcja nadal wskazuje starszy cache-buster mimo zdrowego deploymentu, użyj `railway redeploy --from-source --yes` dla środowiska `production`, a następnie ponów kontrolę publicznego HTML.
+
+Sesja użytkownika wygasa po 2 godzinach bezczynności (`AUTH_IDLE_TIMEOUT_SECONDS=7200`).
+
+Zielone testy lub zweryfikowane wdrozenie nie sa zgoda na migracje, import z zapisem, zmiane infrastruktury ani deploy produkcji. Kazda taka operacja zewnetrzna wymaga osobnej, swiadomej zgody.
 
 ## Dokumentacja
 

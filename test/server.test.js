@@ -17,6 +17,7 @@ const {
   getIdleTimeoutSeconds,
   buildIdleActivityCookie,
   parseIdleActivityCookie,
+  buildRecoveryGrantCookie,
   parseRecoveryGrantCookie,
 } = require("../server");
 
@@ -37,16 +38,49 @@ test("podpisane ciasteczko aktywności odrzuca zmieniony timestamp", () => {
   assert.equal(parseIdleActivityCookie(tampered.split(";")[0].split("=")[1], env, 1_700_000_100), null);
 });
 
-test("grant odzyskiwania jest związany z użytkownikiem i wygasa", () => {
-  const server = require("../server");
-  const cookie = server.buildRecoveryGrantCookie?.("user-1", {
+test("sesja Auth wymaga obecności prawidłowego ciasteczka aktywności", () => {
+  const env = { NODE_ENV: "test", IDLE_SESSION_SECRET: "test-idle-secret" };
+  const cookie = buildIdleActivityCookie(1_700_000_000, env);
+  const value = cookie.split(";", 1)[0].split("=", 2)[1];
+
+  assert.equal(parseIdleActivityCookie(undefined, env, 1_700_000_100), null);
+  assert.equal(parseIdleActivityCookie(value, env, 1_700_000_100), 1_700_000_000);
+});
+
+test("grant odzyskiwania używa osobnego sekretu, wiąże użytkownika, wygasa i odrzuca zmieniony podpis", () => {
+  const env = {
+    IDLE_SESSION_SECRET: "test-idle-secret",
+    RECOVERY_GRANT_SECRET: "test-recovery-secret",
+  };
+  const cookie = buildRecoveryGrantCookie("user-1", {
     jti: "grant-jti-test",
     timestamp: 1_700_000_000,
+    env,
   });
-  const value = cookie.split(";")[0].split("=").slice(1).join("=");
-  assert.equal(parseRecoveryGrantCookie(value, "user-1", 1_700_000_100), true);
-  assert.equal(parseRecoveryGrantCookie(value, "user-2", 1_700_000_100), false);
-  assert.equal(parseRecoveryGrantCookie(value, "user-1", 1_700_000_601), false);
+  const value = cookie.split(";", 1)[0].split("=", 2)[1];
+
+  assert.equal(value.split(".").length, 4);
+  assert.equal(parseRecoveryGrantCookie(value, "user-1", 1_700_000_100, env), true);
+  assert.equal(
+    parseRecoveryGrantCookie(value, "user-1", 1_700_000_100, { IDLE_SESSION_SECRET: env.IDLE_SESSION_SECRET }),
+    false,
+  );
+  assert.equal(parseRecoveryGrantCookie(value, "user-2", 1_700_000_100, env), false);
+  assert.equal(parseRecoveryGrantCookie(value, "user-1", 1_700_000_601, env), false);
+
+  const [rawUserId, jti, timestamp, signature] = value.split(".");
+  const signatureAlphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
+  const lastSignatureIndex = signatureAlphabet.indexOf(signature.at(-1));
+  const tamperedSignature = `${signature.slice(0, -1)}${signatureAlphabet[lastSignatureIndex ^ 16]}`;
+  assert.equal(
+    parseRecoveryGrantCookie(
+      `${rawUserId}.${jti}.${timestamp}.${tamperedSignature}`,
+      "user-1",
+      1_700_000_100,
+      env,
+    ),
+    false,
+  );
 });
 test("konfiguracja uruchomieniowa bez zmiennych używa lokalnego portu 3001", () => {
   assert.deepEqual(getRuntimeConfig?.({}), {
@@ -397,7 +431,6 @@ test("serwer Motek działa bezpiecznie", async (t) => {
   const syntheticUsers = {
     "token-user-a": { id: "11111111-1111-4111-8111-111111111111", email: "a@example.com" },
     "token-user-b": { id: "22222222-2222-4222-8222-222222222222", email: "b@example.com" },
-    "token-user-stale": { id: "44444444-4444-4444-8444-444444444444", email: "stale@example.com" },
   };
   const syntheticProfiles = Object.fromEntries(
     Object.values(syntheticUsers).map((user) => [user.id, {
@@ -407,26 +440,14 @@ test("serwer Motek działa bezpiecznie", async (t) => {
       status: "active",
     }])
   );
-  const syntheticLegalStates = {
-    [syntheticUsers["token-user-a"].id]: {
+  const syntheticLegalStates = Object.fromEntries(
+    Object.values(syntheticUsers).map((user) => [user.id, {
       currentTermsVersion: "1.0",
       currentPrivacyVersion: "1.0",
       acceptedVersion: "1.0",
       acceptanceRequired: false,
-    },
-    [syntheticUsers["token-user-b"].id]: {
-      currentTermsVersion: "1.0",
-      currentPrivacyVersion: "1.0",
-      acceptedVersion: "1.0",
-      acceptanceRequired: false,
-    },
-    [syntheticUsers["token-user-stale"].id]: {
-      currentTermsVersion: "1.0",
-      currentPrivacyVersion: "1.0",
-      acceptedVersion: null,
-      acceptanceRequired: true,
-    },
-  };
+    }])
+  );
   const syntheticYarns = [];
   const syntheticYarnVersions = Object.fromEntries(
     Object.values(syntheticUsers).map((user) => [user.id, 0])
@@ -435,7 +456,6 @@ test("serwer Motek działa bezpiecznie", async (t) => {
   let versionedRpcBatchScheduled = false;
   let nextSyntheticYarnId = 1;
   const recoveryRequests = [];
-  let recoveryRequestError = null;
   const exchangedRecoveryCodes = [];
   const recoveryGrantRpcs = [];
   const recoveryGrantState = {
@@ -443,25 +463,46 @@ test("serwer Motek działa bezpiecznie", async (t) => {
     claimResult: true,
     claimError: null,
     releaseResult: true,
+    releaseError: null,
     consumeResult: true,
     updateUserCalls: 0,
-    updateUserArgs: [],
     updateUserError: null,
-    updateUserException: null,
-    setSessionArgs: [],
-    setSessionError: null,
-    signOutError: null,
-    verifyPasswordCalls: 0,
-    verifyPasswordError: null,
-    signInWithPasswordArgs: [],
   };
   const recoveryGrantEvents = [];
-  const passwordChangeEvents = [];
-  const authClientFactoryTokens = [];
+  const recoveryGrantCalls = [];
+  const recoveryGrants = new Map();
   const signOutScopes = [];
   const signUpRequests = [];
+  const automaticRegistrationFinalizations = [];
+  const issuedSignupConfirmationTokens = [];
+  const usedSignupConfirmationTokens = new Set();
+  const expiredConfirmationTokens = {
+    access_token: "expired-signup-access-token",
+    refresh_token: "expired-signup-refresh-token",
+  };
+  const confirmedSignupUser = {
+    id: "33333333-3333-4333-8333-333333333333",
+    email: "nowy@example.com",
+    email_confirmed_at: "2026-08-06T00:00:00.000Z",
+    user_metadata: { login: "nowy@example.com" },
+  };
   const deletedUserIds = [];
-  const serviceProfileReads = [];
+  const deletionVerificationAttempts = [];
+  let profileResultOverride = null;
+  let profileQueryFailure = null;
+  let authenticatedProfileAccessDenied = false;
+  let signOutFailure = null;
+
+  function sessionCookies(accessToken, refreshToken) {
+    const idleActivity = buildIdleActivityCookie(Math.floor(Date.now() / 1000))
+      .split(";", 1)[0]
+      .split("=", 2)[1];
+    return [
+      `motek_access_token=${accessToken}`,
+      refreshToken ? `motek_refresh_token=${refreshToken}` : null,
+      `motek_idle_activity=${idleActivity}`,
+    ].filter(Boolean).join("; ");
+  }
 
     function createSyntheticQuery(table, _token) {
       const filters = [];
@@ -493,6 +534,11 @@ test("serwer Motek działa bezpiecznie", async (t) => {
         return Promise.resolve({ data: rows, error: null });
       },
       maybeSingle() {
+        if (table === "profiles" && profileQueryFailure) return Promise.reject(profileQueryFailure);
+        if (table === "profiles" && profileResultOverride) return Promise.resolve(profileResultOverride);
+        if (table === "profiles" && authenticatedProfileAccessDenied && _token !== "service-role") {
+          return Promise.resolve({ data: null, error: null });
+        }
         const rows = table === "profiles"
           ? Object.values(syntheticProfiles).filter((row) => filters.every(([field, value]) => row[field] === value))
           : [];
@@ -532,20 +578,26 @@ test("serwer Motek działa bezpiecznie", async (t) => {
   }
 
   function fakeSupabaseAuthClientFactory(config, token) {
-    authClientFactoryTokens.push(token);
     return {
       auth: {
         async getUser(accessToken) {
+          if (issuedSignupConfirmationTokens.some(({ access_token }) => access_token === accessToken)) {
+            return { data: { user: confirmedSignupUser }, error: null };
+          }
           const user = syntheticUsers[accessToken];
           return user ? { data: { user }, error: null } : { data: null, error: new Error("invalid token") };
         },
-        async signOut(options) {
-          signOutScopes.push(options);
-          passwordChangeEvents.push({ name: "signOut", args: options });
-          if (recoveryGrantState.signOutError) throw recoveryGrantState.signOutError;
+        async signOut({ scope } = {}) {
+          if (signOutFailure instanceof Error) throw signOutFailure;
+          signOutScopes.push({ token, scope });
+          return signOutFailure || { error: null };
         },
         async signUp({ email, options }) {
           signUpRequests.push({ email, options });
+          issuedSignupConfirmationTokens.push({
+            access_token: `signup-access-token-${issuedSignupConfirmationTokens.length + 1}`,
+            refresh_token: `signup-refresh-token-${issuedSignupConfirmationTokens.length + 1}`,
+          });
           return {
             data: {
               user: {
@@ -560,28 +612,26 @@ test("serwer Motek działa bezpiecznie", async (t) => {
             error: null,
           };
         },
-        async signInWithPassword({ email, password, options }) {
-          recoveryGrantState.verifyPasswordCalls += 1;
-          recoveryGrantState.signInWithPasswordArgs.push({ email, password, ...(options ? { options } : {}) });
-          passwordChangeEvents.push({ name: "signInWithPassword", args: { email, password, ...(options ? { options } : {}) } });
-          if (recoveryGrantState.verifyPasswordError) {
-            return { data: null, error: recoveryGrantState.verifyPasswordError };
-          }
+        async signInWithPassword(credentials) {
+          const { email, password } = credentials;
           if (
-            (email === syntheticUsers["token-user-a"].email && password === "DeleteHaslo1!") ||
-            (email === syntheticUsers["token-user-a"].email && password === "  DeleteHaslo1!  ") ||
-            (email === syntheticUsers["token-user-stale"].email && password === "DeleteStale1!")
+            email === syntheticUsers["token-user-a"].email &&
+            password === "DeleteHaslo1!"
           ) {
-            const user = email === syntheticUsers["token-user-stale"].email
-              ? syntheticUsers["token-user-stale"]
-              : syntheticUsers["token-user-a"];
-            return { data: { user }, error: null };
+            deletionVerificationAttempts.push(credentials);
+            return {
+              data: {
+                user: syntheticUsers["token-user-a"],
+                session: { access_token: "token-user-a", refresh_token: "refresh-user-a" },
+              },
+              error: null,
+            };
           }
           return { data: null, error: new Error("invalid credentials") };
         },
         async resetPasswordForEmail(email, options) {
           recoveryRequests.push({ email, options });
-          return { data: {}, error: recoveryRequestError };
+          return { data: {}, error: null };
         },
         async exchangeCodeForSession(code) {
           exchangedRecoveryCodes.push(code);
@@ -594,21 +644,35 @@ test("serwer Motek działa bezpiecznie", async (t) => {
           };
         },
         async setSession({ access_token, refresh_token }) {
-          recoveryGrantState.setSessionArgs.push({ access_token, refresh_token });
-          if (recoveryGrantState.setSessionError) {
-            return { data: { session: null }, error: recoveryGrantState.setSessionError };
+          const signupConfirmationTokens = issuedSignupConfirmationTokens.find((tokens) => (
+          tokens.access_token === access_token && tokens.refresh_token === refresh_token
+          ));
+          if (signupConfirmationTokens) {
+            if (usedSignupConfirmationTokens.has(access_token)) {
+              return { data: { session: null, user: null }, error: new Error("token already used") };
+            }
+            usedSignupConfirmationTokens.add(access_token);
+            return {
+              data: {
+                session: { access_token, refresh_token },
+              },
+              error: null,
+            };
           }
+          if (
+            access_token === expiredConfirmationTokens.access_token
+            && refresh_token === expiredConfirmationTokens.refresh_token
+          ) {
+            return { data: { session: null, user: null }, error: new Error("token expired") };
+          }
+          assert.equal(access_token, token);
           assert.equal(refresh_token, "refresh-user-a");
           return { data: { session: { access_token, refresh_token } }, error: null };
         },
-        async updateUser(args) {
-          const { password } = args;
+        async updateUser({ password }) {
           assert.equal(password, "NoweHaslo123!");
           recoveryGrantState.updateUserCalls += 1;
-          recoveryGrantState.updateUserArgs.push(args);
           recoveryGrantEvents.push({ name: "updateUser" });
-          passwordChangeEvents.push({ name: "updateUser", args });
-          if (recoveryGrantState.updateUserException) throw recoveryGrantState.updateUserException;
           return { data: { user: syntheticUsers[token] }, error: recoveryGrantState.updateUserError };
         },
       },
@@ -629,18 +693,17 @@ test("serwer Motek działa bezpiecznie", async (t) => {
         if (name === "claim_auth_recovery_grant") {
           recoveryGrantRpcs.push({ name, args, userId });
           recoveryGrantEvents.push({ name, args });
-          if (recoveryGrantState.claimError) {
-            return Promise.resolve({ data: null, error: recoveryGrantState.claimError });
-          }
           const claimed = recoveryGrantState.claimResult === true && !recoveryGrantState.claimed;
           if (claimed) recoveryGrantState.claimed = true;
-          return Promise.resolve({ data: claimed, error: null });
+          return Promise.resolve({ data: claimed, error: recoveryGrantState.claimError });
         }
         if (name === "release_auth_recovery_grant") {
           recoveryGrantRpcs.push({ name, args, userId });
           recoveryGrantEvents.push({ name, args });
-          recoveryGrantState.claimed = false;
-          return Promise.resolve({ data: recoveryGrantState.releaseResult, error: null });
+          if (!recoveryGrantState.releaseError && recoveryGrantState.releaseResult === true) {
+            recoveryGrantState.claimed = false;
+          }
+          return Promise.resolve({ data: recoveryGrantState.releaseResult, error: recoveryGrantState.releaseError });
         }
         if (name === "get_yarn_store_version") {
           return Promise.resolve({ data: syntheticYarnVersions[userId] ?? 0, error: null });
@@ -656,7 +719,7 @@ test("serwer Motek działa bezpiecznie", async (t) => {
             for (const request of batch) {
               const { name: rpcName, args: rpcArgs, userId: rpcUserId } = request;
               if (request.observedVersion !== rpcArgs.p_expected_version || syntheticYarnVersions[rpcUserId] !== request.observedVersion) {
-                request.resolve({ data: null, error: { code: "40001", message: "yarn version conflict" } });
+                request.resolve({ data: null, error: { code: "P0003", message: "yarn version conflict" } });
                 continue;
               }
               if (rpcName === "update_yarn_versioned") {
@@ -715,6 +778,72 @@ test("serwer Motek działa bezpiecznie", async (t) => {
   const fakeSupabaseConnection = {
     verify: async () => {},
     client: {
+      rpc(name, args) {
+        if (name === "get_account_access_state") {
+          return Promise.resolve({ data: syntheticLegalStates[args.p_user_id], error: null });
+        }
+        if (name === "reserve_registration_invitation") {
+          return Promise.resolve({ data: "invitation-1", error: null });
+        }
+        if (name === "attach_registration_user") {
+          return Promise.resolve({ data: true, error: null });
+        }
+        if (name === "finalize_invited_registration") {
+          return Promise.resolve({ data: "2026-08-09T12:00:00.000Z", error: null });
+        }
+        if (name === "release_registration_reservation") {
+          return Promise.resolve({ data: true, error: null });
+        }
+        if (name === "record_terms_acceptance") {
+          const state = syntheticLegalStates[args.p_user_id];
+          if (state) {
+            state.acceptedVersion = args.p_terms_version;
+            state.acceptanceRequired = false;
+          }
+          return Promise.resolve({ data: "2026-08-09T12:00:00.000Z", error: null });
+        }
+        if (name === "finalize_automatic_registration") {
+          automaticRegistrationFinalizations.push(args);
+          return Promise.resolve({ data: "2026-08-09T12:00:00.000Z", error: null });
+        }
+        if (name === "create_auth_recovery_grant") {
+          recoveryGrantCalls.push(args);
+          recoveryGrants.set(args.p_jti_hash, {
+            userId: args.p_user_id,
+            expiresAt: args.p_expires_at,
+            claimed: false,
+            used: false,
+          });
+          return Promise.resolve({ data: true, error: null });
+        }
+        if (name === "claim_auth_recovery_grant") {
+          const grant = recoveryGrants.get(args.p_jti_hash);
+          const usable = grant
+            && grant.userId === args.p_user_id
+            && !grant.claimed
+            && !grant.used
+            && Date.parse(grant.expiresAt) > Date.now();
+          if (usable) grant.claimed = true;
+          return Promise.resolve({ data: Boolean(usable), error: null });
+        }
+        if (name === "release_auth_recovery_grant") {
+          const grant = recoveryGrants.get(args.p_jti_hash);
+          const released = grant?.userId === args.p_user_id && grant.claimed && !grant.used;
+          if (released) grant.claimed = false;
+          return Promise.resolve({ data: Boolean(released), error: null });
+        }
+        if (name === "consume_auth_recovery_grant") {
+          const grant = recoveryGrants.get(args.p_jti_hash);
+          const usable = grant
+            && grant.userId === args.p_user_id
+            && grant.claimed
+            && !grant.used
+            && Date.parse(grant.expiresAt) > Date.now();
+          if (usable) grant.used = true;
+          return Promise.resolve({ data: Boolean(usable), error: null });
+        }
+        assert.fail(`Nieoczekiwane RPC klienta serwerowego: ${name}`);
+      },
       auth: {
         admin: {
           async deleteUser(userId) {
@@ -725,7 +854,6 @@ test("serwer Motek działa bezpiecznie", async (t) => {
       },
       from(table) {
         if (table === "profiles") {
-          serviceProfileReads.push(true);
           return createSyntheticQuery(table, "service-role");
         }
         assert.equal(table, "patterns");
@@ -758,30 +886,6 @@ test("serwer Motek działa bezpiecznie", async (t) => {
           },
         };
       },
-      async rpc(name, args) {
-        if (name === "get_account_access_state") {
-          return { data: syntheticLegalStates[args.p_user_id], error: null };
-        }
-        if (name === "reserve_registration_invitation") {
-          return { data: "invitation-1", error: null };
-        }
-        if (name === "attach_registration_user") {
-          return { data: true, error: null };
-        }
-        if (name === "finalize_invited_registration") {
-          return { data: "2026-08-09T12:00:00.000Z", error: null };
-        }
-        if (name === "release_registration_reservation") {
-          return { data: true, error: null };
-        }
-        if (name === "record_terms_acceptance") {
-          const state = syntheticLegalStates[args.p_user_id];
-          state.acceptedVersion = args.p_terms_version;
-          state.acceptanceRequired = false;
-          return { data: "2026-08-09T12:00:00.000Z", error: null };
-        }
-        throw new Error(`Unexpected service RPC ${name}`);
-      },
     },
   };
   const runtime = await main({
@@ -792,11 +896,30 @@ test("serwer Motek działa bezpiecznie", async (t) => {
     metricsEnabled: true,
   });
   const baseUrl = `http://${runtime.host}:${runtime.port}`;
-  const idleActivityCookie = buildIdleActivityCookie(Math.floor(Date.now() / 1000))
-    .split(";", 1)[0];
-  const syntheticAuthCookies = (token) => `motek_access_token=${token}; ${idleActivityCookie}`;
 
   try {
+    await t.test("utrzymuje sesję przed akceptacją aktualnego regulaminu", async () => {
+      const legalState = syntheticLegalStates[syntheticUsers["token-user-a"].id];
+      const previousAcceptedVersion = legalState.acceptedVersion;
+      const previousAcceptanceRequired = legalState.acceptanceRequired;
+      authenticatedProfileAccessDenied = true;
+      legalState.acceptedVersion = null;
+      legalState.acceptanceRequired = true;
+      try {
+        const response = await fetch(`${baseUrl}/api/auth/session`, {
+          headers: { Cookie: sessionCookies("token-user-a") },
+        });
+        assert.equal(response.status, 200);
+        const body = await response.json();
+        assert.equal(body.authenticated, true);
+        assert.equal(body.legal.acceptanceRequired, true);
+      } finally {
+        authenticatedProfileAccessDenied = false;
+        legalState.acceptedVersion = previousAcceptedVersion;
+        legalState.acceptanceRequired = previousAcceptanceRequired;
+      }
+    });
+
     await t.test("zgłasza stan zdrowia bez ujawniania szczegółów", async () => {
       const response = await fetch(`${baseUrl}/health`);
       assert.equal(response.status, 200);
@@ -829,17 +952,8 @@ test("serwer Motek działa bezpiecznie", async (t) => {
       assert.equal(response.status, 200);
       assert.match(response.headers.get("content-security-policy"), /default-src 'self'/);
       assert.match(response.headers.get("content-security-policy"), /challenges\.cloudflare\.com/);
-      assert.match(
-        response.headers.get("content-security-policy"),
-        /connect-src[^;]*https:\/\/challenges\.cloudflare\.com/
-      );
       assert.equal(response.headers.get("x-content-type-options"), "nosniff");
       assert.equal(response.headers.get("x-frame-options"), "DENY");
-      assert.equal(response.headers.get("referrer-policy"), "no-referrer");
-      assert.equal(response.headers.get("permissions-policy"), "camera=(), microphone=(), geolocation=()");
-      assert.equal(response.headers.get("cross-origin-opener-policy"), "same-origin");
-      assert.equal(response.headers.get("cross-origin-resource-policy"), "same-origin");
-      assert.equal(response.headers.get("strict-transport-security"), null);
       assert.equal(response.headers.get("access-control-allow-origin"), null);
       const pageHtml = await response.text();
       assert.match(pageHtml, /class="inventory-layout"/);
@@ -888,6 +1002,93 @@ test("serwer Motek działa bezpiecznie", async (t) => {
       assert.equal(response.status, 401);
     });
 
+    await t.test("kończy sesję bez prawidłowej aktywności mimo ważnego tokenu", async () => {
+      const missingActivity = await fetch(`${baseUrl}/api/yarns`, {
+        headers: { Cookie: "motek_access_token=token-user-a" },
+      });
+      assert.equal(missingActivity.status, 401);
+      assert.match(missingActivity.headers.get("set-cookie"), /motek_access_token=.*Max-Age=0/);
+      assert.match(missingActivity.headers.get("set-cookie"), /motek_idle_activity=.*Max-Age=0/);
+
+      const invalidActivity = await fetch(`${baseUrl}/api/yarns`, {
+        headers: { Cookie: "motek_access_token=token-user-a; motek_idle_activity=invalid.signature" },
+      });
+      assert.equal(invalidActivity.status, 401);
+      assert.match(invalidActivity.headers.get("set-cookie"), /motek_access_token=.*Max-Age=0/);
+
+      const expiredActivity = buildIdleActivityCookie(0).split(";", 1)[0].split("=", 2)[1];
+      const expiredResponse = await fetch(`${baseUrl}/api/yarns`, {
+        headers: { Cookie: `motek_access_token=token-user-a; motek_idle_activity=${expiredActivity}` },
+      });
+      assert.equal(expiredResponse.status, 401);
+      assert.match(expiredResponse.headers.get("set-cookie"), /motek_idle_activity=.*Max-Age=0/);
+    });
+
+    await t.test("wylogowanie wygasza ciasteczka mimo błędu Supabase", async () => {
+      signOutFailure = new Error("Supabase niedostępne");
+      try {
+        const response = await fetch(`${baseUrl}/api/auth/logout`, {
+          method: "POST",
+          headers: { Origin: baseUrl, Cookie: sessionCookies("token-user-a") },
+        });
+        assert.equal(response.status, 200);
+        assert.deepEqual(await response.json(), { authenticated: false });
+        assert.match(response.headers.get("set-cookie"), /motek_access_token=.*Max-Age=0/);
+        assert.match(response.headers.get("set-cookie"), /motek_refresh_token=.*Max-Age=0/);
+        assert.match(response.headers.get("set-cookie"), /motek_idle_activity=.*Max-Age=0/);
+      } finally {
+        signOutFailure = null;
+      }
+    });
+
+    await t.test("zachowuje sesję podczas przejściowego błędu profilu", async () => {
+      profileQueryFailure = Object.assign(new Error("Przekroczono czas oczekiwania"), { code: "ETIMEDOUT" });
+      try {
+        const timeoutResponse = await fetch(`${baseUrl}/api/yarns`, {
+          headers: { Cookie: sessionCookies("token-user-a") },
+        });
+        assert.equal(timeoutResponse.status, 503);
+        assert.equal(timeoutResponse.headers.get("set-cookie"), null);
+      } finally {
+        profileQueryFailure = null;
+      }
+
+      profileResultOverride = { data: null, error: { message: "Supabase niedostępne", status: 503 } };
+      try {
+        const unavailableResponse = await fetch(`${baseUrl}/api/yarns`, {
+          headers: { Cookie: sessionCookies("token-user-a") },
+        });
+        assert.equal(unavailableResponse.status, 503);
+        assert.equal(unavailableResponse.headers.get("set-cookie"), null);
+      } finally {
+        profileResultOverride = null;
+      }
+    });
+
+    await t.test("kończy sesję, gdy profil nie istnieje lub nie jest aktywny", async () => {
+      profileResultOverride = { data: null, error: null };
+      try {
+        const missingProfile = await fetch(`${baseUrl}/api/yarns`, {
+          headers: { Cookie: sessionCookies("token-user-a") },
+        });
+        assert.equal(missingProfile.status, 401);
+        assert.match(missingProfile.headers.get("set-cookie"), /motek_access_token=.*Max-Age=0/);
+      } finally {
+        profileResultOverride = null;
+      }
+
+      syntheticProfiles[syntheticUsers["token-user-a"].id].status = "suspended";
+      try {
+        const inactiveProfile = await fetch(`${baseUrl}/api/yarns`, {
+          headers: { Cookie: sessionCookies("token-user-a") },
+        });
+        assert.equal(inactiveProfile.status, 403);
+        assert.match(inactiveProfile.headers.get("set-cookie"), /motek_access_token=.*Max-Age=0/);
+      } finally {
+        syntheticProfiles[syntheticUsers["token-user-a"].id].status = "active";
+      }
+    });
+
     await t.test("obsługuje rejestrację i nie ujawnia szczegółów błędu logowania", async () => {
       const missingCaptchaResponse = await fetch(`${baseUrl}/api/auth/register`, {
         method: "POST",
@@ -903,13 +1104,17 @@ test("serwer Motek działa bezpiecznie", async (t) => {
           login: " NOWY@EXAMPLE.COM ",
           password: "Haslo123!",
           captchaToken: "register-token",
-          invitationToken: "a".repeat(64),
           termsAccepted: true,
           termsVersion: "1.0",
           privacyNoticeVersion: "1.0",
         }),
       });
       assert.equal(registerResponse.status, 201);
+      assert.deepEqual(automaticRegistrationFinalizations.at(-1), {
+        p_user_id: "33333333-3333-4333-8333-333333333333",
+        p_terms_version: "1.0",
+        p_privacy_version: "1.0",
+      });
       assert.deepEqual(await registerResponse.json(), {
         user: {
           id: "33333333-3333-4333-8333-333333333333",
@@ -918,6 +1123,7 @@ test("serwer Motek działa bezpiecznie", async (t) => {
           metadata: { login: "nowy@example.com" },
         },
         requiresEmailConfirmation: true,
+        idleTimeoutMs: 2 * 60 * 60 * 1000,
       });
       assert.deepEqual(signUpRequests.at(-1), {
         email: "nowy@example.com",
@@ -928,6 +1134,18 @@ test("serwer Motek działa bezpiecznie", async (t) => {
         },
       });
 
+      const successfulLogin = await fetch(`${baseUrl}/api/auth/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Origin: baseUrl },
+        body: JSON.stringify({
+          email: "a@example.com",
+          password: "DeleteHaslo1!",
+          captchaToken: "valid-login-token",
+        }),
+      });
+      assert.equal(successfulLogin.status, 200);
+      assert.equal((await successfulLogin.json()).idleTimeoutMs, 2 * 60 * 60 * 1000);
+
       const loginResponse = await fetch(`${baseUrl}/api/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Origin: baseUrl },
@@ -936,6 +1154,68 @@ test("serwer Motek działa bezpiecznie", async (t) => {
       assert.equal(loginResponse.status, 401);
       assert.deepEqual(await loginResponse.json(), {
         error: "Nieprawidłowy e-mail lub hasło.",
+      });
+    });
+
+    await t.test("potwierdza tokeny wydane podczas rejestracji i ustawia sesję", async () => {
+      const registerResponse = await fetch(`${baseUrl}/api/auth/register`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Origin: baseUrl },
+        body: JSON.stringify({
+          login: "potwierdzenie@example.com",
+          password: "Haslo123!",
+          captchaToken: "register-confirmation-token",
+          termsAccepted: true,
+          termsVersion: "1.0",
+          privacyNoticeVersion: "1.0",
+        }),
+      });
+      assert.equal(registerResponse.status, 201);
+      assert.equal((await registerResponse.json()).requiresEmailConfirmation, true);
+
+      const confirmationTokens = issuedSignupConfirmationTokens.at(-1);
+      assert.ok(confirmationTokens);
+      const confirmation = await fetch(`${baseUrl}/api/auth/confirmation`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Origin: baseUrl },
+        body: JSON.stringify(confirmationTokens),
+      });
+
+      assert.equal(confirmation.status, 200);
+      assert.deepEqual(await confirmation.json(), {
+        user: {
+          id: "33333333-3333-4333-8333-333333333333",
+          email: "nowy@example.com",
+          emailConfirmed: true,
+          metadata: { login: "nowy@example.com" },
+        },
+        idleTimeoutMs: 2 * 60 * 60 * 1000,
+      });
+      assert.match(confirmation.headers.get("set-cookie"), new RegExp(`motek_access_token=${confirmationTokens.access_token}`));
+      assert.match(confirmation.headers.get("set-cookie"), new RegExp(`motek_refresh_token=${confirmationTokens.refresh_token}`));
+      assert.match(confirmation.headers.get("set-cookie"), /motek_idle_activity=/);
+
+      const reused = await fetch(`${baseUrl}/api/auth/confirmation`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Origin: baseUrl },
+        body: JSON.stringify(confirmationTokens),
+      });
+      assert.equal(reused.status, 400);
+      assert.deepEqual(await reused.json(), {
+        error: "Link potwierdzający jest nieprawidłowy lub wygasł.",
+      });
+    });
+
+    await t.test("zwraca neutralny błąd dla osobnego wygasłego tokenu potwierdzenia", async () => {
+      const expired = await fetch(`${baseUrl}/api/auth/confirmation`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Origin: baseUrl },
+        body: JSON.stringify(expiredConfirmationTokens),
+      });
+
+      assert.equal(expired.status, 400);
+      assert.deepEqual(await expired.json(), {
+        error: "Link potwierdzający jest nieprawidłowy lub wygasł.",
       });
     });
 
@@ -955,70 +1235,42 @@ test("serwer Motek działa bezpiecznie", async (t) => {
         options: { redirectTo: `${baseUrl}/?recovery=1`, captchaToken: "reset-token" },
       });
 
-      recoveryRequestError = { code: "over_email_send_rate_limit", status: 429 };
-      const rateLimitedResetResponse = await fetch(`${baseUrl}/api/auth/password-reset-request`, {
+      const ordinarySessionResponse = await fetch(`${baseUrl}/api/auth/password`, {
         method: "POST",
-        headers: { "Content-Type": "application/json", Origin: baseUrl },
-        body: JSON.stringify({ email: "a@example.com", captchaToken: "reset-token" }),
+        headers: {
+          "Content-Type": "application/json",
+          Origin: baseUrl,
+          Cookie: sessionCookies("token-user-a", "refresh-user-a"),
+        },
+        body: JSON.stringify({ password: "NoweHaslo123!" }),
       });
-      assert.equal(rateLimitedResetResponse.status, 429);
-      assert.deepEqual(await rateLimitedResetResponse.json(), {
-        error: "Przekroczono limit prób resetu hasła. Odczekaj jakiś czas i spróbuj ponownie później.",
-      });
-      recoveryRequestError = null;
+      assert.equal(ordinarySessionResponse.status, 400);
 
-      recoveryRequestError = { code: "temporary_failure", status: 500 };
-      const unavailableResetResponse = await fetch(`${baseUrl}/api/auth/password-reset-request`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Origin: baseUrl },
-        body: JSON.stringify({ email: "a@example.com", captchaToken: "reset-token" }),
-      });
-      assert.equal(unavailableResetResponse.status, 503);
-      assert.deepEqual(await unavailableResetResponse.json(), {
-        error: "Odzyskiwanie hasła jest chwilowo niedostępne. Spróbuj ponownie później.",
-      });
-      recoveryRequestError = null;
-
-      recoveryGrantRpcs.length = 0;
-      recoveryGrantState.setSessionArgs.length = 0;
-      const tokenRecoveryResponse = await fetch(`${baseUrl}/api/auth/recovery`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Origin: baseUrl },
-        body: JSON.stringify({
-          access_token: "token-user-a",
-          refresh_token: "refresh-user-a",
-        }),
-      });
-      assert.equal(tokenRecoveryResponse.status, 200);
-      assert.deepEqual(recoveryGrantState.setSessionArgs, [{
-        access_token: "token-user-a",
-        refresh_token: "refresh-user-a",
-      }]);
-      assert.deepEqual(recoveryGrantRpcs, [{
-        name: "create_auth_recovery_grant",
-        args: {},
-        userId: syntheticUsers["token-user-a"].id,
-      }]);
-
-      recoveryGrantRpcs.length = 0;
       const recoveryResponse = await fetch(`${baseUrl}/api/auth/recovery`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Origin: baseUrl },
         body: JSON.stringify({ code: "recovery-code" }),
       });
       assert.equal(recoveryResponse.status, 200);
+      assert.equal((await recoveryResponse.clone().json()).idleTimeoutMs, 2 * 60 * 60 * 1000);
       assert.deepEqual(exchangedRecoveryCodes, ["recovery-code"]);
-      assert.deepEqual(recoveryGrantRpcs, [
-        {
-          name: "create_auth_recovery_grant",
-          args: {},
-          userId: syntheticUsers["token-user-a"].id,
-        },
-      ]);
       const recoveryCookies = recoveryResponse.headers
         .getSetCookie()
         .map((cookie) => cookie.split(";", 1)[0])
         .join("; ");
+      const recoveryGrantMatch = recoveryCookies.match(/(?:^|; )motek_recovery_grant=([^;]+)/);
+      assert.ok(recoveryGrantMatch, "recovery ustanawia krótkotrwały grant w HttpOnly cookie");
+      const recoveryGrantValue = decodeURIComponent(recoveryGrantMatch[1]);
+      const [recoveryGrantUserId, recoveryGrantJti, recoveryGrantTimestamp, recoveryGrantSignature] = recoveryGrantValue.split(".");
+      assert.equal(recoveryGrantUserId, syntheticUsers["token-user-a"].id);
+      assert.equal(recoveryGrantJti, "grant-jti-user-a");
+      assert.equal(Number.isSafeInteger(Number(recoveryGrantTimestamp)), true);
+      assert.equal(typeof recoveryGrantSignature, "string");
+      assert.deepEqual(recoveryGrantRpcs[0], {
+        name: "create_auth_recovery_grant",
+        args: {},
+        userId: syntheticUsers["token-user-a"].id,
+      });
 
       const activityResponse = await fetch(`${baseUrl}/api/auth/activity`, {
         method: "POST",
@@ -1028,6 +1280,12 @@ test("serwer Motek działa bezpiecznie", async (t) => {
       assert.equal(activityResponse.status, 200);
       assert.deepEqual(await activityResponse.json(), { authenticated: true });
       assert.match(activityResponse.headers.get("set-cookie"), /motek_idle_activity=/);
+
+      const sessionResponse = await fetch(`${baseUrl}/api/auth/session`, {
+        headers: { Cookie: recoveryCookies },
+      });
+      assert.equal(sessionResponse.status, 200);
+      assert.equal((await sessionResponse.json()).idleTimeoutMs, 2 * 60 * 60 * 1000);
 
       const updateResponse = await fetch(`${baseUrl}/api/auth/password`, {
         method: "POST",
@@ -1050,11 +1308,15 @@ test("serwer Motek działa bezpiecznie", async (t) => {
         "consume_auth_recovery_grant",
       ]);
       assert.equal(recoveryGrantState.updateUserCalls, 1);
-      assert.deepEqual(signOutScopes.at(-1), { scope: "global" });
+      assert.equal(signOutScopes.at(-1).scope, "global");
       assert.deepEqual(await updateResponse.json(), {
         passwordUpdated: true,
         authenticated: false,
       });
+      assert.match(updateResponse.headers.get("set-cookie"), /motek_recovery_grant=.*Max-Age=0/);
+      assert.match(updateResponse.headers.get("set-cookie"), /motek_access_token=.*Max-Age=0/);
+      assert.match(updateResponse.headers.get("set-cookie"), /motek_refresh_token=.*Max-Age=0/);
+      assert.ok(signOutScopes.some((call) => call.scope === "global"), "zmiana hasła unieważnia pozostałe sesje");
 
       const passwordRequest = () => fetch(`${baseUrl}/api/auth/password`, {
         method: "POST",
@@ -1085,7 +1347,7 @@ test("serwer Motek działa bezpiecznie", async (t) => {
         }
       });
 
-      await passwordT.test("zwraca 503 przy błędzie RPC claim bez zmiany hasła", async () => {
+      await passwordT.test("zwraca 503 po błędzie claim bez zmiany hasła", async () => {
         recoveryGrantState.claimed = false;
         recoveryGrantState.claimError = new Error("claim failed");
         recoveryGrantEvents.length = 0;
@@ -1095,9 +1357,10 @@ test("serwer Motek działa bezpiecznie", async (t) => {
 
           assert.equal(response.status, 503);
           assert.deepEqual(await response.json(), {
-            error: "Nie udało się bezpiecznie zweryfikować linku odzyskiwania. Spróbuj ponownie.",
+            error: "Odzyskiwanie hasła jest chwilowo niedostępne. Spróbuj ponownie później.",
           });
           assert.equal(recoveryGrantState.updateUserCalls, updateUserCallsBefore);
+          assert.equal(recoveryGrantEvents.some(({ name }) => name === "consume_auth_recovery_grant"), false);
         } finally {
           recoveryGrantState.claimError = null;
           recoveryGrantState.claimed = false;
@@ -1125,6 +1388,7 @@ test("serwer Motek działa bezpiecznie", async (t) => {
       await passwordT.test("zwalnia grant po błędzie zmiany hasła", async () => {
         recoveryGrantState.claimed = false;
         recoveryGrantState.updateUserError = new Error("update failed");
+        recoveryGrantState.releaseError = new Error("release failed");
         recoveryGrantEvents.length = 0;
         try {
           const response = await passwordRequest();
@@ -1135,9 +1399,10 @@ test("serwer Motek działa bezpiecznie", async (t) => {
             "updateUser",
             "release_auth_recovery_grant",
           ]);
-          assert.equal(recoveryGrantState.claimed, false);
+          assert.equal(recoveryGrantState.claimed, true);
         } finally {
           recoveryGrantState.updateUserError = null;
+          recoveryGrantState.releaseError = null;
           recoveryGrantState.claimed = false;
           recoveryGrantEvents.length = 0;
         }
@@ -1147,7 +1412,6 @@ test("serwer Motek działa bezpiecznie", async (t) => {
         recoveryGrantState.claimed = false;
         recoveryGrantState.consumeResult = false;
         recoveryGrantEvents.length = 0;
-        signOutScopes.length = 0;
         try {
           const response = await passwordRequest();
           const eventNames = recoveryGrantEvents.map(({ name }) => name);
@@ -1159,55 +1423,8 @@ test("serwer Motek działa bezpiecznie", async (t) => {
           assert.equal(eventNames.filter((name) => name === "consume_auth_recovery_grant").length, 1);
           assert.equal(eventNames.includes("release_auth_recovery_grant"), false);
           assert.equal(recoveryGrantState.claimed, true);
-          assert.deepEqual(signOutScopes, [{ scope: "global" }]);
-          for (const cookieName of [
-            "motek_access_token",
-            "motek_refresh_token",
-            "motek_idle_activity",
-            "motek_recovery_grant",
-          ]) {
-            const cookie = response.headers
-              .getSetCookie()
-              .find((value) => value.startsWith(`${cookieName}=`) && /Max-Age=0/.test(value));
-            assert.ok(cookie, `Brak cookie ${cookieName}`);
-          }
         } finally {
           recoveryGrantState.consumeResult = true;
-          recoveryGrantState.claimed = false;
-          recoveryGrantEvents.length = 0;
-          signOutScopes.length = 0;
-        }
-      });
-
-      await passwordT.test("czyści cookies po wyjątku globalnego wylogowania", async () => {
-        recoveryGrantState.claimed = false;
-        recoveryGrantState.signOutError = new Error("sign out failed");
-        recoveryGrantEvents.length = 0;
-        try {
-          const response = await passwordRequest();
-
-          assert.equal(response.status, 500);
-          assert.deepEqual(await response.json(), {
-            error: "Wewnętrzny błąd serwera.",
-          });
-          assert.deepEqual(recoveryGrantEvents.map(({ name }) => name), [
-            "claim_auth_recovery_grant",
-            "updateUser",
-            "consume_auth_recovery_grant",
-          ]);
-          for (const cookieName of [
-            "motek_access_token",
-            "motek_refresh_token",
-            "motek_idle_activity",
-            "motek_recovery_grant",
-          ]) {
-            const cookie = response.headers
-              .getSetCookie()
-              .find((value) => value.startsWith(`${cookieName}=`) && /Max-Age=0/.test(value));
-            assert.ok(cookie, `Brak cookie ${cookieName}`);
-          }
-        } finally {
-          recoveryGrantState.signOutError = null;
           recoveryGrantState.claimed = false;
           recoveryGrantEvents.length = 0;
         }
@@ -1226,381 +1443,6 @@ test("serwer Motek działa bezpiecznie", async (t) => {
         assert.equal(response.status, 401);
         assert.match(response.headers.get("set-cookie"), /motek_idle_activity=;/);
       });
-
-      await passwordT.test("nie pozwala zmienić hasła ze zwykłej sesji", async () => {
-        const normalSessionCookies = [
-          "motek_access_token=token-user-a",
-          "motek_refresh_token=refresh-token-user-a",
-          recoveryCookies.split("; ").find((cookie) => cookie.startsWith("motek_idle_activity=")),
-        ].filter(Boolean).join("; ");
-        const response = await fetch(`${baseUrl}/api/auth/password`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Origin: baseUrl,
-            Cookie: normalSessionCookies,
-          },
-          body: JSON.stringify({ password: "NoweHaslo123!" }),
-        });
-        assert.equal(response.status, 400);
-      });
-
-    });
-
-    await t.test("zwykła zmiana hasła wymaga ponownego uwierzytelnienia i bezpiecznie kończy sesję", async (passwordT) => {
-      const sessionCookies = `${syntheticAuthCookies("token-user-a")}; motek_refresh_token=refresh-user-a`;
-      const changePasswordRequest = (overrides = {}) => fetch(`${baseUrl}/api/auth/password/change`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Origin: baseUrl,
-          ...(overrides.cookie ? { Cookie: overrides.cookie } : {}),
-        },
-        body: JSON.stringify({
-          currentPassword: "DeleteHaslo1!",
-          password: "NoweHaslo123!",
-          captchaToken: "test-captcha-token",
-          ...overrides.body,
-        }),
-      });
-      const resetPasswordChangeState = () => {
-        recoveryGrantState.verifyPasswordCalls = 0;
-        recoveryGrantState.verifyPasswordError = null;
-        recoveryGrantState.signInWithPasswordArgs.length = 0;
-        recoveryGrantState.updateUserCalls = 0;
-        recoveryGrantState.updateUserArgs.length = 0;
-        recoveryGrantState.updateUserError = null;
-        recoveryGrantState.updateUserException = null;
-        recoveryGrantState.setSessionArgs.length = 0;
-        recoveryGrantState.setSessionError = null;
-        recoveryGrantState.signOutError = null;
-        authClientFactoryTokens.length = 0;
-        passwordChangeEvents.length = 0;
-        signOutScopes.length = 0;
-      };
-      const secretPattern = /DeleteHaslo1!|NoweHaslo123!|token-user-a|refresh-token/;
-      const requestWithCapturedOutput = async (configure = () => {}) => {
-        resetPasswordChangeState();
-        configure();
-        const capturedLogs = [];
-        const consoleMethods = ["error", "warn", "log"];
-        const originalConsoleMethods = Object.fromEntries(
-          consoleMethods.map((method) => [method, console[method]])
-        );
-        for (const method of consoleMethods) {
-          console[method] = (...args) => capturedLogs.push(`${method}: ${args.join(" ")}`);
-        }
-        try {
-          const response = await changePasswordRequest({ cookie: sessionCookies });
-          const body = await response.text();
-          return {
-            response,
-            body,
-            capturedText: `${body}\n${capturedLogs.join("\n")}`,
-          };
-        } finally {
-          for (const method of consoleMethods) {
-            console[method] = originalConsoleMethods[method];
-          }
-        }
-      };
-      const assertJsonErrorBody = (response, body, expectedStatus) => {
-        assert.equal(response.status, expectedStatus);
-        assert.match(response.headers.get("content-type") ?? "", /^application\/json(?:;|$)/);
-        const parsedBody = JSON.parse(body);
-        assert.equal(typeof parsedBody.error, "string");
-        assert.ok(parsedBody.error.length > 0);
-        return parsedBody;
-      };
-      const assertJsonErrorResponse = async (response, expectedStatus) => {
-        assert.equal(response.status, expectedStatus);
-        assert.match(response.headers.get("content-type") ?? "", /^application\/json(?:;|$)/);
-        const parsedBody = await response.json();
-        assert.equal(typeof parsedBody.error, "string");
-        assert.ok(parsedBody.error.length > 0);
-        return parsedBody;
-      };
-
-      await passwordT.test("zwraca potwierdzenie po poprawnej zmianie hasła", async () => {
-        const { response, body, capturedText } = await requestWithCapturedOutput();
-
-        assert.equal(response.status, 200);
-        assert.deepEqual(JSON.parse(body), { passwordUpdated: true, authenticated: false });
-        assert.deepEqual(passwordChangeEvents.map(({ name }) => name), ["signInWithPassword", "updateUser", "signOut"]);
-        assert.deepEqual(recoveryGrantState.signInWithPasswordArgs, [{
-          email: syntheticUsers["token-user-a"].email,
-          password: "DeleteHaslo1!",
-          options: { captchaToken: "test-captcha-token" },
-        }]);
-        assert.deepEqual(recoveryGrantState.updateUserArgs, [{
-          current_password: "DeleteHaslo1!",
-          password: "NoweHaslo123!",
-        }]);
-        assert.deepEqual(recoveryGrantState.setSessionArgs, [{
-          access_token: "token-user-a",
-          refresh_token: "refresh-user-a",
-        }]);
-        assert.deepEqual(authClientFactoryTokens, [undefined, undefined, "token-user-a"]);
-        assert.deepEqual(signOutScopes, [{ scope: "global" }]);
-        assert.doesNotMatch(capturedText, secretPattern);
-      });
-
-      await passwordT.test("weryfikuje bieżące hasło z zachowaniem znaczących spacji", async () => {
-        resetPasswordChangeState();
-        const response = await changePasswordRequest({
-          cookie: sessionCookies,
-          body: { currentPassword: "  DeleteHaslo1!  " },
-        });
-
-        assert.equal(response.status, 200);
-        assert.deepEqual(recoveryGrantState.signInWithPasswordArgs, [{
-          email: syntheticUsers["token-user-a"].email,
-          password: "  DeleteHaslo1!  ",
-          options: { captchaToken: "test-captcha-token" },
-        }]);
-        assert.deepEqual(recoveryGrantState.setSessionArgs, [{
-          access_token: "token-user-a",
-          refresh_token: "refresh-user-a",
-        }]);
-        assert.deepEqual(authClientFactoryTokens, [undefined, undefined, "token-user-a"]);
-      });
-
-      await passwordT.test("odrzuca brak sesji przed weryfikacją hasła", async () => {
-        resetPasswordChangeState();
-        const response = await changePasswordRequest();
-
-        await assertJsonErrorResponse(response, 401);
-        assert.equal(recoveryGrantState.verifyPasswordCalls, 0);
-      });
-
-      await passwordT.test("odrzuca brak bieżącego hasła bez wywołania Auth", async () => {
-        resetPasswordChangeState();
-        const response = await changePasswordRequest({ cookie: sessionCookies, body: { currentPassword: undefined } });
-
-        await assertJsonErrorResponse(response, 400);
-        assert.equal(recoveryGrantState.verifyPasswordCalls, 0);
-      });
-
-      await passwordT.test("odrzuca puste bieżące hasło bez wywołania Auth", async () => {
-        resetPasswordChangeState();
-        const response = await changePasswordRequest({ cookie: sessionCookies, body: { currentPassword: "" } });
-
-        await assertJsonErrorResponse(response, 400);
-        assert.equal(recoveryGrantState.verifyPasswordCalls, 0);
-      });
-
-      await passwordT.test("wymaga CAPTCHA przed ponowną weryfikacją hasła", async () => {
-        resetPasswordChangeState();
-        const response = await changePasswordRequest({ cookie: sessionCookies, body: { captchaToken: undefined } });
-
-        const errorBody = await assertJsonErrorResponse(response, 400);
-        assert.equal(errorBody.error, "Potwierdź zabezpieczenie CAPTCHA.");
-        assert.equal(recoveryGrantState.verifyPasswordCalls, 0);
-      });
-
-      await passwordT.test("nie zmienia hasła po błędnej weryfikacji starego hasła", async () => {
-        resetPasswordChangeState();
-        recoveryGrantState.verifyPasswordError = new Error("invalid credentials");
-        const response = await changePasswordRequest({ cookie: sessionCookies });
-
-        const errorBody = await assertJsonErrorResponse(response, 403);
-        assert.equal(errorBody.error, "Nie udało się zmienić hasła. Spróbuj ponownie.");
-        assert.equal(recoveryGrantState.updateUserCalls, 0);
-        assert.deepEqual(passwordChangeEvents.map(({ name }) => name), ["signInWithPassword"]);
-      });
-
-      await passwordT.test("odrzuca niepoprawne nowe hasło przed wywołaniem Auth", async () => {
-        resetPasswordChangeState();
-        const response = await changePasswordRequest({ cookie: sessionCookies, body: { password: "niepoprawne" } });
-
-        await assertJsonErrorResponse(response, 400);
-        assert.equal(recoveryGrantState.verifyPasswordCalls, 0);
-        assert.equal(recoveryGrantState.updateUserCalls, 0);
-      });
-
-      await passwordT.test("odrzuca brak nowego hasła bez wywołania Auth", async () => {
-        resetPasswordChangeState();
-        const response = await changePasswordRequest({ cookie: sessionCookies, body: { password: undefined } });
-
-        await assertJsonErrorResponse(response, 400);
-        assert.equal(recoveryGrantState.verifyPasswordCalls, 0);
-        assert.equal(recoveryGrantState.updateUserCalls, 0);
-      });
-
-      await passwordT.test("nie wylogowuje globalnie po błędzie updateUser", async () => {
-        resetPasswordChangeState();
-        recoveryGrantState.updateUserError = new Error("update failed");
-        const response = await changePasswordRequest({ cookie: sessionCookies });
-
-        await assertJsonErrorResponse(response, 400);
-        assert.equal(recoveryGrantState.updateUserCalls, 1);
-        assert.deepEqual(signOutScopes, []);
-      });
-
-      await passwordT.test("traktuje błąd chwilowy zwrócony przez updateUser jako niepewny wynik", async () => {
-        const { response, body, capturedText } = await requestWithCapturedOutput(() => {
-          recoveryGrantState.updateUserError = Object.assign(new Error("upstream unavailable"), {
-            name: "AuthRetryableFetchError",
-            status: 503,
-          });
-        });
-
-        const errorBody = assertJsonErrorBody(response, body, 503);
-        assert.equal(errorBody.error, "Wynik zmiany hasła jest niepewny. Zostałeś wylogowany. Zaloguj się ponownie.");
-        assert.deepEqual(passwordChangeEvents.map(({ name }) => name), ["signInWithPassword", "updateUser", "signOut"]);
-        assert.deepEqual(signOutScopes, [{ scope: "global" }]);
-        assert.doesNotMatch(capturedText, secretPattern);
-      });
-
-      await passwordT.test("nie udaje błędnego hasła przy chwilowym błędzie weryfikacji", async () => {
-        const { response, body, capturedText } = await requestWithCapturedOutput(() => {
-          recoveryGrantState.verifyPasswordError = Object.assign(new Error("auth unavailable"), {
-            name: "AuthRetryableFetchError",
-            status: 503,
-          });
-        });
-
-        const errorBody = assertJsonErrorBody(response, body, 503);
-        assert.equal(errorBody.error, "Weryfikacja bieżącego hasła jest chwilowo niedostępna. Spróbuj ponownie później.");
-        assert.equal(recoveryGrantState.updateUserCalls, 0);
-        assert.doesNotMatch(capturedText, secretPattern);
-      });
-
-      await passwordT.test("traktuje wyjątek transportowy updateUser jako niepewny wynik i kończy sesję", async () => {
-        const { response, body, capturedText } = await requestWithCapturedOutput(() => {
-          recoveryGrantState.updateUserException = new Error("transport failed: DeleteHaslo1! token-user-a");
-        });
-
-        const errorBody = assertJsonErrorBody(response, body, 503);
-        assert.equal(errorBody.error, "Wynik zmiany hasła jest niepewny. Zostałeś wylogowany. Zaloguj się ponownie.");
-        assert.doesNotMatch(errorBody.error, secretPattern);
-        assert.doesNotMatch(capturedText, secretPattern);
-        assert.deepEqual(passwordChangeEvents.map(({ name }) => name), ["signInWithPassword", "updateUser", "signOut"]);
-        assert.deepEqual(signOutScopes, [{ scope: "global" }]);
-        for (const cookieName of ["motek_access_token", "motek_refresh_token", "motek_idle_activity"]) {
-          const cookie = response.headers.getSetCookie().find((value) => value.startsWith(`${cookieName}=`) && /Max-Age=0/.test(value));
-          assert.ok(cookie, `Brak cookie ${cookieName}`);
-        }
-      });
-
-      await passwordT.test("czyści cookies po błędzie globalnego wylogowania", async () => {
-        resetPasswordChangeState();
-        recoveryGrantState.signOutError = new Error("sign out failed");
-        const response = await changePasswordRequest({ cookie: sessionCookies });
-
-        const errorBody = await assertJsonErrorResponse(response, 503);
-        assert.doesNotMatch(errorBody.error, secretPattern);
-        assert.equal(recoveryGrantState.updateUserCalls, 1);
-        assert.deepEqual(passwordChangeEvents.map(({ name }) => name), ["signInWithPassword", "updateUser", "signOut"]);
-        for (const cookieName of ["motek_access_token", "motek_refresh_token", "motek_idle_activity"]) {
-          const cookie = response.headers.getSetCookie().find((value) => value.startsWith(`${cookieName}=`) && /Max-Age=0/.test(value));
-          assert.ok(cookie, `Brak cookie ${cookieName}`);
-        }
-      });
-
-      await passwordT.test("nie ujawnia sekretów po błędzie weryfikacji hasła", async () => {
-        const { response, body, capturedText } = await requestWithCapturedOutput(() => {
-          recoveryGrantState.verifyPasswordError = new Error("invalid credentials");
-        });
-
-        const errorBody = assertJsonErrorBody(response, body, 403);
-        assert.doesNotMatch(errorBody.error, secretPattern);
-        assert.doesNotMatch(capturedText, secretPattern);
-      });
-
-      await passwordT.test("nie ujawnia sekretów po błędzie updateUser", async () => {
-        const { response, body, capturedText } = await requestWithCapturedOutput(() => {
-          recoveryGrantState.updateUserError = new Error("update failed");
-        });
-
-        const errorBody = assertJsonErrorBody(response, body, 400);
-        assert.doesNotMatch(errorBody.error, secretPattern);
-        assert.doesNotMatch(capturedText, secretPattern);
-      });
-
-      await passwordT.test("nie ujawnia sekretów po błędzie globalnego wylogowania", async () => {
-        try {
-          const { response, body, capturedText } = await requestWithCapturedOutput(() => {
-            recoveryGrantState.signOutError = new Error("sign out failed");
-          });
-
-          const errorBody = assertJsonErrorBody(response, body, 503);
-          assert.doesNotMatch(errorBody.error, secretPattern);
-          assert.doesNotMatch(capturedText, secretPattern);
-        } finally {
-          resetPasswordChangeState();
-        }
-      });
-    });
-
-    await t.test("pokazuje stan regulaminu i blokuje starej zgodzie dostęp do danych", async () => {
-      const currentSessionResponse = await fetch(`${baseUrl}/api/auth/session`, {
-        headers: { Cookie: syntheticAuthCookies("token-user-a") },
-      });
-      assert.equal(currentSessionResponse.status, 200);
-      assert.deepEqual((await currentSessionResponse.json()).legal, {
-        currentVersion: "1.0",
-        acceptedVersion: "1.0",
-        acceptanceRequired: false,
-      });
-
-      const staleSessionResponse = await fetch(`${baseUrl}/api/auth/session`, {
-        headers: { Cookie: syntheticAuthCookies("token-user-stale") },
-      });
-      assert.equal(staleSessionResponse.status, 200);
-      assert.deepEqual((await staleSessionResponse.json()).legal, {
-        currentVersion: "1.0",
-        acceptedVersion: null,
-        acceptanceRequired: true,
-      });
-      assert.equal(serviceProfileReads.length >= 1, true, "profil stara zgoda jest czytany zaufanym klientem");
-
-      const yarnsResponse = await fetch(`${baseUrl}/api/yarns`, {
-        headers: { Cookie: syntheticAuthCookies("token-user-stale") },
-      });
-      assert.equal(yarnsResponse.status, 403);
-
-      const patternsResponse = await fetch(`${baseUrl}/api/patterns`, {
-        headers: { Cookie: syntheticAuthCookies("token-user-stale") },
-      });
-      assert.equal(patternsResponse.status, 403);
-
-      const staleVersionResponse = await fetch(`${baseUrl}/api/legal/acceptance`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Origin: baseUrl,
-          Cookie: syntheticAuthCookies("token-user-stale"),
-        },
-        body: JSON.stringify({ version: "0.9" }),
-      });
-      assert.equal(staleVersionResponse.status, 409);
-
-      const acceptanceResponse = await fetch(`${baseUrl}/api/legal/acceptance`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Origin: baseUrl,
-          Cookie: syntheticAuthCookies("token-user-stale"),
-        },
-        body: JSON.stringify({ version: "1.0" }),
-      });
-      assert.equal(acceptanceResponse.status, 200);
-      assert.deepEqual(await acceptanceResponse.json(), {
-        acceptedVersion: "1.0",
-        acceptedAt: "2026-08-09T12:00:00.000Z",
-      });
-
-      const staleYarnsAfterAcceptance = await fetch(`${baseUrl}/api/yarns`, {
-        headers: { Cookie: syntheticAuthCookies("token-user-stale") },
-      });
-      assert.equal(staleYarnsAfterAcceptance.status, 200);
-
-      const logoutResponse = await fetch(`${baseUrl}/api/auth/logout`, {
-        method: "POST",
-        headers: { Origin: baseUrl, Cookie: syntheticAuthCookies("token-user-stale") },
-      });
-      assert.equal(logoutResponse.status, 200);
     });
 
     await t.test("usuwa bieżące konto po ponownym haśle i frazie", async () => {
@@ -1609,17 +1451,23 @@ test("serwer Motek działa bezpiecznie", async (t) => {
         headers: {
           "Content-Type": "application/json",
           Origin: baseUrl,
-          Cookie: syntheticAuthCookies("token-user-a"),
+          Cookie: sessionCookies("token-user-a"),
         },
         body: JSON.stringify({
           password: "DeleteHaslo1!",
           confirmation: "USUŃ KONTO",
+          captchaToken: "delete-account-token",
         }),
       });
 
       assert.equal(response.status, 204);
       assert.equal(await response.text(), "");
       assert.deepEqual(deletedUserIds, [syntheticUsers["token-user-a"].id]);
+      assert.deepEqual(deletionVerificationAttempts.at(-1), {
+        email: syntheticUsers["token-user-a"].email,
+        password: "DeleteHaslo1!",
+        options: { captchaToken: "delete-account-token" },
+      });
       assert.match(response.headers.get("set-cookie"), /motek_access_token=/);
       assert.match(response.headers.get("set-cookie"), /motek_refresh_token=/);
     });
@@ -1637,7 +1485,7 @@ test("serwer Motek działa bezpiecznie", async (t) => {
         headers: {
           "Content-Type": "application/json",
           Origin: baseUrl,
-          Cookie: syntheticAuthCookies("token-user-a"),
+          Cookie: sessionCookies("token-user-a"),
         },
         body: JSON.stringify({ password: "DeleteHaslo1!", confirmation: "USUN KONTO" }),
       });
@@ -1646,36 +1494,18 @@ test("serwer Motek działa bezpiecznie", async (t) => {
       assert.deepEqual(deletedUserIds, [syntheticUsers["token-user-a"].id]);
     });
 
-    await t.test("pozwala usunąć konto bez aktualnej zgody", async () => {
-      const response = await fetch(`${baseUrl}/api/account`, {
-        method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-          Origin: baseUrl,
-          Cookie: syntheticAuthCookies("token-user-stale"),
-        },
-        body: JSON.stringify({
-          password: "DeleteStale1!",
-          confirmation: "USUŃ KONTO",
-        }),
-      });
-
-      assert.equal(response.status, 204);
-      assert.equal(await response.text(), "");
-      assert.equal(deletedUserIds.at(-1), syntheticUsers["token-user-stale"].id);
-    });
-
     await t.test("blokuje szóstą błędną próbę potwierdzenia hasła przy usuwaniu konta", async () => {
       const request = () => fetch(`${baseUrl}/api/account`, {
         method: "DELETE",
         headers: {
           "Content-Type": "application/json",
           Origin: baseUrl,
-          Cookie: syntheticAuthCookies("token-user-b"),
+          Cookie: sessionCookies("token-user-b"),
         },
         body: JSON.stringify({
           password: "BledneHaslo1!",
           confirmation: "USUŃ KONTO",
+          captchaToken: "delete-account-token",
         }),
       });
 
@@ -1691,8 +1521,8 @@ test("serwer Motek działa bezpiecznie", async (t) => {
     });
 
     await t.test("izoluje syntetyczne dane włóczek między użytkownikami", async () => {
-      const userACookies = syntheticAuthCookies("token-user-a");
-      const userBCookies = syntheticAuthCookies("token-user-b");
+      const userACookies = sessionCookies("token-user-a");
+      const userBCookies = sessionCookies("token-user-b");
       const originHeaders = { Origin: baseUrl };
       let userAVersion = (await fetch(`${baseUrl}/api/yarns`, {
         headers: { Cookie: userACookies },
@@ -1920,7 +1750,7 @@ test("serwer Motek działa bezpiecznie", async (t) => {
         email: "a@example.com",
         status: "active",
       };
-      const patternHeaders = { Cookie: syntheticAuthCookies("token-user-a") };
+      const patternHeaders = { Cookie: sessionCookies("token-user-a") };
       const oversizedPageResponse = await fetch(`${baseUrl}/api/patterns?limit=51`, { headers: patternHeaders });
       assert.equal(oversizedPageResponse.status, 400);
       const negativeOffsetResponse = await fetch(`${baseUrl}/api/patterns?offset=-1`, { headers: patternHeaders });

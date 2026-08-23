@@ -86,6 +86,17 @@ async function runAuthenticatedRegression(options) {
     const authenticated = await requireJson(session, '/api/auth/session');
     requireCondition(authenticated.body?.authenticated === true, 'Authenticated session was not established');
 
+    if (authenticated.body?.legal?.acceptanceRequired) {
+      const currentVersion = authenticated.body.legal.currentVersion;
+      requireCondition(typeof currentVersion === 'string' && currentVersion, 'Current legal document version is missing');
+      await requireJson(session, '/api/legal/acceptance', {
+        method: 'POST',
+        body: { version: currentVersion },
+      });
+      const accepted = await requireJson(session, '/api/auth/session');
+      requireCondition(accepted.body?.authenticated === true, 'Authenticated session was not restored after legal acceptance');
+    }
+
     const activity = await requireJson(session, '/api/auth/activity', { method: 'POST' });
     requireCondition(activity.body?.authenticated === true, 'Authenticated activity refresh failed');
 

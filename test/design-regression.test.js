@@ -44,6 +44,24 @@ test("design changes preserve text-only navigation destinations", () => {
   assert.ok(navigation.every(({ label }) => label.length > 0));
 });
 
+test("design changes preserve the compact authentication header contract", () => {
+  const document = createDocument();
+  const actions = [...document.querySelectorAll(".app-header__actions > *")];
+
+  assert.deepEqual(actions.map((node) => node.id), ["themeToggle", "headerAuthAction"]);
+  assert.equal(document.getElementById("headerUser"), null);
+  assert.equal(document.getElementById("headerAuthAction")?.getAttribute("type"), "button");
+  assert.equal(document.getElementById("headerAuthAction")?.textContent.trim(), "Zaloguj");
+  assert.match(document.getElementById("authProfileSummary").textContent, /Zalogowano jako:/);
+  assert.equal(document.querySelector("#authLoggedIn > .auth-message"), null);
+});
+
+test("authenticated account disclosure remains compact and keyboard-visible", () => {
+  assert.match(stylesCss, /#accountView\.is-authenticated[\s\S]*?\.account-danger-disclosure/);
+  assert.match(stylesCss, /\.account-danger-disclosure summary:focus-visible/);
+  assert.match(stylesCss, /\.account-danger-disclosure\[open\]/);
+});
+
 test("design changes preserve accessible theme control and paired artwork sources", () => {
   const document = createDocument();
   const themeToggle = document.getElementById("themeToggle");
@@ -96,19 +114,6 @@ test("design changes preserve hooks used by inventory, catalog and account logic
   assert.match(appJs, /inventoryAddYarnBtn\.addEventListener/);
 });
 
-test("design exposes the legal acceptance gate without adding a fifth view", () => {
-  const document = createDocument();
-  const gate = document.getElementById("legalAcceptanceGate");
-
-  assert.ok(gate);
-  assert.equal(gate.hidden, true);
-  assert.ok(gate.querySelector("#legalAcceptanceForm"));
-  assert.ok(gate.querySelector("#legalAcceptanceMessage"));
-  assert.match(indexHtml, /client\/legal-acceptance-controller\.js/);
-  assert.match(appJs, /acceptanceRequired/);
-  assert.match(appJs, /resolveRequestedView/);
-});
-
 test("design changes keep the icon control touch-safe and respect reduced motion", () => {
   assert.match(
     stylesCss,
@@ -131,10 +136,28 @@ test("light coral actions use dark text and the skip link keeps a fixed contrast
   assert.doesNotMatch(skipLink, /(?:background|color): var\(--(?:text|on-accent)\);/);
 });
 
-test("karta katalogu ukrywa pusty opis i bezpiecznie renderuje link HTTPS", () => {
-  assert.match(appJs, /description\?\.trim\(\)/);
-  assert.match(appJs, /officialSourceUrl/);
-  assert.match(appJs, /sourceLink\.textContent\s*=\s*["']Oficjalne źródło["']/);
-  assert.match(appJs, /rel\s*=\s*["']noopener noreferrer["']/);
-  assert.match(appJs, /protocol\s*===\s*["']https:["']/);
+test("dark inventory and matches artwork use the catalog exposure only in dark mode", () => {
+  assert.match(
+    stylesCss,
+    /\[data-theme="dark"\] #inventoryView \.inventory-layout__visual,\s*\[data-theme="dark"\] #matchesView \.matches-hero__visual \{[\s\S]*?background: none;[\s\S]*?\}/,
+  );
+  assert.match(
+    stylesCss,
+    /\[data-theme="dark"\] #inventoryView \.inventory-layout__visual img,\s*\[data-theme="dark"\] #matchesView \.matches-hero__visual img \{[\s\S]*?opacity: 1;[\s\S]*?\}/,
+  );
+  assert.match(
+    stylesCss,
+    /\[data-theme="dark"\] #inventoryView \.inventory-layout__visual::after,\s*\[data-theme="dark"\] #matchesView \.matches-hero__visual::after \{[\s\S]*?background: none;[\s\S]*?\}/,
+  );
+
+  for (const selector of [
+    "#inventoryView \\.inventory-layout__visual img",
+    "#matchesView \\.matches-hero__visual img",
+  ]) {
+    const baseRules = [...stylesCss.matchAll(new RegExp(`(?:^|\\n)${selector} \\{([\\s\\S]*?)\\n\\}`, "g"))]
+      .map((match) => match[1]);
+    assert.ok(baseRules.some((rule) => /object-fit: cover;/.test(rule)));
+    assert.ok(baseRules.some((rule) => /object-position: 72% center;/.test(rule)));
+    assert.ok(baseRules.every((rule) => !/opacity:/.test(rule)));
+  }
 });

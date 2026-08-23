@@ -1,6 +1,6 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
-const { validateLegalPublication } = require("../legal-publication-policy");
+const { readLegalPublicationEnforcement, validateLegalPublication } = require("../legal-publication-policy");
 
 const base = {
   legalDocument: { operator: { name: "Operator", email: "operator@example.com" } },
@@ -60,6 +60,12 @@ const base = {
   patternAudit: { complete: true, pending_review: 0 },
   deploymentEnvironment: "production",
 };
+
+test("blokada publikacji prawnej w runtime jest domyślnie wyłączona i może być włączona jawnie", () => {
+  assert.equal(readLegalPublicationEnforcement({}), false);
+  assert.equal(readLegalPublicationEnforcement({ ENFORCE_LEGAL_PUBLICATION: "false" }), false);
+  assert.equal(readLegalPublicationEnforcement({ ENFORCE_LEGAL_PUBLICATION: "true" }), true);
+});
 
 test("polityka nie ufa wejściowemu ready i wymaga kompletnej produkcji", () => {
   const result = validateLegalPublication({ ...base, ready: true });

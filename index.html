@@ -102,6 +102,7 @@
 
           <form id="registerForm" class="auth-form" method="post" action="/api/auth/register" role="tabpanel" aria-labelledby="registerModeBtn" hidden>
             <h3>Nowe konto</h3>
+            <input type="hidden" name="invitationToken" autocomplete="off" />
             <label>
               Login (Twój e-mail)
               <input id="register-login" name="login" type="email" maxlength="254" autocomplete="email" required aria-describedby="registerLoginHint authMessage" />
@@ -120,7 +121,6 @@
               </span>
               <span id="registerPasswordHint" class="field-hint">Minimum 8 znaków, w tym mała i wielka litera, cyfra oraz znak specjalny.</span>
             </div>
-            <input id="register-invitation-token" name="invitationToken" type="hidden" autocomplete="off" />
             <fieldset class="legal-consent">
               <legend>Dokumenty konta</legend>
               <label class="legal-consent__checkbox" for="register-terms-accepted">
@@ -172,8 +172,7 @@
         </form>
 
         <div id="authLoggedIn" class="auth-logged-in" hidden>
-          <p id="authProfileSummary"></p>
-          <button id="logoutBtn" class="button button--ghost" type="button">Wyloguj się</button>
+          <p id="authProfileSummary">Zalogowano jako:</p>
           <p class="field-hint"><a href="/informacje-prawne#regulamin">Przeczytaj regulamin, prywatność i prawa autorskie.</a></p>
           <section id="legalAcceptanceGate" class="legal-acceptance-gate" hidden aria-labelledby="legalAcceptanceTitle">
             <h3 id="legalAcceptanceTitle">Potwierdź aktualny regulamin</h3>
@@ -200,11 +199,11 @@
               <button id="changePasswordToggle" class="button button--ghost" type="button"
                 aria-controls="changePasswordForm" aria-expanded="false">Zmień hasło</button>
             </div>
-            <form id="changePasswordForm" class="account-security-zone__panel" method="post" action="/api/auth/password/change" autocomplete="off" hidden>
+            <form id="changePasswordForm" class="account-security-zone__panel" method="post" action="/api/auth/password/change" hidden>
               <div class="auth-field">
                 <label for="change-current-password">Aktualne hasło</label>
                 <span class="password-field">
-                  <input id="change-current-password" name="currentSecret" type="password" autocomplete="one-time-code" required aria-describedby="changePasswordHint changePasswordMessage" />
+                  <input id="change-current-password" name="currentPassword" type="password" autocomplete="current-password" required aria-describedby="changePasswordHint changePasswordMessage" />
                   <button class="password-reveal" type="button" data-password-reveal="change-current-password"
                     aria-controls="change-current-password" aria-pressed="false" aria-label="Przytrzymaj, aby pokazać hasło">
                     <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
@@ -217,7 +216,7 @@
               <div class="auth-field">
                 <label for="change-password">Nowe hasło</label>
                 <span class="password-field">
-                  <input id="change-password" name="newSecret" type="password" minlength="8" maxlength="256" autocomplete="new-password" required aria-describedby="changePasswordHint changePasswordMessage" />
+                  <input id="change-password" name="password" type="password" minlength="8" maxlength="256" autocomplete="new-password" required aria-describedby="changePasswordHint changePasswordMessage" />
                   <button class="password-reveal" type="button" data-password-reveal="change-password"
                     aria-controls="change-password" aria-pressed="false" aria-label="Przytrzymaj, aby pokazać hasło">
                     <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
@@ -230,7 +229,7 @@
               <div class="auth-field">
                 <label for="change-password-confirmation">Powtórz nowe hasło</label>
                 <span class="password-field">
-                  <input id="change-password-confirmation" name="newSecretConfirmation" type="password" minlength="8" maxlength="256" autocomplete="new-password" required aria-describedby="changePasswordHint changePasswordMessage" />
+                  <input id="change-password-confirmation" name="passwordConfirmation" type="password" minlength="8" maxlength="256" autocomplete="new-password" required aria-describedby="changePasswordHint changePasswordMessage" />
                   <button class="password-reveal" type="button" data-password-reveal="change-password-confirmation"
                     aria-controls="change-password-confirmation" aria-pressed="false" aria-label="Przytrzymaj, aby pokazać hasło">
                     <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
@@ -246,32 +245,34 @@
               <button class="button" type="submit">Zmień hasło</button>
             </form>
           </section>
+          <button id="logoutBtn" class="button button--ghost" type="button">Wyloguj się</button>
           <details id="deleteAccountDisclosure" class="account-danger-disclosure">
             <summary>
               <span class="account-danger-disclosure__title">Usuń konto</span>
               <span class="account-danger-disclosure__warning">Tej operacji nie można cofnąć.</span>
             </summary>
             <form id="deleteAccountForm" class="account-danger-zone" method="post" action="/api/account" novalidate>
-            <h3 id="deleteAccountTitle">Usuń konto</h3>
-            <p>Ta operacja trwale usuwa konto i wszystkie zapisane włóczki.</p>
-            <div class="auth-field">
-              <label for="account-delete-password">Twoje hasło</label>
-              <span class="password-field">
-                <input id="account-delete-password" name="password" type="password" autocomplete="current-password" required aria-describedby="deleteAccountHint deleteAccountMessage" />
-                <button class="password-reveal" type="button"
-                  data-password-reveal="account-delete-password"
-                  aria-controls="account-delete-password" aria-pressed="false"
-                  aria-label="Przytrzymaj, aby pokazać hasło">
-                </button>
-              </span>
-            </div>
-            <label for="account-delete-confirmation">
-              Wpisz: <strong>USUŃ KONTO</strong>
-              <input id="account-delete-confirmation" name="confirmation" autocomplete="off" required aria-describedby="deleteAccountHint deleteAccountMessage" />
-            </label>
-            <p id="deleteAccountHint" class="field-hint">Usunięcie jest natychmiastowe i nie można go cofnąć.</p>
-            <button class="button button--danger" type="submit">Usuń konto bezpowrotnie</button>
-            <p id="deleteAccountMessage" class="auth-message" role="status" aria-live="polite"></p>
+              <h3 id="deleteAccountTitle">Usuń konto</h3>
+              <p>Ta operacja trwale usuwa konto i wszystkie zapisane włóczki.</p>
+              <div class="auth-field">
+                <label for="account-delete-password">Twoje hasło</label>
+                <span class="password-field">
+                  <input id="account-delete-password" name="password" type="password" autocomplete="current-password" required aria-describedby="deleteAccountHint deleteAccountMessage" />
+                  <button class="password-reveal" type="button"
+                    data-password-reveal="account-delete-password"
+                    aria-controls="account-delete-password" aria-pressed="false"
+                    aria-label="Przytrzymaj, aby pokazać hasło">
+                  </button>
+                </span>
+              </div>
+              <label for="account-delete-confirmation">
+                Wpisz: <strong>USUŃ KONTO</strong>
+                <input id="account-delete-confirmation" name="confirmation" autocomplete="off" required aria-describedby="deleteAccountHint deleteAccountMessage" />
+              </label>
+              <div class="auth-captcha" data-turnstile-for="deleteAccount"></div>
+              <p id="deleteAccountHint" class="field-hint">Usunięcie jest natychmiastowe i nie można go cofnąć.</p>
+              <button class="button button--danger" type="submit">Usuń konto bezpowrotnie</button>
+              <p id="deleteAccountMessage" class="auth-message" role="status" aria-live="polite"></p>
             </form>
           </details>
         </div>
@@ -289,9 +290,7 @@
           <section class="inventory-hero">
             <div class="page-heading inventory-heading">
               <div>
-                <p class="eyebrow">Twoja pracownia</p>
                 <h1 id="inventoryTitle">Magazyn włóczek</h1>
-                <p>Zobacz swój zapas, uzupełnij go i wybierz włóczki do kolejnego projektu.</p>
               </div>
               <div class="inventory-heading__actions">
                 <button id="inventoryMatchBtn" class="button" type="button">Dobierz wzór <span aria-hidden="true">→</span></button>
@@ -501,13 +500,19 @@
           </div>
           <div class="catalog-summary-row">
             <div id="patternCatalogSummary" class="catalog-summary" aria-live="polite"></div>
-            <button id="resetCatalogFiltersBtn" class="button button--ghost" type="button" disabled>Wyczyść filtry</button>
+            <button id="resetCatalogFiltersBtn" class="button button--ghost" type="button" disabled>
+              Wyczyść filtry
+            </button>
           </div>
           <div id="patternCatalogNotice" class="catalog-notice" hidden></div>
           <div id="patternCatalog" class="pattern-catalog"></div>
           <div id="patternCatalogActions" class="catalog-actions" hidden>
-            <button id="loadMorePatternsBtn" class="button" type="button">Pokaż kolejne wzory</button>
-            <button id="backToCatalogFiltersBtn" class="button button--ghost" type="button">Wróć do filtrów</button>
+            <button id="loadMorePatternsBtn" class="button" type="button">
+              Pokaż kolejne wzory
+            </button>
+            <button id="backToCatalogFiltersBtn" class="button button--ghost" type="button">
+              Wróć do filtrów
+            </button>
           </div>
         </div>
       </section>
@@ -657,11 +662,11 @@
     <script src="material-policy.js?v=2.0.0-alpha.39"></script>
     <script src="legal-document.js"></script>
     <script src="client/legal-acceptance-controller.js"></script>
-    <script src="client-policy.js?v=2.0.0-alpha.39&rev=152d4a8"></script>
+    <script src="client-policy.js?v=2.0.0-alpha.39&rev=f50e2a0"></script>
     <script src="client/api-client.js"></script>
     <script src="client/dom-utils.js"></script>
     <script src="client/catalog-controller.js?v=2.0.0-alpha.39&rev=a9d3dae"></script>
     <script src="client/idle-session-controller.js"></script>
-    <script src="app.js?v=2.0.0-alpha.39&rev=cc9d64f"></script>
+    <script src="app.js?v=2.0.0-alpha.39&rev=34b8426"></script>
   </body>
 </html>

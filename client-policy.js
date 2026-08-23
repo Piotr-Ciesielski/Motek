@@ -341,10 +341,13 @@
     ) {
       throw new Error("Odśwież stronę, aby użyć bieżącej wersji dokumentu prawnego.");
     }
+    const invitation = values.invitationToken == null || values.invitationToken === ""
+      ? null
+      : normalizeInvitationToken(values.invitationToken);
     const payload = buildAuthPayload({
       login: values.login,
       password: values.password,
-      invitationToken: normalizeInvitationToken(values.invitationToken),
+      ...(invitation ? { invitationToken: invitation } : {}),
       termsAccepted: true,
       termsVersion: legalDocument.termsVersion,
       privacyNoticeVersion: legalDocument.privacyVersion,

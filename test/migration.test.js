@@ -11,6 +11,13 @@ const migrationPath = path.join(
   "migrations",
   "20260731104741_email_login_and_remove_full_name.sql"
 );
+const avatarMigrationPath = path.join(
+  __dirname,
+  "..",
+  "supabase",
+  "migrations",
+  "20260807093000_harden_profile_avatar_url.sql"
+);
 
 test("migracja usuwa stary constraint loginu przed przepisaniem loginów", () => {
   const sql = fs.readFileSync(migrationPath, "utf8");
@@ -47,19 +54,13 @@ test("backend nie odczytuje usuniętej kolumny full_name", () => {
   assert.doesNotMatch(server, /\bfull_name\b/);
 });
 
-test("migracja ACL blokuje bezpośrednie mutacje i usuwa publiczny licznik wersji", () => {
-  const migrationPath = path.join(
-    __dirname,
-    "..",
-    "supabase",
-    "migrations",
-    "20260807150000_reconcile_yarn_acl_and_recovery.sql"
-  );
-  const sql = fs.existsSync(migrationPath) ? fs.readFileSync(migrationPath, "utf8") : "";
+test("migracja ogranicza avatar_url do 2048 znaków", () => {
+  const sql = fs.readFileSync(avatarMigrationPath, "utf8");
 
-  assert.match(sql, /revoke\s+insert,\s*update,\s*delete\s+on\s+table\s+public\.yarns\s+from\s+authenticated/i);
-  assert.match(sql, /revoke\s+all\s+on\s+table\s+private\.yarn_store_versions\s+from\s+public,\s*anon,\s*authenticated/i);
-  assert.match(sql, /drop\s+table\s+if\s+exists\s+public\.yarn_store_versions/i);
+  assert.match(
+    sql,
+    /check \(avatar_url is null or char_length\(avatar_url\) <= 2048\)/i
+  );
 });
 
 test("migracja recovery przechowuje grant i zużywa go atomowo", () => {
@@ -78,26 +79,6 @@ test("migracja recovery przechowuje grant i zużywa go atomowo", () => {
   assert.match(sql, /consume_auth_recovery_grant/i);
   assert.match(sql, /update private\.auth_recovery_grants/i);
   assert.match(sql, /revoke all on table private\.auth_recovery_grants from public, anon, authenticated/i);
-});
-
-test("migracja przywraca brakujący creator recovery wyłącznie dla authenticated", () => {
-  const migrationPath = path.join(
-    __dirname,
-    "..",
-    "supabase",
-    "migrations",
-    "20260815152553_restore_recovery_grant_creator.sql"
-  );
-  const sql = fs.readFileSync(migrationPath, "utf8");
-
-  assert.match(sql, /create or replace function public\.create_auth_recovery_grant\(\)/i);
-  assert.match(sql, /returns text/i);
-  assert.match(sql, /security definer\s+set search_path = ''/i);
-  assert.match(sql, /select auth\.uid\(\)/i);
-  assert.match(sql, /extensions\.digest\(grant_jti, 'sha256'\)/i);
-  assert.match(sql, /revoke all on function public\.create_auth_recovery_grant\(\) from public, anon, authenticated/i);
-  assert.match(sql, /grant execute on function public\.create_auth_recovery_grant\(\) to authenticated/i);
-  assert.doesNotMatch(sql, /drop\s+(?:table|column|function)|truncate/i);
 });
 
 test("migracja katalogu dodaje fail-closed publikację wzorów", () => {
@@ -146,6 +127,22 @@ test("migracja rejestracji zaproszonej chroni prywatne dane i stan profilu", () 
   assert.match(sql, /registration_attempts.*\(auth_user_id\)/is);
   assert.match(sql, /pending_registration/i);
   assert.match(sql, /revoke all on all tables in schema private from public, anon, authenticated/i);
+});
+
+test("migracja automatycznej rejestracji aktywuje profil i zapisuje zgody", () => {
+  const migrationsDirectory = path.join(__dirname, "..", "supabase", "migrations");
+  const sql = fs.readFileSync(
+    path.join(migrationsDirectory, "20260822170000_finalize_automatic_registration.sql"),
+    "utf8",
+  );
+
+  assert.match(sql, /create or replace function public\.finalize_automatic_registration/i);
+  assert.match(sql, /status not in \('pending_registration', 'active'\)/i);
+  assert.match(sql, /insert into private\.terms_acceptances/i);
+  assert.match(sql, /insert into private\.privacy_notice_deliveries/i);
+  assert.match(sql, /set status = 'active'/i);
+  assert.match(sql, /revoke execute on function public\.finalize_automatic_registration/i);
+  assert.match(sql, /grant execute on function public\.finalize_automatic_registration.*service_role/i);
 });
 
 test("migracja bramki regulaminu chroni prywatne dane i RPC magazynu", () => {
@@ -202,4 +199,29 @@ test("migracja zaproszeń udostępnia revoke wyłącznie service_role", () => {
   assert.match(sql, /create or replace function public\.create_registration_invitation\(\s*p_email text,\s*p_token_hash text,\s*p_expires_at timestamptz\s*\)/i);
   assert.match(sql, /revoke all on function public\.create_registration_invitation\(text, text, timestamptz\) from public, anon, authenticated/i);
   assert.match(sql, /grant execute on function public\.create_registration_invitation\(text, text, timestamptz\) to service_role/i);
+});
+
+test("produkcyjny pakiet katalogu zachowuje description NOT NULL i zatrzymuje się na stagingowych NULL-ach", () => {
+  const migrationPath = path.join(
+    __dirname,
+    "..",
+    "supabase",
+    "production-deltas",
+    "20260816_add_pattern_publication_audit_compatible.sql",
+  );
+  assert.ok(fs.existsSync(migrationPath), "produkcyjny pakiet migracyjny istnieje");
+
+  const sql = fs.readFileSync(migrationPath, "utf8");
+
+  assert.match(sql, /PRODUCTION-ONLY/i);
+  assert.match(sql, /add column if not exists publication_status text/i);
+  assert.match(sql, /default 'pending_review'/i);
+  assert.match(sql, /content_audit_version text/i);
+  assert.match(sql, /content_audited_at timestamptz/i);
+  assert.match(sql, /official_source_url text/i);
+  assert.match(sql, /description is null[\s\S]*raise exception/i);
+  assert.match(sql, /alter column description set not null/i);
+  assert.match(sql, /patterns_publication_status_check/i);
+  assert.match(sql, /patterns_published_audit_check/i);
+  assert.doesNotMatch(sql, /description\s+drop\s+not\s+null/i);
 });

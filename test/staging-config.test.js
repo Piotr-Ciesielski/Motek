@@ -9,14 +9,10 @@ test("staging publikuje wyłącznie WAF i używa nieruchomych obrazów", () => {
   const dashboard = fs.readFileSync(path.join(root, "compose.dashboard.yaml"), "utf8");
   const dockerfile = fs.readFileSync(path.join(root, "Dockerfile"), "utf8");
   assert.match(dockerfile, /node:24\.18\.0-alpine/);
-  assert.match(
-    compose,
-    /owasp\/modsecurity-crs:4\.28\.0-nginx-202607160307@sha256:2051ff18b836c1d9bbc5c7754451c1687ea27352e497b89d0c9fc7e657861e07/,
-  );
-  assert.match(
-    compose,
-    /prom\/prometheus:v3\.12\.0@sha256:69f5241418838263316593f7274a304b095c40bcf22e57272865da91bd60a8ac/,
-  );
+  assert.match(compose, /owasp\/modsecurity-crs@sha256:2051ff18b836c1d9bbc5c7754451c1687ea27352e497b89d0c9fc7e657861e07/);
+  assert.match(compose, /prom\/prometheus@sha256:69f5241418838263316593f7274a304b095c40bcf22e57272865da91bd60a8ac/);
+  const dashboardCompose = fs.readFileSync(path.join(root, "compose.dashboard.yaml"), "utf8");
+  assert.match(dashboardCompose, /grafana\/grafana@sha256:121a7a9ece6dc10b969f1f96eed64b4f07dfac0d0b8abc070f7cb83bbde86f63/);
   assert.doesNotMatch(compose, /:latest|:rolling/);
   assert.match(compose, /waf:[\s\S]*ports:[\s\S]*"443:8443"/);
   assert.doesNotMatch(compose, /3000:3000|9090:9090/);

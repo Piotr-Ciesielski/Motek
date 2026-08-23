@@ -84,6 +84,39 @@ test('runs the complete authenticated regression using only the created yarn id'
   assert.equal(script.calls.filter(({ path }) => path === '/api/yarns/99').length, 0);
 });
 
+test('accepts current legal documents before running authenticated checks', async () => {
+  const { runAuthenticatedRegression } = require('../scripts/regression/authenticated-suite');
+  const steps = successSteps();
+  steps[1] = {
+    request: 'GET /api/auth/session',
+    response: jsonResponse(200, {
+      authenticated: true,
+      user: { id: 'user-1' },
+      legal: { currentVersion: '1.0', acceptedVersion: null, acceptanceRequired: true },
+    }),
+  };
+  steps.splice(2, 0,
+    {
+      request: 'POST /api/legal/acceptance',
+      check: ({ body }) => assert.deepEqual(body, { version: '1.0' }),
+      response: jsonResponse(200, { acceptedVersion: '1.0' }),
+    },
+    {
+      request: 'GET /api/auth/session',
+      response: jsonResponse(200, {
+        authenticated: true,
+        user: { id: 'user-1' },
+        legal: { currentVersion: '1.0', acceptedVersion: '1.0', acceptanceRequired: false },
+      }),
+    },
+  );
+  const script = scriptedFetch(steps);
+
+  await runAuthenticatedRegression({ ...credentials, fetchImpl: script.fetchImpl });
+
+  assert.equal(script.remaining.length, 0);
+});
+
 test('cleans up the exact created yarn after a later failure', async () => {
   const { runAuthenticatedRegression } = require('../scripts/regression/authenticated-suite');
   const steps = successSteps().slice(0, 7);

@@ -37,6 +37,7 @@ build/
 coverage/
 .venv/
 tmp/
+.tmp-production-backup/
 .worktrees/
 .superpowers/
 __pycache__/
@@ -46,3 +47,4 @@ Wzory/
 PROMPTS.md
 AUDYT.md
 .audit/
+.cache/

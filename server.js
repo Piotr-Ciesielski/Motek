@@ -9,7 +9,6 @@ const {
   readSupabaseAuthConfig,
 } = require("./supabase");
 const { validateRegistrationLegalInput } = require("./registration-policy");
-const { registerInvitedUser } = require("./registration-service");
 const { createLegalAccessService } = require("./legal-access-service");
 const {
   maxYarnsPerUser: MAX_YARNS_PER_USER,
@@ -39,7 +38,7 @@ const { createPatternRouter } = require("./server/pattern-routes");
 const { createYarnRouter } = require("./server/yarn-routes");
 const { readReleaseInfo } = require("./release-info");
 const { CURRENT_LEGAL_DOCUMENT } = require("./legal-document");
-const { validateLegalPublication } = require("./legal-publication-policy");
+const { readLegalPublicationEnforcement, validateLegalPublication } = require("./legal-publication-policy");
 
 const rootDir = __dirname;
 let server;
@@ -57,18 +56,24 @@ const MAX_JSON_BODY_BYTES = 16 * 1024;
 const AUTH_ACCESS_COOKIE = "motek_access_token";
 const AUTH_REFRESH_COOKIE = "motek_refresh_token";
 const AUTH_IDLE_COOKIE = "motek_idle_activity";
-const AUTH_RECOVERY_COOKIE = "motek_recovery_grant";
+const AUTH_RECOVERY_GRANT_COOKIE = "motek_recovery_grant";
 const AUTH_ACCESS_MAX_AGE = 60 * 60;
 const AUTH_REFRESH_MAX_AGE = 60 * 60 * 24 * 30;
 const AUTH_IDLE_TIMEOUT_SECONDS = 2 * 60 * 60;
-const AUTH_RECOVERY_TIMEOUT_SECONDS = 10 * 60;
+const AUTH_RECOVERY_GRANT_MAX_AGE = 10 * 60;
 const AUTH_RATE_LIMIT_WINDOW_MS = 15 * 60 * 1000;
 const AUTH_RATE_LIMIT_MAX_FAILURES = 5;
 const AUTH_RATE_LIMIT_BLOCK_MS = 15 * 60 * 1000;
 const AUTH_RATE_LIMIT_MAX_ENTRIES = 10_000;
+const AUTH_REQUEST_WINDOW_MS = 60 * 1000;
+const AUTH_REQUEST_MAX = 30;
+const AUTH_REQUEST_BLOCK_MS = 60 * 1000;
 const YARN_WRITE_WINDOW_MS = 60 * 1000;
 const YARN_WRITE_MAX = 600;
 const YARN_WRITE_BLOCK_MS = 60 * 1000;
+const MATCH_REQUEST_WINDOW_MS = 60 * 1000;
+const MATCH_REQUEST_MAX = 30;
+const MATCH_REQUEST_BLOCK_MS = 60 * 1000;
 const HTTP_REQUEST_TIMEOUT_MS = 30 * 1000;
 const HTTP_HEADERS_TIMEOUT_MS = 10 * 1000;
 const HTTP_KEEP_ALIVE_TIMEOUT_MS = 5 * 1000;
@@ -91,21 +96,21 @@ const AUTH_REQUEST_LIMITS = Object.freeze({
 });
 const authRateLimiter = createAuthRateLimiter();
 const accountDeletionRateLimiter = createAuthRateLimiter();
+const authRequestRateLimiter = createRequestRateLimiter({
+  windowMs: AUTH_REQUEST_WINDOW_MS,
+  maxRequests: AUTH_REQUEST_MAX,
+  blockMs: AUTH_REQUEST_BLOCK_MS,
+});
 const authRequestRateLimiters = createAuthRequestRateLimiters();
 const yarnWriteRateLimiter = createRequestRateLimiter({
   windowMs: YARN_WRITE_WINDOW_MS,
   maxRequests: YARN_WRITE_MAX,
   blockMs: YARN_WRITE_BLOCK_MS,
 });
-const patternReadRateLimiter = createRequestRateLimiter({
-  windowMs: 60 * 1000,
-  maxRequests: 60,
-  blockMs: 60 * 1000,
-});
-const matchingRateLimiter = createRequestRateLimiter({
-  windowMs: 60 * 1000,
-  maxRequests: 30,
-  blockMs: 60 * 1000,
+const matchRateLimiter = createRequestRateLimiter({
+  windowMs: MATCH_REQUEST_WINDOW_MS,
+  maxRequests: MATCH_REQUEST_MAX,
+  blockMs: MATCH_REQUEST_BLOCK_MS,
 });
 const MAX_TEXT_LENGTH = {
   name: 100,
@@ -172,9 +177,8 @@ const patternRouter = createPatternRouter({
   getSupabaseMatches,
   parsePatternPage,
   enforceRequestRateLimit,
-  patternReadRateLimiter,
-  matchingRateLimiter,
-  getRequestRateLimitKeys: (req) => [`ip:${getClientAddress(req)}`],
+  getMatchRateLimitKeys,
+  matchRateLimiter,
 });
 
 class ApiError extends Error {
@@ -348,6 +352,10 @@ function getAuthRateLimitKeys(req, email) {
   return [`ip:${getClientAddress(req)}`, `email:${email}`];
 }
 
+function getMatchRateLimitKeys(req, session) {
+  return [`ip:${getClientAddress(req)}`, `user:${session.user.id}`];
+}
+
 function enforceAuthRateLimit(keys, res, operation, metrics = metricsRegistry) {
   const retryAfterMs = Math.max(...keys.map((key) => authRateLimiter.getRetryAfterMs(key)));
   if (retryAfterMs > 0) {
@@ -437,10 +445,55 @@ function getIdleTimeoutSeconds(env = process.env) {
   return value;
 }
 
+function getIdleTimeoutMs(env = process.env) {
+  return getIdleTimeoutSeconds(env) * 1000;
+}
+
 function getIdleSessionSecret(env = process.env) {
   const secret = String(env.IDLE_SESSION_SECRET || env.SUPABASE_SECRET_KEY || "");
   if (!secret) throw new Error("Brak sekretu podpisu sesji bezczynności.");
   return secret;
+}
+
+function getRecoveryGrantSecret(env = process.env) {
+  const secret = String(env.RECOVERY_GRANT_SECRET || env.IDLE_SESSION_SECRET || env.SUPABASE_SECRET_KEY || "");
+  if (!secret) throw new Error("Brak sekretu podpisu grantu odzyskiwania hasła.");
+  return secret;
+}
+
+function buildRecoveryGrantCookie(userId, options = {}) {
+  const jti = typeof options.jti === "string" && options.jti ? options.jti : crypto.randomUUID();
+  const timestamp = Math.floor(Number(options.timestamp ?? Date.now() / 1000));
+  const env = options.env || process.env;
+  const payload = `${userId}.${jti}.${timestamp}`;
+  const signature = crypto.createHmac("sha256", getRecoveryGrantSecret(env))
+    .update(`recovery:${payload}`)
+    .digest("base64url");
+  return buildAuthCookie(AUTH_RECOVERY_GRANT_COOKIE, `${payload}.${signature}`, AUTH_RECOVERY_GRANT_MAX_AGE, env);
+}
+
+function parseRecoveryGrantCookie(value, userId, now = Math.floor(Date.now() / 1000), env = process.env) {
+  if (typeof value !== "string" || typeof userId !== "string") return false;
+  const parts = value.split(".");
+  if (parts.length !== 4) return false;
+  const [rawUserId, jti, rawTimestamp, signature] = parts;
+  const timestamp = Number(rawTimestamp);
+  if (!rawUserId || rawUserId !== userId || !jti || !Number.isSafeInteger(timestamp) || !signature) return false;
+  const expected = crypto.createHmac("sha256", getRecoveryGrantSecret(env))
+    .update(`recovery:${rawUserId}.${jti}.${timestamp}`)
+    .digest("base64url");
+  const expectedBuffer = Buffer.from(expected);
+  const receivedBuffer = Buffer.from(signature);
+  return receivedBuffer.length === expectedBuffer.length
+    && crypto.timingSafeEqual(receivedBuffer, expectedBuffer)
+    && now >= timestamp
+    && now - timestamp <= AUTH_RECOVERY_GRANT_MAX_AGE;
+}
+
+function getRecoveryGrantJti(value, userId) {
+  if (!parseRecoveryGrantCookie(value, userId)) return null;
+  const [, jti] = value.split(".");
+  return jti || null;
 }
 
 function signIdleActivity(timestamp, env = process.env) {
@@ -488,39 +541,7 @@ function clearAuthCookies(res) {
   appendSetCookie(res, buildAuthCookie(AUTH_ACCESS_COOKIE, "", 0));
   appendSetCookie(res, buildAuthCookie(AUTH_REFRESH_COOKIE, "", 0));
   appendSetCookie(res, buildAuthCookie(AUTH_IDLE_COOKIE, "", 0));
-  appendSetCookie(res, buildAuthCookie(AUTH_RECOVERY_COOKIE, "", 0));
-}
-
-function buildRecoveryGrantCookie(userId, options = {}) {
-  const jti = typeof options.jti === "string" && options.jti ? options.jti : crypto.randomUUID();
-  const timestamp = Math.floor(Number(options.timestamp ?? Date.now() / 1000));
-  const payload = `${userId}.${jti}.${timestamp}`;
-  const signature = crypto.createHmac("sha256", getIdleSessionSecret())
-    .update(`recovery:${payload}`)
-    .digest("base64url");
-  return buildAuthCookie(AUTH_RECOVERY_COOKIE, `${payload}.${signature}`, AUTH_RECOVERY_TIMEOUT_SECONDS);
-}
-
-function parseRecoveryGrantCookie(value, userId, now = Math.floor(Date.now() / 1000)) {
-  if (typeof value !== "string" || typeof userId !== "string") return false;
-  const [rawUserId, jti, rawTimestamp, signature] = value.split(".");
-  const timestamp = Number(rawTimestamp);
-  if (!rawUserId || rawUserId !== userId || !jti || !Number.isSafeInteger(timestamp) || !signature) return false;
-  const expected = crypto.createHmac("sha256", getIdleSessionSecret())
-    .update(`recovery:${rawUserId}.${jti}.${timestamp}`)
-    .digest("base64url");
-  const expectedBuffer = Buffer.from(expected);
-  const receivedBuffer = Buffer.from(signature);
-  return receivedBuffer.length === expectedBuffer.length
-    && crypto.timingSafeEqual(receivedBuffer, expectedBuffer)
-    && now >= timestamp
-    && now - timestamp <= AUTH_RECOVERY_TIMEOUT_SECONDS;
-}
-
-function getRecoveryGrantJti(value, userId) {
-  if (!parseRecoveryGrantCookie(value, userId)) return null;
-  const [, jti] = value.split(".");
-  return jti || null;
+  appendSetCookie(res, buildAuthCookie(AUTH_RECOVERY_GRANT_COOKIE, "", 0));
 }
 
 function normalizeAuthEmail(value) {
@@ -553,8 +574,8 @@ function validateAuthPassword(value) {
   if (/^\s+$/u.test(value)) {
     throw new ApiError(400, "Hasło nie może składać się wyłącznie ze spacji.");
   }
-  if (!/[a-z]/u.test(value) || !/[A-Z]/u.test(value) || !/\d/u.test(value) || !/[^\p{L}\p{N}\s]/u.test(value)) {
-    throw new ApiError(400, "Hasło musi zawierać małą i wielką literę, cyfrę oraz znak specjalny.");
+  if (!/\p{Ll}/u.test(value) || !/\p{Lu}/u.test(value) || !/\p{Nd}/u.test(value) || !/[^\p{L}\p{N}\s]/u.test(value)) {
+    throw new ApiError(400, "Hasło musi zawierać małą i wielką literę Unicode, cyfrę Unicode oraz znak specjalny.");
   }
   return value;
 }
@@ -581,6 +602,9 @@ function sanitizeAuthUser(user) {
 function genericAuthError(operation) {
   if (operation === "login") {
     return new ApiError(401, "Nieprawidłowy e-mail lub hasło.");
+  }
+  if (operation === "confirmation") {
+    return new ApiError(400, "Link potwierdzający jest nieprawidłowy lub wygasł.");
   }
   return new ApiError(400, "Nie udało się utworzyć konta. Sprawdź dane i spróbuj ponownie.");
 }
@@ -615,7 +639,7 @@ async function getAuthenticatedSession(req, res) {
   const accessToken = cookies[AUTH_ACCESS_COOKIE];
   const refreshToken = cookies[AUTH_REFRESH_COOKIE];
   if (!accessToken && !refreshToken) return null;
-  if (!cookies[AUTH_IDLE_COOKIE] || !parseIdleActivityCookie(cookies[AUTH_IDLE_COOKIE])) {
+  if (!parseIdleActivityCookie(cookies[AUTH_IDLE_COOKIE])) {
     clearAuthCookies(res);
     return null;
   }
@@ -644,24 +668,29 @@ async function getAuthenticatedSession(req, res) {
 
   const profileClient = supabaseConnection?.client;
   if (!profileClient) {
-    throw new ApiError(503, "Usługa profilu jest chwilowo niedostępna.");
+    throw new ApiError(503, "Nie udało się teraz zweryfikować konta. Spróbuj ponownie.");
   }
-
   let legalError = null;
-  const [profileResult, legal] = await Promise.all([
-    profileClient
-      .from("profiles")
-      .select("id,login,email,avatar_url,status,role,created_at,updated_at,last_login_at")
-      .eq("id", userResult.data.user.id)
-      .maybeSingle(),
+  const readProfile = async () => {
+    try {
+      return await profileClient
+        .from("profiles")
+        .select("id,login,email,avatar_url,status,role,created_at,updated_at,last_login_at")
+        .eq("id", userResult.data.user.id)
+        .maybeSingle();
+    } catch {
+      return { error: { message: "Nie udało się odczytać profilu." } };
+    }
+  };
+  const readLegalState = () =>
     legalAccessService.getAccountAccessState(userResult.data.user.id).catch((error) => {
       legalError = error;
       return null;
-    }),
-  ]);
+    });
+  const [profileResult, legal] = await Promise.all([readProfile(), readLegalState()]);
 
   if (profileResult.error) {
-    throw new ApiError(503, "Usługa profilu jest chwilowo niedostępna.");
+    throw new ApiError(503, "Nie udało się teraz zweryfikować konta. Spróbuj ponownie.");
   }
 
   if (!profileResult.data) {
@@ -1013,6 +1042,7 @@ async function readBody(req) {
   let timeout;
   const timeoutPromise = new Promise((resolve, reject) => {
     timeout = setTimeout(() => {
+      req.destroy();
       reject(new ApiError(408, "Przekroczono czas przesyłania danych."));
     }, HTTP_BODY_TIMEOUT_MS);
   });
@@ -1184,10 +1214,6 @@ function validateYarn(body) {
   };
 }
 
-async function hashInvitationToken(token) {
-  return crypto.createHash("sha256").update(token, "utf8").digest("hex");
-}
-
 async function handleAuthApi(req, res, url) {
   if (req.method === "POST") {
     requireTrustedOrigin(req);
@@ -1197,9 +1223,8 @@ async function handleAuthApi(req, res, url) {
     const body = await readBody(req);
     const email = normalizeAuthEmail(body.login);
     const password = validateAuthPassword(body.password);
-    let legalInput;
     try {
-      legalInput = validateRegistrationLegalInput(body, CURRENT_LEGAL_DOCUMENT);
+      validateRegistrationLegalInput(body, CURRENT_LEGAL_DOCUMENT);
     } catch (error) {
       throw new ApiError(400, error.message);
     }
@@ -1215,19 +1240,26 @@ async function handleAuthApi(req, res, url) {
 
     let registration;
     try {
-      registration = await registerInvitedUser({
+      const { data, error } = await authClient().auth.signUp({
         email,
         password,
-        ...legalInput,
-        captchaToken,
-        emailRedirectTo: new URL("/?confirmed=1", getExpectedOrigin(req)).toString(),
-      }, {
-        authClient: authClient(),
-        adminClient: supabaseConnection.client,
-        serviceClient: supabaseConnection.client,
-        legalDocument: CURRENT_LEGAL_DOCUMENT,
-        hashInvitationToken,
+        options: {
+          data: { login: email },
+          emailRedirectTo: new URL("/?confirmed=1", getExpectedOrigin(req)).toString(),
+          ...(captchaToken ? { captchaToken } : {}),
+        },
       });
+      if (error || !data?.user) throw error || new Error("Brak użytkownika po rejestracji");
+      const { error: finalizationError } = await supabaseConnection.client.rpc(
+        "finalize_automatic_registration",
+        {
+          p_user_id: data.user.id,
+          p_terms_version: CURRENT_LEGAL_DOCUMENT.termsVersion,
+          p_privacy_version: CURRENT_LEGAL_DOCUMENT.privacyVersion,
+        },
+      );
+      if (finalizationError) throw finalizationError;
+      registration = data;
     } catch {
       recordAuthFailure(rateLimitKeys);
       throw genericAuthError("register");
@@ -1243,6 +1275,54 @@ async function handleAuthApi(req, res, url) {
     return sendJson(res, 201, {
       user: sanitizeAuthUser(registration.user),
       requiresEmailConfirmation: !registration.session,
+      idleTimeoutMs: getIdleTimeoutMs(),
+    });
+  }
+
+  if (req.method === "POST" && url.pathname === "/api/auth/confirmation") {
+    const body = await readBody(req);
+    const rateLimitKeys = [`ip:${getClientAddress(req)}`];
+    enforceRequestRateLimit(rateLimitKeys, authRequestRateLimiter, res);
+    enforceAuthRateLimit(rateLimitKeys, res);
+
+    let accessToken;
+    let refreshToken;
+    try {
+      accessToken = normalizeRecoveryToken(body.access_token, "potwierdzający");
+      refreshToken = normalizeRecoveryToken(body.refresh_token, "odświeżający");
+    } catch {
+      recordAuthFailure(rateLimitKeys);
+      throw genericAuthError("confirmation");
+    }
+
+    const client = authClient();
+    let session;
+    let user;
+    try {
+      const { data, error } = await client.auth.setSession({
+        access_token: accessToken,
+        refresh_token: refreshToken,
+      });
+      session = data?.session;
+      if (error || !session?.access_token || !session?.refresh_token) {
+        throw new Error("Nieprawidłowa sesja potwierdzenia.");
+      }
+
+      const userResult = await client.auth.getUser(session.access_token);
+      user = userResult.data?.user;
+      if (userResult.error || !user) {
+        throw new Error("Nieprawidłowy użytkownik potwierdzenia.");
+      }
+    } catch {
+      recordAuthFailure(rateLimitKeys);
+      throw genericAuthError("confirmation");
+    }
+
+    clearAuthFailures(rateLimitKeys);
+    setAuthCookies(res, session);
+    return sendJson(res, 200, {
+      user: sanitizeAuthUser(user),
+      idleTimeoutMs: getIdleTimeoutMs(),
     });
   }
 
@@ -1274,7 +1354,10 @@ async function handleAuthApi(req, res, url) {
 
     setAuthCookies(res, data.session);
     await updateLastLogin(data.user.id);
-    return sendJson(res, 200, { user: sanitizeAuthUser(data.user) });
+    return sendJson(res, 200, {
+      user: sanitizeAuthUser(data.user),
+      idleTimeoutMs: getIdleTimeoutMs(),
+    });
   }
 
   if (req.method === "POST" && url.pathname === "/api/auth/password-reset-request") {
@@ -1366,7 +1449,10 @@ async function handleAuthApi(req, res, url) {
     }
     setAuthCookies(res, recoverySession);
     appendSetCookie(res, buildRecoveryGrantCookie(recoveryUser.id, { jti: grantJti }));
-    return sendJson(res, 200, { user: sanitizeAuthUser(recoveryUser) });
+    return sendJson(res, 200, {
+      user: sanitizeAuthUser(recoveryUser),
+      idleTimeoutMs: getIdleTimeoutMs(),
+    });
   }
 
   if (req.method === "POST" && url.pathname === "/api/auth/password") {
@@ -1375,7 +1461,7 @@ async function handleAuthApi(req, res, url) {
     const password = validateAuthPassword(body.password);
     const cookies = parseCookies(req.headers.cookie);
     const refreshToken = cookies[AUTH_REFRESH_COOKIE];
-    const grantJti = getRecoveryGrantJti(cookies[AUTH_RECOVERY_COOKIE], session.user.id);
+    const grantJti = getRecoveryGrantJti(cookies[AUTH_RECOVERY_GRANT_COOKIE], session.user.id);
     if (!refreshToken || !grantJti) {
       throw new ApiError(400, "Link odzyskiwania hasła jest nieprawidłowy lub wygasł.");
     }
@@ -1393,7 +1479,7 @@ async function handleAuthApi(req, res, url) {
       grant_jti: grantJti,
     });
     if (grantClaimError) {
-      throw new ApiError(503, "Nie udało się bezpiecznie zweryfikować linku odzyskiwania. Spróbuj ponownie.");
+      throw new ApiError(503, "Odzyskiwanie hasła jest chwilowo niedostępne. Spróbuj ponownie później.");
     }
     if (grantClaimed !== true) {
       throw new ApiError(400, "Ten link został już wykorzystany albo wygasł. Rozpocznij odzyskiwanie hasła ponownie.");
@@ -1424,10 +1510,17 @@ async function handleAuthApi(req, res, url) {
       throw new ApiError(503, "Hasło zostało zmienione. Nie udało się bezpiecznie zakończyć procesu. Zaloguj się nowym hasłem. Jeśli logowanie nie zadziała, rozpocznij odzyskiwanie ponownie.");
     }
 
+    let globalSignOutFailed = false;
     try {
-      await client.auth.signOut({ scope: "global" });
+      const signOutResult = await client.auth.signOut({ scope: "global" });
+      globalSignOutFailed = Boolean(signOutResult?.error);
+    } catch {
+      globalSignOutFailed = true;
     } finally {
       clearAuthCookies(res);
+    }
+    if (globalSignOutFailed) {
+      throw new ApiError(503, "Hasło zostało zmienione, ale nie udało się unieważnić pozostałych sesji.");
     }
     return sendJson(res, 200, { passwordUpdated: true, authenticated: false });
   }
@@ -1440,6 +1533,7 @@ async function handleAuthApi(req, res, url) {
       throw new ApiError(400, "Podaj bieżące hasło.");
     }
     const password = validateAuthPassword(body.password);
+
     let captchaToken;
     try {
       captchaToken = normalizeCaptchaToken(body.captchaToken, captchaConfig.enabled);
@@ -1471,11 +1565,13 @@ async function handleAuthApi(req, res, url) {
     }
     clearAuthFailures(rateLimitKeys);
 
-    const client = supabaseAuthClientFactory(supabaseAuthConfig, session.accessToken);
+    
     if (!session.refreshToken) {
       clearAuthCookies(res);
       throw new ApiError(503, "Sesja logowania jest niepełna. Zaloguj się ponownie i spróbuj jeszcze raz.");
     }
+
+    const client = supabaseAuthClientFactory(supabaseAuthConfig, session.accessToken);
     const { error: sessionError } = await client.auth.setSession({
       access_token: session.accessToken,
       refresh_token: session.refreshToken,
@@ -1544,6 +1640,8 @@ async function handleAuthApi(req, res, url) {
         );
         await client.auth.signOut({ scope: "local" });
       }
+    } catch {
+      console.warn("Nie udało się wylogować sesji po stronie Supabase.");
     } finally {
       clearAuthCookies(res);
     }
@@ -1561,6 +1659,7 @@ async function handleAuthApi(req, res, url) {
       authenticated: Boolean(session),
       user: session ? sanitizeAuthUser(session.user) : null,
       profile: session?.profile || null,
+      idleTimeoutMs: getIdleTimeoutMs(),
       legal: session?.legal || null,
     });
   }
@@ -1595,6 +1694,12 @@ async function handleApi(req, res, url) {
     } catch (error) {
       throw new ApiError(400, error.message || `Wpisz dokładnie: ${ACCOUNT_DELETION_PHRASE}.`);
     }
+    let captchaToken;
+    try {
+      captchaToken = normalizeCaptchaToken(body.captchaToken, captchaConfig.enabled);
+    } catch (error) {
+      throw new ApiError(400, error.message);
+    }
 
     const retryAfterMs = Math.max(
       ...rateLimitKeys.map((key) => accountDeletionRateLimiter.getRetryAfterMs(key)),
@@ -1608,6 +1713,7 @@ async function handleApi(req, res, url) {
       await deleteSupabaseAccount({
         session,
         password: deletionInput.password,
+        captchaToken,
         authClient: authClient(),
         adminClient: supabaseConnection.client,
       });
@@ -1657,7 +1763,7 @@ async function handleApi(req, res, url) {
     const session = await requireCurrentTermsSession(req, res);
     enforceRequestRateLimit(
       [`ip:${getClientAddress(req)}`, `user:${session.user.id}`],
-      matchingRateLimiter,
+      matchRateLimiter,
       res,
     );
     const result = await getSupabaseMatches(session, { diagnostics: true });
@@ -1722,7 +1828,12 @@ async function main(options = {}) {
       },
       deploymentEnvironment: "production",
     });
-    if (!publication.ready) throw new Error("Publikacja prawna nie jest gotowa.");
+    if (!publication.ready) {
+      if (readLegalPublicationEnforcement()) throw new Error("Publikacja prawna nie jest gotowa.");
+      console.log(
+        `[LEGAL_PUBLICATION_WARNING] Start produkcji kontynuowany przy wyłączonej blokadzie: ${publication.errors.join(" ")}`
+      );
+    }
   }
   validateCookieSecurityConfig();
   validateOriginConfig();
@@ -1935,6 +2046,7 @@ if (require.main === module) {
 
 module.exports = {
   getClientAddress,
+  getMatchRateLimitKeys,
   getRuntimeConfig,
   main,
   normalizeAuthEmail,

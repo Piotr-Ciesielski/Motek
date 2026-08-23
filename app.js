@@ -63,14 +63,14 @@ const headerAuthAction = document.getElementById("headerAuthAction");
 const themeToggle = document.getElementById("themeToggle");
 const themeToggleIcon = themeToggle?.querySelector(".theme-toggle__icon");
 const inventoryThemeImage = document.getElementById("inventoryThemeImage");
+const catalogThemeImage = document.getElementById("catalogThemeImage");
+const accountThemeImage = document.getElementById("accountThemeImage");
 const inventoryStats = document.getElementById("inventoryStats");
 const inventoryStatYarns = document.getElementById("inventoryStatYarns");
 const inventoryStatLength = document.getElementById("inventoryStatLength");
 const inventoryStatWeight = document.getElementById("inventoryStatWeight");
 const inventoryStatColors = document.getElementById("inventoryStatColors");
 const matchesThemeImage = document.getElementById("matchesThemeImage");
-const catalogThemeImage = document.getElementById("catalogThemeImage");
-const accountThemeImage = document.getElementById("accountThemeImage");
 const appViews = [...document.querySelectorAll(".app-view")];
 const viewButtons = [...document.querySelectorAll("[data-view-target]")];
 const inventoryMatchBtn = document.getElementById("inventoryMatchBtn");
@@ -79,17 +79,29 @@ const backToInventoryBtn = document.getElementById("backToInventoryBtn");
 const networkStatus = document.getElementById("networkStatus");
 const copyrightNotice = document.getElementById("copyrightNotice");
 const { createApiClient, ApiError, RequestError, isResponseEnvelope } = window.MotekApiClient;
-const { CURRENT_LEGAL_DOCUMENT, formatCopyrightNotice } = window.MotekLegalDocument;
+const legalDocumentApi = window.MotekLegalDocument || {
+  CURRENT_LEGAL_DOCUMENT: Object.freeze({
+    termsVersion: "1.0",
+    privacyVersion: "1.0",
+    copyrightYear: new Date().getFullYear(),
+  }),
+  formatCopyrightNotice: () => "",
+};
+const { CURRENT_LEGAL_DOCUMENT, formatCopyrightNotice } = legalDocumentApi;
+const createLegalAcceptanceController = window.createLegalAcceptanceController
+  || (() => ({ setSessionLegalState: () => false }));
 
 const REQUEST_TIMEOUT_MS = 12_000;
 const scrollBehavior = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches
   ? "auto"
   : "smooth";
-const catalogFilterDisclosure = createCatalogFilterDisclosure({
-  toggle: catalogFiltersToggle,
-  panel: catalogSecondaryFilters,
-  mobileQuery: window.matchMedia("(max-width: 640px)"),
-});
+const catalogFilterDisclosure = typeof window.createCatalogFilterDisclosure === "function"
+  ? window.createCatalogFilterDisclosure({
+    toggle: catalogFiltersToggle,
+    panel: catalogSecondaryFilters,
+    mobileQuery: window.matchMedia("(max-width: 640px)"),
+  })
+  : { updateCount() {} };
 const {
   buildAuthPayload,
   buildRegistrationAuthPayload,
@@ -118,12 +130,8 @@ const {
 function initializeLegalRegistrationFields() {
   const termsVersion = registerForm.elements.termsVersion;
   const privacyNoticeVersion = registerForm.elements.privacyNoticeVersion;
-  const invitationToken = registerForm.elements.invitationToken;
   if (termsVersion) termsVersion.value = CURRENT_LEGAL_DOCUMENT.termsVersion;
   if (privacyNoticeVersion) privacyNoticeVersion.value = CURRENT_LEGAL_DOCUMENT.privacyVersion;
-  if (invitationToken) {
-    invitationToken.value = new URLSearchParams(window.location.search).get("invitation") || "";
-  }
   if (copyrightNotice) {
     copyrightNotice.textContent = formatCopyrightNotice(CURRENT_LEGAL_DOCUMENT);
   }
@@ -162,6 +170,8 @@ let baseUrl = window.location.origin;
 let isAuthenticated = false;
 let requiresLegalAcceptance = false;
 let pendingWriteCount = 0;
+let yarnRefreshGeneration = 0;
+let yarnRefreshBusyGeneration = 0;
 const catalogController = createCatalogController({
   initialFilters: {},
   load: async ({ page }) => {
@@ -194,13 +204,14 @@ let preservedDraftRequiresSave = false;
 let hasCalculatedMatches = false;
 let inventoryChangedSinceMatch = false;
 let authCaptchaConfig = { enabled: false, provider: null, siteKey: null };
-const captchaTokens = { login: null, register: null, passwordReset: null, passwordChange: null };
-const captchaWidgetIds = { login: null, register: null, passwordReset: null, passwordChange: null };
+const captchaTokens = { login: null, register: null, passwordReset: null, passwordChange: null, deleteAccount: null };
+const captchaWidgetIds = { login: null, register: null, passwordReset: null, passwordChange: null, deleteAccount: null };
+const captchaRenderPromises = { login: null, register: null, passwordReset: null, passwordChange: null, deleteAccount: null };
+let turnstileScriptPromise = null;
 
 function canAccessPrivateData() {
   return isAuthenticated && !requiresLegalAcceptance;
 }
-
 const apiClient = createApiClient({
   fetchImpl: window.fetch.bind(window),
   timeoutMs: REQUEST_TIMEOUT_MS,
@@ -223,31 +234,64 @@ const idleSessionController = window.MotekIdleSession.createIdleSessionControlle
   onExpired: () => {
     idleSessionWarning.hidden = true;
     handleSessionExpired();
-    setAuthMessage("Sesja wygasła z powodu 2 godzin bezczynności. Zaloguj się ponownie.", "error");
+    setAuthMessage("Sesja wygasła z powodu bezczynności. Zaloguj się ponownie.", "error");
   },
 });
 
+function applyIdleTimeout(payload) {
+  if (typeof idleSessionController.setTimeoutMs === "function") {
+    idleSessionController.setTimeoutMs(payload?.idleTimeoutMs);
+  }
+}
+
 function loadTurnstileScript() {
   if (window.turnstile) return Promise.resolve();
-  return new Promise((resolve, reject) => {
+  if (turnstileScriptPromise) return turnstileScriptPromise;
+  turnstileScriptPromise = new Promise((resolve, reject) => {
     const script = document.createElement("script");
     script.src = "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit";
     script.async = true;
     script.defer = true;
     script.onload = resolve;
-    script.onerror = () => reject(new Error("Nie udało się załadować zabezpieczenia formularza."));
+    script.onerror = () => {
+      turnstileScriptPromise = null;
+      reject(new Error("Nie udało się załadować zabezpieczenia formularza."));
+    };
     document.head.appendChild(script);
   });
+  return turnstileScriptPromise;
 }
 
-async function initializeCaptcha() {
-  const config = await api("/api/config");
-  authCaptchaConfig = config.captcha || authCaptchaConfig;
-  if (!authCaptchaConfig.enabled) return;
-  await loadTurnstileScript();
-  ["login", "register", "passwordReset", "passwordChange"].forEach((kind) => {
-    const container = document.querySelector(`[data-turnstile-for="${kind}"]`);
-    if (!container) return;
+function authFormKind(form) {
+  return form === registerForm
+    ? "register"
+    : form === passwordResetForm
+      ? "passwordReset"
+      : form === changePasswordForm
+        ? "passwordChange"
+        : form === deleteAccountForm
+          ? "deleteAccount"
+        : "login";
+}
+
+async function renderCaptchaForForm(form) {
+  if (!form || !authCaptchaConfig.enabled) return;
+
+  const kind = authFormKind(form);
+  if (captchaWidgetIds[kind] !== null) return;
+  if (captchaRenderPromises[kind]) return captchaRenderPromises[kind];
+
+  captchaRenderPromises[kind] = (async () => {
+    await loadTurnstileScript();
+    const visibleForm = document.querySelector(".auth-form:not([hidden])");
+    const isVisible = form === changePasswordForm
+      ? !form.hidden
+      : form === deleteAccountForm
+        ? deleteAccountDisclosure.open
+        : visibleForm === form;
+    if (!isVisible || !form.isConnected) return;
+    const container = form.querySelector(`[data-turnstile-for="${kind}"]`);
+    if (!container || captchaWidgetIds[kind] !== null) return;
     captchaWidgetIds[kind] = window.turnstile.render(container, {
       sitekey: authCaptchaConfig.siteKey,
       theme: "auto",
@@ -255,17 +299,24 @@ async function initializeCaptcha() {
       "expired-callback": () => { captchaTokens[kind] = null; },
       "error-callback": () => { captchaTokens[kind] = null; },
     });
-  });
+  })();
+
+  try {
+    await captchaRenderPromises[kind];
+  } finally {
+    captchaRenderPromises[kind] = null;
+  }
+}
+
+async function initializeCaptcha() {
+  const config = await api("/api/config");
+  authCaptchaConfig = config.captcha || authCaptchaConfig;
+  if (!authCaptchaConfig.enabled) return;
+  await renderCaptchaForForm(document.querySelector(".auth-form:not([hidden])"));
 }
 
 function resetCaptchaForForm(form) {
-  const kind = form === registerForm
-    ? "register"
-    : form === passwordResetForm
-      ? "passwordReset"
-      : form === changePasswordForm
-        ? "passwordChange"
-        : "login";
+  const kind = authFormKind(form);
   captchaTokens[kind] = null;
   if (captchaWidgetIds[kind] !== null && window.turnstile) {
     window.turnstile.reset(captchaWidgetIds[kind]);
@@ -300,6 +351,9 @@ function setActiveView(requestedView, { focus = true } = {}) {
   const target = appViews.find((candidate) => candidate.dataset.view === view);
   if (!target) return;
 
+  const returningFromCatalogToInventory = activeView === "catalog" && view === "inventory";
+  const enteringMatchesView = view === "matches" && activeView !== "matches";
+  yarnRefreshGeneration += 1;
   activeView = view;
   appViews.forEach((candidate) => {
     candidate.hidden = candidate !== target;
@@ -314,6 +368,16 @@ function setActiveView(requestedView, { focus = true } = {}) {
   if (focus) {
     window.scrollTo({ top: 0, behavior: scrollBehavior });
     focusViewHeading(target);
+  }
+
+  if (returningFromCatalogToInventory && isAuthenticated && !hasUnsavedYarnChanges()) {
+    refresh().catch((error) => {
+      setStorageMessage(`${error.message} Nie udało się odświeżyć magazynu — spróbuj ponownie za chwilę.`, "error");
+    });
+  }
+
+  if (enteringMatchesView && isAuthenticated && !requiresLegalAcceptance && results.childElementCount === 0) {
+    queueMicrotask(() => findBtn.click());
   }
 }
 
@@ -339,7 +403,12 @@ function renderThemeToggle() {
       : "Kolorowe włóczki i kot w pracowni",
   };
 
-  for (const image of [inventoryThemeImage, matchesThemeImage, catalogThemeImage, accountThemeImage]) {
+  for (const image of [
+    inventoryThemeImage,
+    matchesThemeImage,
+    catalogThemeImage,
+    accountThemeImage,
+  ]) {
     if (!image) continue;
     image.src = artwork.src(image);
     image.alt = artwork.alt;
@@ -358,14 +427,6 @@ function updateNavigationState() {
 viewButtons.forEach((button) => {
   button.addEventListener("click", () => {
     setActiveView(button.dataset.viewTarget);
-    if (
-      button.dataset.viewTarget === "matches"
-      && isAuthenticated
-      && !requiresLegalAcceptance
-      && results.childElementCount === 0
-    ) {
-      findBtn.click();
-    }
   });
 });
 
@@ -418,7 +479,7 @@ const legalAcceptanceController = createLegalAcceptanceController({
   request: (path, options) => api(path, options),
   legalDocument: CURRENT_LEGAL_DOCUMENT,
   onAccepted: async () => {
-    await refreshAuthSession();
+    await refreshAuthSession({ navigateToInventory: true });
     await refreshPatternCatalog().catch(showPatternCatalogError);
   },
 });
@@ -1278,6 +1339,7 @@ function addYarnCard(yarn = {}, { isNew = false } = {}) {
     else saveNewYarn(node);
   });
   node.querySelector(".yarn-edit").addEventListener("click", () => {
+    yarnRefreshGeneration += 1;
     node.dataset.editing = "true";
     setYarnFieldsDisabled(node, false);
     updateYarnSaveButton(node);
@@ -1343,6 +1405,17 @@ function addYarnCard(yarn = {}, { isNew = false } = {}) {
 function collectYarnsFromDom() {
   return [...yarnList.querySelectorAll('.yarn-card[data-saved="true"]')].map(collectYarnFromCard);
 }
+
+yarnList.addEventListener("click", (event) => {
+  const card = event.target.closest(".yarn-card");
+  if (!card || event.target.closest("[data-material-picker]")) {
+    return;
+  }
+
+  card.querySelectorAll("[data-material-picker][open]").forEach((picker) => {
+    picker.open = false;
+  });
+});
 
 document.querySelectorAll("label").forEach((label) => {
   const field = label.querySelector("input, select");
@@ -1965,6 +2038,7 @@ function showAuthForm(form) {
   loginModeBtn.tabIndex = form === loginForm ? 0 : -1;
   registerModeBtn.tabIndex = form === registerForm ? 0 : -1;
   authPanel.classList.toggle("auth-panel--recovery", form === passwordUpdateForm);
+  renderCaptchaForForm(form).catch((error) => setAuthMessage(error.message, "error"));
 
   const content = new Map([
     [loginForm, ["Zaloguj się do Motka", "Wróć do swojego magazynu i rozpoczętych projektów."]],
@@ -1987,10 +2061,11 @@ async function startPasswordRecovery() {
     window.history.replaceState({}, document.title, window.location.pathname);
     try {
       setAuthMessage("Potwierdzam adres e-mail...");
-      await api("/api/auth/confirmation", {
+      const confirmation = await api("/api/auth/confirmation", {
         method: "POST",
         body: JSON.stringify({ access_token: accessToken, refresh_token: refreshToken }),
       });
+      applyIdleTimeout(confirmation);
       setAuthMessage("Adres e-mail został potwierdzony. Konto jest gotowe do użycia.", "success");
       return false;
     } catch (error) {
@@ -2012,10 +2087,11 @@ async function startPasswordRecovery() {
     const recoveryBody = code
       ? { code }
       : { access_token: accessToken, refresh_token: refreshToken };
-    await api("/api/auth/recovery", {
+    const recovery = await api("/api/auth/recovery", {
       method: "POST",
       body: JSON.stringify(recoveryBody),
     });
+    applyIdleTimeout(recovery);
     window.history.replaceState({}, document.title, window.location.pathname);
     authForms.hidden = false;
     setActiveView("account", { focus: false });
@@ -2047,7 +2123,7 @@ function renderAuthState(payload) {
   [loginForm, registerForm, passwordResetForm, passwordUpdateForm].forEach((form) => {
     setAuthFormDisabled(form, authenticated);
   });
-  authUser.hidden = !authenticated;
+  authUser.hidden = true;
   accountView.classList.toggle("is-authenticated", authenticated);
   document.body.classList.toggle("auth-logged-out", !authenticated);
   headerAuthAction.textContent = authenticated ? "Wyloguj" : "Zaloguj";
@@ -2057,15 +2133,18 @@ function renderAuthState(payload) {
   findBtn.disabled = !authenticated;
   inventoryMatchBtn.disabled = !authenticated;
   updateNavigationState();
+  headerAuthAction.textContent = authenticated ? "Wyloguj" : "Zaloguj";
+  headerAuthAction.setAttribute("aria-label", authenticated ? "Wyloguj" : "Zaloguj");
+  headerAuthAction.removeAttribute("title");
   if (!authenticated) {
     idleSessionController.stop();
     idleSessionWarning.hidden = true;
+    deleteAccountDisclosure.open = false;
     onboardingDismissed = false;
     onboarding.hidden = true;
     patternCatalog.replaceChildren();
     patternCatalogSummary.textContent = "";
     results.replaceChildren();
-    deleteAccountDisclosure.open = false;
     if (["inventory", "matches"].includes(activeView)) {
       setActiveView("account", { focus: false });
     }
@@ -2073,6 +2152,7 @@ function renderAuthState(payload) {
 
   if (!authenticated) {
     authUser.textContent = "";
+    authUser.removeAttribute("title");
     authProfileSummary.textContent = "";
     deleteAccountForm.reset();
     changePasswordForm.reset();
@@ -2086,11 +2166,10 @@ function renderAuthState(payload) {
   }
 
   const profile = payload.profile || {};
-  const login = profile.login || payload.user.metadata?.login || payload.user.email;
-  authUser.textContent = `Zalogowano jako ${login}`;
-  authUser.title = login;
+  authUser.textContent = "";
+  authUser.removeAttribute("title");
   const profileEmail = profile.email || payload.user.email || "";
-  authProfileSummary.textContent = profileEmail || "Zalogowany użytkownik";
+  authProfileSummary.textContent = profileEmail ? `Zalogowano jako: ${profileEmail}` : "Zalogowano jako:";
   authTitle.textContent = "Twoje konto";
   authLead.textContent = requiresLegalAcceptance
     ? "Potwierdź aktualny regulamin, aby wrócić do prywatnego magazynu."
@@ -2105,10 +2184,11 @@ function renderAuthState(payload) {
   }
 }
 
-async function refreshAuthSession() {
+async function refreshAuthSession({ navigateToInventory = false } = {}) {
   let payload;
   try {
     payload = await api("/api/auth/session");
+    applyIdleTimeout(payload);
   } catch (error) {
     renderAuthState({ authenticated: false });
     setAuthMessage(error.message, "error");
@@ -2134,6 +2214,10 @@ async function refreshAuthSession() {
   if (requiresLegalAcceptance) {
     setActiveView("account", { focus: false });
     return payload;
+  }
+
+  if (navigateToInventory) {
+    setActiveView("inventory", { focus: false });
   }
 
   if (preserveDraftAfterLogin) {
@@ -2194,18 +2278,17 @@ async function submitAuthForm(form, endpoint, successMessage) {
       method: "POST",
       body: JSON.stringify(body),
     });
-    renderAuthState({
-      authenticated: Boolean(payload.user && !payload.requiresEmailConfirmation),
-      user: payload.user,
-      profile: null,
-    });
+    applyIdleTimeout(payload);
     if (payload.requiresEmailConfirmation) {
+      renderAuthState({ authenticated: false });
       setAuthMessage("Konto utworzone. Potwierdź adres e-mail, aby się zalogować.");
     } else {
       setAuthMessage(successMessage, "success");
-      await refreshAuthSession();
+      await refreshAuthSession({ navigateToInventory: true });
       await refreshPatternCatalog().catch(showPatternCatalogError);
-      setActiveView("inventory");
+      if (form === loginForm && authMessage.textContent === successMessage) {
+        setAuthMessage("");
+      }
     }
     form.reset();
   } catch (error) {
@@ -2225,6 +2308,17 @@ loginModeBtn.addEventListener("click", () => {
   showAuthForm(loginForm);
   setAuthMessage("");
   loginForm.querySelector('input[name="email"]').focus();
+});
+
+headerAuthAction.addEventListener("click", () => {
+  if (isAuthenticated) {
+    logoutBtn.click();
+    return;
+  }
+  setActiveView("account");
+  showAuthForm(loginForm);
+  setAuthMessage("");
+  loginForm.querySelector('input[name="email"]').focus({ preventScroll: true });
 });
 
 registerModeBtn.addEventListener("click", () => {
@@ -2315,17 +2409,18 @@ changePasswordToggle.addEventListener("click", () => {
   changePasswordToggle.setAttribute("aria-expanded", String(isOpen));
   changePasswordToggle.textContent = isOpen ? "Anuluj" : "Zmień hasło";
   if (isOpen) {
-    changePasswordForm.querySelector('input[name="currentSecret"]').focus();
+    changePasswordForm.querySelector('input[name="currentPassword"]').focus();
+    renderCaptchaForForm(changePasswordForm).catch((error) => setAuthMessage(error.message, "error"));
   }
 });
 
 changePasswordForm.addEventListener("submit", async (event) => {
   event.preventDefault();
-  const formValues = Object.fromEntries(new FormData(changePasswordForm).entries());
-  const passwordConfirmation = formValues.newSecretConfirmation;
-  if (formValues.newSecret !== passwordConfirmation) {
+  const body = Object.fromEntries(new FormData(changePasswordForm).entries());
+  const passwordConfirmation = body.passwordConfirmation;
+  if (body.password !== passwordConfirmation) {
     setAuthMessage("Wpisane hasła nie są zgodne.", "error");
-    changePasswordForm.querySelector('input[name="newSecretConfirmation"]').focus();
+    changePasswordForm.querySelector('input[name="passwordConfirmation"]').focus();
     return;
   }
 
@@ -2334,10 +2429,7 @@ changePasswordForm.addEventListener("submit", async (event) => {
   try {
     await api("/api/auth/password/change", {
       method: "POST",
-      body: JSON.stringify(buildAuthPayload({
-        currentPassword: formValues.currentSecret,
-        password: formValues.newSecret,
-      }, {
+      body: JSON.stringify(buildAuthPayload({ currentPassword: body.currentPassword, password: body.password }, {
         captchaEnabled: authCaptchaConfig.enabled,
         captchaToken: captchaTokens.passwordChange,
       })),
@@ -2447,6 +2539,7 @@ deleteAccountForm.addEventListener("submit", async (event) => {
 
   const submitButton = deleteAccountForm.querySelector('button[type="submit"]');
   const body = Object.fromEntries(new FormData(deleteAccountForm).entries());
+  body.captchaToken = captchaTokens.deleteAccount;
   submitButton.disabled = true;
   deleteAccountForm.setAttribute("aria-busy", "true");
   setDeleteAccountMessage("Usuwam konto...");
@@ -2468,17 +2561,27 @@ deleteAccountForm.addEventListener("submit", async (event) => {
   } catch (error) {
     setDeleteAccountMessage(error.message, "error");
   } finally {
+    resetCaptchaForForm(deleteAccountForm);
     deleteAccountForm.removeAttribute("aria-busy");
     submitButton.disabled = false;
   }
 });
 
+deleteAccountDisclosure.addEventListener("toggle", () => {
+  if (deleteAccountDisclosure.open) {
+    renderCaptchaForForm(deleteAccountForm).catch((error) => setDeleteAccountMessage(error.message, "error"));
+  }
+});
+
 async function refresh() {
   if (!canAccessPrivateData()) return;
+  const refreshGeneration = ++yarnRefreshGeneration;
+  const busyGeneration = ++yarnRefreshBusyGeneration;
   yarnList.setAttribute("aria-busy", "true");
   summary.setAttribute("aria-busy", "true");
   try {
     const yarns = await loadYarns();
+    if (refreshGeneration !== yarnRefreshGeneration) return;
     yarnList.replaceChildren();
     if (yarns.length) {
       yarns.forEach(addYarnCard);
@@ -2488,12 +2591,15 @@ async function refresh() {
     renderOnboarding(yarns);
     await renderSummary(yarns);
   } finally {
-    yarnList.removeAttribute("aria-busy");
-    summary.removeAttribute("aria-busy");
+    if (busyGeneration === yarnRefreshBusyGeneration) {
+      yarnList.removeAttribute("aria-busy");
+      summary.removeAttribute("aria-busy");
+    }
   }
 }
 
 addYarnBtn.addEventListener("click", () => {
+  yarnRefreshGeneration += 1;
   const { card, created } = ensureSingleNewYarnCard(
     yarnList.querySelectorAll(".yarn-card"),
     () => {
@@ -2618,4 +2724,4 @@ detectRuntimeMode()
   .catch((error) => {
     showMessage(results, error.message, "error");
   });
-/* global MotekDomUtils, createCatalogController, createCatalogFilterDisclosure, createLegalAcceptanceController */
+/* global MotekDomUtils, createCatalogController */

@@ -12,8 +12,6 @@ const indexHtml = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf
 const browserScripts = [
   'theme-policy.js',
   'material-policy.js',
-  'legal-document.js',
-  'client/legal-acceptance-controller.js',
   'client-policy.js',
   'client/api-client.js',
   'client/dom-utils.js',
@@ -39,7 +37,7 @@ function loadApp(patterns = []) {
     const pathname = new URL(input, window.location.href).pathname;
     const payload = pathname === '/api/config'
       ? { captcha: { enabled: false } }
-      : pathname === '/api/auth/session'
+        : pathname === '/api/auth/session'
         ? {
           authenticated: true,
           user: { id: 'catalog-user', email: 'catalog@example.test' },
