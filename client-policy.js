@@ -230,20 +230,6 @@
       : { card: createCard(), created: true };
   }
 
-  function shouldRetryRead({
-    method,
-    status = null,
-    errorName = "",
-    externallyAborted = false,
-    attempt,
-    maxAttempts,
-  }) {
-    if (!["GET", "HEAD"].includes(String(method).toUpperCase())) return false;
-    if (externallyAborted || attempt >= maxAttempts) return false;
-    if (errorName === "TypeError") return true;
-    return [502, 503, 504].includes(status);
-  }
-
   function yarnsHaveSameValues(first, second) {
     return yarnValueFields.every((field) => {
       if (field !== "materials") return first?.[field] === second?.[field];
@@ -473,93 +459,6 @@
     return `${requirement?.role || "wymagana włóczka"}: ${parts.filter(Boolean).join(" · ")}`;
   }
 
-  async function loadPaginatedItems(
-    fetchPage,
-    { items = [], offset = 0, total = items.length, onPage = null } = {},
-  ) {
-    const loadedItems = [...items];
-    const knownIds = new Set(loadedItems.map((item) => String(item.id)));
-    let nextOffset = offset;
-    let knownTotal = total;
-    let hasMore = true;
-
-    while (hasMore) {
-      let page;
-      try {
-        page = await fetchPage(nextOffset);
-      } catch (error) {
-        if (!loadedItems.length) throw error;
-        return {
-          items: loadedItems,
-          nextOffset,
-          total: knownTotal,
-          complete: false,
-          error,
-        };
-      }
-
-      page.items.forEach((item) => {
-        const id = String(item.id);
-        if (knownIds.has(id)) return;
-        knownIds.add(id);
-        loadedItems.push(item);
-      });
-      if (Number.isInteger(page.total) && page.total >= loadedItems.length) {
-        knownTotal = page.total;
-      }
-      nextOffset += page.items.length;
-      hasMore = Boolean(page.hasMore) && page.items.length > 0;
-      if (typeof onPage === "function") {
-        await onPage({
-          items: [...loadedItems],
-          nextOffset,
-          total: knownTotal,
-          complete: !hasMore,
-        });
-      }
-    }
-
-    return {
-      items: loadedItems,
-      nextOffset,
-      total: knownTotal,
-      complete: true,
-      error: null,
-    };
-  }
-
-  // Pobiera pojedynczą stronę, zachowując już załadowane elementy do kolejnego wywołania.
-  async function loadNextPaginatedPage(
-    fetchPage,
-    { items = [], offset = 0, total = items.length } = {},
-  ) {
-    const loadedItems = [...items];
-    const knownIds = new Set(loadedItems.map((item) => String(item.id)));
-    try {
-      const page = await fetchPage(offset);
-      const pageItems = Array.isArray(page?.items) ? page.items : [];
-      pageItems.forEach((item) => {
-        const id = String(item.id);
-        if (knownIds.has(id)) return;
-        knownIds.add(id);
-        loadedItems.push(item);
-      });
-      const nextOffset = offset + pageItems.length;
-      const nextTotal = Number.isInteger(page?.total) ? page.total : total;
-      const complete = !page?.hasMore && (pageItems.length > 0 || loadedItems.length >= nextTotal);
-      return {
-        items: loadedItems,
-        nextOffset,
-        total: nextTotal,
-        complete,
-        error: null,
-      };
-    } catch (error) {
-      if (!loadedItems.length) throw error;
-      return { items: loadedItems, nextOffset: offset, total, complete: false, error };
-    }
-  }
-
   function formatCatalogSummary({ visible = 0, matching = 0, loaded = 0, total = 0, complete = true } = {}) {
     return `Pokazano ${Number(visible).toLocaleString("pl-PL")} z ${Number(matching).toLocaleString("pl-PL")} pasujących wzorów.`
       + ` Załadowano ${Number(loaded).toLocaleString("pl-PL")} z ${Number(total).toLocaleString("pl-PL")} wzorów.`
@@ -589,11 +488,8 @@
     readYarnVersionHeader,
     withYarnVersionRetry,
     isDeleteConfirmed,
-    loadPaginatedItems,
-    loadNextPaginatedPage,
     formatCatalogSummary,
     matchesPatternFilters,
-    shouldRetryRead,
     yarnsHaveSameValues,
   };
 });

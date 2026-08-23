@@ -1,5 +1,6 @@
 const path = require("node:path");
 const fs = require("node:fs/promises");
+const crypto = require("node:crypto");
 
 const SECURITY_HEADERS = Object.freeze({
   "Cache-Control": "no-cache",
@@ -29,26 +30,55 @@ function resolveAllowlistedFile(rootDir, relativePath) {
 
 function createStaticFileHandler({ rootDir, files, securityHeaders = {} } = {}) {
   const fileMap = new Map(Object.entries(files || {}));
+  // ponytail: cache in-memory nie unieważnia się do końca procesu — pliki są częścią obrazu deploymentu; dodaj check mtime, gdy pojawi się hot-reload.
+  const cache = new Map();
+
+  const resolveCacheControl = (ext, searchParams) => {
+    if (ext === ".webp") return "public, max-age=31536000, immutable";
+    if (ext === ".html") return "no-cache";
+    const versioned =
+      searchParams !== undefined && (searchParams.has("v") || searchParams.has("rev"));
+    return versioned ? "public, max-age=31536000, immutable" : "no-cache";
+  };
 
   return {
     async handle(req, res, url) {
       if (req?.method !== "GET") return false;
-      const pathname = typeof url === "string" ? new URL(url, "http://localhost").pathname : url?.pathname;
+      const parsedUrl = typeof url === "string" ? new URL(url, "http://localhost") : url;
+      const pathname = parsedUrl?.pathname;
       if (typeof pathname !== "string" || !fileMap.has(pathname)) return false;
 
       const filePath = resolveAllowlistedFile(rootDir, fileMap.get(pathname));
       if (!filePath) return false;
 
       const ext = path.extname(filePath).toLowerCase();
+      const cacheHeaders = {
+        ...securityHeaders,
+        ...SECURITY_HEADERS,
+        "Cache-Control": resolveCacheControl(ext, parsedUrl?.searchParams),
+      };
+
       try {
-        const body = await fs.readFile(filePath);
+        let entry = cache.get(filePath);
+        if (!entry) {
+          const body = await fs.readFile(filePath);
+          entry = {
+            body,
+            etag: `"${crypto.createHash("sha256").update(body).digest("hex")}"`,
+          };
+          cache.set(filePath, entry);
+        }
+        if ((req.headers?.["if-none-match"] || "").includes(entry.etag)) {
+          res.writeHead(304, { ...cacheHeaders, ETag: entry.etag });
+          res.end();
+          return true;
+        }
         res.writeHead(200, {
-          ...securityHeaders,
-          ...SECURITY_HEADERS,
+          ...cacheHeaders,
+          ETag: entry.etag,
           "Content-Type": CONTENT_TYPES[ext] || "application/octet-stream",
-          "Cache-Control": ext === ".webp" ? "public, max-age=31536000, immutable" : "no-cache",
         });
-        res.end(body);
+        res.end(entry.body);
       } catch (error) {
         if (error?.code !== "ENOENT" && error?.code !== "EISDIR") throw error;
         res.writeHead(404, {

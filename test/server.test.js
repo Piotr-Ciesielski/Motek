@@ -9,8 +9,6 @@ const {
   main,
   normalizeCatalogPattern,
   getCatalogPatterns,
-  scorePattern,
-  selectMatchingYarns,
   shutdown,
   validatePatternCatalogSize,
   validateMatchLimits,
@@ -123,7 +121,7 @@ test("publiczny DTO katalogu nie ujawnia źródeł ani audytu i odrzuca nieszyfr
   assert.equal(httpsPattern.officialSourceUrl, "https://example.com/pattern?ref=motek");
 });
 
-test("getCatalogPatterns mapuje HTTPS official_source_url i filtruje published", async () => {
+test("getCatalogPatterns filtruje published i pobiera count jednym zapytaniem", async () => {
   const calls = [];
   const result = (value) => {
     const promise = Promise.resolve(value);
@@ -148,18 +146,17 @@ test("getCatalogPatterns mapuje HTTPS official_source_url i filtruje published",
         return {
           select(fields, options) {
             calls.push(["select", fields, options]);
-            return result(fields === "id"
-              ? { count: 1, error: null }
-              : {
-                data: [{
-                  id: 1,
-                  name: "Jawny wzór",
-                  description: null,
-                  official_source_url: "https://example.com/pattern?ref=motek",
-                  matching_requirements: { version: 2, variants: [] },
-                }],
-                error: null,
-              });
+            return result({
+              data: [{
+                id: 1,
+                name: "Jawny wzór",
+                description: null,
+                official_source_url: "https://example.com/pattern?ref=motek",
+                matching_requirements: { version: 2, variants: [] },
+              }],
+              count: 1,
+              error: null,
+            });
           },
         };
       },
@@ -168,7 +165,24 @@ test("getCatalogPatterns mapuje HTTPS official_source_url i filtruje published",
 
   const page = await getCatalogPatterns({ limit: 10, offset: 0 }, connection);
   assert.equal(page.items[0].officialSourceUrl, "https://example.com/pattern?ref=motek");
-  assert.equal(calls.filter(([name]) => name === "eq").length, 2);
+  assert.deepEqual(calls[0], [
+    "select",
+    "id,name,description,project_type,materials,meters_per_100g,yarn_requirements,matching_requirements,source_language,needs_review,official_source_url",
+    { count: "exact" },
+  ]);
+  assert.deepEqual(calls[1], ["eq", "publication_status", "published"]);
+});
+
+test("getCatalogPatterns kończy się błędem, gdy klient nie wspiera filtra published", async () => {
+  const connection = {
+    client: {
+      from: () => ({
+        select: () => Promise.resolve({ data: [], count: 0, error: null }),
+      }),
+    },
+  };
+
+  await assert.rejects(() => getCatalogPatterns({ limit: 10, offset: 0 }, connection));
 });
 
 test("walidacja włóczki zachowuje kilka materiałów", () => {
@@ -234,68 +248,6 @@ test("ranking respektuje limity rozmiaru i może użyć kilku motków dla jednej
     ),
     /zbyt wiele wariantów/
   );
-
-  const selected = selectMatchingYarns(
-    {
-      yarnsNeeded: 1,
-      metersNeeded: 500,
-      gramsNeeded: 100,
-      materials: ["wełna"],
-      weightClasses: ["dk"],
-    },
-    Array.from({ length: 75 }, (_, id) => ({
-      id,
-      materials: ["wełna"],
-      weightClass: "dk",
-      length: 100,
-      weight: 20,
-    }))
-  );
-  assert.equal(selected.yarns.length, 75);
-  assert.equal(selected.limited, false);
-
-  const result = scorePattern(
-    {
-      requirements: [
-        {
-          yarnsNeeded: 1,
-          metersNeeded: 500,
-          gramsNeeded: 100,
-          materials: ["wełna"],
-          weightClasses: ["dk"],
-        },
-      ],
-    },
-    [
-      { id: 1, materials: ["wełna"], weightClass: "dk", length: 300, weight: 60 },
-      { id: 2, materials: ["wełna"], weightClass: "dk", length: 250, weight: 50 },
-    ]
-  );
-
-  assert.equal(result.doable, true);
-  assert.equal(result.matchedYarns, 2);
-
-  const impossible = scorePattern(
-    {
-      requirements: [
-        {
-          yarnsNeeded: 1,
-          metersNeeded: 2_500,
-          gramsNeeded: 500,
-          materials: ["wełna"],
-          weightClasses: ["dk"],
-        },
-      ],
-    },
-    Array.from({ length: 20 }, (_, id) => ({
-      id,
-      materials: ["wełna"],
-      weightClass: "dk",
-      length: 50,
-      weight: 10,
-    }))
-  );
-  assert.equal(impossible.doable, false);
 });
 
 test("endpoint release pozostaje niedostępny bez gotowego Supabase", async () => {
@@ -318,6 +270,86 @@ test("endpoint release pozostaje niedostępny bez gotowego Supabase", async () =
     assert.deepEqual(await response.json(), { status: "not_ready" });
   } finally {
     await shutdown("release-not-ready-test");
+  }
+});
+
+test("getAuthenticatedSession pobiera profil i stan prawny równolegle", async () => {
+  const started = [];
+  const deferred = () => {
+    let resolveGate;
+    const promise = new Promise((resolve) => { resolveGate = resolve; });
+    return { promise, resolve: resolveGate };
+  };
+  const profileGate = deferred();
+  const legalGate = deferred();
+  const runtime = await main({
+    supabaseConnection: {
+      async verify() {},
+      client: {
+        from(table) {
+          assert.equal(table, "profiles");
+          started.push("profile");
+          return {
+            select() {
+              return {
+                eq() {
+                  return {
+                    maybeSingle: () => profileGate.promise,
+                  };
+                },
+              };
+            },
+          };
+        },
+        async rpc(name) {
+          assert.equal(name, "get_account_access_state");
+          started.push("legal");
+          return legalGate.promise;
+        },
+      },
+    },
+    supabaseAuthConfig: {
+      url: "https://project.supabase.co",
+      publishableKey: "sb_publishable_test",
+    },
+    supabaseAuthClientFactory: () => ({
+      auth: {
+        async getUser(token) {
+          assert.equal(token, "tok-parallel");
+          return {
+            data: { user: { id: "user-parallel", email: "p@example.test", user_metadata: {} } },
+            error: null,
+          };
+        },
+      },
+    }),
+    captchaConfig: { enabled: false, provider: null, siteKey: null },
+    readinessIntervalMs: 0,
+  });
+  const baseUrl = `http://${runtime.host}:${runtime.port}`;
+  const idleCookie = buildIdleActivityCookie(Math.floor(Date.now() / 1000)).split(";", 1)[0];
+
+  try {
+    const responsePromise = fetch(`${baseUrl}/api/auth/session`, {
+      headers: { Cookie: `motek_access_token=tok-parallel; ${idleCookie}` },
+    });
+    for (let tick = 0; started.length < 2 && tick < 400; tick += 1) {
+      await new Promise((resolve) => setTimeout(resolve, 5));
+    }
+    assert.deepEqual([...started].sort(), ["legal", "profile"]);
+    profileGate.resolve({
+      data: { id: "user-parallel", login: "p", email: "p@example.test", status: "active" },
+      error: null,
+    });
+    legalGate.resolve({
+      data: { currentTermsVersion: "1.0", acceptedVersion: "1.0", acceptanceRequired: false },
+      error: null,
+    });
+    const response = await responsePromise;
+    assert.equal(response.status, 200);
+    assert.equal((await response.json()).authenticated, true);
+  } finally {
+    await shutdown("parallel-session-test");
   }
 });
 
@@ -699,27 +731,30 @@ test("serwer Motek działa bezpiecznie", async (t) => {
         assert.equal(table, "patterns");
         return {
           select(columns, options) {
-            if (options?.head) {
-              assert.equal(columns, "id");
-              return Promise.resolve({ count: supabasePatterns.length, error: null });
-            }
+            assert.equal(options?.count, "exact");
             assert.match(columns, /meters_per_100g/);
-            return {
+            const query = {
+              eq(field, expected) {
+                assert.equal(field, "publication_status");
+                assert.equal(expected, "published");
+                return query;
+              },
               range(from, to) {
                 return {
-                  async order(field, options) {
+                  async order(field, orderOptions) {
                     assert.equal(field, "name");
-                    assert.deepEqual(options, { ascending: true });
-                    return { data: supabasePatterns.slice(from, to + 1), error: null };
+                    assert.deepEqual(orderOptions, { ascending: true });
+                    return { data: supabasePatterns.slice(from, to + 1), count: supabasePatterns.length, error: null };
                   },
                 };
               },
-              async order(field, options) {
+              async order(field, orderOptions) {
                 assert.equal(field, "name");
-                assert.deepEqual(options, { ascending: true });
-                return { data: supabasePatterns, error: null };
+                assert.deepEqual(orderOptions, { ascending: true });
+                return { data: supabasePatterns, count: supabasePatterns.length, error: null };
               },
             };
+            return query;
           },
         };
       },

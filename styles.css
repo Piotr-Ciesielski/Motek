@@ -987,17 +987,6 @@ h1 {
   justify-self: start;
 }
 
-.auth-profile__name,
-.auth-profile__email {
-  display: block;
-}
-
-.auth-profile__email {
-  margin-top: 3px;
-  color: var(--muted);
-  font-size: 0.92rem;
-}
-
 .auth-message {
   min-height: 1.5em;
   margin: 14px 0 0;
