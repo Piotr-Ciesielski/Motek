@@ -457,7 +457,7 @@ test("inventory stats update together with the existing summary", () => {
 test("versioned assets keep cache busters in sync with file content", () => {
   const contentRev = (relativePath) =>
     createHash("sha256")
-      .update(readFileSync(path.join(__dirname, "..", relativePath)))
+      .update(readFileSync(path.join(__dirname, "..", relativePath), "utf8").replace(/\r\n/g, "\n"))
       .digest("hex")
       .slice(0, 7);
   const stylesRev = contentRev("styles.css");
