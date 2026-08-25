@@ -26,6 +26,7 @@ const {
   normalizePatternTechnique,
   parseTechniqueParam,
 } = require("./technique-policy");
+const { buildManualPatternDraft } = require("./pattern-content-policy");
 const {
   formatProjectVersion,
   parseProjectVersion,
@@ -119,6 +120,11 @@ const yarnWriteRateLimiter = createRequestRateLimiter({
   maxRequests: YARN_WRITE_MAX,
   blockMs: YARN_WRITE_BLOCK_MS,
 });
+const patternWriteRateLimiter = createRequestRateLimiter({
+  windowMs: YARN_WRITE_WINDOW_MS,
+  maxRequests: YARN_WRITE_MAX,
+  blockMs: YARN_WRITE_BLOCK_MS,
+});
 const matchRateLimiter = createRequestRateLimiter({
   windowMs: MATCH_REQUEST_WINDOW_MS,
   maxRequests: MATCH_REQUEST_MAX,
@@ -184,8 +190,7 @@ const staticFileHandler = createStaticFileHandler({
 
 const patternRouter = createPatternRouter({
   sendJson,
-  requireAuthenticatedSession,
-  requireCurrentTermsSession,
+  requireAuthenticatedSession: requireCurrentTermsSession,
   getCatalogPatterns,
   getSupabaseMatches,
   parsePatternPage,
@@ -193,6 +198,10 @@ const patternRouter = createPatternRouter({
   enforceRequestRateLimit,
   getMatchRateLimitKeys,
   matchRateLimiter,
+  readBody,
+  validateManualPatternPayload,
+  insertSupabasePattern,
+  patternWriteRateLimiter,
 });
 
 class ApiError extends Error {
@@ -1407,6 +1416,40 @@ function validatePatternCatalogSize(count) {
   }
 }
 
+function validateManualPatternPayload(body) {
+  try {
+    return buildManualPatternDraft(body, { newId: () => crypto.randomUUID() });
+  } catch (error) {
+    throw new ApiError(400, error.message);
+  }
+}
+
+function handlePatternInsertError(error) {
+  if (error.code === "P0001") {
+    if (/limit 300 rekordów/.test(error.message)) {
+      throw new ApiError(
+        409,
+        `Katalog wzorów osiągnął limit ${MAX_PATTERN_CATALOG_RECORDS} rekordów.`
+      );
+    }
+    throw new ApiError(400, error.message);
+  }
+  throw new Error(`Nie udało się zapisać wzoru w Supabase: ${error.message}`);
+}
+
+async function insertSupabasePattern(draft, connection = supabaseConnection) {
+  const { data, error } = await connection.client
+    .from("patterns")
+    .insert(draft)
+    .select("id,name,publication_status")
+    .single();
+
+  if (error) {
+    handlePatternInsertError(error);
+  }
+  return data;
+}
+
 function normalizeText(value, field, fallback) {
   if (value === undefined || value === null || value === "") {
     return fallback;
@@ -2321,6 +2364,9 @@ module.exports = {
   AUTH_REQUEST_LIMITS,
   recordAuthFailure,
   validateMatchLimits,
+  validateManualPatternPayload,
+  handlePatternInsertError,
+  insertSupabasePattern,
   shouldUseSecureCookies,
   shutdown,
   validateCookieSecurityConfig,

@@ -15,10 +15,27 @@ function createPatternRouter(dependencies) {
     enforceRequestRateLimit,
     getMatchRateLimitKeys,
     matchRateLimiter,
+    readBody,
+    validateManualPatternPayload,
+    insertSupabasePattern,
+    patternWriteRateLimiter,
   } = dependencies;
 
   return {
     async handle(req, res, url) {
+      if (req.method === "POST" && url.pathname === "/api/patterns") {
+        const draft = validateManualPatternPayload(await readBody(req));
+        const session = await requireCurrentTermsSession(req, res);
+        enforceRequestRateLimit([`user:${session.user.id}`], patternWriteRateLimiter, res);
+        const pattern = await insertSupabasePattern(draft);
+        sendJson(res, 201, {
+          id: pattern.id,
+          name: pattern.name,
+          publicationStatus: pattern.publication_status,
+        });
+        return true;
+      }
+
       if (req.method === "GET" && url.pathname === "/api/patterns") {
         await requireCurrentTermsSession(req, res);
         const technique = typeof parseTechniqueParam === "function"

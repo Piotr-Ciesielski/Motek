@@ -6,6 +6,7 @@ const {
   createRequestRateLimiter,
   enforceRequestRateLimit,
   getMatchRateLimitKeys,
+  handlePatternInsertError,
 } = require("../server");
 const {
   parseTechniqueParam,
@@ -283,4 +284,109 @@ test("pattern router serves authenticated matches and reports scope", async () =
     ["sendJson", 200, ["match"]],
   ]);
   assert.equal(handled, true);
+});
+
+const validManualPayload = {
+  name: "Czapka na szydełku",
+  projectType: "head_accessory",
+  technique: "crochet",
+  materials: ["bawełna"],
+  requirements: [
+    {
+      role: "kolor główny",
+      measurementBasis: "grams",
+      quantityMin: 100,
+      materialMatch: "any_material",
+      colorMode: "same",
+      weightClasses: ["dk"],
+    },
+  ],
+};
+
+function createManualPatternRouter({ insertError } = {}) {
+  const calls = [];
+  const response = { setHeader() {} };
+  const router = createPatternRouter({
+    sendJson(_res, status, payload) {
+      calls.push(["sendJson", status, payload]);
+    },
+    requireCurrentTermsSession(_req, _res) {
+      calls.push(["session"]);
+      return { user: { id: "user-9" } };
+    },
+    readBody: async () => validManualPayload,
+    validateManualPatternPayload(body) {
+      if (body !== validManualPayload) throw Object.assign(new Error("Nieprawidłowe dane."), { status: 400 });
+      calls.push(["validate"]);
+      return { source_filename: "manual:test" };
+    },
+    enforceRequestRateLimit(keys, _limiter, _res) {
+      calls.push(["rate-limit", keys]);
+    },
+    patternWriteRateLimiter: { name: "pattern-limiter" },
+    insertSupabasePattern(draft) {
+      calls.push(["insert", draft.source_filename]);
+      if (insertError) throw insertError;
+      return { id: 42, name: draft.name ?? "Czapka na szydełku", publication_status: "pending_review" };
+    },
+    getCatalogPatterns() {
+      throw new Error("katalog nie powinien zostać pobrany");
+    },
+    getSupabaseMatches() {
+      throw new Error("dopasowania nie powinny zostać pobrane");
+    },
+  });
+  return { router, calls, response };
+}
+
+test("pattern router zapisuje zgłoszony wzór po sesji i limicie żądań", async () => {
+  const { router, calls, response } = createManualPatternRouter();
+  const handled = await router.handle(
+    { method: "POST" },
+    response,
+    new URL("http://localhost/api/patterns"),
+  );
+
+  assert.equal(handled, true);
+  assert.deepEqual(calls, [
+    ["validate"],
+    ["session"],
+    ["rate-limit", ["user:user-9"]],
+    ["insert", "manual:test"],
+    ["sendJson", 201, { id: 42, name: "Czapka na szydełku", publicationStatus: "pending_review" }],
+  ]);
+});
+
+test("pattern router propaguje błędy zapisu wzoru bez zmian", async () => {
+  await assert.rejects(
+    () => createManualPatternRouter({
+      insertError: Object.assign(new Error("Katalog wzorów osiągnął limit 300 rekordów."), { status: 409 }),
+    }).router.handle({ method: "POST" }, {}, new URL("http://localhost/api/patterns")),
+    (error) => error.status === 409,
+  );
+});
+
+test("mapowanie błędów insertu wzoru: limit katalogu 409, trigger 400, reszta błąd serwera", () => {
+  assert.throws(
+    () => handlePatternInsertError(Object.assign(new Error(), { code: "P0001", message: "Katalog wzorów osiągnął limit 300 rekordów." })),
+    (error) => error.status === 409 && /limit 300/.test(error.message),
+  );
+  assert.throws(
+    () => handlePatternInsertError(Object.assign(new Error(), { code: "P0001", message: "Rola ma nieprawidłową wartość liczbową." })),
+    (error) => error.status === 400 && /nieprawidłową wartość/.test(error.message),
+  );
+  assert.throws(
+    () => handlePatternInsertError(Object.assign(new Error(), { code: "23505", message: "duplicate key" })),
+    (error) => error.status === undefined && /Nie udało się zapisać wzoru/.test(error.message),
+  );
+});
+
+test("pattern router nie obsługuje POST pod inną ścieżką", async () => {
+  const { router } = createManualPatternRouter();
+  const handled = await router.handle(
+    { method: "POST" },
+    {},
+    new URL("http://localhost/api/patterns/other"),
+  );
+  assert.equal(handled, false);
 });

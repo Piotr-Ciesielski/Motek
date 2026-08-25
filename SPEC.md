@@ -96,6 +96,7 @@ Ranking ma bezpieczne limity złożoności: do 250 wariantów na wzór, 8 ról w
 | `PATCH /api/yarns/:id` | Zmiana własnej włóczki z kontrolą wersji |
 | `DELETE /api/yarns/:id` | Usunięcie własnej włóczki z kontrolą wersji |
 | `GET /api/patterns` | Uwierzytelniona, stronicowana lista katalogu |
+| `POST /api/patterns` | Ręczne zgłoszenie wzoru do katalogu jako `pending_review`, nigdy bezpośrednio `published` |
 | `GET /api/projects/active` | Aktywny projekt właścicielki z `ETag: "project-vN"` albo `204` bez ETag |
 | `POST /api/projects` | Rozpoczęcie projektu wyłącznie z `patternId`, `variantId` i `If-Match: "yarn-vM"` |
 | `PATCH /api/projects/active` | Aktualizacja bieżącego postępu aktywnego projektu walidowanym payloadem; wymaga `If-Match: "project-vN"` i zwraca nowy ETag |
@@ -106,6 +107,10 @@ Odpowiedzi błędów mają stabilny kształt `{ "error": "komunikat" }`. Prywatn
 ## Katalog i import
 
 Źródłowy katalog przechodzi walidację pól, limitu 300 rekordów, dozwolonych materiałów, bezpiecznych adresów HTTPS i kompletności wymagań dopasowania. Publiczne DTO nie ujawnia nazw plików źródłowych ani notatek audytowych.
+
+### Ręczne zgłaszanie wzorów
+
+Zalogowana użytkowniczka z bieżącą akceptacją regulaminu może zgłosić wzór formularzem w widoku Katalogu: nazwa, typ projektu, technika, materiały, opcjonalny metraż i opis faktograficzny oraz jeden wariant zapotrzebowania (1–8 ról z jednostką, zakresem ilości, grubościami, trybem materiałów i koloru). Zgłoszenie powstaje wyłącznie jako `pending_review` z `needs_review=true`, syntetycznym `source_filename` (`manual:<uuid>`) i bez audytu treści, więc nigdy samo nie staje się `published`; publikacja pozostaje ścieżką operatora zgodną z kontraktem poniżej. Limit 300 rekordów egzekwuje trigger w bazie, a jego naruszenie zwraca czytelny komunikat. Zgłoszenia nie mają osobnej listy „moje propozycje”; katalog nadal pokazuje wyłącznie rekordy opublikowane.
 
 ### Kontrakt publikacji treści katalogu
 

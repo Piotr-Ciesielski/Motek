@@ -29,6 +29,15 @@ const backToCatalogFiltersBtn = document.getElementById("backToCatalogFiltersBtn
 const resetCatalogFiltersBtn = document.getElementById("resetCatalogFiltersBtn");
 const catalogFiltersToggle = document.getElementById("catalogFiltersToggle");
 const catalogSecondaryFilters = document.getElementById("catalogSecondaryFilters");
+const addPatternBtn = document.getElementById("addPatternBtn");
+const patternAddPanel = document.getElementById("patternAddPanel");
+const patternAddForm = document.getElementById("patternAddForm");
+const patternAddNotice = document.getElementById("patternAddNotice");
+const patternRequirementsList = document.getElementById("patternRequirementsList");
+const addPatternRequirementBtn = document.getElementById("addPatternRequirementBtn");
+const cancelPatternAddBtn = document.getElementById("cancelPatternAddBtn");
+const savePatternBtn = document.getElementById("savePatternBtn");
+const patternRequirementTemplate = document.getElementById("patternRequirementTemplate");
 const loginForm = document.getElementById("loginForm");
 const registerForm = document.getElementById("registerForm");
 const authForms = document.getElementById("authForms");
@@ -2415,6 +2424,7 @@ function renderAuthState(payload) {
   headerAuthAction.textContent = authenticated ? "Wyloguj" : "Zaloguj";
   headerAuthAction.setAttribute("aria-label", authenticated ? "Wyloguj" : "Zaloguj");
   addYarnBtn.disabled = !authenticated;
+  addPatternBtn.disabled = !authenticated;
   inventoryAddYarnBtn.disabled = !authenticated;
   findBtn.disabled = !authenticated;
   inventoryMatchBtn.disabled = !authenticated;
@@ -2430,6 +2440,7 @@ function renderAuthState(payload) {
     onboarding.hidden = true;
     patternCatalog.replaceChildren();
     patternCatalogSummary.textContent = "";
+    patternAddPanel.hidden = true;
     results.replaceChildren();
     if (["inventory", "matches"].includes(activeView)) {
       setActiveView("account", { focus: false });
@@ -2884,6 +2895,233 @@ async function refresh() {
     }
   }
 }
+
+let patternRoleSequence = 0;
+
+function getSelectedPatternMaterials(scope = patternAddPanel) {
+  return [...scope.querySelectorAll("[data-pattern-material-option]:checked")]
+    .map((field) => field.value);
+}
+
+function updatePatternMaterialSummary(summaryElement, selected) {
+  summaryElement.textContent = formatYarnMaterials(selected);
+}
+
+function syncPatternMaterialError() {
+  const attempted = patternAddForm.dataset.validationAttempted === "true";
+  const isEmpty = getSelectedPatternMaterials().length === 0;
+  const error = patternAddPanel.querySelector("[data-pattern-material-error]");
+  error.hidden = !(attempted && isEmpty);
+  patternAddPanel
+    .querySelector("[data-pattern-material-picker]")
+    .classList.toggle("material-picker--invalid", attempted && isEmpty);
+}
+
+function initPatternMaterialOptions() {
+  const options = patternAddPanel.querySelector("[data-pattern-material-options]");
+  MATERIALS.forEach(({ value, label }) => {
+    const option = document.createElement("label");
+    const checkbox = document.createElement("input");
+    const optionLabel = document.createElement("span");
+    checkbox.type = "checkbox";
+    checkbox.value = value;
+    checkbox.dataset.patternMaterialOption = "";
+    checkbox.id = `pattern-material-${value}`;
+    option.htmlFor = checkbox.id;
+    option.className = "material-picker__option";
+    optionLabel.textContent = label;
+    option.append(checkbox, optionLabel);
+    options.appendChild(option);
+  });
+  options.addEventListener("change", () => {
+    updatePatternMaterialSummary(
+      patternAddPanel.querySelector("[data-pattern-material-summary]"),
+      getSelectedPatternMaterials(),
+    );
+    syncPatternMaterialError();
+  });
+}
+
+function addPatternRequirementRow() {
+  const node = patternRequirementTemplate.content.firstElementChild.cloneNode(true);
+  patternRoleSequence += 1;
+  node
+    .querySelectorAll('input[type="radio"]')
+    .forEach((radio) => { radio.name = `pattern-role-${patternRoleSequence}-color`; });
+
+  const materialOptions = node.querySelector("[data-role-material-options]");
+  const summaryElement = node.querySelector("[data-role-material-summary]");
+  MATERIALS.forEach(({ value, label }) => {
+    const option = document.createElement("label");
+    const checkbox = document.createElement("input");
+    const optionLabel = document.createElement("span");
+    checkbox.type = "checkbox";
+    checkbox.value = value;
+    checkbox.dataset.roleMaterialOption = "";
+    checkbox.id = `pattern-role-${patternRoleSequence}-material-${value}`;
+    option.htmlFor = checkbox.id;
+    option.className = "material-picker__option";
+    optionLabel.textContent = label;
+    option.append(checkbox, optionLabel);
+    materialOptions.appendChild(option);
+  });
+  materialOptions.addEventListener("change", () => {
+    updatePatternMaterialSummary(summaryElement, getSelectedPatternMaterials(node));
+  });
+
+  const matchSelect = node.querySelector('[data-role-field="materialMatch"]');
+  const materialsBlock = node.querySelector("[data-role-materials-block]");
+  matchSelect.addEventListener("change", () => {
+    materialsBlock.hidden = matchSelect.value === "any_material";
+  });
+
+  node.querySelector(".pattern-role-remove").addEventListener("click", () => {
+    node.remove();
+    if (!patternRequirementsList.children.length) addPatternRequirementRow();
+  });
+
+  patternRequirementsList.appendChild(node);
+  return node;
+}
+
+function collectPatternDraftFromForm() {
+  const fieldValue = (name) => patternAddForm.querySelector(`[data-pattern-field="${name}"]`);
+  const metersPer100g = fieldValue("metersPer100g").value.trim();
+  return {
+    name: fieldValue("name").value,
+    projectType: fieldValue("projectType").value,
+    technique: fieldValue("technique").value,
+    metersPer100g: metersPer100g ? Number(metersPer100g) : undefined,
+    variantLabel: fieldValue("variantLabel").value.trim(),
+    sourceLanguage: fieldValue("sourceLanguage").value,
+    sourceUrl: fieldValue("sourceUrl").value.trim(),
+    description: fieldValue("description").value.trim(),
+    materials: getSelectedPatternMaterials(),
+    requirements: [...patternRequirementsList.children].map((row) => {
+      const quantityMax = row.querySelector('[data-role-field="quantityMax"]').value;
+      return {
+        role: row.querySelector('[data-role-field="role"]').value,
+        measurementBasis: row.querySelector('[data-role-field="measurementBasis"]').value,
+        quantityMin: Number(row.querySelector('[data-role-field="quantityMin"]').value),
+        ...(quantityMax ? { quantityMax: Number(quantityMax) } : {}),
+        materialMatch: row.querySelector('[data-role-field="materialMatch"]').value,
+        colorMode: row.querySelector('input[type="radio"]:checked')?.value || "same",
+        weightClasses: [...row.querySelectorAll(".pattern-weight-classes input:checked")]
+          .map((input) => input.value),
+        materials: getSelectedPatternMaterials(row),
+      };
+    }),
+  };
+}
+
+function validatePatternForm(draft) {
+  patternAddForm.dataset.validationAttempted = "true";
+  syncPatternMaterialError();
+  const invalidField = [
+    ...patternAddForm.querySelectorAll("input[required], select[required], input[type=\"number\"], input[type=\"url\"]"),
+  ].find((field) => !field.checkValidity());
+  if (invalidField) {
+    invalidField.reportValidity();
+    invalidField.focus({ preventScroll: true });
+    return false;
+  }
+
+  const problems = [];
+  if (draft.materials.length === 0) {
+    problems.push("Wybierz co najmniej jeden materiał wzoru.");
+  }
+  draft.requirements.forEach((requirement, index) => {
+    const context = `Rola ${index + 1}`;
+    if (requirement.weightClasses.length === 0) {
+      problems.push(`${context}: zaznacz co najmniej jedną grubość włóczki.`);
+    }
+    if (
+      requirement.materialMatch !== "any_material"
+      && requirement.materials.length === 0
+    ) {
+      problems.push(`${context}: wybierz materiały dopasowania albo tryb „dowolny materiał”.`);
+    }
+    if (
+      requirement.quantityMax !== undefined
+      && requirement.quantityMax < requirement.quantityMin
+    ) {
+      problems.push(`${context}: ilość maksymalna nie może być mniejsza od minimalnej.`);
+    }
+  });
+  if (problems.length > 0) {
+    showMessage(patternAddNotice, problems.join(" "), "error");
+    return false;
+  }
+  return true;
+}
+
+function resetPatternAddForm() {
+  patternAddForm.reset();
+  delete patternAddForm.dataset.validationAttempted;
+  patternAddPanel
+    .querySelectorAll("[data-pattern-material-option]")
+    .forEach((field) => { field.checked = false; });
+  updatePatternMaterialSummary(
+    patternAddPanel.querySelector("[data-pattern-material-summary]"),
+    [],
+  );
+  syncPatternMaterialError();
+  patternRequirementsList.replaceChildren();
+  addPatternRequirementRow();
+  patternAddNotice.replaceChildren();
+}
+
+async function saveNewPattern(event) {
+  event.preventDefault();
+  const draft = collectPatternDraftFromForm();
+  if (!validatePatternForm(draft)) return;
+
+  savePatternBtn.disabled = true;
+  showMessage(patternAddNotice, "Zgłaszam wzór do katalogu...", "loading");
+  try {
+    await api("/api/patterns", {
+      method: "POST",
+      body: JSON.stringify(draft),
+    });
+    resetPatternAddForm();
+    patternAddPanel.hidden = true;
+    patternCatalogNotice.hidden = false;
+    showMessage(
+      patternCatalogNotice,
+      `Wzór „${draft.name}” został zgłoszony. Trafí do katalogu po weryfikacji operatora.`,
+      "success",
+    );
+  } catch (error) {
+    showMessage(patternAddNotice, `${error.message} Formularz pozostał wypełniony.`, "error");
+  } finally {
+    savePatternBtn.disabled = false;
+  }
+}
+
+initPatternMaterialOptions();
+addPatternRequirementRow();
+
+addPatternBtn.addEventListener("click", () => {
+  if (patternAddPanel.hidden) {
+    patternAddPanel.hidden = false;
+    patternAddNotice.replaceChildren();
+  }
+  patternAddPanel.scrollIntoView({ behavior: scrollBehavior, block: "start" });
+  patternAddForm.querySelector('[data-pattern-field="name"]').focus();
+});
+
+cancelPatternAddBtn.addEventListener("click", () => {
+  resetPatternAddForm();
+  patternAddPanel.hidden = true;
+});
+
+addPatternRequirementBtn.addEventListener("click", () => {
+  const row = addPatternRequirementRow();
+  row.scrollIntoView({ behavior: scrollBehavior, block: "center" });
+  row.querySelector('[data-role-field="role"]').focus();
+});
+
+patternAddForm.addEventListener("submit", saveNewPattern);
 
 addYarnBtn.addEventListener("click", () => {
   yarnRefreshGeneration += 1;

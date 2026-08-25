@@ -3992,3 +3992,67 @@ body::before {
   justify-self: start;
   margin-top: 0.5rem;
 }
+
+.pattern-add-panel {
+  margin: 12px 0;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--panel, var(--surface));
+}
+
+.pattern-add-panel h2 {
+  margin: 0 0 6px;
+}
+
+.pattern-requirements {
+  margin: 4px 0 12px;
+}
+
+.pattern-requirements h3 {
+  margin: 8px 0 4px;
+}
+
+.pattern-role-row {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  margin-bottom: 10px;
+  border: 1px solid var(--border);
+  border-radius: 11px;
+}
+
+.pattern-role-row__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.pattern-role-row__options {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 12px;
+}
+
+.pattern-role-row__options fieldset {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  font-size: 0.92rem;
+}
+
+.pattern-inline-option {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-right: 10px;
+  white-space: nowrap;
+}
+
+@media (min-width: 641px) {
+  .pattern-role-row__grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}

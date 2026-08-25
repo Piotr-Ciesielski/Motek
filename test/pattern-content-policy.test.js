@@ -7,7 +7,9 @@ const { execFileSync } = require("node:child_process");
 const {
   validatePatternAuditManifest,
   toPublicationFields,
+  buildManualPatternDraft,
 } = require("../pattern-content-policy");
+const { normalizeMatchingDocument } = require("../matching-policy");
 
 test("odrzuca rekord bez decyzji audytowej", () => {
   assert.throws(
@@ -139,4 +141,115 @@ test("odrzuca brakujący lub nieobiektowy manifest kontrolowanym TypeError", () 
     assert.throws(() => validatePatternAuditManifest([], manifest), TypeError);
   }
   assert.throws(() => validatePatternAuditManifest(null, {}), TypeError);
+});
+
+function manualPatternInput(overrides = {}) {
+  return {
+    name: "Czapka na szydełku",
+    projectType: "head_accessory",
+    technique: "crochet",
+    materials: ["bawełna"],
+    variantLabel: "Podstawowy",
+    requirements: [
+      {
+        role: "kolor główny",
+        measurementBasis: "grams",
+        quantityMin: 100,
+        materialMatch: "any_material",
+        materials: [],
+        colorMode: "same",
+        weightClasses: ["dk"],
+      },
+    ],
+    ...overrides,
+  };
+}
+
+test("buduje draft wzoru ręcznego jako pending_review z dokumentem wymagań v2", () => {
+  const draft = buildManualPatternDraft(manualPatternInput(), { newId: () => "abc-1" });
+  assert.equal(draft.publication_status, "pending_review");
+  assert.equal(draft.needs_review, true);
+  assert.equal(draft.source_filename, "manual:abc-1");
+  assert.equal(draft.content_audit_version, null);
+  assert.equal(draft.description, null);
+  assert.deepEqual(
+    draft.matching_requirements,
+    {
+      version: 2,
+      variants: [
+        {
+          id: "reczne-zgloszenie",
+          label: "Podstawowy",
+          requirements: [
+            {
+              role: "kolor główny",
+              measurement_basis: "grams",
+              grams_min: 100,
+              materials: [],
+              material_match: "any_material",
+              color_mode: "same",
+              weight_classes: ["dk"],
+            },
+          ],
+        },
+      ],
+    },
+  );
+});
+
+test("draft ręczny przechodzi walidację matchera i triggera (format snake_case)", () => {
+  const draft = buildManualPatternDraft(manualPatternInput({
+    requirements: [
+      {
+        role: "kolor główny",
+        measurementBasis: "meters",
+        quantityMin: 300,
+        quantityMax: 350,
+        materialMatch: "any",
+        materials: ["bawełna", "akryl"],
+        colorMode: "any",
+        weightClasses: ["dk", "sport"],
+      },
+    ],
+  }));
+  const variant = normalizeMatchingDocument(draft.matching_requirements)[0];
+  assert.equal(variant.requirements[0].metersMin, 300);
+  assert.equal(variant.requirements[0].metersMax, 350);
+  assert.deepEqual(variant.requirements[0].weightClasses, ["dk", "sport"]);
+});
+
+test("payload użytkownika nie może nadpisać statusu, audytu ani źródła", () => {
+  const draft = buildManualPatternDraft(manualPatternInput({
+    publication_status: "published",
+    needs_review: false,
+    source_filename: "podrzucony.pdf",
+    content_audit_version: "9.9",
+    matching_requirements: { version: 1 },
+    technique: "crochet",
+  }), { newId: () => "safe-1" });
+  assert.equal(draft.publication_status, "pending_review");
+  assert.equal(draft.needs_review, true);
+  assert.equal(draft.source_filename, "manual:safe-1");
+  assert.equal(draft.content_audit_version, null);
+});
+
+test("odrzuca niepełny lub błędny formularz wzoru ręcznego", () => {
+  assert.throws(() => buildManualPatternDraft(manualPatternInput({ name: "  " })), /nazwa/);
+  assert.throws(() => buildManualPatternDraft(manualPatternInput({ name: "x".repeat(201) })), /200 znaków/);
+  assert.throws(() => buildManualPatternDraft(manualPatternInput({ description: "instrukcja wykonania" })), /instrukcji/);
+  assert.throws(() => buildManualPatternDraft(manualPatternInput({ projectType: "magic" })), /typ projektu/);
+  assert.throws(() => buildManualPatternDraft(manualPatternInput({ technique: "spinning" })), /technikę/);
+  assert.throws(() => buildManualPatternDraft(manualPatternInput({ materials: ["smok"] })), /Materiały/);
+  assert.throws(() => buildManualPatternDraft(manualPatternInput({ metersPer100g: -5 })), /metraż/);
+  assert.throws(() => buildManualPatternDraft(manualPatternInput({ sourceUrl: "http://example.com" })), /HTTPS/);
+  assert.throws(() => buildManualPatternDraft(manualPatternInput({ requirements: [] })), /1 do 8 ról/);
+  assert.throws(() => buildManualPatternDraft(manualPatternInput({
+    requirements: [{ role: "główny", measurementBasis: "grams", quantityMin: 10, quantityMax: 5, materialMatch: "any_material", colorMode: "same", weightClasses: ["dk"] }],
+  })), /mniejsza od minimalnej/);
+  assert.throws(() => buildManualPatternDraft(manualPatternInput({
+    requirements: [{ role: "główny", measurementBasis: "grams", quantityMin: 10, materialMatch: "any_material", colorMode: "same", weightClasses: [] }],
+  })), /grubość/);
+  assert.throws(() => buildManualPatternDraft(manualPatternInput({
+    requirements: [{ role: "główny", measurementBasis: "grams", quantityMin: 10, materialMatch: "all", materials: [], colorMode: "same", weightClasses: ["dk"] }],
+  })), /jeden materiał/);
 });

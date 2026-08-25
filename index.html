@@ -12,7 +12,7 @@
       rel="stylesheet"
     />
     <script src="theme-policy.js?v=2.0.0-alpha.39"></script>
-    <link rel="stylesheet" href="styles.css?v=2.0.0-alpha.39&rev=ce1e448" />
+    <link rel="stylesheet" href="styles.css?v=2.0.0-alpha.39&rev=d644b6e" />
   </head>
   <body class="auth-logged-out">
     <a class="skip-link" href="#main-content">Przejdź do głównej treści</a>
@@ -518,9 +518,101 @@
           </div>
           <div class="catalog-summary-row">
             <div id="patternCatalogSummary" class="catalog-summary" aria-live="polite"></div>
+            <button id="addPatternBtn" class="button button--ghost" type="button">Dodaj wzór</button>
             <button id="resetCatalogFiltersBtn" class="button button--ghost" type="button" disabled>
               Wyczyść filtry
             </button>
+          </div>
+          <div id="patternAddPanel" class="pattern-add-panel" hidden>
+            <h2>Zgłoś wzór do katalogu</h2>
+            <p class="field-hint">
+              Wzór trafi do weryfikacji operatora i pojawi się w katalogu po publikacji.
+              Podaj zapotrzebowanie na włóczkę, żeby dopasowanie mogło ocenić Twój magazyn.
+            </p>
+            <form id="patternAddForm" novalidate>
+              <div class="yarn-card__row">
+                <label>
+                  Nazwa wzoru
+                  <input type="text" data-pattern-field="name" maxlength="200" placeholder="np. Czapka z bulionów" required />
+                </label>
+                <label>
+                  Typ projektu
+                  <select data-pattern-field="projectType" required>
+                    <option value="socks">Skarpety</option>
+                    <option value="sweater">Sweter</option>
+                    <option value="cardigan">Kardigan</option>
+                    <option value="top">Top lub bluzka</option>
+                    <option value="shawl_scarf">Chusta lub szal</option>
+                    <option value="head_accessory">Czapka, opaska, komin</option>
+                    <option value="gloves">Rękawiczki</option>
+                    <option value="vest">Kamizelka</option>
+                    <option value="skirt_dress">Spódnica lub sukienka</option>
+                    <option value="blanket">Koc</option>
+                    <option value="other" selected>Inne</option>
+                  </select>
+                </label>
+                <label>
+                  Technika
+                  <select data-pattern-field="technique" required>
+                    <option value="crochet" selected>Szydełko</option>
+                    <option value="knitting">Druty</option>
+                  </select>
+                </label>
+              </div>
+              <div class="yarn-card__row">
+                <fieldset class="material-picker-field">
+                  <legend>Materiały wzoru</legend>
+                  <details class="material-picker" data-pattern-material-picker>
+                    <summary>
+                      <span data-pattern-material-summary>Wybierz materiały</span>
+                    </summary>
+                    <div class="material-picker__options" data-pattern-material-options></div>
+                  </details>
+                  <p class="field-error" data-pattern-material-error aria-live="polite" hidden>
+                    Wybierz co najmniej jeden materiał.
+                  </p>
+                </fieldset>
+                <label>
+                  Metraż na 100 g (opcjonalnie)
+                  <input type="number" min="1" max="1000000" step="1" inputmode="numeric" data-pattern-field="metersPer100g" />
+                </label>
+                <label>
+                  Język źródła
+                  <select data-pattern-field="sourceLanguage">
+                    <option value="unknown">Nieustalony</option>
+                    <option value="pl">Polski</option>
+                    <option value="en">Angielski</option>
+                    <option value="mixed">Mieszany</option>
+                  </select>
+                </label>
+              </div>
+              <div class="yarn-card__row">
+                <label>
+                  Etykieta wariantu
+                  <input type="text" data-pattern-field="variantLabel" maxlength="100" value="Podstawowy" />
+                </label>
+                <label>
+                  Link do źródła (https, opcjonalnie)
+                  <input type="url" data-pattern-field="sourceUrl" placeholder="https://…" />
+                </label>
+              </div>
+              <label>
+                Opis (opcjonalnie, bez instrukcji wykonania)
+                <textarea data-pattern-field="description" maxlength="1000" rows="2" placeholder="Krótki opis faktograficzny wzoru"></textarea>
+              </label>
+              <div class="pattern-requirements">
+                <h3>Zapotrzebowanie na włóczkę</h3>
+                <p class="field-hint">Opisz, ile włóczki potrzebuje jeden egzemplarz w tym wariancie.</p>
+                <div id="patternRequirementsList"></div>
+                <button type="button" id="addPatternRequirementBtn" class="button button--ghost">
+                  Dodaj rolę
+                </button>
+              </div>
+              <div class="yarn-card__actions pattern-add-actions">
+                <button type="submit" id="savePatternBtn" class="button">Zapisz wzór</button>
+                <button type="button" id="cancelPatternAddBtn" class="button button--ghost">Anuluj</button>
+              </div>
+            </form>
           </div>
           <div id="patternCatalogNotice" class="catalog-notice" hidden></div>
           <div id="patternCatalog" class="pattern-catalog"></div>
@@ -667,6 +759,69 @@
       </article>
     </template>
 
+    <template id="patternRequirementTemplate">
+      <div class="pattern-role-row">
+        <div class="pattern-role-row__grid">
+          <label>
+            Rola
+            <input type="text" data-role-field="role" maxlength="100" placeholder="np. kolor główny" required />
+          </label>
+          <label>
+            Jednostka
+            <select data-role-field="measurementBasis">
+              <option value="grams" selected>gramy</option>
+              <option value="meters">metry</option>
+            </select>
+          </label>
+          <label>
+            Ilość min.
+            <input type="number" min="1" max="1000000" step="1" inputmode="numeric" data-role-field="quantityMin" required />
+          </label>
+          <label>
+            Ilość maks.
+            <input type="number" min="1" max="1000000" step="1" inputmode="numeric" data-role-field="quantityMax" />
+          </label>
+          <label>
+            Materiały dopasowania
+            <select data-role-field="materialMatch">
+              <option value="any_material" selected>dowolny materiał</option>
+              <option value="any">którykolwiek z wybranych</option>
+              <option value="all">wszystkie wybrane</option>
+            </select>
+          </label>
+          <div class="material-picker-field" data-role-materials-block hidden>
+            <details class="material-picker">
+              <summary>
+                <span data-role-material-summary>Wybierz materiały</span>
+              </summary>
+              <div class="material-picker__options" data-role-material-options></div>
+            </details>
+          </div>
+        </div>
+        <div class="pattern-role-row__options">
+          <fieldset>
+            <legend>Kolor</legend>
+            <label class="pattern-inline-option">
+              <input type="radio" value="same" checked /> ten sam
+            </label>
+            <label class="pattern-inline-option">
+              <input type="radio" value="any" /> dowolny
+            </label>
+          </fieldset>
+          <fieldset class="pattern-weight-classes">
+            <legend>Grubość włóczki (co najmniej jedna)</legend>
+            <label class="pattern-inline-option"><input type="checkbox" value="lace" /> lace</label>
+            <label class="pattern-inline-option"><input type="checkbox" value="fingering" /> fingering</label>
+            <label class="pattern-inline-option"><input type="checkbox" value="sport" /> sport</label>
+            <label class="pattern-inline-option"><input type="checkbox" value="dk" checked /> dk</label>
+            <label class="pattern-inline-option"><input type="checkbox" value="worsted" /> worsted</label>
+            <label class="pattern-inline-option"><input type="checkbox" value="bulky" /> bulky</label>
+          </fieldset>
+          <button type="button" class="button button--ghost pattern-role-remove">Usuń rolę</button>
+        </div>
+      </div>
+    </template>
+
     <template id="patternSkeletonTemplate">
       <div class="pattern-card pattern-card--skeleton" aria-hidden="true">
         <span class="skeleton-line skeleton-line--short"></span>
@@ -686,6 +841,6 @@
     <script src="client/dom-utils.js"></script>
     <script src="client/catalog-controller.js?v=2.0.0-alpha.39&rev=ed496cd"></script>
     <script src="client/idle-session-controller.js"></script>
-    <script src="app.js?v=2.0.0-alpha.39&rev=554e368"></script>
+    <script src="app.js?v=2.0.0-alpha.39&rev=09156c2"></script>
   </body>
 </html>
