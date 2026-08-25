@@ -12,6 +12,7 @@ const browserScripts = [
   "client/legal-acceptance-controller.js",
   "theme-policy.js",
   "material-policy.js",
+  "technique-policy.js",
   "client-policy.js",
   "client/api-client.js",
   "client/dom-utils.js",

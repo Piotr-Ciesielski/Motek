@@ -10,9 +10,11 @@
 
 ## Supabase: RLS, ACL i RPC
 
-`profiles` i `yarns` mają włączone RLS. Polityki ograniczają odczyt i zmianę do `auth.uid()` właściciela oraz wymagają bieżącej akceptacji regulaminu. `patterns` jest wspólnym katalogiem, ale API katalogu nadal wymaga uwierzytelnienia i legal gate.
+`profiles` i `yarns` mają włączone RLS. Polityki ograniczają odczyt i zmianę do `auth.uid()` właściciela oraz wymagają bieżącej akceptacji regulaminu. `patterns` jest wspólnym katalogiem, ale API katalogu nadal wymaga uwierzytelnienia i legal gate. Parametr `technique` jest filtrem whitelistowanym po stronie backendu: dopuszczalne są wyłącznie `knitting` i `crochet`, a inna wartość daje stabilny błąd 400 zamiast zapytania do bazy.
 
 Bezpośrednie granty zapisu do prywatnych tabel i sekwencji są odebrane rolom `anon` i `authenticated`. Magazyn jest zmieniany przez wersjonowane funkcje `SECURITY DEFINER` z pustym `search_path`, jawnymi grantami `authenticated`, kontrolą właściciela, limitem 500 i ochroną przed utraconym zapisem.
+
+`projects` i `project_yarns` mają włączone RLS z polityką odczytu wyłącznie własnych rekordów wymagającą aktualnej akceptacji regulaminu; granty zapisu są odebrane. Jedyne tworzenie projektu prowadzi przez RPC `create_active_project`, dostępne wyłącznie dla backendu (`service_role`, jawny identyfikator właścicielki ze zweryfikowanej sesji), które działa jako `SECURITY DEFINER` z pustym `search_path`, wymaga aktualnej akceptacji regulaminu, blokuje wiersz wersji magazynu, sprawdza zgodność `If-Match: "yarn-vM"`, własność każdego przypisanego motka i odrzuca drugi aktywny projekt (częściowy indeks unikalny pozostaje twardą regułą). Przypisania pochodzą wyłącznie z ponownie wyliczonego dopasowania po stronie serwera; żądanie nie przekazuje metrów ani gramów do bazy. Jedyne zapisywanie postępu prowadzi przez RPC `update_active_project_progress`, również `SECURITY DEFINER` z pustym `search_path`: wymaga aktualnej akceptacji regulaminu, blokuje aktywny projekt właścicielki, waliduje granice pól jak backend i odrzuca nieaktualną wersję projektu błędem konfliktu.
 
 Tabele schematu `private` przechowują liczniki wersji, granty recovery, zaproszenia i dane prawne. Publiczne role nie mają do nich dostępu. Operacje zaproszeń i finalizacji rejestracji są dostępne dla `service_role`; RPC recovery mają wyłącznie granty potrzebne do konkretnego etapu.
 

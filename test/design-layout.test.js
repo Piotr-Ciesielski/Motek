@@ -1,5 +1,6 @@
 const assert = require("node:assert/strict");
 const { execFileSync } = require("node:child_process");
+const { createHash } = require("node:crypto");
 const { readFileSync } = require("node:fs");
 const path = require("node:path");
 const test = require("node:test");
@@ -453,10 +454,21 @@ test("inventory stats update together with the existing summary", () => {
   assert.match(appJs, /inventoryAddYarnBtn\.addEventListener/);
 });
 
-test("catalog controller asset has a deployment cache buster", () => {
-  assert.match(
-    indexHtml,
-    /client\/catalog-controller\.js\?v=2\.0\.0-alpha\.39&rev=[a-f0-9]{7,40}/,
+test("versioned assets keep cache busters in sync with file content", () => {
+  const contentRev = (relativePath) =>
+    createHash("sha256")
+      .update(readFileSync(path.join(__dirname, "..", relativePath)))
+      .digest("hex")
+      .slice(0, 7);
+  const stylesRev = contentRev("styles.css");
+  const controllerRev = contentRev("client/catalog-controller.js");
+  assert.ok(
+    indexHtml.includes(`href="styles.css?v=2.0.0-alpha.39&rev=${stylesRev}"`),
+    "styles.css publikowany jest pod bustereem zgodnym z treścią pliku",
+  );
+  assert.ok(
+    indexHtml.includes(`src="client/catalog-controller.js?v=2.0.0-alpha.39&rev=${controllerRev}"`),
+    "catalog-controller.js publikowany jest pod bustereem zgodnym z treścią pliku",
   );
 });
 
@@ -528,7 +540,7 @@ test("catalog keeps search first, secondary filters grouped and artwork before r
 
   assert.ok(search.compareDocumentPosition(toggle) & search.DOCUMENT_POSITION_FOLLOWING);
   assert.ok(toggle.compareDocumentPosition(secondary) & toggle.DOCUMENT_POSITION_FOLLOWING);
-  assert.equal(secondary.querySelectorAll("select").length, 5);
+  assert.equal(secondary.querySelectorAll("select").length, 6);
   assert.ok(catalog.querySelector(".catalog-hero").compareDocumentPosition(workspace)
     & catalog.DOCUMENT_POSITION_FOLLOWING);
 });

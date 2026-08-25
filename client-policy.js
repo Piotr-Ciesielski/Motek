@@ -3,16 +3,23 @@
     typeof module === "object" && module.exports
       ? require("./material-policy")
       : root?.MotekMaterialPolicy;
-  const policy = factory(materialPolicy);
+  const techniquePolicy =
+    typeof module === "object" && module.exports
+      ? require("./technique-policy")
+      : root?.MotekTechniquePolicy;
+  const policy = factory(materialPolicy, techniquePolicy);
   if (typeof module === "object" && module.exports) {
     module.exports = policy;
   }
   if (root) {
     root.MotekClientPolicy = policy;
   }
-})(typeof globalThis === "object" ? globalThis : null, (materialPolicy) => {
+})(typeof globalThis === "object" ? globalThis : null, (materialPolicy, techniquePolicy) => {
   if (!materialPolicy) {
     throw new Error("Brak wspólnej polityki materiałów Motka.");
+  }
+  if (!techniquePolicy) {
+    throw new Error("Brak wspólnej polityki technik Motka.");
   }
   const {
     ANY_MATERIAL,
@@ -20,6 +27,7 @@
     formatYarnMaterials,
     matchesPatternMaterialFilter,
   } = materialPolicy;
+  const { matchesPatternTechniqueFilter } = techniquePolicy;
   const yarnValueFields = [
     "name",
     "color",
@@ -166,6 +174,9 @@
       ignoredFacet === "material"
       || material === "all"
       || matchesPatternMaterialFilter(materials, material);
+    const matchesTechnique =
+      ignoredFacet === "technique"
+      || matchesPatternTechniqueFilter(pattern, filters.technique);
 
     return (
       matchesPhrase
@@ -173,6 +184,7 @@
       && matchesLanguage
       && matchesType
       && matchesMaterial
+      && matchesTechnique
     );
   }
 
@@ -363,6 +375,43 @@
       || null;
   }
 
+  function readProjectVersionHeader(headers) {
+    return headers?.get?.("X-Motek-Project-Version")
+      || headers?.get?.("x-motek-project-version")
+      || headers?.get?.("ETag")
+      || headers?.get?.("etag")
+      || null;
+  }
+
+  function getActiveProjectView({ project, patterns = [] } = {}) {
+    if (!project || project.status !== "active") return { visible: false };
+    const pattern = (Array.isArray(patterns) ? patterns : [])
+      .find((candidate) => candidate.id === project.patternId) || null;
+    const patternName = pattern?.name ?? project.patternName ?? null;
+    const assignments = Array.isArray(project.yarns) ? project.yarns : [];
+    return {
+      visible: true,
+      patternAvailable: Boolean(patternName),
+      title: patternName
+        ? `${patternName} — ${project.variantId}`
+        : "Wzór niedostępny",
+      yarnLines: assignments.map((assignment) =>
+        `${assignment.role}: ${Number(assignment.initialLengthMeters).toLocaleString("pl-PL")} m · ${Number(assignment.initialWeightGrams).toLocaleString("pl-PL")} g`
+      ),
+      progress: {
+        unit: project.progressUnit === "round" ? "round" : "row",
+        count: Number.isInteger(project.progressCount) && project.progressCount >= 0
+          ? project.progressCount
+          : 0,
+        note: typeof project.note === "string" ? project.note : "",
+        toolSizeMm: project.toolSizeMm === null || project.toolSizeMm === undefined
+          ? ""
+          : String(project.toolSizeMm),
+        gauge: typeof project.gauge === "string" ? project.gauge : "",
+      },
+    };
+  }
+
   async function withYarnVersionRetry({ getVersion, refreshVersion, operation } = {}) {
     const hasVersion = /^"yarn-v\d+"$/.test(String(getVersion?.() || ""));
     if (!hasVersion) await refreshVersion();
@@ -489,6 +538,8 @@
     getMatchFreshnessState,
     getYarnSaveHint,
     readYarnVersionHeader,
+    readProjectVersionHeader,
+    getActiveProjectView,
     withYarnVersionRetry,
     isDeleteConfirmed,
     formatCatalogSummary,

@@ -1,4 +1,5 @@
 const PUBLICATION_STATUSES = new Set(["published", "hidden"]);
+const TECHNIQUES = new Set(["knitting", "crochet"]);
 const ALLOWED_BASES = new Set(["neutral_fact", "independent_summary", "synthetic"]);
 const FORBIDDEN_KEYS = new Set(["evidence", "excerpt", "instruction", "pdf_text"]);
 
@@ -90,7 +91,13 @@ function validatePatternAuditManifest(records, manifest) {
       if (entry.status === "published" && entry.source_kind === "synthetic" && (field.basis !== "synthetic" || field.source_reference !== "synthetic")) fail("Publikacja syntetyczna wymaga podstawy pola");
       return { ...field };
     });
-    return { ...entry, audit_version: manifest.audit_version, official_source_url: entry.official_source_url ?? null, fields };
+    if (entry.technique !== null && entry.technique !== undefined && !TECHNIQUES.has(entry.technique)) {
+      fail(`Nieprawidłowa technika dla ${entry.source_filename}`);
+    }
+    if (entry.status === "published" && !TECHNIQUES.has(entry.technique)) {
+      fail(`Publikacja wymaga techniki: ${entry.source_filename}`);
+    }
+    return { ...entry, audit_version: manifest.audit_version, official_source_url: entry.official_source_url ?? null, technique: entry.technique ?? null, fields };
   });
   if (seen.size !== inputNames.size) fail("Brak decyzji audytowej dla rekordu");
   return freezeDeep({ audit_version: manifest.audit_version, records: validated });

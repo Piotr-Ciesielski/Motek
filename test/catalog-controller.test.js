@@ -12,6 +12,7 @@ const indexHtml = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf
 const browserScripts = [
   'theme-policy.js',
   'material-policy.js',
+  'technique-policy.js',
   'client-policy.js',
   'client/api-client.js',
   'client/dom-utils.js',
@@ -120,6 +121,26 @@ test('ponawia nieudaną stronę katalogu bez duplikowania kart i czyści błąd'
   assert.equal(controller.getState().error, null);
 });
 
+test('odświeżenie porzuca wolniejszą, starszą odpowiedź po szybszej nowszej', async () => {
+  const resolvers = [];
+  const controller = createCatalogController({
+    load: () => new Promise((resolve) => resolvers.push(resolve)),
+  });
+
+  const first = controller.refresh();
+  const second = controller.refresh();
+
+  resolvers[1]({ items: [{ id: 'nowszy' }], hasMore: false });
+  await second;
+  assert.deepEqual(controller.getState().items, [{ id: 'nowszy' }]);
+
+  resolvers[0]({ items: [{ id: 'starszy' }], hasMore: false });
+  await first;
+  assert.deepEqual(controller.getState().items, [{ id: 'nowszy' }]);
+  assert.equal(controller.getState().loading, false);
+  assert.equal(controller.getState().error, null);
+});
+
 test('mobilny panel filtrów zachowuje wartości, stan dostępności i zamyka się klawiszem Escape', () => {
   const dom = new JSDOM(indexHtml, { pretendToBeVisual: true });
   const { document, KeyboardEvent } = dom.window;
@@ -165,6 +186,8 @@ test('pusty wynik pozwala wyczyścić filtry i wrócić do wyszukiwania', async 
   action.click();
   assert.equal(language.value, 'all');
   assert.equal(document.activeElement, document.getElementById('patternSearch'));
+  // Reset pobiera teraz katalog ponownie z serwera; czekamy na ustanie odświeżania.
+  await new Promise((resolve) => dom.window.setTimeout(resolve, 20));
   dom.window.close();
 });
 

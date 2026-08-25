@@ -16,6 +16,8 @@ const {
   getMatchFreshnessState,
   getYarnSaveHint,
   readYarnVersionHeader,
+  readProjectVersionHeader,
+  getActiveProjectView,
   withYarnVersionRetry,
   isDeleteConfirmed,
   resolveRequestedView,
@@ -115,6 +117,100 @@ test("preferuje jawny nagłówek wersji magazynu nad ETag", () => {
   ]);
 
   assert.equal(readYarnVersionHeader(headers), '"yarn-v8"');
+});
+
+test("odczytuje wersję projektu z nagłówka jawnego lub ETag", () => {
+  const explicit = new Map([["x-motek-project-version", '"project-v3"']]);
+  const fallback = new Map([["etag", '"project-v4"']]);
+
+  assert.equal(readProjectVersionHeader(explicit), '"project-v3"');
+  assert.equal(readProjectVersionHeader(fallback), '"project-v4"');
+  assert.equal(readProjectVersionHeader(new Map()), null);
+});
+
+test("panel aktywnego projektu pokazuje wzór i przypisane motki", () => {
+  const view = getActiveProjectView({
+    project: {
+      status: "active",
+      patternId: 21,
+      variantId: "m",
+      yarns: [
+        { role: "główna", initialLengthMeters: 300, initialWeightGrams: 100 },
+      ],
+    },
+    patterns: [{ id: 21, name: "Wzór testowy" }],
+  });
+
+  assert.equal(view.visible, true);
+  assert.equal(view.patternAvailable, true);
+  assert.equal(view.title, "Wzór testowy — m");
+  assert.deepEqual(view.yarnLines, ["główna: 300 m · 100 g"]);
+});
+
+test("panel aktywnego projektu udostępnia bieżący postęp do edycji", () => {
+  const filled = getActiveProjectView({
+    project: {
+      status: "active",
+      patternId: 21,
+      variantId: "m",
+      yarns: [],
+      progressUnit: "round",
+      progressCount: 12,
+      note: "Prazury gotowe.",
+      toolSizeMm: 3.5,
+      gauge: "12 śl./10 cm",
+    },
+    patterns: [{ id: 21, name: "Wzór testowy" }],
+  });
+  assert.deepEqual(filled.progress, {
+    unit: "round",
+    count: 12,
+    note: "Prazury gotowe.",
+    toolSizeMm: "3.5",
+    gauge: "12 śl./10 cm",
+  });
+
+  const blank = getActiveProjectView({
+    project: { status: "active", patternId: 21, variantId: "m", yarns: [] },
+    patterns: [{ id: 21, name: "Wzór testowy" }],
+  });
+  assert.deepEqual(blank.progress, {
+    unit: "row",
+    count: 0,
+    note: "",
+    toolSizeMm: "",
+    gauge: "",
+  });
+});
+
+test("panel aktywnego projektu oznacza niedostępny wzór i ukrywa się bez projektu", () => {
+  const unavailable = getActiveProjectView({
+    project: { status: "active", patternId: 99, variantId: "m", yarns: [] },
+    patterns: [{ id: 21, name: "Wzór testowy" }],
+  });
+  assert.equal(unavailable.visible, true);
+  assert.equal(unavailable.patternAvailable, false);
+  assert.equal(unavailable.title, "Wzór niedostępny");
+
+  assert.equal(getActiveProjectView({ project: null }).visible, false);
+  assert.equal(getActiveProjectView({
+    project: { status: "completed", patternId: 21, variantId: "m", yarns: [] },
+  }).visible, false);
+});
+
+test("panel aktywnego projektu korzysta z nazwy wzoru dostarczonej przez backend", () => {
+  const view = getActiveProjectView({
+    project: {
+      status: "active",
+      patternId: 99,
+      variantId: "m",
+      yarns: [],
+      patternName: "Wzór spoza wczytanej strony",
+    },
+    patterns: [{ id: 21, name: "Wzór testowy" }],
+  });
+  assert.equal(view.patternAvailable, true);
+  assert.equal(view.title, "Wzór spoza wczytanej strony — m");
 });
 
 test("odświeża wersję przed zapisem i ponawia jednorazowo po HTTP 428", async () => {
@@ -443,6 +539,72 @@ test("liczy dynamiczne opcje typu i materiału względem pozostałych filtrów",
     types: { top: 1, socks: 1 },
     materials: { "bawełna": 1, bambus: 1, "wełna": 1 },
   });
+});
+
+const techniqueFixture = [
+  { name: "Drut", projectType: "top", materials: ["wełna"], sourceLanguage: "pl", needsReview: false, technique: "knitting" },
+  { name: "Szydełko", projectType: "top", materials: ["bawełna"], sourceLanguage: "pl", needsReview: false, technique: "crochet" },
+];
+
+test("filtr techniki wybiera wyłącznie wzory tej techniki", () => {
+  assert.deepEqual(
+    filterPatterns?.(techniqueFixture, {
+      phrase: "",
+      review: "all",
+      language: "all",
+      type: "all",
+      material: "all",
+      technique: "crochet",
+    }).map((pattern) => pattern.name),
+    ["Szydełko"],
+  );
+  assert.deepEqual(
+    filterPatterns?.(techniqueFixture, {
+      phrase: "",
+      review: "all",
+      language: "all",
+      type: "all",
+      material: "all",
+      technique: "knitting",
+    }).map((pattern) => pattern.name),
+    ["Drut"],
+  );
+  assert.deepEqual(
+    filterPatterns?.(techniqueFixture, {
+      phrase: "",
+      review: "all",
+      language: "all",
+      type: "all",
+      material: "all",
+      technique: "all",
+    }).map((pattern) => pattern.name),
+    ["Drut", "Szydełko"],
+  );
+  assert.deepEqual(
+    filterPatterns?.(techniqueFixture, {
+      phrase: "",
+      review: "all",
+      language: "all",
+      type: "all",
+      material: "all",
+      technique: "crochet",
+    }, "technique").map((pattern) => pattern.name),
+    ["Drut", "Szydełko"],
+  );
+});
+
+test("liczniki pozostałych filtrów liczą względem wybranej techniki", () => {
+  const counts = buildPatternFacetCounts?.(techniqueFixture, {
+    phrase: "",
+    review: "all",
+    language: "all",
+    type: "all",
+    material: "all",
+    technique: "crochet",
+  });
+
+  assert.deepEqual(counts.types, { top: 1 });
+  assert.deepEqual(counts.materials, { "bawełna": 1 });
 });
 
 test("wyłącza niemożliwe opcje, ale zachowuje aktualnie wybraną", () => {

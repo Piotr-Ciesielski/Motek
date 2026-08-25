@@ -21,7 +21,7 @@ function getPattern(sourceFilename) {
 }
 
 test("cały katalog używa kontraktu dopasowania wersji 2", () => {
-  assert.equal(records.length, 106);
+  assert.equal(records.length, 116);
   assert.equal(records.filter((record) => record.needs_review).length, 0);
   records.forEach((record) =>
     assert.doesNotThrow(() =>
@@ -33,7 +33,7 @@ test("cały katalog używa kontraktu dopasowania wersji 2", () => {
       (total, record) => total + record.matching_requirements.variants.length,
       0,
     ),
-    21,
+    67,
   );
 });
 
@@ -120,5 +120,41 @@ test("import katalogu publikuje wyłącznie neutralne metadane audytu", () => {
     assert.equal(record.content_audit_version, "1.0");
     assert.equal(Number.isNaN(Date.parse(record.content_audited_at)), false);
     assert.equal(Object.hasOwn(record, "official_source_url"), true);
+  });
+});
+
+test("rekordy opublikowane mają sklasyfikowaną technikę źródłową", () => {
+  const published = records.filter(
+    (record) => record.publication_status === "published",
+  );
+  assert.ok(published.length > 0);
+  published.forEach((record) => {
+    assert.ok(
+      ["knitting", "crochet"].includes(record.technique),
+      `${record.source_filename}: published wymaga techniki knitting albo crochet`,
+    );
+  });
+});
+
+test("katalog zawiera co najmniej 10 zweryfikowanych wzorów szydełkowych", () => {
+  const crochet = records.filter(
+    (record) =>
+      record.publication_status === "published" && record.technique === "crochet",
+  );
+  assert.ok(
+    crochet.length >= 10,
+    `katalog ma ${crochet.length} opublikowanych wzorów szydełkowych, wymagane co najmniej 10`,
+  );
+  crochet.forEach((record) => {
+    const sourceUrl = record.official_source_url;
+    assert.ok(sourceUrl, `${record.source_filename}: brak oficjalnego źródła`);
+    assert.match(sourceUrl, /^https:\/\//);
+    assert.ok(
+      record.matching_requirements.variants.length > 0,
+      `${record.source_filename}: publikacja wymaga kompletnych wymagań dopasowania`,
+    );
+    record.matching_requirements.variants.forEach((variant) => {
+      assert.ok(variant.requirements.length > 0);
+    });
   });
 });

@@ -36,8 +36,11 @@ function createCatalogController(options) {
     return snapshot;
   };
 
+  let latestRequestId = 0;
+
   const loadPage = async (page, replace) => {
     const loader = config.load;
+    const requestId = ++latestRequestId;
     state.loading = true;
     state.error = null;
     emit();
@@ -45,6 +48,7 @@ function createCatalogController(options) {
       const result = loader
         ? await loader({ page, filters: Object.assign({}, state.filters), pageSize: config.pageSize })
         : { items: [], hasMore: false };
+      if (requestId !== latestRequestId) return getState();
       const payload = Array.isArray(result) ? { items: result, hasMore: false } : (result || {});
       const items = Array.isArray(payload.items) ? payload.items : [];
       if (replace) {
@@ -68,12 +72,16 @@ function createCatalogController(options) {
       state.hasMore = payload.hasMore !== undefined ? Boolean(payload.hasMore) : Boolean(payload.nextPage);
       return emit();
     } catch (error) {
-      state.error = error;
-      emit();
+      if (requestId === latestRequestId) {
+        state.error = error;
+        emit();
+      }
       throw error;
     } finally {
-      state.loading = false;
-      emit();
+      if (requestId === latestRequestId) {
+        state.loading = false;
+        emit();
+      }
     }
   };
 

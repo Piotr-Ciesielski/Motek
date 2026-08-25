@@ -11,6 +11,7 @@ function createPatternRouter(dependencies) {
     getCatalogPatterns,
     getSupabaseMatches,
     parsePatternPage,
+    parseTechniqueParam,
     enforceRequestRateLimit,
     getMatchRateLimitKeys,
     matchRateLimiter,
@@ -20,12 +21,18 @@ function createPatternRouter(dependencies) {
     async handle(req, res, url) {
       if (req.method === "GET" && url.pathname === "/api/patterns") {
         await requireCurrentTermsSession(req, res);
+        const technique = typeof parseTechniqueParam === "function"
+          ? parseTechniqueParam(url)
+          : undefined;
         const page = typeof parsePatternPage === "function"
           ? parsePatternPage(url)
           : undefined;
-        const patterns = page === undefined
+        const patterns = page === undefined && technique === undefined
           ? await getCatalogPatterns()
-          : await getCatalogPatterns(page);
+          : await getCatalogPatterns({
+            ...page,
+            ...(technique === undefined ? {} : { technique }),
+          });
         sendJson(res, 200, patterns);
         return true;
       }
@@ -37,7 +44,10 @@ function createPatternRouter(dependencies) {
           matchRateLimiter,
           res,
         );
-        const result = await getSupabaseMatches(session);
+        const technique = typeof parseTechniqueParam === "function"
+          ? parseTechniqueParam(url)
+          : undefined;
+        const result = await getSupabaseMatches(session, { technique });
         res.setHeader("X-Motek-Match-Scope", result.limited ? "subset" : "full");
         sendJson(res, 200, result.matches);
         return true;

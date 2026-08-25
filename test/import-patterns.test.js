@@ -62,14 +62,29 @@ test("import odrzuca brak decyzji audytu i pola dowodu przed zapisem", () => {
 test("import dopuszcza ukryty rekord oraz opublikowane rekordy z właściwym audytem", () => {
   assert.doesNotThrow(() => validatePatternAuditManifest([
     { source_filename: "a.pdf", publication_status: "hidden" },
-    { source_filename: "demo.synthetic.json", publication_status: "published", source_kind: "synthetic", content_audit_version: "1.0", content_audited_at: "2026-08-09T00:00:00Z" },
-    { source_filename: "audited.pdf", publication_status: "published", source_kind: "pdf", content_audit_version: "1.0", content_audited_at: "2026-08-15T00:00:00Z", official_source_url: "https://example.com/pattern" },
+    { source_filename: "demo.synthetic.json", publication_status: "published", source_kind: "synthetic", content_audit_version: "1.0", content_audited_at: "2026-08-09T00:00:00Z", technique: "crochet" },
+    { source_filename: "audited.pdf", publication_status: "published", source_kind: "pdf", content_audit_version: "1.0", content_audited_at: "2026-08-15T00:00:00Z", official_source_url: "https://example.com/pattern", technique: "knitting" },
   ]));
   assert.throws(
     () => validatePatternAuditManifest([
-      { source_filename: "audited.pdf", publication_status: "published", source_kind: "pdf", content_audit_version: "1.0", content_audited_at: "2026-08-15T00:00:00Z" },
+      { source_filename: "audited.pdf", publication_status: "published", source_kind: "pdf", content_audit_version: "1.0", content_audited_at: "2026-08-15T00:00:00Z", technique: "knitting" },
     ]),
     /źródła HTTPS/
+  );
+});
+
+test("import wymaga techniki dla published i odrzuca nieznaną wartość", () => {
+  assert.throws(
+    () => validatePatternAuditManifest([
+      { source_filename: "demo.synthetic.json", publication_status: "published", source_kind: "synthetic", content_audit_version: "1.0", content_audited_at: "2026-08-09T00:00:00Z" },
+    ]),
+    /wymaga techniki/
+  );
+  assert.throws(
+    () => validatePatternAuditManifest([
+      { source_filename: "a.pdf", publication_status: "hidden", technique: "szydełko" },
+    ]),
+    /nieobsługiwana technika/
   );
 });
 

@@ -86,6 +86,32 @@ test("publikacja PDF wymaga adresu HTTPS", () => {
   assert.throws(() => validatePatternAuditManifest([{ source_filename: "a" }], { audit_version: "1.0", records: [{ ...entry, official_source_url: "http://example.com" }] }), /https/);
 });
 
+test("publikacja wymaga techniki, a nieznana wartość jest odrzucana", () => {
+  const base = { source_filename: "a", status: "published", source_kind: "pdf", audited_at: "2026-08-09T00:00:00Z", official_source_url: "https://example.com/pattern", fields: [{ name: "name", basis: "neutral_fact", decision: "publish", source_reference: "x" }] };
+  assert.throws(
+    () => validatePatternAuditManifest([{ source_filename: "a" }], { audit_version: "1.0", records: [base] }),
+    /wymaga techniki/,
+  );
+  assert.throws(
+    () => validatePatternAuditManifest([{ source_filename: "a" }], { audit_version: "1.0", records: [{ ...base, technique: "szydełko" }] }),
+    /Nieprawidłowa technika/,
+  );
+  const result = validatePatternAuditManifest([{ source_filename: "a" }], { audit_version: "1.0", records: [{ ...base, technique: "crochet" }] });
+  assert.equal(result.records[0].technique, "crochet");
+});
+
+test("rekord ukryty może mieć technikę albo ją pominąć", () => {
+  const hiddenBase = { source_filename: "h.pdf", status: "hidden", source_kind: "pdf", audited_at: "2026-08-09T00:00:00Z", fields: [] };
+  assert.equal(
+    validatePatternAuditManifest([{ source_filename: "h.pdf" }], { audit_version: "1.0", records: [hiddenBase] }).records[0].technique,
+    null,
+  );
+  assert.equal(
+    validatePatternAuditManifest([{ source_filename: "h.pdf" }], { audit_version: "1.0", records: [{ ...hiddenBase, technique: "knitting" }] }).records[0].technique,
+    "knitting",
+  );
+});
+
 test("generator rozpoznaje trzy rekordy syntetyczne po nazwie", () => {
   const tempDirectory = fs.mkdtempSync(path.join(os.tmpdir(), "motek-pattern-audit-"));
   const outputPath = path.join(tempDirectory, "manifest.json");

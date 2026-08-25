@@ -14,6 +14,7 @@ const SOURCE_FILTER = process.argv
   .find((argument) => argument.startsWith("--source="))
   ?.slice("--source=".length);
 const BATCH_SIZE = 50;
+const TECHNIQUES = new Set(["knitting", "crochet"]);
 const PROJECT_TYPES = new Set([
   "socks",
   "sweater",
@@ -61,6 +62,18 @@ function validatePatternAuditManifest(records) {
     }
     if (!["hidden", "published"].includes(record.publication_status)) {
       throw new Error(`Rekord ${source}: nieobsługiwany status publikacji.`);
+    }
+    if (
+      record.technique !== null && record.technique !== undefined
+      && !TECHNIQUES.has(record.technique)
+    ) {
+      throw new Error(`Rekord ${source}: nieobsługiwana technika.`);
+    }
+    if (
+      record.publication_status === "published"
+      && !TECHNIQUES.has(record.technique)
+    ) {
+      throw new Error(`Rekord ${source}: published wymaga techniki (knitting albo crochet).`);
     }
     const sourceKind = record.source_kind ?? (
       source.endsWith(".synthetic.json") ? "synthetic" : "pdf"

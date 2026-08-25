@@ -9,6 +9,7 @@ CANDIDATES_PATH = PROJECT_DIR / "tmp" / "pdfs" / "pattern-candidates.json"
 OVERRIDES_PATH = PROJECT_DIR / "data" / "pattern-manual-overrides.json"
 EXCLUSIONS_PATH = PROJECT_DIR / "data" / "pattern-catalog-exclusions.json"
 DEMO_PATH = PROJECT_DIR / "data" / "pattern-demo.json"
+WEB_PATH = PROJECT_DIR / "data" / "pattern-web-catalog.json"
 AUDIT_PATH = PROJECT_DIR / "data" / "pattern-content-audit.json"
 OUTPUT_PATH = PROJECT_DIR / "data" / "patterns-import.json"
 
@@ -27,6 +28,7 @@ DATABASE_FIELDS = (
     "content_audit_version",
     "content_audited_at",
     "official_source_url",
+    "technique",
 )
 
 ALLOWED_LANGUAGES = {"pl", "en", "mixed", "unknown"}
@@ -61,6 +63,7 @@ ALLOWED_MATERIALS = {
     "mieszanka",
 }
 ALLOWED_WEIGHT_CLASSES = {"lace", "fingering", "sport", "dk", "worsted", "bulky"}
+ALLOWED_TECHNIQUES = {"knitting", "crochet"}
 
 
 def validate_matching_requirements(value: object, source: str) -> list[str]:
@@ -214,10 +217,18 @@ def validate_record(record: dict) -> list[str]:
 
     if record.get("publication_status") not in {"pending_review", "published", "hidden"}:
         errors.append(f"{source}: nieobsługiwany status publikacji")
+    technique = record.get("technique")
+    if technique is not None and technique not in ALLOWED_TECHNIQUES:
+        errors.append(f"{source}: nieobsługiwana technika")
     if record.get("publication_status") == "published" and (
         not record.get("content_audit_version") or not record.get("content_audited_at")
     ):
         errors.append(f"{source}: published wymaga metadanych audytu")
+    if (
+        record.get("publication_status") == "published"
+        and technique not in ALLOWED_TECHNIQUES
+    ):
+        errors.append(f"{source}: published wymaga techniki")
 
     requirements_are_complete = bool(requirements) and all(
         isinstance(requirement, dict)
@@ -251,15 +262,18 @@ def main() -> None:
     overrides = load_json(OVERRIDES_PATH)
     exclusions = load_json(EXCLUSIONS_PATH)["exclusions"]
     demo_document = load_json(DEMO_PATH)
+    web_document = load_json(WEB_PATH)
     audit_document = load_json(AUDIT_PATH)
     audit_records = audit_document["records"]
     audit_by_filename = {item["source_filename"]: item for item in audit_records}
     candidates = candidate_document["candidates"]
     demo_records = demo_document["records"]
+    web_records = web_document["records"]
     candidate_filenames = {candidate["source_filename"] for candidate in candidates}
     all_filenames = (
         (candidate_filenames - set(exclusions))
         | {record["source_filename"] for record in demo_records}
+        | {record["source_filename"] for record in web_records}
     )
     missing_audit = sorted(all_filenames - set(audit_by_filename))
     if missing_audit:
@@ -326,6 +340,7 @@ def main() -> None:
         record["content_audit_version"] = audit_document["audit_version"]
         record["content_audited_at"] = audit_record.get("audited_at")
         record["official_source_url"] = audit_record.get("official_source_url")
+        record["technique"] = audit_record.get("technique")
         record["matching_requirements"] = override.get(
             "matching_requirements",
             {"version": 2, "variants": []},
@@ -353,6 +368,7 @@ def main() -> None:
         demo_record["content_audit_version"] = audit_document["audit_version"]
         demo_record["content_audited_at"] = audit_record.get("audited_at")
         demo_record["official_source_url"] = audit_record.get("official_source_url")
+        demo_record["technique"] = audit_record.get("technique")
         validation_errors.extend(validate_record(demo_record))
         records.append(demo_record)
         audit.append(
@@ -360,6 +376,27 @@ def main() -> None:
                 "source_filename": demo_record["source_filename"],
                 "manual_override": False,
                 "synthetic_demo": True,
+                "review_reasons": [],
+                "review_notes": [],
+            }
+        )
+
+    for web_record in web_records:
+        web_record = dict(web_record)
+        source_filename = web_record["source_filename"]
+        audit_record = audit_by_filename[source_filename]
+        web_record["publication_status"] = audit_record["status"]
+        web_record["content_audit_version"] = audit_document["audit_version"]
+        web_record["content_audited_at"] = audit_record.get("audited_at")
+        web_record["official_source_url"] = audit_record.get("official_source_url")
+        web_record["technique"] = audit_record.get("technique")
+        validation_errors.extend(validate_record(web_record))
+        records.append(web_record)
+        audit.append(
+            {
+                "source_filename": source_filename,
+                "manual_override": False,
+                "web_source": True,
                 "review_reasons": [],
                 "review_notes": [],
             }

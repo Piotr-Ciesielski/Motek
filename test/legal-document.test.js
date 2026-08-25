@@ -9,7 +9,7 @@ const {
 test("dokument ma stabilną wersję i trzy wymagane sekcje", () => {
   assert.doesNotThrow(() => assertLegalDocumentShape(CURRENT_LEGAL_DOCUMENT));
   assert.match(CURRENT_LEGAL_DOCUMENT.termsVersion, /^\d+\.\d+$/);
-  assert.equal(CURRENT_LEGAL_DOCUMENT.privacyVersion, "1.0");
+  assert.equal(CURRENT_LEGAL_DOCUMENT.privacyVersion, "1.1");
   assert.deepEqual(
     CURRENT_LEGAL_DOCUMENT.sections.map(({ id }) => id),
     ["regulamin", "prywatnosc", "prawa-autorskie"],
@@ -21,6 +21,15 @@ test("nota copyright ma dokładny format produktu", () => {
     formatCopyrightNotice(CURRENT_LEGAL_DOCUMENT),
     "© 2026 Motek — Piotr Ciesielski. Wszelkie prawa zastrzeżone.",
   );
+});
+
+test("prywatność wymienia dane postępu projektu", () => {
+  const privacy = CURRENT_LEGAL_DOCUMENT.sections.find(({ id }) => id === "prywatnosc");
+  const text = privacy.blocks.find(({ type }) => type === "list").items[0];
+  assert.match(text, /postęp projektu/);
+  for (const phrase of ["notatka", "rozmiar narzędzia", "próbka"]) {
+    assert.ok(text.includes(phrase), `brak wzmianki: ${phrase}`);
+  }
 });
 
 test("walidator odrzuca niepoprawny kształt sekcji i bloków", () => {

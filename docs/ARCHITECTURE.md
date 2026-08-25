@@ -13,6 +13,7 @@ server.js
   ├── server/static-files.js
   ├── server/yarn-routes.js
   ├── server/pattern-routes.js
+  ├── server/project-routes.js
   ├── server/matching-service.js
   ├── *-policy.js / *-service.js
   └── Supabase Data API / Auth / RPC
@@ -51,9 +52,15 @@ Magazyn używa wersji kolekcji oraz `ETag: "yarn-vN"`. Mutacje wysyłają `If-Ma
 
 Właściciel rekordu wynika z sesji, nie z danych formularza. Limit 500 włóczek jest egzekwowany wspólnie przez aplikację i bazę.
 
+## Aktywny projekt
+
+Projekt powstaje wyłącznie z aktualnego, pełnego dopasowania: `POST /api/projects` przyjmuje tylko `patternId` i `variantId` oraz `If-Match: "yarn-vM"`, a backend ponownie wylicza dopasowanie i przekazuje do RPC wyłącznie serwerowo wyznaczone `yarn_id` oraz role. RPC jest dostępne tylko dla backendu (`service_role`, jawny identyfikator właścicielki), działa jako `security definer` z pustym `search_path`, wymaga aktualnej akceptacji regulaminu, blokuje wiersz wersji magazynu, waliduje własność motków i korzysta z częściowego indeksu unikalnego na `projects(user_id) where status = 'active'`. Jeden użytkownik ma dokładnie jeden projekt `active`; projekty terminalne (`completed`, `frogged`) zachowuje baza, ale UI ich nie pokazuje. `GET /api/projects/active` zwraca `200` z `ETag: "project-vN"` albo `204` bez ETag. Tabele projektów są dla właściciela tylko do odczytu przez RLS z bramką aktualnego regulaminu; usunięty wzór zostawia projekt z pustym `pattern_id` („wzór niedostępny”), a `RESTRICT` chroni przypisane motki.
+
+Codzienny postęp (`progress_unit`, `progress_count`, `note`, `tool_size_mm`, `gauge`) zapisuje wyłącznie `PATCH /api/projects/active` z `If-Match: "project-vN"` przez RPC `update_active_project_progress`; RPC działa jako `security definer` z pustym `search_path`, blokuje aktywny projekt właścicielki, waliduje granice pól jak backend i atomowo zwiększa wersję projektu do `N+1`. Postęp jest wartością bieżącą bez historii kroków, a `-1` nigdy nie schodzi poniżej zera.
+
 ## Katalog i dopasowania
 
-`GET /api/patterns` zwraca strony katalogu przez `limit` i `offset`; klient doładowuje je kontrolowanie. `GET /api/matches` pobiera prywatne włóczki, odrzuca niekompletne wymagania i uruchamia ograniczone wyszukiwanie przypisań. Gdy nie ma potwierdzonego wyniku, backend może zwrócić diagnostykę najbliższego wariantu. Materiał `mieszanka` jest w diagnostyce traktowany jako potencjalnie zgodny z nieznanym składem, ale nie podnosi takiego wariantu do statusu potwierdzonego dopasowania.
+`GET /api/patterns` zwraca strony katalogu przez `limit` i `offset`; klient doładowuje je kontrolowanie. Oba endpointy katalogu i dopasowania przyjmują opcjonalny parametr `technique` (`knitting` albo `crochet`); jego brak zwraca wszystkie rekordy opublikowane, a pusta lub nieznana wartość kończy się błędem 400. Publiczne DTO wzoru zawiera pole `technique`, a filtrowanie odbywa się przed wywołaniem matchera. `GET /api/matches` pobiera prywatne włóczki, odrzuca niekompletne wymagania i uruchamia ograniczone wyszukiwanie przypisań. Gdy nie ma potwierdzonego wyniku, backend może zwrócić diagnostykę najbliższego wariantu. Materiał `mieszanka` jest w diagnostyce traktowany jako potencjalnie zgodny z nieznanym składem, ale nie podnosi takiego wariantu do statusu potwierdzonego dopasowania.
 
 Wspólny katalog ma limit 300 wzorów. API nie zwraca prywatnych pól importu. Dopasowanie nie zgaduje brakujących danych i nie przypisuje jednego motka do kilku ról.
 

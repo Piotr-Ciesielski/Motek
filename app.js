@@ -5,16 +5,20 @@ const yarnList = document.getElementById("yarnList");
 const results = document.getElementById("results");
 const matchFreshnessNotice = document.getElementById("matchFreshnessNotice");
 const refreshStaleMatchesBtn = document.getElementById("refreshStaleMatchesBtn");
+const activeProjectPanel = document.getElementById("activeProjectPanel");
+const activeProjectStatus = document.getElementById("activeProjectStatus");
 const summary = document.getElementById("summary");
 const storageMessage = document.getElementById("storageMessage");
 const addYarnBtn = document.getElementById("addYarnBtn");
 const findBtn = document.getElementById("findBtn");
+const matchTechniqueFilter = document.getElementById("matchTechniqueFilter");
 const patternTemplate = document.getElementById("patternTemplate");
 const patternSearch = document.getElementById("patternSearch");
 const patternReviewFilter = document.getElementById("patternReviewFilter");
 const patternLanguageFilter = document.getElementById("patternLanguageFilter");
 const patternTypeFilter = document.getElementById("patternTypeFilter");
 const patternMaterialFilter = document.getElementById("patternMaterialFilter");
+const patternTechniqueFilter = document.getElementById("patternTechniqueFilter");
 const patternSort = document.getElementById("patternSort");
 const patternCatalogSummary = document.getElementById("patternCatalogSummary");
 const patternCatalogNotice = document.getElementById("patternCatalogNotice");
@@ -121,6 +125,8 @@ const {
   getMatchFreshnessState,
   getYarnSaveHint,
   readYarnVersionHeader,
+  readProjectVersionHeader,
+  getActiveProjectView,
   withYarnVersionRetry,
   isDeleteConfirmed,
   initializePasswordRevealControls,
@@ -179,7 +185,11 @@ const catalogController = createCatalogController({
       return { items: [], hasMore: false, total: 0 };
     }
     const offset = Math.max(0, (page - 1) * 50);
-    const payload = await api(`/api/patterns?limit=50&offset=${offset}`);
+    const technique = patternTechniqueFilter?.value;
+    const techniqueParam = technique && technique !== "all"
+      ? `&technique=${encodeURIComponent(technique)}`
+      : "";
+    const payload = await api(`/api/patterns?limit=50&offset=${offset}${techniqueParam}`);
     const items = Array.isArray(payload) ? payload : (payload.items || payload.data || []);
     const total = Number(payload && payload.total);
     return {
@@ -193,6 +203,8 @@ const catalogController = createCatalogController({
   },
 });
 let yarnVersion = null;
+let projectVersion = null;
+let activeProject = null;
 let onboardingDismissed = false;
 let yarnFormSequence = 0;
 let activeView = "account";
@@ -220,6 +232,8 @@ const apiClient = createApiClient({
     const protectedPath = pathname === "/api/matches"
       || pathname === "/api/yarns"
       || pathname.startsWith("/api/yarns/")
+      || pathname === "/api/projects"
+      || pathname.startsWith("/api/projects/")
       || pathname === "/api/account";
     if (protectedPath) handleSessionExpired();
   },
@@ -461,6 +475,9 @@ async function api(path, options = {}) {
     const response = isResponseEnvelope(result) ? result.response : result?.response;
     if (path === "/api/yarns" || path.startsWith("/api/yarns/")) {
       yarnVersion = readYarnVersionHeader(response?.headers) || yarnVersion;
+    }
+    if (path === "/api/projects" || path.startsWith("/api/projects/")) {
+      projectVersion = readProjectVersionHeader(response?.headers) || projectVersion;
     }
     api.lastMatchScope = path.startsWith("/api/matches")
       ? response?.headers?.get?.("X-Motek-Match-Scope") || "full"
@@ -732,6 +749,19 @@ function createMatchVariant(item, open = false) {
   );
 
   details.append(header, meta, requirements);
+
+  if (item.pattern.patternId && item.pattern.variantId) {
+    const startButton = document.createElement("button");
+    startButton.className = "button button--ghost match-variant__start";
+    startButton.type = "button";
+    startButton.textContent = "Rozpocznij projekt";
+    startButton.disabled = Boolean(activeProject);
+    startButton.addEventListener("click", () =>
+      startActiveProject(item.pattern.patternId, item.pattern.variantId, startButton)
+    );
+    details.appendChild(startButton);
+  }
+
   return details;
 }
 
@@ -1482,7 +1512,258 @@ async function deleteYarn(id) {
 
 async function loadMatches() {
   if (!canAccessPrivateData()) return [];
-  return api("/api/matches?diagnostics=1");
+  const technique = matchTechniqueFilter?.value;
+  const techniqueParam = technique && technique !== "all"
+    ? `&technique=${encodeURIComponent(technique)}`
+    : "";
+  return api(`/api/matches?diagnostics=1${techniqueParam}`);
+}
+
+async function loadActiveProject() {
+  if (!canAccessPrivateData()) {
+    clearActiveProjectState();
+    return;
+  }
+  const project = await api("/api/projects/active");
+  activeProject = project || null;
+  renderActiveProjectPanel();
+}
+
+function clearActiveProjectState() {
+  activeProject = null;
+  projectVersion = null;
+  if (activeProjectPanel) {
+    activeProjectPanel.replaceChildren();
+    activeProjectPanel.hidden = true;
+  }
+  setProjectStatus("");
+}
+
+function setProjectStatus(message, kind = "", action = null) {
+  if (!activeProjectStatus) return;
+  if (!message) {
+    activeProjectStatus.hidden = true;
+    activeProjectStatus.replaceChildren();
+    return;
+  }
+  activeProjectStatus.hidden = false;
+  showMessage(activeProjectStatus, message, kind, action);
+}
+
+function renderActiveProjectPanel() {
+  if (!activeProjectPanel) return;
+  const view = getActiveProjectView({
+    project: activeProject,
+    patterns: catalogController.getState().items,
+  });
+  activeProjectPanel.hidden = !view.visible;
+  if (!view.visible) return;
+
+  const title = document.createElement("strong");
+  title.textContent = view.title;
+  const meta = document.createElement("p");
+  meta.className = "active-project__meta";
+  meta.textContent = view.patternAvailable
+    ? "Rozpoczęty z pełnego dopasowania."
+    : "Wzór jest niedostępny w katalogu; przypisania motków pozostają zachowane.";
+  const list = document.createElement("ul");
+  list.className = "active-project__yarns";
+  list.replaceChildren(
+    ...view.yarnLines.map((line) => {
+      const item = document.createElement("li");
+      item.textContent = line;
+      return item;
+    }),
+  );
+  const children = [title, meta, list];
+  if (view.progress) children.push(buildProgressForm(view.progress));
+  activeProjectPanel.replaceChildren(...children);
+}
+
+function buildProgressForm(progress) {
+  const form = document.createElement("form");
+  form.className = "active-project__progress";
+  let count = progress.count;
+  let saving = false;
+
+  const unitLabel = document.createElement("label");
+  unitLabel.className = "active-project__field";
+  const unitCaption = document.createElement("span");
+  unitCaption.textContent = "Jednostka postępu";
+  const unitSelect = document.createElement("select");
+  [
+    ["row", "rzędy"],
+    ["round", "okrążenia"],
+  ].forEach(([value, label]) => {
+    const option = document.createElement("option");
+    option.value = value;
+    option.textContent = label;
+    unitSelect.appendChild(option);
+  });
+  unitSelect.value = progress.unit;
+  unitLabel.append(unitCaption, unitSelect);
+
+  const controls = document.createElement("div");
+  controls.className = "active-project__controls";
+  const minusButton = document.createElement("button");
+  minusButton.type = "button";
+  minusButton.className = "button button--ghost";
+  minusButton.textContent = "−1";
+  minusButton.setAttribute("aria-label", "Zmniejsz postęp o jeden");
+  const countOutput = document.createElement("strong");
+  countOutput.className = "active-project__count";
+  countOutput.textContent = String(count);
+  countOutput.setAttribute("aria-live", "polite");
+  const plusButton = document.createElement("button");
+  plusButton.type = "button";
+  plusButton.className = "button button--ghost";
+  plusButton.textContent = "+1";
+  plusButton.setAttribute("aria-label", "Zwiększ postęp o jeden");
+  controls.append(minusButton, countOutput, plusButton);
+
+  const fields = document.createElement("div");
+  fields.className = "active-project__fields";
+
+  const noteLabel = document.createElement("label");
+  noteLabel.className = "active-project__field";
+  const noteCaption = document.createElement("span");
+  noteCaption.textContent = "Notatka";
+  const noteInput = document.createElement("input");
+  noteInput.type = "text";
+  noteInput.maxLength = 500;
+  noteInput.value = progress.note;
+  noteLabel.append(noteCaption, noteInput);
+
+  const toolLabel = document.createElement("label");
+  toolLabel.className = "active-project__field";
+  const toolCaption = document.createElement("span");
+  toolCaption.textContent = "Drut lub igła (mm)";
+  const toolInput = document.createElement("input");
+  toolInput.type = "number";
+  toolInput.min = "0.5";
+  toolInput.max = "50";
+  toolInput.step = "0.1";
+  toolInput.value = progress.toolSizeMm;
+  toolLabel.append(toolCaption, toolInput);
+
+  const gaugeLabel = document.createElement("label");
+  gaugeLabel.className = "active-project__field";
+  const gaugeCaption = document.createElement("span");
+  gaugeCaption.textContent = "Próbka";
+  const gaugeInput = document.createElement("input");
+  gaugeInput.type = "text";
+  gaugeInput.maxLength = 120;
+  gaugeInput.value = progress.gauge;
+  gaugeLabel.append(gaugeCaption, gaugeInput);
+
+  fields.append(unitLabel, noteLabel, toolLabel, gaugeLabel);
+
+  const saveButton = document.createElement("button");
+  saveButton.type = "submit";
+  saveButton.className = "button";
+  saveButton.textContent = "Zapisz postęp";
+
+  function collectPayload() {
+    return {
+      progressUnit: unitSelect.value,
+      progressCount: count,
+      note: noteInput.value.trim() || null,
+      toolSizeMm: toolInput.value.trim() === "" ? null : Number(toolInput.value),
+      gauge: gaugeInput.value.trim() || null,
+    };
+  }
+
+  async function persist() {
+    if (saving || !canAccessPrivateData() || !projectVersion) return;
+    saving = true;
+    [minusButton, plusButton, saveButton].forEach((button) => {
+      button.disabled = true;
+    });
+    setProjectStatus("Zapisuję postęp...");
+    try {
+      const updated = await api("/api/projects/active", {
+        method: "PATCH",
+        headers: { "If-Match": projectVersion },
+        body: JSON.stringify(collectPayload()),
+      });
+      activeProject = updated ? { ...activeProject, ...updated } : null;
+      setProjectStatus("Postęp zapisany.", "success");
+    } catch (error) {
+      if (error?.status === 409 || error?.status === 428) {
+        setProjectStatus(error.message, "error", {
+          label: "Pobierz aktualny stan",
+          onClick: () => refreshProjectState(),
+        });
+      } else {
+        setProjectStatus(error.message, "error");
+      }
+    } finally {
+      saving = false;
+      if (activeProject) {
+        [minusButton, plusButton, saveButton].forEach((button) => {
+          button.disabled = false;
+        });
+      }
+    }
+  }
+
+  function step(delta) {
+    count = Math.max(0, count + delta);
+    countOutput.textContent = String(count);
+    persist();
+  }
+
+  minusButton.addEventListener("click", () => step(-1));
+  plusButton.addEventListener("click", () => step(1));
+  form.addEventListener("submit", (event) => {
+    event.preventDefault();
+    if (!form.reportValidity()) return;
+    persist();
+  });
+
+  form.append(controls, fields, saveButton);
+  return form;
+}
+
+async function refreshProjectState() {
+  setProjectStatus("Pobieram aktualny stan magazynu i projektu...");
+  try {
+    await Promise.all([loadYarns().catch(() => []), loadActiveProject()]);
+    setProjectStatus("");
+  } catch (error) {
+    setProjectStatus(error.message, "error");
+  }
+}
+
+async function startActiveProject(patternId, variantId, button) {
+  if (!canAccessPrivateData()) return;
+  if (button) {
+    button.disabled = true;
+    button.textContent = "Rozpoczynam...";
+  }
+  try {
+    activeProject = await api("/api/projects", {
+      method: "POST",
+      headers: { "If-Match": yarnVersion },
+      body: JSON.stringify({ patternId, variantId }),
+    }) || null;
+    renderActiveProjectPanel();
+    setProjectStatus(activeProject ? "Projekt rozpoczęty." : "", "success");
+  } catch (error) {
+    if (error?.status === 409 || error?.status === 428) {
+      setProjectStatus(error.message, "error", {
+        label: "Pobierz aktualny stan",
+        onClick: () => refreshProjectState(),
+      });
+    } else {
+      setProjectStatus(error.message, "error");
+    }
+  } finally {
+    if (button) {
+      button.disabled = Boolean(activeProject);
+      button.textContent = "Rozpocznij projekt";
+    }
+  }
 }
 
 async function loadPatternCatalog({ resume = false, onPage = null } = {}) {
@@ -1563,9 +1844,10 @@ function showPatternInCatalog(patternName) {
   patternLanguageFilter.value = "all";
   patternTypeFilter.value = "all";
   patternMaterialFilter.value = "all";
+  patternTechniqueFilter.value = "all";
   patternSort.value = "recommended";
   catalogDisplayLimit = 12;
-  renderPatternCatalog();
+  refreshPatternCatalog().catch(showPatternCatalogError);
   setActiveView("catalog");
 }
 
@@ -1595,6 +1877,7 @@ function readPatternFilters() {
     language: patternLanguageFilter.value,
     type: patternTypeFilter.value,
     material: patternMaterialFilter.value,
+    technique: patternTechniqueFilter?.value || "all",
   };
 }
 
@@ -1687,12 +1970,14 @@ function renderPatternCatalog() {
     languageFilter === "all" &&
     typeFilter === "all" &&
     materialFilter === "all" &&
+    filters.technique === "all" &&
     sortMode === "recommended";
   catalogFilterDisclosure.updateCount([
     reviewFilter !== "verified",
     languageFilter !== "all",
     typeFilter !== "all",
     materialFilter !== "all",
+    filters.technique !== "all",
     sortMode !== "recommended",
   ].filter(Boolean).length);
   const matchingPatterns = filterPatterns(catalogPatterns, filters)
@@ -2117,6 +2402,7 @@ function renderAuthState(payload) {
     ? (payload.legal || { currentVersion: CURRENT_LEGAL_DOCUMENT.termsVersion, acceptedVersion: null, acceptanceRequired: true })
     : { currentVersion: CURRENT_LEGAL_DOCUMENT.termsVersion, acceptedVersion: CURRENT_LEGAL_DOCUMENT.termsVersion, acceptanceRequired: false };
   requiresLegalAcceptance = authenticated && legalAcceptanceController.setSessionLegalState(legalState);
+  if (!canAccessPrivateData()) clearActiveProjectState();
   authForms.hidden = authenticated;
   authModeSwitch.hidden = authenticated;
   authLoggedIn.hidden = !authenticated;
@@ -2590,6 +2876,7 @@ async function refresh() {
     }
     renderOnboarding(yarns);
     await renderSummary(yarns);
+    await loadActiveProject();
   } finally {
     if (busyGeneration === yarnRefreshBusyGeneration) {
       yarnList.removeAttribute("aria-busy");
@@ -2670,6 +2957,10 @@ refreshStaleMatchesBtn.addEventListener("click", () => {
   findBtn.click();
 });
 
+matchTechniqueFilter.addEventListener("change", () => {
+  if (hasCalculatedMatches) findBtn.click();
+});
+
 function resetPatternCatalogView() {
   catalogDisplayLimit = 12;
   renderPatternCatalog();
@@ -2681,8 +2972,10 @@ function resetPatternCatalogFilters() {
   patternLanguageFilter.value = "all";
   patternTypeFilter.value = "all";
   patternMaterialFilter.value = "all";
+  patternTechniqueFilter.value = "all";
   patternSort.value = "recommended";
-  resetPatternCatalogView();
+  catalogDisplayLimit = 12;
+  refreshPatternCatalog().catch(showPatternCatalogError);
   patternSearch.focus({ preventScroll: true });
 }
 
@@ -2691,6 +2984,10 @@ patternReviewFilter.addEventListener("change", resetPatternCatalogView);
 patternLanguageFilter.addEventListener("change", resetPatternCatalogView);
 patternTypeFilter.addEventListener("change", resetPatternCatalogView);
 patternMaterialFilter.addEventListener("change", resetPatternCatalogView);
+patternTechniqueFilter.addEventListener("change", () => {
+  catalogDisplayLimit = 12;
+  refreshPatternCatalog().catch(showPatternCatalogError);
+});
 patternSort.addEventListener("change", resetPatternCatalogView);
 resetCatalogFiltersBtn.addEventListener("click", resetPatternCatalogFilters);
 loadMorePatternsBtn.addEventListener("click", async () => {

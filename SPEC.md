@@ -96,6 +96,8 @@ Ranking ma bezpieczne limity złożoności: do 250 wariantów na wzór, 8 ról w
 | `PATCH /api/yarns/:id` | Zmiana własnej włóczki z kontrolą wersji |
 | `DELETE /api/yarns/:id` | Usunięcie własnej włóczki z kontrolą wersji |
 | `GET /api/patterns` | Uwierzytelniona, stronicowana lista katalogu |
+| `GET /api/projects/active` | Aktywny projekt właścicielki z `ETag: "project-vN"` albo `204` bez ETag |
+| `POST /api/projects` | Rozpoczęcie projektu wyłącznie z `patternId`, `variantId` i `If-Match: "yarn-vM"` |
 | `GET /api/matches` | Potwierdzone dopasowania dla własnego magazynu |
 
 Odpowiedzi błędów mają stabilny kształt `{ "error": "komunikat" }`. Prywatne endpointy wymagają aktywnej sesji i bieżącej akceptacji regulaminu. Wyjątkiem są wylogowanie i usunięcie konta, aby użytkownik zawsze miał drogę wyjścia.
@@ -129,9 +131,11 @@ Usunięcie konta wymaga aktywnej sesji, poprawnego hasła i dokładnej frazy `US
 - każdorazowe uzgodnienie ledgera migracji, pełny backup i izolowany restore przed zmianą produkcyjnego Supabase;
 - utrzymanie jawnej zgody operatora jako warunku migracji, importu z zapisem i deployu produkcji.
 
-## Plan następnego etapu — niewdrożony
+## Plan rozwoju — kolejne etapy
 
 Ten plan opisuje zatwierdzony kierunek: katalog szydełkowy → aktywny projekt → codzienny postęp → resztki. Nie zmienia bieżących kontraktów, danych ani zachowania, dopóki dany etap nie zostanie osobno wdrożony i zweryfikowany.
+
+Stan realizacji: etap 1 (technika i katalog szydełkowy) jest zaimplementowany w kodzie, danych katalogu, migracji i testach — 13 rekordów `published` ma sklasyfikowaną technikę (3 `knitting`, 10 `crochet` ze zweryfikowanym źródłem HTTPS). Etap 2 (jeden aktywny projekt) jest zaimplementowany w kodzie backendu, frontendu, migracji i testach; jego migracja bazy na środowisku zdalnym pozostaje do osobnego wykonania po zgodzie operatora. Etap 3 (codzienny postęp) jest zaimplementowany w kodzie backendu, frontendu panelu Dopasowania, migracji i testach; jego migracja bazy na środowisku zdalnym również wymaga zgody operatora. Migracja i import z zapisem etapu 1 oraz etap 4 pozostają niewdrożone. Warunek rolloutu etapu 1: dopóki migracja i kontrolowany import z zapisem nie zostaną wykonane na środowisku zdalnym po zgodzie operatora, staging pokazuje wyłącznie dotychczasowy katalog — trzy rekordy `knitting` z techniką, bez 10 rekordów `crochet`, które istnieją tylko w lokalnych danych importu.
 
 ### Cel, rezultat i granice
 

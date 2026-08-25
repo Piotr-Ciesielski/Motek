@@ -7,6 +7,21 @@ const {
   enforceRequestRateLimit,
   getMatchRateLimitKeys,
 } = require("../server");
+const {
+  parseTechniqueParam,
+} = require("../technique-policy");
+
+function createServerLikeParseTechnique() {
+  return (url) => {
+    try {
+      return parseTechniqueParam(url.searchParams.get("technique"));
+    } catch {
+      const error = new Error("Parametr techniki ma niedozwoloną wartość.");
+      error.status = 400;
+      throw error;
+    }
+  };
+}
 
 test("limiter dopasowań używa adresu połączenia i zwraca Retry-After", () => {
   let now = 0;
@@ -67,6 +82,98 @@ test("pattern router returns false for an unsupported route", async () => {
   );
 
   assert.equal(handled, false);
+});
+
+test("pattern router przekazuje technikę do katalogu i dopasowań", async () => {
+  const calls = [];
+  const response = { setHeader() {} };
+  const router = createPatternRouter({
+    sendJson(_res, status, payload) {
+      calls.push(["sendJson", status, payload]);
+    },
+    parseTechniqueParam: createServerLikeParseTechnique(),
+    parsePatternPage(url) {
+      const limit = Number(url.searchParams.get("limit"));
+      return { limit, offset: 0 };
+    },
+    getCatalogPatterns(page) {
+      calls.push(["getCatalogPatterns", page]);
+      return { items: [], total: 0, ...page };
+    },
+    requireCurrentTermsSession() {
+      return { user: { id: "user-1" } };
+    },
+    getSupabaseMatches(_session, options) {
+      calls.push(["getSupabaseMatches", options]);
+      return { matches: [], limited: false };
+    },
+    getMatchRateLimitKeys() {
+      return ["ip:127.0.0.1"];
+    },
+    enforceRequestRateLimit() {},
+    matchRateLimiter: {},
+  });
+
+  await router.handle(
+    { method: "GET" },
+    response,
+    new URL("http://localhost/api/patterns?limit=50&technique=crochet"),
+  );
+  await router.handle(
+    { method: "GET" },
+    response,
+    new URL("http://localhost/api/patterns?limit=50"),
+  );
+  await router.handle(
+    { method: "GET" },
+    response,
+    new URL("http://localhost/api/matches?diagnostics=1&technique=knitting"),
+  );
+
+  assert.deepEqual(calls, [
+    ["getCatalogPatterns", { limit: 50, offset: 0, technique: "crochet" }],
+    ["sendJson", 200, { items: [], total: 0, limit: 50, offset: 0, technique: "crochet" }],
+    ["getCatalogPatterns", { limit: 50, offset: 0 }],
+    ["sendJson", 200, { items: [], total: 0, limit: 50, offset: 0 }],
+    ["getSupabaseMatches", { technique: "knitting" }],
+    ["sendJson", 200, []],
+  ]);
+});
+
+test("pattern router odrzuca pusty i nieznany parametr techniki na obu ścieżkach", async () => {
+  const router = createPatternRouter({
+    sendJson() {
+      throw new Error("sendJson nie powinien zostać wywołany");
+    },
+    parseTechniqueParam: createServerLikeParseTechnique(),
+    getCatalogPatterns() {
+      throw new Error("katalog nie powinien zostać pobrany");
+    },
+    getSupabaseMatches() {
+      throw new Error("dopasowania nie powinny zostać pobrane");
+    },
+    requireCurrentTermsSession() {
+      return { user: { id: "user-1" } };
+    },
+    getMatchRateLimitKeys() {
+      return ["ip:127.0.0.1"];
+    },
+    enforceRequestRateLimit() {},
+    matchRateLimiter: {},
+  });
+
+  for (const [path, value] of [
+    ["/api/patterns?technique=", ""],
+    ["/api/patterns?technique=sprz%C4%99t", "sprzęt"],
+    ["/api/matches?technique=", ""],
+    ["/api/matches?technique=wool", "wool"],
+  ]) {
+    await assert.rejects(
+      () => router.handle({ method: "GET" }, {}, new URL(`http://localhost${path}`)),
+      (error) => error.status === 400,
+      `ścieżka ${path} powinna zwrócić błąd 400 dla wartości „${value}”`,
+    );
+  }
 });
 
 test("pattern router serves the catalog with parsed pagination", async () => {

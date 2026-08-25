@@ -12,7 +12,7 @@
       rel="stylesheet"
     />
     <script src="theme-policy.js?v=2.0.0-alpha.39"></script>
-    <link rel="stylesheet" href="styles.css?v=2.0.0-alpha.39" />
+    <link rel="stylesheet" href="styles.css?v=2.0.0-alpha.39&rev=6f1bde9" />
   </head>
   <body class="auth-logged-out">
     <a class="skip-link" href="#main-content">Przejdź do głównej treści</a>
@@ -396,6 +396,14 @@
               <p>Motek porówna długość, grubość i skład Twoich włóczek z wymaganiami wzorów.</p>
             </div>
             <div id="summary" class="summary"></div>
+            <label class="match-technique" for="matchTechniqueFilter">
+              Technika wzoru
+              <select id="matchTechniqueFilter">
+                <option value="all">Wszystkie techniki</option>
+                <option value="knitting">Na drutach</option>
+                <option value="crochet">Szydełkowe</option>
+              </select>
+            </label>
             <button id="findBtn" class="button" type="button">
               Dobierz wzór
             </button>
@@ -414,6 +422,8 @@
                 <p>Po zmianie magazynu uruchom dopasowanie ponownie.</p>
               </div>
             </div>
+            <div id="activeProjectStatus" hidden></div>
+            <div id="activeProjectPanel" class="active-project" hidden></div>
             <div id="results" class="results"></div>
           </article>
         </div>
@@ -486,6 +496,14 @@
                 Materiał
                 <select id="patternMaterialFilter">
                   <option value="all">Wszystkie materiały</option>
+                </select>
+              </label>
+              <label>
+                Technika
+                <select id="patternTechniqueFilter">
+                  <option value="all">Wszystkie techniki</option>
+                  <option value="knitting">Na drutach</option>
+                  <option value="crochet">Szydełkowe</option>
                 </select>
               </label>
               <label>
@@ -660,13 +678,14 @@
     </template>
 
     <script src="material-policy.js?v=2.0.0-alpha.39"></script>
+    <script src="technique-policy.js?v=2.0.0-alpha.39"></script>
     <script src="legal-document.js"></script>
     <script src="client/legal-acceptance-controller.js"></script>
-    <script src="client-policy.js?v=2.0.0-alpha.39&rev=f50e2a0"></script>
+    <script src="client-policy.js?v=2.0.0-alpha.39&rev=6b3d24b"></script>
     <script src="client/api-client.js"></script>
     <script src="client/dom-utils.js"></script>
-    <script src="client/catalog-controller.js?v=2.0.0-alpha.39&rev=a9d3dae"></script>
+    <script src="client/catalog-controller.js?v=2.0.0-alpha.39&rev=90c15b1"></script>
     <script src="client/idle-session-controller.js"></script>
-    <script src="app.js?v=2.0.0-alpha.39&rev=34b8426"></script>
+    <script src="app.js?v=2.0.0-alpha.39&rev=554e368"></script>
   </body>
 </html>

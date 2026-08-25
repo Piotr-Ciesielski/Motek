@@ -92,6 +92,39 @@ test("design changes preserve accessible theme control and paired artwork source
   assert.match(appJs, /window\.MotekThemePolicy/);
 });
 
+test("technique filters exist in both views and load policy before client policy", () => {
+  const document = createDocument();
+
+  for (const id of ["matchTechniqueFilter", "patternTechniqueFilter"]) {
+    const select = document.getElementById(id);
+    assert.ok(select, `brak filtru techniki ${id}`);
+    assert.deepEqual(
+      [...select.querySelectorAll("option")].map((option) => option.value),
+      ["all", "knitting", "crochet"],
+    );
+  }
+
+  const scripts = [...document.querySelectorAll("script[src]")].map((script) =>
+    script.getAttribute("src").split("?")[1] === undefined
+      ? script.getAttribute("src")
+      : script.getAttribute("src").split("?")[0]
+  );
+  assert.ok(scripts.includes("technique-policy.js"), "index.html nie ładuje technique-policy.js");
+  assert.ok(
+    scripts.indexOf("material-policy.js") < scripts.indexOf("technique-policy.js")
+    && scripts.indexOf("technique-policy.js") < scripts.indexOf("client-policy.js"),
+    "technique-policy.js musi być załadowany po material-policy.js i przed client-policy.js",
+  );
+
+  const techniquePolicyJs = readFileSync(
+    path.join(__dirname, "..", "technique-policy.js"),
+    "utf8",
+  );
+  assert.match(techniquePolicyJs, /MotekTechniquePolicy/);
+  assert.match(appJs, /patternTechniqueFilter/);
+  assert.match(appJs, /matchTechniqueFilter/);
+});
+
 test("design changes preserve hooks used by inventory, catalog and account logic", () => {
   const document = createDocument();
   const requiredIds = [

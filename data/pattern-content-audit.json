@@ -341,6 +341,7 @@
       "source_filename": "HollyBerryCharitySocks.pdf",
       "status": "published",
       "source_kind": "pdf",
+      "technique": "knitting",
       "audited_at": "2026-08-15T00:00:00Z",
       "official_source_url": "https://www.ravelry.com/patterns/library/hollyberrycharitysocks",
       "fields": [
@@ -418,6 +419,7 @@
       "source_filename": "Kopia pliku na_pole_wzor.pdf",
       "status": "published",
       "source_kind": "pdf",
+      "technique": "knitting",
       "audited_at": "2026-08-15T00:00:00Z",
       "official_source_url": "https://www.ravelry.com/patterns/library/na-pole-tee",
       "fields": [
@@ -535,6 +537,7 @@
       "source_filename": "Oslohuen_2.0_ENGELSK.pdf",
       "status": "published",
       "source_kind": "pdf",
+      "technique": "knitting",
       "audited_at": "2026-08-15T00:00:00Z",
       "official_source_url": "https://www.petiteknit.com/en/products/oslo-hue",
       "fields": [
@@ -887,6 +890,226 @@
       "audited_at": "2026-08-09T00:00:00Z",
       "official_source_url": null,
       "fields": []
+    },
+    {
+      "source_filename": "day-date-cardigan.web.json",
+      "status": "published",
+      "source_kind": "web",
+      "technique": "crochet",
+      "audited_at": "2026-08-24T00:00:00Z",
+      "official_source_url": "https://makeanddocrew.com/day-date-easy-crochet-sweater-pattern/",
+      "fields": [
+        {
+          "name": "pattern_identity",
+          "basis": "neutral_fact",
+          "decision": "publish",
+          "source_reference": "https://makeanddocrew.com/day-date-easy-crochet-sweater-pattern/"
+        },
+        {
+          "name": "matching_requirements",
+          "basis": "neutral_fact",
+          "decision": "publish",
+          "source_reference": "https://makeanddocrew.com/day-date-easy-crochet-sweater-pattern/"
+        }
+      ]
+    },
+    {
+      "source_filename": "campfire-cardigan.web.json",
+      "status": "published",
+      "source_kind": "web",
+      "technique": "crochet",
+      "audited_at": "2026-08-24T00:00:00Z",
+      "official_source_url": "https://makeanddocrew.com/campfire-cardigan-free-crochet-sweater-pattern/",
+      "fields": [
+        {
+          "name": "pattern_identity",
+          "basis": "neutral_fact",
+          "decision": "publish",
+          "source_reference": "https://makeanddocrew.com/campfire-cardigan-free-crochet-sweater-pattern/"
+        },
+        {
+          "name": "matching_requirements",
+          "basis": "neutral_fact",
+          "decision": "publish",
+          "source_reference": "https://makeanddocrew.com/campfire-cardigan-free-crochet-sweater-pattern/"
+        }
+      ]
+    },
+    {
+      "source_filename": "habitat-cardigan.web.json",
+      "status": "published",
+      "source_kind": "web",
+      "technique": "crochet",
+      "audited_at": "2026-08-24T00:00:00Z",
+      "official_source_url": "https://makeanddocrew.com/habitat-cardigan-beginner-crochet-sweater-part-1/",
+      "fields": [
+        {
+          "name": "pattern_identity",
+          "basis": "neutral_fact",
+          "decision": "publish",
+          "source_reference": "https://makeanddocrew.com/habitat-cardigan-beginner-crochet-sweater-part-1/"
+        },
+        {
+          "name": "matching_requirements",
+          "basis": "neutral_fact",
+          "decision": "publish",
+          "source_reference": "https://makeanddocrew.com/habitat-cardigan-beginner-crochet-sweater-part-1/"
+        }
+      ]
+    },
+    {
+      "source_filename": "staycation-cardigan.web.json",
+      "status": "published",
+      "source_kind": "web",
+      "technique": "crochet",
+      "audited_at": "2026-08-24T00:00:00Z",
+      "official_source_url": "https://makeanddocrew.com/staycation-womens-crochet-cardigan-pattern/",
+      "fields": [
+        {
+          "name": "pattern_identity",
+          "basis": "neutral_fact",
+          "decision": "publish",
+          "source_reference": "https://makeanddocrew.com/staycation-womens-crochet-cardigan-pattern/"
+        },
+        {
+          "name": "matching_requirements",
+          "basis": "neutral_fact",
+          "decision": "publish",
+          "source_reference": "https://makeanddocrew.com/staycation-womens-crochet-cardigan-pattern/"
+        }
+      ]
+    },
+    {
+      "source_filename": "chunky-cocoon-cardigan.web.json",
+      "status": "published",
+      "source_kind": "web",
+      "technique": "crochet",
+      "audited_at": "2026-08-24T00:00:00Z",
+      "official_source_url": "https://makeanddocrew.com/chunky-crochet-cocoon-cardigan-pattern/",
+      "fields": [
+        {
+          "name": "pattern_identity",
+          "basis": "neutral_fact",
+          "decision": "publish",
+          "source_reference": "https://makeanddocrew.com/chunky-crochet-cocoon-cardigan-pattern/"
+        },
+        {
+          "name": "matching_requirements",
+          "basis": "neutral_fact",
+          "decision": "publish",
+          "source_reference": "https://makeanddocrew.com/chunky-crochet-cocoon-cardigan-pattern/"
+        }
+      ]
+    },
+    {
+      "source_filename": "slice-of-nice-raglan.web.json",
+      "status": "published",
+      "source_kind": "web",
+      "technique": "crochet",
+      "audited_at": "2026-08-24T00:00:00Z",
+      "official_source_url": "https://makeanddocrew.com/top-down-crochet-sweater-pattern/",
+      "fields": [
+        {
+          "name": "pattern_identity",
+          "basis": "neutral_fact",
+          "decision": "publish",
+          "source_reference": "https://makeanddocrew.com/top-down-crochet-sweater-pattern/"
+        },
+        {
+          "name": "matching_requirements",
+          "basis": "neutral_fact",
+          "decision": "publish",
+          "source_reference": "https://makeanddocrew.com/top-down-crochet-sweater-pattern/"
+        }
+      ]
+    },
+    {
+      "source_filename": "canyonlands-top.web.json",
+      "status": "published",
+      "source_kind": "web",
+      "technique": "crochet",
+      "audited_at": "2026-08-24T00:00:00Z",
+      "official_source_url": "https://makeanddocrew.com/canyonlands-boho-crochet-top-free-pattern/",
+      "fields": [
+        {
+          "name": "pattern_identity",
+          "basis": "neutral_fact",
+          "decision": "publish",
+          "source_reference": "https://makeanddocrew.com/canyonlands-boho-crochet-top-free-pattern/"
+        },
+        {
+          "name": "matching_requirements",
+          "basis": "neutral_fact",
+          "decision": "publish",
+          "source_reference": "https://makeanddocrew.com/canyonlands-boho-crochet-top-free-pattern/"
+        }
+      ]
+    },
+    {
+      "source_filename": "summer-poncho-top.web.json",
+      "status": "published",
+      "source_kind": "web",
+      "technique": "crochet",
+      "audited_at": "2026-08-24T00:00:00Z",
+      "official_source_url": "https://makeanddocrew.com/summer-crochet-top-free-pattern/",
+      "fields": [
+        {
+          "name": "pattern_identity",
+          "basis": "neutral_fact",
+          "decision": "publish",
+          "source_reference": "https://makeanddocrew.com/summer-crochet-top-free-pattern/"
+        },
+        {
+          "name": "matching_requirements",
+          "basis": "neutral_fact",
+          "decision": "publish",
+          "source_reference": "https://makeanddocrew.com/summer-crochet-top-free-pattern/"
+        }
+      ]
+    },
+    {
+      "source_filename": "andie-top.web.json",
+      "status": "published",
+      "source_kind": "web",
+      "technique": "crochet",
+      "audited_at": "2026-08-24T00:00:00Z",
+      "official_source_url": "https://makeanddocrew.com/lightweight-crochet-top-free-pattern/",
+      "fields": [
+        {
+          "name": "pattern_identity",
+          "basis": "neutral_fact",
+          "decision": "publish",
+          "source_reference": "https://makeanddocrew.com/lightweight-crochet-top-free-pattern/"
+        },
+        {
+          "name": "matching_requirements",
+          "basis": "neutral_fact",
+          "decision": "publish",
+          "source_reference": "https://makeanddocrew.com/lightweight-crochet-top-free-pattern/"
+        }
+      ]
+    },
+    {
+      "source_filename": "hooded-crochet-sweater.web.json",
+      "status": "published",
+      "source_kind": "web",
+      "technique": "crochet",
+      "audited_at": "2026-08-24T00:00:00Z",
+      "official_source_url": "https://makeanddocrew.com/free-crochet-sweater-pattern-with-hood/",
+      "fields": [
+        {
+          "name": "pattern_identity",
+          "basis": "neutral_fact",
+          "decision": "publish",
+          "source_reference": "https://makeanddocrew.com/free-crochet-sweater-pattern-with-hood/"
+        },
+        {
+          "name": "matching_requirements",
+          "basis": "neutral_fact",
+          "decision": "publish",
+          "source_reference": "https://makeanddocrew.com/free-crochet-sweater-pattern-with-hood/"
+        }
+      ]
     }
   ]
 }

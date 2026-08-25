@@ -37,6 +37,7 @@ build/
 coverage/
 .venv/
 tmp/
+.tmp/
 .tmp-production-backup/
 .worktrees/
 .superpowers/
@@ -48,3 +49,8 @@ PROMPTS.md
 AUDYT.md
 .audit/
 .cache/
+
+# Lokalne instrukcje Codexa — nie publikować w repozytorium
+AGENTS.md
+ox-codex-review-loop-hardened-v7.ps1
+opencode.json

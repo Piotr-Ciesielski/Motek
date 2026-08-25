@@ -21,6 +21,17 @@ const {
 const {
   normalizeMatchingDocument,
 } = require("./matching-policy");
+const {
+  matchesPatternTechniqueFilter,
+  normalizePatternTechnique,
+  parseTechniqueParam,
+} = require("./technique-policy");
+const {
+  formatProjectVersion,
+  parseProjectVersion,
+  validateProjectStartPayload: validateProjectStartInput,
+  validateProjectProgressPayload: validateProjectProgressInput,
+} = require("./project-policy");
 const { ACCOUNT_DELETION_PHRASE, validateAccountDeletionInput } = require("./account-deletion-policy");
 const { deleteSupabaseAccount } = require("./account-deletion-service");
 const {
@@ -36,6 +47,7 @@ const {
 const { createStaticFileHandler } = require("./server/static-files");
 const { createPatternRouter } = require("./server/pattern-routes");
 const { createYarnRouter } = require("./server/yarn-routes");
+const { createProjectRouter } = require("./server/project-routes");
 const { readReleaseInfo } = require("./release-info");
 const { CURRENT_LEGAL_DOCUMENT } = require("./legal-document");
 const { readLegalPublicationEnforcement, validateLegalPublication } = require("./legal-publication-policy");
@@ -157,6 +169,7 @@ const staticFileHandler = createStaticFileHandler({
     "/client-policy.js": "client-policy.js",
     "/theme-policy.js": "theme-policy.js",
     "/material-policy.js": "material-policy.js",
+    "/technique-policy.js": "technique-policy.js",
     "/client/api-client.js": "client/api-client.js",
     "/client/dom-utils.js": "client/dom-utils.js",
     "/client/catalog-controller.js": "client/catalog-controller.js",
@@ -176,6 +189,7 @@ const patternRouter = createPatternRouter({
   getCatalogPatterns,
   getSupabaseMatches,
   parsePatternPage,
+  parseTechniqueParam: parsePatternTechnique,
   enforceRequestRateLimit,
   getMatchRateLimitKeys,
   matchRateLimiter,
@@ -219,6 +233,34 @@ const yarnRouter = createYarnRouter({
   requireAuthenticatedSession: requireCurrentTermsSession,
   requireCurrentYarnVersion,
   validateYarn,
+  readBody,
+  enforceRequestRateLimit,
+  yarnWriteRateLimiter,
+});
+
+const projectRouter = createProjectRouter({
+  sendJson,
+  requireAuthenticatedSession: requireCurrentTermsSession,
+  requireCurrentYarnVersion,
+  requireCurrentProjectVersion,
+  validateProjectStartPayload(body) {
+    try {
+      return validateProjectStartInput(body);
+    } catch (error) {
+      throw new ApiError(400, error.message);
+    }
+  },
+  validateProjectProgressPayload(body) {
+    try {
+      return validateProjectProgressInput(body);
+    } catch (error) {
+      throw new ApiError(400, error.message);
+    }
+  },
+  getProjectCollectionVersion: formatProjectVersion,
+  getSupabaseActiveProject,
+  createSupabaseActiveProject,
+  updateSupabaseActiveProject,
   readBody,
   enforceRequestRateLimit,
   yarnWriteRateLimiter,
@@ -766,6 +808,14 @@ async function requireCurrentYarnVersion(req) {
   return parsedVersion;
 }
 
+function requireCurrentProjectVersion(req) {
+  const parsedVersion = parseProjectVersion(req.headers["if-match"]);
+  if (parsedVersion === null) {
+    throw new ApiError(428, "Odśwież projekt przed zapisaniem postępu.");
+  }
+  return parsedVersion;
+}
+
 function toSupabaseYarn(yarn, userId) {
   return {
     user_id: userId,
@@ -813,6 +863,9 @@ async function getSupabaseYarnVersion(session) {
 }
 
 function handleYarnRpcError(error, action) {
+  if (error.code === "23503") {
+    throw new ApiError(409, "Motek jest przypisany do aktywnego projektu i nie może zostać usunięty.");
+  }
   if (error.code === "P0003" || error.code === "40001") {
     throw new ApiError(409, "Magazyn został zmieniony w innej karcie. Odśwież dane i spróbuj ponownie.");
   }
@@ -898,11 +951,193 @@ async function sendYarnMutationResponse(res, status, mutation) {
   return sendJson(res, status, status === 204 ? null : mutation.yarn);
 }
 
-async function getSupabaseMatches(session, { diagnostics: includeDiagnostics = false } = {}) {
-  const [yarns, patterns] = await Promise.all([
+function normalizeProjectRow(row) {
+  return {
+    id: Number(row.id),
+    patternId: row.pattern_id === null || row.pattern_id === undefined ? null : Number(row.pattern_id),
+    variantId: row.variant_id,
+    status: row.status,
+    version: Number(row.version),
+    progressUnit: row.progress_unit ?? null,
+    progressCount: row.progress_count === null || row.progress_count === undefined ? null : Number(row.progress_count),
+    note: row.note ?? null,
+    toolSizeMm: row.tool_size_mm === null || row.tool_size_mm === undefined ? null : Number(row.tool_size_mm),
+    gauge: row.gauge ?? null,
+    createdAt: row.created_at || null,
+    updatedAt: row.updated_at || null,
+    endedAt: row.ended_at || null,
+  };
+}
+
+function normalizeProjectAssignments(rows) {
+  return (Array.isArray(rows) ? rows : []).map((row) => ({
+    yarnId: Number(row.yarn_id ?? row.yarnId),
+    role: row.role,
+    initialLengthMeters: Number(row.initial_length_meters ?? row.initialLengthMeters),
+    initialWeightGrams: Number(row.initial_weight_grams ?? row.initialWeightGrams),
+  }));
+}
+
+async function getCatalogPatternName(patternId) {
+  if (!patternId) return null;
+  const { data, error } = await supabaseConnection.client
+    .from("patterns")
+    .select("name")
+    .eq("id", patternId)
+    .eq("publication_status", "published")
+    .maybeSingle();
+  if (error) {
+    throw new Error(`Nie udało się pobrać nazwy wzoru z Supabase: ${error.message}`);
+  }
+  return data ? data.name : null;
+}
+
+async function getSupabaseActiveProject(session) {
+  const client = supabaseAuthClientFactory(supabaseAuthConfig, session.accessToken);
+  const { data: project, error } = await client
+    .from("projects")
+    .select("id,pattern_id,variant_id,status,version,progress_unit,progress_count,note,tool_size_mm,gauge,created_at,updated_at,ended_at")
+    .eq("status", "active")
+    .maybeSingle();
+  if (error) {
+    throw new Error(`Nie udało się pobrać aktywnego projektu z Supabase: ${error.message}`);
+  }
+  if (!project) return null;
+  const { data: assignments, error: assignmentsError } = await client
+    .from("project_yarns")
+    .select("yarn_id,role,initial_length_meters,initial_weight_grams")
+    .eq("project_id", project.id)
+    .order("yarn_id");
+  if (assignmentsError) {
+    throw new Error(`Nie udało się pobrać przypisań projektu z Supabase: ${assignmentsError.message}`);
+  }
+  return {
+    ...normalizeProjectRow(project),
+    patternName: await getCatalogPatternName(project.pattern_id),
+    yarns: normalizeProjectAssignments(assignments),
+  };
+}
+
+function handleProjectRpcError(error, action) {
+  if (error.code === "P0003" || error.code === "40001") {
+    throw new ApiError(409, "Magazyn został zmieniony w innej karcie. Odśwież dane i spróbuj ponownie.");
+  }
+  if (error.code === "P0002") {
+    throw new ApiError(409, "Magazyn zmienił się względem dopasowania. Uruchom dopasowanie ponownie.");
+  }
+  if (error.code === "P0001" || error.code === "23505") {
+    throw new ApiError(409, "Masz już aktywny projekt. Zakończ go przed rozpoczęciem kolejnego.");
+  }
+  if (error.code === "PGRST202" || error.code === "42883") {
+    throw new ApiError(503, "Backend Supabase nie ma wymaganej migracji projektów. Skontaktuj się z administratorem.");
+  }
+  throw new Error(`${action}: ${error.message}`);
+}
+
+async function createSupabaseActiveProject(session, patternId, variantId, expectedYarnVersion) {
+  const [yarns, catalogPatterns] = await Promise.all([
     getSupabaseYarns(session),
     getCatalogPatterns(),
   ]);
+  const pattern = catalogPatterns.find((candidate) => candidate.id === patternId);
+  if (!pattern || pattern.needsReview) {
+    throw new ApiError(404, "Nie znaleziono opublikowanego wzoru o podanym identyfikatorze.");
+  }
+  const variant = pattern.matchingRequirements.find((candidate) => candidate.id === variantId);
+  if (!variant) {
+    throw new ApiError(404, "Nie znaleziono wariantu wzoru o podanym identyfikatorze.");
+  }
+  const { matches } = evaluateMatchingVariants(pattern.matchingRequirements, yarns);
+  const match = matches.find(({ variant: matched }) => matched.id === variant.id);
+  if (!match) {
+    throw new ApiError(
+      409,
+      "Ten wariant nie jest już w pełni wykonalny z Twojego magazynu. Uruchom dopasowanie ponownie.",
+    );
+  }
+
+  const assignments = [];
+  match.variant.requirements.forEach((requirement, index) => {
+    match.outcome.allocation[index].forEach((yarn) => {
+      assignments.push({
+        yarn_id: yarn.id,
+        role: requirement.role,
+        initial_length_meters: yarn.length,
+        initial_weight_grams: yarn.weight,
+      });
+    });
+  });
+
+  // RPC jest dostępne wyłącznie dla backendu (service_role); tożsamość
+  // właścicielki pochodzi ze zweryfikowanej sesji i przekazywana jawnie.
+  const { data, error } = await supabaseConnection.client.rpc("create_active_project", {
+    p_user_id: session.user.id,
+    p_pattern_id: pattern.id,
+    p_variant_id: variant.id,
+    p_expected_yarn_version: expectedYarnVersion,
+    p_assignments: assignments,
+  });
+  if (error) {
+    handleProjectRpcError(error, "Nie udało się rozpocząć projektu w Supabase");
+  }
+  if (!data?.project) {
+    throw new Error("Supabase nie zwróciło rozpoczętego projektu.");
+  }
+  return {
+    ...normalizeProjectRow(data.project),
+    patternName: pattern.name,
+    yarns: normalizeProjectAssignments(assignments),
+  };
+}
+
+function handleProjectProgressRpcError(error, action) {
+  if (error.code === "P0003" || error.code === "40001") {
+    throw new ApiError(409, "Projekt został zmieniony w innej karcie. Odśwież dane i spróbuj ponownie.");
+  }
+  if (error.code === "P0001") {
+    throw new ApiError(409, "Nie masz aktywnego projektu.");
+  }
+  if (error.code === "P0002") {
+    throw new ApiError(400, "Nieprawidłowe dane postępu projektu.");
+  }
+  if (error.code === "PGRST202" || error.code === "42883") {
+    throw new ApiError(503, "Backend Supabase nie ma wymaganej migracji postępu projektu. Skontaktuj się z administratorem.");
+  }
+  throw new Error(`${action}: ${error.message}`);
+}
+
+async function updateSupabaseActiveProject(session, patch, expectedVersion) {
+  const { data, error } = await supabaseAuthClientFactory(
+    supabaseAuthConfig,
+    session.accessToken
+  ).rpc("update_active_project_progress", {
+    p_expected_version: expectedVersion,
+    p_progress_unit: patch.progressUnit,
+    p_progress_count: patch.progressCount,
+    p_note: patch.note,
+    p_tool_size_mm: patch.toolSizeMm,
+    p_gauge: patch.gauge,
+  });
+  if (error) {
+    handleProjectProgressRpcError(error, "Nie udało się zapisać postępu projektu w Supabase");
+  }
+  if (!data?.project) {
+    throw new Error("Supabase nie zwróciło zaktualizowanego projektu.");
+  }
+  return {
+    ...normalizeProjectRow(data.project),
+    patternName: await getCatalogPatternName(data.project.pattern_id),
+  };
+}
+
+async function getSupabaseMatches(session, { diagnostics: includeDiagnostics = false, technique } = {}) {
+  const [yarns, catalogPatterns] = await Promise.all([
+    getSupabaseYarns(session),
+    getCatalogPatterns(),
+  ]);
+  const patterns = catalogPatterns.filter((pattern) =>
+    matchesPatternTechniqueFilter(pattern, technique)
+  );
 
   validateMatchLimits(patterns);
   let limited = false;
@@ -955,6 +1190,7 @@ async function getSupabaseMatches(session, { diagnostics: includeDiagnostics = f
             ...variant,
             id: `${pattern.id}:${variant.id}`,
             patternId: pattern.id,
+            variantId: variant.id,
             baseName: pattern.name,
             variantLabel: variant.label,
             name: `${pattern.name} — ${variant.label}`,
@@ -1083,6 +1319,7 @@ function normalizeCatalogPattern(pattern) {
     matchingRequirements: normalizeMatchingRequirements(pattern.matching_requirements),
     sourceLanguage: pattern.source_language || "unknown",
     needsReview: Boolean(pattern.needs_review),
+    technique: normalizePatternTechnique(pattern.technique),
   };
 }
 
@@ -1094,15 +1331,19 @@ function normalizeMatchingRequirements(value) {
   }
 }
 
-async function getCatalogPatterns({ limit = null, offset = 0 } = {}, connection = supabaseConnection) {
+async function getCatalogPatterns({ limit = null, offset = 0, technique } = {}, connection = supabaseConnection) {
   const effectiveLimit = limit ?? MAX_PATTERN_CATALOG_RECORDS;
-  const { data, count, error } = await connection.client
+  let query = connection.client
     .from("patterns")
     .select(
-      "id,name,description,project_type,materials,meters_per_100g,yarn_requirements,matching_requirements,source_language,needs_review,official_source_url",
+      "id,name,description,project_type,materials,meters_per_100g,yarn_requirements,matching_requirements,source_language,needs_review,official_source_url,technique",
       { count: "exact" }
     )
-    .eq("publication_status", "published")
+    .eq("publication_status", "published");
+  if (technique !== undefined) {
+    query = query.eq("technique", technique);
+  }
+  const { data, count, error } = await query
     .range(offset, Math.max(offset, offset + effectiveLimit - 1))
     .order("name", { ascending: true });
 
@@ -1138,6 +1379,14 @@ function parsePatternPage(url) {
   }
 
   return { limit, offset };
+}
+
+function parsePatternTechnique(url) {
+  try {
+    return parseTechniqueParam(url.searchParams.get("technique"));
+  } catch {
+    throw new ApiError(400, "Parametr techniki ma niedozwoloną wartość.");
+  }
 }
 
 function validateYarnStorageCapacity(count) {
@@ -1755,6 +2004,8 @@ async function handleApi(req, res, url) {
 
   if (await yarnRouter.handle(req, res, url)) return;
 
+  if (await projectRouter.handle(req, res, url)) return;
+
   if (
     req.method === "GET"
     && url.pathname === "/api/matches"
@@ -1766,7 +2017,10 @@ async function handleApi(req, res, url) {
       matchRateLimiter,
       res,
     );
-    const result = await getSupabaseMatches(session, { diagnostics: true });
+    const result = await getSupabaseMatches(session, {
+      diagnostics: true,
+      technique: parsePatternTechnique(url),
+    });
     res.setHeader("X-Motek-Match-Scope", result.limited ? "subset" : "full");
     return sendJson(res, 200, {
       matches: result.matches,
@@ -2052,6 +2306,7 @@ module.exports = {
   normalizeAuthEmail,
   normalizeCatalogPattern,
   getCatalogPatterns,
+  parsePatternTechnique,
   normalizeSupabaseYarn,
   validatePatternCatalogSize,
   validateYarn,

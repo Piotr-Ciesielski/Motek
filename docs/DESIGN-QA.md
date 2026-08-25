@@ -8,7 +8,7 @@ Motek ma dokładnie cztery routowalne widoki:
 | --- | --- | --- |
 | Konto | `#accountView[data-view="account"]` | logowanie, rejestracja, recovery, prawo, hasło i usunięcie konta |
 | Magazyn | `#inventoryView[data-view="inventory"]` | statystyki oraz dodawanie, edycja i usuwanie włóczek |
-| Dopasowanie | `#matchesView[data-view="matches"]` | kryteria i potwierdzone wyniki dopasowania |
+| Dopasowanie | `#matchesView[data-view="matches"]` | kryteria i potwierdzone wyniki dopasowania, panel `#activeProjectPanel` aktywnego projektu z formularzem codziennego postępu (+1/−1, jednostka, notatka, drut, próbka) |
 | Katalog | `#catalogView[data-view="catalog"]` | wyszukiwanie, filtry i stronicowane ładowanie wzorów |
 
 Główna nawigacja używa tekstowych etykiet `Magazyn`, `Dopasowanie`, `Katalog`, `Konto` oraz odpowiadających im `data-view-target`. Bramka ponownej akceptacji prawa jest częścią Konta i nie tworzy piątego widoku.
@@ -66,6 +66,7 @@ Macierz ręczna obejmuje 32 kombinacje: 4 widoki × 2 motywy × 4 szerokości. D
 | Zakres | Dokładne testy |
 | --- | --- |
 | Cztery widoki, nawigacja, theme toggle, obrazy, DOM hooks, legal gate, 44 px, reduced motion | `test/design-regression.test.js` |
+| Filtry techniki w Dopasowaniu i Katalogu oraz kolejność ładowania `technique-policy.js` | `test/design-regression.test.js`, `test/client-policy.test.js`, `test/technique-policy.test.js` |
 | Kolejność mobile, układ Magazynu i Dopasowania, Konto, Auth forms, filtry, asset cache, crop | `test/design-layout.test.js` |
 | Przełączanie, zapis i tokeny obu motywów | `test/theme-policy.test.js` |
 | Role i poziomy `aria-live` komunikatów | `test/dom-utils.test.js` |

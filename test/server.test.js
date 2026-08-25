@@ -201,7 +201,7 @@ test("getCatalogPatterns filtruje published i pobiera count jednym zapytaniem", 
   assert.equal(page.items[0].officialSourceUrl, "https://example.com/pattern?ref=motek");
   assert.deepEqual(calls[0], [
     "select",
-    "id,name,description,project_type,materials,meters_per_100g,yarn_requirements,matching_requirements,source_language,needs_review,official_source_url",
+    "id,name,description,project_type,materials,meters_per_100g,yarn_requirements,matching_requirements,source_language,needs_review,official_source_url,technique",
     { count: "exact" },
   ]);
   assert.deepEqual(calls[1], ["eq", "publication_status", "published"]);
@@ -455,6 +455,7 @@ test("serwer Motek działa bezpiecznie", async (t) => {
   const pendingVersionedRpcs = [];
   let versionedRpcBatchScheduled = false;
   let nextSyntheticYarnId = 1;
+  const syntheticProjectYarnIds = new Set();
   const recoveryRequests = [];
   const exchangedRecoveryCodes = [];
   const recoveryGrantRpcs = [];
@@ -741,6 +742,10 @@ test("serwer Motek działa bezpiecznie", async (t) => {
                 continue;
               }
               if (rpcName === "delete_yarn_versioned") {
+                if (syntheticProjectYarnIds.has(rpcArgs.p_id)) {
+                  request.resolve({ data: null, error: { code: "23503", message: "foreign key violation" } });
+                  continue;
+                }
                 const index = syntheticYarns.findIndex((candidate) => candidate.id === rpcArgs.p_id && candidate.user_id === rpcUserId);
                 if (index < 0) {
                   request.resolve({ data: null, error: { code: "P0002", message: "yarn not found" } });
@@ -861,10 +866,23 @@ test("serwer Motek działa bezpiecznie", async (t) => {
           select(columns, options) {
             assert.equal(options?.count, "exact");
             assert.match(columns, /meters_per_100g/);
+            const filters = [];
+            // Fixture jest już zbiorem published; filtrowana jest wyłącznie technika.
+            const filteredPatterns = () => {
+              const techniqueFilter = filters.find(([field]) => field === "technique");
+              return techniqueFilter
+                ? supabasePatterns.filter((row) => row[techniqueFilter[0]] === techniqueFilter[1])
+                : supabasePatterns;
+            };
             const query = {
               eq(field, expected) {
-                assert.equal(field, "publication_status");
-                assert.equal(expected, "published");
+                if (field === "publication_status") {
+                  assert.equal(expected, "published");
+                } else {
+                  assert.equal(field, "technique");
+                  assert.ok(["knitting", "crochet"].includes(expected));
+                }
+                filters.push([field, expected]);
                 return query;
               },
               range(from, to) {
@@ -872,14 +890,16 @@ test("serwer Motek działa bezpiecznie", async (t) => {
                   async order(field, orderOptions) {
                     assert.equal(field, "name");
                     assert.deepEqual(orderOptions, { ascending: true });
-                    return { data: supabasePatterns.slice(from, to + 1), count: supabasePatterns.length, error: null };
+                    const rows = filteredPatterns();
+                    return { data: rows.slice(from, to + 1), count: rows.length, error: null };
                   },
                 };
               },
               async order(field, orderOptions) {
                 assert.equal(field, "name");
                 assert.deepEqual(orderOptions, { ascending: true });
-                return { data: supabasePatterns, count: supabasePatterns.length, error: null };
+                const rows = filteredPatterns();
+                return { data: rows, count: rows.length, error: null };
               },
             };
             return query;
@@ -984,6 +1004,14 @@ test("serwer Motek działa bezpiecznie", async (t) => {
         /^(?:application|text)\/javascript/,
       );
       assert.match(await themePolicyResponse.text(), /MotekThemePolicy/);
+
+      const techniquePolicyResponse = await fetch(`${baseUrl}/technique-policy.js`);
+      assert.equal(techniquePolicyResponse.status, 200);
+      assert.match(
+        techniquePolicyResponse.headers.get("content-type"),
+        /^(?:application|text)\/javascript/,
+      );
+      assert.match(await techniquePolicyResponse.text(), /MotekTechniquePolicy/);
 
       for (const assetName of ["color-yarn-cat.v1.webp", "night-yarn-cat.v1.webp"]) {
         const assetResponse = await fetch(`${baseUrl}/assets/${assetName}`);
@@ -1106,14 +1134,14 @@ test("serwer Motek działa bezpiecznie", async (t) => {
           captchaToken: "register-token",
           termsAccepted: true,
           termsVersion: "1.0",
-          privacyNoticeVersion: "1.0",
+          privacyNoticeVersion: "1.1",
         }),
       });
       assert.equal(registerResponse.status, 201);
       assert.deepEqual(automaticRegistrationFinalizations.at(-1), {
         p_user_id: "33333333-3333-4333-8333-333333333333",
         p_terms_version: "1.0",
-        p_privacy_version: "1.0",
+        p_privacy_version: "1.1",
       });
       assert.deepEqual(await registerResponse.json(), {
         user: {
@@ -1167,7 +1195,7 @@ test("serwer Motek działa bezpiecznie", async (t) => {
           captchaToken: "register-confirmation-token",
           termsAccepted: true,
           termsVersion: "1.0",
-          privacyNoticeVersion: "1.0",
+          privacyNoticeVersion: "1.1",
         }),
       });
       assert.equal(registerResponse.status, 201);
@@ -1689,6 +1717,16 @@ test("serwer Motek działa bezpiecznie", async (t) => {
       });
       assert.equal(forbiddenUpdate.status, 404);
 
+      syntheticProjectYarnIds.add(created.id);
+      const assignedDeleteResponse = await fetch(`${baseUrl}/api/yarns/${created.id}`, {
+        method: "DELETE",
+        headers: { ...originHeaders, Cookie: userACookies, "If-Match": userAVersion },
+      });
+      assert.equal(assignedDeleteResponse.status, 409);
+      assert.match((await assignedDeleteResponse.json()).error, /aktywnego projektu/);
+      assert.equal(userAVersion, (await fetch(`${baseUrl}/api/yarns`, { headers: { Cookie: userACookies } })).headers.get("etag"));
+      syntheticProjectYarnIds.delete(created.id);
+
       const deleteResponse = await fetch(`${baseUrl}/api/yarns/${created.id}`, {
         method: "DELETE",
         headers: { ...originHeaders, Cookie: userACookies, "If-Match": userAVersion },
@@ -1755,6 +1793,23 @@ test("serwer Motek działa bezpiecznie", async (t) => {
       assert.equal(oversizedPageResponse.status, 400);
       const negativeOffsetResponse = await fetch(`${baseUrl}/api/patterns?offset=-1`, { headers: patternHeaders });
       assert.equal(negativeOffsetResponse.status, 400);
+      for (const path of ["/api/patterns?technique=", "/api/patterns?technique=sprz%C4%99t"]) {
+        const invalidTechniqueResponse = await fetch(`${baseUrl}${path}`, { headers: patternHeaders });
+        assert.equal(invalidTechniqueResponse.status, 400, path);
+      }
+      for (const path of ["/api/matches?technique=", "/api/matches?technique=wool", "/api/matches?diagnostics=1&technique="]) {
+        const invalidMatchResponse = await fetch(`${baseUrl}${path}`, { headers: patternHeaders });
+        assert.equal(invalidMatchResponse.status, 400, path);
+      }
+      const crochetPageResponse = await fetch(`${baseUrl}/api/patterns?technique=crochet`, { headers: patternHeaders });
+      assert.equal(crochetPageResponse.status, 200);
+      assert.deepEqual(await crochetPageResponse.json(), {
+        total: 0,
+        limit: 50,
+        offset: 0,
+        hasMore: false,
+        items: [],
+      });
 
       const response = await fetch(`${baseUrl}/api/patterns`, { headers: patternHeaders });
       assert.equal(response.status, 200);
@@ -1805,6 +1860,7 @@ test("serwer Motek działa bezpiecznie", async (t) => {
         sourceLanguage: "pl",
         needsReview: false,
         officialSourceUrl: null,
+        technique: null,
         }],
       });
       assert.equal(JSON.stringify(page).includes("sb_secret_"), false);
@@ -1851,4 +1907,382 @@ test("serwer Motek działa bezpiecznie", async (t) => {
   }
 
   await assert.rejects(fetch(`${baseUrl}/`, { signal: AbortSignal.timeout(1_000) }));
+});
+
+test("endpointy projektów wymagają sesji, warunku magazynu i jednego aktywnego projektu", async () => {
+  const userId = "44444444-4444-4444-8444-444444444444";
+  const accessToken = "token-user-project";
+  const syntheticYarns = [{
+    id: 1,
+    user_id: userId,
+    name: "Testowa motek",
+    color: "zielony",
+    materials: ["wełna"],
+    weight_class: "dk",
+    length_meters: 300,
+    weight_grams: 100,
+  }];
+  const currentYarnVersion = 7;
+  let activeProject = null;
+  const projectAssignments = [];
+
+  const publishedPattern = {
+    id: 21,
+    name: "Wzór projektowy",
+    description: "Opis",
+    official_source_url: "https://example.com/wzor",
+    project_type: "socks",
+    materials: ["wełna"],
+    matching_requirements: {
+      version: 2,
+      variants: ["m", "dup"].map((id) => ({
+        id,
+        label: id.toUpperCase(),
+        requirements: [{
+          role: "główna",
+          measurement_basis: "meters",
+          meters_min: 200,
+          grams_min: 80,
+          materials: ["wełna"],
+          material_match: "all",
+          color_mode: "same",
+          weight_classes: ["dk"],
+        }],
+      })),
+    },
+    source_language: "pl",
+    needs_review: false,
+  };
+
+  const serviceQueryResult = (rows) => {
+    const promise = Promise.resolve({ data: rows, count: rows.length, error: null });
+    promise.eq = () => promise;
+    promise.range = () => promise;
+    promise.order = () => promise;
+    promise.maybeSingle = () => promise.then((result) => ({ data: result.data[0] ?? null, error: null }));
+    return promise;
+  };
+
+  function userQuery(table) {
+    const filters = [];
+    const query = {
+      select() {
+        return query;
+      },
+      eq(field, value) {
+        filters.push([field, value]);
+        return query;
+      },
+      order() {
+        return query;
+      },
+      maybeSingle() {
+        const rows = table === "projects" && activeProject
+          ? [activeProject].filter((row) => filters.every(([field, value]) => row[field] === value))
+          : [];
+        return Promise.resolve({ data: rows[0] || null, error: null });
+      },
+      then(resolve, reject) {
+        let rows = [];
+        if (table === "yarns") {
+          rows = syntheticYarns.filter((row) => filters.every(([field, value]) => row[field] === value));
+        }
+        if (table === "project_yarns") {
+          rows = projectAssignments.filter((row) => filters.every(([field, value]) => row[field] === value));
+        }
+        return Promise.resolve({ data: rows, error: null }).then(resolve, reject);
+      },
+    };
+    return query;
+  }
+
+  function fakeCreateActiveProject(args) {
+    if (args.p_expected_yarn_version !== currentYarnVersion) {
+      return Promise.resolve({ data: null, error: { code: "P0003", message: "yarn version conflict" } });
+    }
+    if (args.p_variant_id === "dup") {
+      return Promise.resolve({
+        data: null,
+        error: { code: "23505", message: 'duplicate key value violates unique constraint "projects_single_active_per_user_idx"' },
+      });
+    }
+    if (activeProject) {
+      return Promise.resolve({ data: null, error: { code: "P0001", message: "active project already exists" } });
+    }
+    const ownedIds = new Set(syntheticYarns.map((row) => row.id));
+    for (const assignment of args.p_assignments) {
+      if (!ownedIds.has(assignment.yarn_id)) {
+        return Promise.resolve({ data: null, error: { code: "P0002", message: "yarn not found" } });
+      }
+    }
+    activeProject = {
+      id: 5,
+      user_id: userId,
+      pattern_id: args.p_pattern_id,
+      variant_id: args.p_variant_id,
+      status: "active",
+      version: 1,
+      created_at: "2026-08-24T00:00:00Z",
+      updated_at: "2026-08-24T00:00:00Z",
+      ended_at: null,
+    };
+    args.p_assignments.forEach((assignment, index) => {
+      projectAssignments.push({ project_id: 5, ...assignment, yarn_order: index });
+    });
+    return Promise.resolve({ data: { project: activeProject }, error: null });
+  }
+
+  function fakeUserClient(_config, _token) {
+    return {
+      auth: {
+        async getUser(accessTokenValue) {
+          return accessTokenValue === accessToken
+            ? { data: { user: { id: userId, email: "p@example.test", user_metadata: {} } }, error: null }
+            : { data: null, error: new Error("invalid token") };
+        },
+      },
+      from(table) {
+        return userQuery(table);
+      },
+      async rpc(name, args) {
+        if (name === "update_active_project_progress") {
+          if (!activeProject || activeProject.status !== "active") {
+            return { data: null, error: { code: "P0001", message: "no active project" } };
+          }
+          if (args.p_expected_version !== activeProject.version) {
+            return { data: null, error: { code: "P0003", message: "project version conflict" } };
+          }
+          Object.assign(activeProject, {
+            progress_unit: args.p_progress_unit,
+            progress_count: args.p_progress_count,
+            note: args.p_note,
+            tool_size_mm: args.p_tool_size_mm,
+            gauge: args.p_gauge,
+            version: activeProject.version + 1,
+            updated_at: "2026-08-24T01:00:00Z",
+          });
+          return { data: { project: activeProject }, error: null };
+        }
+        if (name !== "create_active_project") throw new Error(`nieznane RPC: ${name}`);
+        return fakeCreateActiveProject(args);
+      },
+    };
+  }
+
+  const runtime = await main({
+    supabaseConnection: {
+      async verify() {},
+      client: {
+        rpc(name, args) {
+          if (name === "create_active_project") {
+            assert.equal(args.p_user_id, userId);
+            return fakeCreateActiveProject(args);
+          }
+          assert.equal(name, "get_account_access_state");
+          return Promise.resolve({
+            data: { currentTermsVersion: "1.0", acceptedVersion: "1.0", acceptanceRequired: false },
+            error: null,
+          });
+        },
+        from(table) {
+          if (table === "profiles") {
+            return {
+              select() {
+                return {
+                  eq() {
+                    return {
+                      maybeSingle: () => Promise.resolve({
+                        data: { id: userId, login: "p", email: "p@example.test", status: "active" },
+                        error: null,
+                      }),
+                    };
+                  },
+                };
+              },
+            };
+          }
+          assert.equal(table, "patterns");
+          return {
+            select() {
+              return {
+                eq() {
+                  return serviceQueryResult([publishedPattern]);
+                },
+              };
+            },
+          };
+        },
+      },
+    },
+    supabaseAuthConfig: {
+      url: "https://project.supabase.co",
+      publishableKey: "sb_publishable_test",
+    },
+    supabaseAuthClientFactory: fakeUserClient,
+    captchaConfig: { enabled: false, provider: null, siteKey: null },
+    readinessIntervalMs: 0,
+  });
+  const baseUrl = `http://${runtime.host}:${runtime.port}`;
+  const idleCookie = buildIdleActivityCookie(Math.floor(Date.now() / 1000)).split(";", 1)[0];
+  const cookies = `motek_access_token=${accessToken}; ${idleCookie}`;
+
+  try {
+    const anonymousResponse = await fetch(`${baseUrl}/api/projects/active`);
+    assert.equal(anonymousResponse.status, 401);
+
+    const emptyResponse = await fetch(`${baseUrl}/api/projects/active`, {
+      headers: { Cookie: cookies },
+    });
+    assert.equal(emptyResponse.status, 204);
+    assert.equal(emptyResponse.headers.get("etag"), null);
+
+    const missingPreconditionResponse = await fetch(`${baseUrl}/api/projects`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Origin: baseUrl, Cookie: cookies },
+      body: JSON.stringify({ patternId: 21, variantId: "m" }),
+    });
+    assert.equal(missingPreconditionResponse.status, 428);
+
+    const stalePreconditionResponse = await fetch(`${baseUrl}/api/projects`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Origin: baseUrl,
+        Cookie: cookies,
+        "If-Match": '"yarn-v6"',
+      },
+      body: JSON.stringify({ patternId: 21, variantId: "m" }),
+    });
+    assert.equal(stalePreconditionResponse.status, 409);
+
+    const extraFieldResponse = await fetch(`${baseUrl}/api/projects`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Origin: baseUrl,
+        Cookie: cookies,
+        "If-Match": '"yarn-v7"',
+      },
+      body: JSON.stringify({ patternId: 21, variantId: "m", yarns: [] }),
+    });
+    assert.equal(extraFieldResponse.status, 400);
+
+    const createResponse = await fetch(`${baseUrl}/api/projects`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Origin: baseUrl,
+        Cookie: cookies,
+        "If-Match": '"yarn-v7"',
+      },
+      body: JSON.stringify({ patternId: 21, variantId: "m" }),
+    });
+    assert.equal(createResponse.status, 201);
+    assert.equal(createResponse.headers.get("ETag"), '"project-v1"');
+    assert.equal(createResponse.headers.get("X-Motek-Project-Version"), '"project-v1"');
+    const createdProject = await createResponse.json();
+    assert.equal(createdProject.patternId, 21);
+    assert.equal(createdProject.variantId, "m");
+    assert.equal(createdProject.patternName, "Wzór projektowy");
+    assert.equal(createdProject.status, "active");
+    assert.equal(createdProject.yarns.length, 1);
+    assert.deepEqual(createdProject.yarns[0], {
+      yarnId: 1,
+      role: "główna",
+      initialLengthMeters: 300,
+      initialWeightGrams: 100,
+    });
+
+    const activeResponse = await fetch(`${baseUrl}/api/projects/active`, {
+      headers: { Cookie: cookies },
+    });
+    assert.equal(activeResponse.status, 200);
+    assert.equal(activeResponse.headers.get("ETag"), '"project-v1"');
+
+    const secondProjectResponse = await fetch(`${baseUrl}/api/projects`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Origin: baseUrl,
+        Cookie: cookies,
+        "If-Match": '"yarn-v7"',
+      },
+      body: JSON.stringify({ patternId: 21, variantId: "m" }),
+    });
+    assert.equal(secondProjectResponse.status, 409);
+    const secondProjectBody = await secondProjectResponse.json();
+    assert.equal(secondProjectBody.error, "Masz już aktywny projekt. Zakończ go przed rozpoczęciem kolejnego.");
+
+    const duplicateIndexResponse = await fetch(`${baseUrl}/api/projects`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Origin: baseUrl,
+        Cookie: cookies,
+        "If-Match": '"yarn-v7"',
+      },
+      body: JSON.stringify({ patternId: 21, variantId: "dup" }),
+    });
+    assert.equal(duplicateIndexResponse.status, 409);
+    const duplicateIndexBody = await duplicateIndexResponse.json();
+    assert.equal(duplicateIndexBody.error, "Masz już aktywny projekt. Zakończ go przed rozpoczęciem kolejnego.");
+
+    const progressBody = {
+      progressUnit: "round",
+      progressCount: 8,
+      note: "Prazury gotowe.",
+      toolSizeMm: 3.5,
+      gauge: "12 śl./10 cm",
+    };
+    const missingProgressPrecondition = await fetch(`${baseUrl}/api/projects/active`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json", Origin: baseUrl, Cookie: cookies },
+      body: JSON.stringify(progressBody),
+    });
+    assert.equal(missingProgressPrecondition.status, 428);
+
+    const staleProgressPrecondition = await fetch(`${baseUrl}/api/projects/active`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        Origin: baseUrl,
+        Cookie: cookies,
+        "If-Match": '"project-v9"',
+      },
+      body: JSON.stringify(progressBody),
+    });
+    assert.equal(staleProgressPrecondition.status, 409);
+
+    const progressResponse = await fetch(`${baseUrl}/api/projects/active`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        Origin: baseUrl,
+        Cookie: cookies,
+        "If-Match": '"project-v1"',
+      },
+      body: JSON.stringify(progressBody),
+    });
+    assert.equal(progressResponse.status, 200);
+    assert.equal(progressResponse.headers.get("ETag"), '"project-v2"');
+    assert.equal(progressResponse.headers.get("X-Motek-Project-Version"), '"project-v2"');
+    const updatedProject = await progressResponse.json();
+    assert.equal(updatedProject.version, 2);
+    assert.equal(updatedProject.progressUnit, "round");
+    assert.equal(updatedProject.progressCount, 8);
+    assert.equal(updatedProject.note, "Prazury gotowe.");
+    assert.equal(updatedProject.toolSizeMm, 3.5);
+    assert.equal(updatedProject.gauge, "12 śl./10 cm");
+
+    const refreshedActiveResponse = await fetch(`${baseUrl}/api/projects/active`, {
+      headers: { Cookie: cookies },
+    });
+    assert.equal(refreshedActiveResponse.status, 200);
+    assert.equal(refreshedActiveResponse.headers.get("ETag"), '"project-v2"');
+    const refreshedActiveProject = await refreshedActiveResponse.json();
+    assert.equal(refreshedActiveProject.progressCount, 8);
+    assert.equal(refreshedActiveProject.patternName, "Wzór projektowy");
+  } finally {
+    await shutdown("project-routes-test");
+  }
 });

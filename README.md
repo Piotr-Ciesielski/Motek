@@ -2,7 +2,7 @@
 
 Prywatna aplikacja webowa do zarządzania włóczkami, katalogiem wzorów i ich dopasowaniem.
 
-Motek to prywatna aplikacja dla osób robiących na drutach i szydełku, która pomaga zamienić zapas włóczek w konkretne pomysły na projekty. Użytkownik może prowadzić własny magazyn motków, przeglądać i filtrować katalog wzorów oraz sprawdzać, które projekty da się wykonać z materiałów, które już ma — bez ręcznego porównywania wymagań wzoru z zawartością szafy. Dzięki temu łatwiej wykorzystać posiadaną włóczkę, szybciej znaleźć odpowiedni wzór i podejmować decyzje bez kupowania materiałów na zapas.
+Motek to prywatna aplikacja dla osób robiących na drutach i szydełku, która pomaga zamienić zapas włóczek w konkretne pomysły na projekty. Użytkownik może prowadzić własny magazyn motków, przeglądać i filtrować katalog wzorów — między innymi według techniki (druty albo szydełko), języka, typu projektu i materiału — sprawdzać, które projekty da się wykonać z materiałów, które już ma, oraz rozpocząć z pełnego dopasowania jeden aktywny projekt i śledzić przypisane motki — bez ręcznego porównywania wymagań wzoru z zawartością szafy. Dzięki temu łatwiej wykorzystać posiadaną włóczkę, szybciej znaleźć odpowiedni wzór i podejmować decyzje bez kupowania materiałów na zapas.
 
 ## Lokalny start
 

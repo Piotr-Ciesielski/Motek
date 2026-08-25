@@ -1,6 +1,6 @@
 begin;
 
-select plan(88);
+select plan(89);
 
 select has_schema('private', 'Prywatny schemat danych rejestracji istnieje');
 select has_table('private', 'legal_document_versions', 'Wersje dokumentów prawnych istnieją');
@@ -80,9 +80,14 @@ select is(
   'Aktualna wersja regulaminu 1.0 jest opublikowana'
 );
 select is(
-  (select count(*) from private.legal_document_versions where kind = 'privacy' and version = '1.0' and effective_at = date '2026-08-09' and not requires_acceptance and is_current),
+  (select count(*) from private.legal_document_versions where kind = 'privacy' and version = '1.1' and effective_at = date '2026-08-24' and not requires_acceptance and is_current),
   1::bigint,
-  'Aktualna wersja prywatności 1.0 jest opublikowana'
+  'Aktualna wersja prywatności 1.1 jest opublikowana'
+);
+select is(
+  (select count(*) from private.legal_document_versions where kind = 'privacy' and version = '1.0'),
+  1::bigint,
+  'Poprzednia wersja prywatności 1.0 pozostaje w ledgerze jako historyczna'
 );
 select is(
   exists (
@@ -188,7 +193,7 @@ select is(
   'Rezerwacja wiąże użytkownika po zgodnym e-mailu'
 );
 select is(
-  (public.finalize_invited_registration('00000000-0000-0000-0000-000000000101'::uuid, '00000000-0000-0000-0000-000000000001'::uuid, '1.0', '1.0') is not null),
+  (public.finalize_invited_registration('00000000-0000-0000-0000-000000000101'::uuid, '00000000-0000-0000-0000-000000000001'::uuid, '1.0', '1.1') is not null),
   true,
   'Finalizacja zwraca czas akceptacji'
 );
@@ -220,13 +225,13 @@ select is(
   'Stan dostępu nie wymaga ponownej akceptacji'
 );
 select is(
-  (public.record_terms_acceptance('00000000-0000-0000-0000-000000000001'::uuid, '1.0', '1.0') is not null),
+  (public.record_terms_acceptance('00000000-0000-0000-0000-000000000001'::uuid, '1.0', '1.1') is not null),
   true,
   'Ponowny zapis akceptacji zachowuje pierwszy czas'
 );
 
 select is(
-  (public.finalize_automatic_registration('00000000-0000-0000-0000-000000000002'::uuid, '1.0', '1.0') is not null),
+  (public.finalize_automatic_registration('00000000-0000-0000-0000-000000000002'::uuid, '1.0', '1.1') is not null),
   true,
   'Automatyczna rejestracja zwraca czas finalizacji'
 );
@@ -248,7 +253,7 @@ select is(
   'Automatyczna rejestracja zapisuje akceptację regulaminu'
 );
 select is(
-  (select count(*) from private.privacy_notice_deliveries where user_id = '00000000-0000-0000-0000-000000000002' and privacy_version = '1.0'),
+  (select count(*) from private.privacy_notice_deliveries where user_id = '00000000-0000-0000-0000-000000000002' and privacy_version = '1.1'),
   1::bigint,
   'Automatyczna rejestracja zapisuje przekazanie prywatności'
 );

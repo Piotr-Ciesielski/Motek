@@ -1,12 +1,12 @@
 {
   "metadata": {
-    "record_count": 106,
+    "record_count": 116,
     "manual_override_count": 27,
     "excluded_pdf_count": 13,
     "synthetic_demo_count": 3,
     "needs_review_count": 0,
-    "complete_material_count": 106,
-    "complete_ratio_count": 68
+    "complete_material_count": 116,
+    "complete_ratio_count": 74
   },
   "records": [
     {
@@ -36,7 +36,8 @@
       "publication_status": "hidden",
       "content_audit_version": "1.0",
       "content_audited_at": "2026-08-09T00:00:00Z",
-      "official_source_url": null
+      "official_source_url": null,
+      "technique": null
     },
     {
       "name": "suncatcher-square-neck-intarsia-tee",
@@ -70,7 +71,8 @@
       "publication_status": "hidden",
       "content_audit_version": "1.0",
       "content_audited_at": "2026-08-09T00:00:00Z",
-      "official_source_url": null
+      "official_source_url": null,
+      "technique": null
     },
     {
       "name": "rosmarino-eyelet-ankle-socks",
@@ -106,7 +108,8 @@
       "publication_status": "hidden",
       "content_audit_version": "1.0",
       "content_audited_at": "2026-08-09T00:00:00Z",
-      "official_source_url": null
+      "official_source_url": null,
+      "technique": null
     },
     {
       "name": "Black Lodge Socks - wzór dziewiarski",
@@ -152,7 +155,8 @@
       "publication_status": "hidden",
       "content_audit_version": "1.0",
       "content_audited_at": "2026-08-09T00:00:00Z",
-      "official_source_url": null
+      "official_source_url": null,
+      "technique": null
     },
     {
       "name": "White Lodge Socks - wzór dziewiarski",
@@ -204,7 +208,8 @@
       "publication_status": "hidden",
       "content_audit_version": "1.0",
       "content_audited_at": "2026-08-09T00:00:00Z",
-      "official_source_url": null
+      "official_source_url": null,
+      "technique": null
     },
     {
       "name": "Diamond Fade Socks 2025",
@@ -236,7 +241,8 @@
       "publication_status": "hidden",
       "content_audit_version": "1.0",
       "content_audited_at": "2026-08-09T00:00:00Z",
-      "official_source_url": null
+      "official_source_url": null,
+      "technique": null
     },
     {
       "name": "Teddy Bear Socks - wzór PL (ang skróty)",
@@ -269,7 +275,8 @@
       "publication_status": "hidden",
       "content_audit_version": "1.0",
       "content_audited_at": "2026-08-09T00:00:00Z",
-      "official_source_url": null
+      "official_source_url": null,
+      "technique": null
     },
     {
       "name": "Alice in Wonderland July 2013",
@@ -300,7 +307,8 @@
       "publication_status": "hidden",
       "content_audit_version": "1.0",
       "content_audited_at": "2026-08-09T00:00:00Z",
-      "official_source_url": null
+      "official_source_url": null,
+      "technique": null
     },
     {
       "name": "ALTA socks (PL) dla Włóczkomaniaczki (poprawione)",
@@ -336,7 +344,8 @@
       "publication_status": "hidden",
       "content_audit_version": "1.0",
       "content_audited_at": "2026-08-09T00:00:00Z",
-      "official_source_url": null
+      "official_source_url": null,
+      "technique": null
     },
     {
       "name": "Autumn s Letter Cardigan by Amina Ali",
@@ -404,7 +413,8 @@
       "publication_status": "hidden",
       "content_audit_version": "1.0",
       "content_audited_at": "2026-08-09T00:00:00Z",
-      "official_source_url": null
+      "official_source_url": null,
+      "technique": null
     },
     {
       "name": "b2b-pdf 2106-07abc-eng 1",
@@ -438,7 +448,8 @@
       "publication_status": "hidden",
       "content_audit_version": "1.0",
       "content_audited_at": "2026-08-09T00:00:00Z",
-      "official_source_url": null
+      "official_source_url": null,
+      "technique": null
     },
     {
       "name": "BABUSHKA SCARF",
@@ -471,7 +482,8 @@
       "publication_status": "hidden",
       "content_audit_version": "1.0",
       "content_audited_at": "2026-08-09T00:00:00Z",
-      "official_source_url": null
+      "official_source_url": null,
+      "technique": null
     },
     {
       "name": "bevelled-tank-sleeveless-intarsia-top",
@@ -505,7 +517,8 @@
       "publication_status": "hidden",
       "content_audit_version": "1.0",
       "content_audited_at": "2026-08-09T00:00:00Z",
-      "official_source_url": null
+      "official_source_url": null,
+      "technique": null
     },
     {
       "name": "Big-Big-BuBBles06.23-licnfm",
@@ -544,7 +557,8 @@
       "publication_status": "hidden",
       "content_audit_version": "1.0",
       "content_audited_at": "2026-08-09T00:00:00Z",
-      "official_source_url": null
+      "official_source_url": null,
+      "technique": null
     },
     {
       "name": "Blush Basic Socks Listopad 2023 Wydanie pierwsze",
@@ -574,7 +588,8 @@
       "publication_status": "hidden",
       "content_audit_version": "1.0",
       "content_audited_at": "2026-08-09T00:00:00Z",
-      "official_source_url": null
+      "official_source_url": null,
+      "technique": null
     },
     {
       "name": "bluzka saranda tee knitolog",
@@ -608,7 +623,8 @@
       "publication_status": "hidden",
       "content_audit_version": "1.0",
       "content_audited_at": "2026-08-09T00:00:00Z",
-      "official_source_url": null
+      "official_source_url": null,
+      "technique": null
     },
     {
       "name": "bluzka Skuletant Iwona Eriksson",
@@ -654,7 +670,8 @@
       "publication_status": "hidden",
       "content_audit_version": "1.0",
       "content_audited_at": "2026-08-09T00:00:00Z",
-      "official_source_url": null
+      "official_source_url": null,
+      "technique": null
     },
     {
       "name": "Bone",
@@ -688,7 +705,8 @@
       "publication_status": "hidden",
       "content_audit_version": "1.0",
       "content_audited_at": "2026-08-09T00:00:00Z",
-      "official_source_url": null
+      "official_source_url": null,
+      "technique": null
     },
     {
       "name": "Bubble",
@@ -725,7 +743,8 @@
       "publication_status": "hidden",
       "content_audit_version": "1.0",
       "content_audited_at": "2026-08-09T00:00:00Z",
-      "official_source_url": null
+      "official_source_url": null,
+      "technique": null
     },
     {
       "name": "Canada",
@@ -759,7 +778,8 @@
       "publication_status": "hidden",
       "content_audit_version": "1.0",
       "content_audited_at": "2026-08-09T00:00:00Z",
-      "official_source_url": null
+      "official_source_url": null,
+      "technique": null
     },
     {
       "name": "Capucharpe EN",
@@ -790,7 +810,8 @@
       "publication_status": "hidden",
       "content_audit_version": "1.0",
       "content_audited_at": "2026-08-09T00:00:00Z",
-      "official_source_url": null
+      "official_source_url": null,
+      "technique": null
     },
     {
       "name": "Chaussettes PERCY final EN",
@@ -821,7 +842,8 @@
       "publication_status": "hidden",
       "content_audit_version": "1.0",
       "content_audited_at": "2026-08-09T00:00:00Z",
-      "official_source_url": null
+      "official_source_url": null,
+      "technique": null
     },
     {
       "name": "Chusta Erin kotek i motek",
@@ -887,7 +909,8 @@
       "publication_status": "hidden",
       "content_audit_version": "1.0",
       "content_audited_at": "2026-08-09T00:00:00Z",
-      "official_source_url": null
+      "official_source_url": null,
+      "technique": null
     },
     {
       "name": "Cirro",
@@ -928,7 +951,8 @@
       "publication_status": "hidden",
       "content_audit_version": "1.0",
       "content_audited_at": "2026-08-09T00:00:00Z",
-      "official_source_url": null
+      "official_source_url": null,
+      "technique": null
     },
     {
       "name": "Climb every Mountain socks Final Edit141122",
@@ -983,7 +1007,8 @@
       "publication_status": "hidden",
       "content_audit_version": "1.0",
       "content_audited_at": "2026-08-09T00:00:00Z",
-      "official_source_url": null
+      "official_source_url": null,
+      "technique": null
     },
     {
       "name": "Cloudberry Sweater",
@@ -1017,7 +1042,8 @@
       "publication_status": "hidden",
       "content_audit_version": "1.0",
       "content_audited_at": "2026-08-09T00:00:00Z",
-      "official_source_url": null
+      "official_source_url": null,
+      "technique": null
     },
     {
       "name": "Clue 1 Color Popportunity Socks",
@@ -1056,7 +1082,8 @@
       "publication_status": "hidden",
       "content_audit_version": "1.0",
       "content_audited_at": "2026-08-09T00:00:00Z",
-      "official_source_url": null
+      "official_source_url": null,
+      "technique": null
     },
     {
       "name": "Cotton",
@@ -1090,7 +1117,8 @@
       "publication_status": "hidden",
       "content_audit_version": "1.0",
       "content_audited_at": "2026-08-09T00:00:00Z",
-      "official_source_url": null
+      "official_source_url": null,
+      "technique": null
     },
     {
       "name": "Craigh Na Dun Shawl - Anna Kania (2)",
@@ -1158,7 +1186,8 @@
       "publication_status": "hidden",
       "content_audit_version": "1.0",
       "content_audited_at": "2026-08-09T00:00:00Z",
-      "official_source_url": null
+      "official_source_url": null,
+      "technique": null
     },
     {
       "name": "diaphane-top-buttoned-shirt",
@@ -1192,7 +1221,8 @@
       "publication_status": "hidden",
       "content_audit_version": "1.0",
       "content_audited_at": "2026-08-09T00:00:00Z",
-      "official_source_url": null
+      "official_source_url": null,
+      "technique": null
     },
     {
       "name": "Fallandenforestsocks",
@@ -1238,7 +1268,8 @@
       "publication_status": "hidden",
       "content_audit_version": "1.0",
       "content_audited_at": "2026-08-09T00:00:00Z",
-      "official_source_url": null
+      "official_source_url": null,
+      "technique": null
     },
     {
       "name": "Fiorellino ENG1",
@@ -1276,7 +1307,8 @@
       "publication_status": "hidden",
       "content_audit_version": "1.0",
       "content_audited_at": "2026-08-09T00:00:00Z",
-      "official_source_url": null
+      "official_source_url": null,
+      "technique": null
     },
     {
       "name": "floreale-top-lace-back-tee",
@@ -1315,7 +1347,8 @@
       "publication_status": "hidden",
       "content_audit_version": "1.0",
       "content_audited_at": "2026-08-09T00:00:00Z",
-      "official_source_url": null
+      "official_source_url": null,
+      "technique": null
     },
     {
       "name": "Forest Light",
@@ -1351,7 +1384,8 @@
       "publication_status": "hidden",
       "content_audit_version": "1.0",
       "content_audited_at": "2026-08-09T00:00:00Z",
-      "official_source_url": null
+      "official_source_url": null,
+      "technique": null
     },
     {
       "name": "Forever Autumn Sock Set Final",
@@ -1398,7 +1432,8 @@
       "publication_status": "hidden",
       "content_audit_version": "1.0",
       "content_audited_at": "2026-08-09T00:00:00Z",
-      "official_source_url": null
+      "official_source_url": null,
+      "technique": null
     },
     {
       "name": "Gingerbreads Socks",
@@ -1440,7 +1475,8 @@
       "publication_status": "hidden",
       "content_audit_version": "1.0",
       "content_audited_at": "2026-08-09T00:00:00Z",
-      "official_source_url": null
+      "official_source_url": null,
+      "technique": null
     },
     {
       "name": "Grassland Tee",
@@ -1482,7 +1518,8 @@
       "publication_status": "hidden",
       "content_audit_version": "1.0",
       "content_audited_at": "2026-08-09T00:00:00Z",
-      "official_source_url": null
+      "official_source_url": null,
+      "technique": null
     },
     {
       "name": "Greenbay",
@@ -1516,7 +1553,8 @@
       "publication_status": "hidden",
       "content_audit_version": "1.0",
       "content_audited_at": "2026-08-09T00:00:00Z",
-      "official_source_url": null
+      "official_source_url": null,
+      "technique": null
     },
     {
       "name": "Handasa Top AminaAliHandmade",
@@ -1580,7 +1618,8 @@
       "publication_status": "hidden",
       "content_audit_version": "1.0",
       "content_audited_at": "2026-08-09T00:00:00Z",
-      "official_source_url": null
+      "official_source_url": null,
+      "technique": null
     },
     {
       "name": "HAPPY-TRIO-SWEATER-Tkane-na-okraglo-Wzor-na-druty-exxadt",
@@ -1611,7 +1650,8 @@
       "publication_status": "hidden",
       "content_audit_version": "1.0",
       "content_audited_at": "2026-08-09T00:00:00Z",
-      "official_source_url": null
+      "official_source_url": null,
+      "technique": null
     },
     {
       "name": "Happy Haunts Socks",
@@ -1666,7 +1706,8 @@
       "publication_status": "hidden",
       "content_audit_version": "1.0",
       "content_audited_at": "2026-08-09T00:00:00Z",
-      "official_source_url": null
+      "official_source_url": null,
+      "technique": null
     },
     {
       "name": "Highland Cardi",
@@ -1701,7 +1742,8 @@
       "publication_status": "hidden",
       "content_audit_version": "1.0",
       "content_audited_at": "2026-08-09T00:00:00Z",
-      "official_source_url": null
+      "official_source_url": null,
+      "technique": null
     },
     {
       "name": "Holly Berry Charity Socks",
@@ -1783,7 +1825,8 @@
       "publication_status": "published",
       "content_audit_version": "1.0",
       "content_audited_at": "2026-08-15T00:00:00Z",
-      "official_source_url": "https://www.ravelry.com/patterns/library/hollyberrycharitysocks"
+      "official_source_url": "https://www.ravelry.com/patterns/library/hollyberrycharitysocks",
+      "technique": "knitting"
     },
     {
       "name": "Hot Chocolate with Finishing Sugar",
@@ -1819,7 +1862,8 @@
       "publication_status": "hidden",
       "content_audit_version": "1.0",
       "content_audited_at": "2026-08-09T00:00:00Z",
-      "official_source_url": null
+      "official_source_url": null,
+      "technique": null
     },
     {
       "name": "Turtle Town Cowl",
@@ -1863,7 +1907,8 @@
       "publication_status": "hidden",
       "content_audit_version": "1.0",
       "content_audited_at": "2026-08-09T00:00:00Z",
-      "official_source_url": null
+      "official_source_url": null,
+      "technique": null
     },
     {
       "name": "I m Batty for Halloween single pattern",
@@ -1892,7 +1937,8 @@
       "publication_status": "hidden",
       "content_audit_version": "1.0",
       "content_audited_at": "2026-08-09T00:00:00Z",
-      "official_source_url": null
+      "official_source_url": null,
+      "technique": null
     },
     {
       "name": "ingrid-summer-sweater-A4",
@@ -1927,7 +1973,8 @@
       "publication_status": "hidden",
       "content_audit_version": "1.0",
       "content_audited_at": "2026-08-09T00:00:00Z",
-      "official_source_url": null
+      "official_source_url": null,
+      "technique": null
     },
     {
       "name": "ingrid-top-A4",
@@ -1962,7 +2009,8 @@
       "publication_status": "hidden",
       "content_audit_version": "1.0",
       "content_audited_at": "2026-08-09T00:00:00Z",
-      "official_source_url": null
+      "official_source_url": null,
+      "technique": null
     },
     {
       "name": "JOAN FEST tee",
@@ -2047,7 +2095,8 @@
       "publication_status": "hidden",
       "content_audit_version": "1.0",
       "content_audited_at": "2026-08-09T00:00:00Z",
-      "official_source_url": null
+      "official_source_url": null,
+      "technique": null
     },
     {
       "name": "kardigan Hobbii",
@@ -2086,7 +2135,8 @@
       "publication_status": "hidden",
       "content_audit_version": "1.0",
       "content_audited_at": "2026-08-09T00:00:00Z",
-      "official_source_url": null
+      "official_source_url": null,
+      "technique": null
     },
     {
       "name": "Na Pole Tee",
@@ -2420,7 +2470,8 @@
       "publication_status": "published",
       "content_audit_version": "1.0",
       "content_audited_at": "2026-08-15T00:00:00Z",
-      "official_source_url": "https://www.ravelry.com/patterns/library/na-pole-tee"
+      "official_source_url": "https://www.ravelry.com/patterns/library/na-pole-tee",
+      "technique": "knitting"
     },
     {
       "name": "Leafstream Socks - wzór PL (ang skróty)",
@@ -2452,7 +2503,8 @@
       "publication_status": "hidden",
       "content_audit_version": "1.0",
       "content_audited_at": "2026-08-09T00:00:00Z",
-      "official_source_url": null
+      "official_source_url": null,
+      "technique": null
     },
     {
       "name": "Lento",
@@ -2493,7 +2545,8 @@
       "publication_status": "hidden",
       "content_audit_version": "1.0",
       "content_audited_at": "2026-08-09T00:00:00Z",
-      "official_source_url": null
+      "official_source_url": null,
+      "technique": null
     },
     {
       "name": "LinearisSocksSet",
@@ -2527,7 +2580,8 @@
       "publication_status": "hidden",
       "content_audit_version": "1.0",
       "content_audited_at": "2026-08-09T00:00:00Z",
-      "official_source_url": null
+      "official_source_url": null,
+      "technique": null
     },
     {
       "name": "Lola Cardin gruby",
@@ -2566,7 +2620,8 @@
       "publication_status": "hidden",
       "content_audit_version": "1.0",
       "content_audited_at": "2026-08-09T00:00:00Z",
-      "official_source_url": null
+      "official_source_url": null,
+      "technique": null
     },
     {
       "name": "Lyon Sweater",
@@ -2610,7 +2665,8 @@
       "publication_status": "hidden",
       "content_audit_version": "1.0",
       "content_audited_at": "2026-08-09T00:00:00Z",
-      "official_source_url": null
+      "official_source_url": null,
+      "technique": null
     },
     {
       "name": "Made Me Puff Top",
@@ -2653,7 +2709,8 @@
       "publication_status": "hidden",
       "content_audit_version": "1.0",
       "content_audited_at": "2026-08-09T00:00:00Z",
-      "official_source_url": null
+      "official_source_url": null,
+      "technique": null
     },
     {
       "name": "Magic Toadstool socks update 2023",
@@ -2700,7 +2757,8 @@
       "publication_status": "hidden",
       "content_audit_version": "1.0",
       "content_audited_at": "2026-08-09T00:00:00Z",
-      "official_source_url": null
+      "official_source_url": null,
+      "technique": null
     },
     {
       "name": "Mikkeli Sweater Easter",
@@ -2734,7 +2792,8 @@
       "publication_status": "hidden",
       "content_audit_version": "1.0",
       "content_audited_at": "2026-08-09T00:00:00Z",
-      "official_source_url": null
+      "official_source_url": null,
+      "technique": null
     },
     {
       "name": "Mineral",
@@ -2768,7 +2827,8 @@
       "publication_status": "hidden",
       "content_audit_version": "1.0",
       "content_audited_at": "2026-08-09T00:00:00Z",
-      "official_source_url": null
+      "official_source_url": null,
+      "technique": null
     },
     {
       "name": "Mountain Pine socks",
@@ -2823,7 +2883,8 @@
       "publication_status": "hidden",
       "content_audit_version": "1.0",
       "content_audited_at": "2026-08-09T00:00:00Z",
-      "official_source_url": null
+      "official_source_url": null,
+      "technique": null
     },
     {
       "name": "NBIELINKA LinearisHat Kokonki",
@@ -2924,7 +2985,8 @@
       "publication_status": "hidden",
       "content_audit_version": "1.0",
       "content_audited_at": "2026-08-09T00:00:00Z",
-      "official_source_url": null
+      "official_source_url": null,
+      "technique": null
     },
     {
       "name": "Nova Skirt",
@@ -2954,7 +3016,8 @@
       "publication_status": "hidden",
       "content_audit_version": "1.0",
       "content_audited_at": "2026-08-09T00:00:00Z",
-      "official_source_url": null
+      "official_source_url": null,
+      "technique": null
     },
     {
       "name": "Oslo Hat",
@@ -3201,7 +3264,8 @@
       "publication_status": "published",
       "content_audit_version": "1.0",
       "content_audited_at": "2026-08-15T00:00:00Z",
-      "official_source_url": "https://www.petiteknit.com/en/products/oslo-hue"
+      "official_source_url": "https://www.petiteknit.com/en/products/oslo-hue",
+      "technique": "knitting"
     },
     {
       "name": "Pani-Wiosna wzor HeartofCotton",
@@ -3231,7 +3295,8 @@
       "publication_status": "hidden",
       "content_audit_version": "1.0",
       "content_audited_at": "2026-08-09T00:00:00Z",
-      "official_source_url": null
+      "official_source_url": null,
+      "technique": null
     },
     {
       "name": "Pearl",
@@ -3265,7 +3330,8 @@
       "publication_status": "hidden",
       "content_audit_version": "1.0",
       "content_audited_at": "2026-08-09T00:00:00Z",
-      "official_source_url": null
+      "official_source_url": null,
+      "technique": null
     },
     {
       "name": "Penguono",
@@ -3298,7 +3364,8 @@
       "publication_status": "hidden",
       "content_audit_version": "1.0",
       "content_audited_at": "2026-08-09T00:00:00Z",
-      "official_source_url": null
+      "official_source_url": null,
+      "technique": null
     },
     {
       "name": "Picot Headband Knitting Pattern - The Obsessed final",
@@ -3334,7 +3401,8 @@
       "publication_status": "hidden",
       "content_audit_version": "1.0",
       "content_audited_at": "2026-08-09T00:00:00Z",
-      "official_source_url": null
+      "official_source_url": null,
+      "technique": null
     },
     {
       "name": "PisankiSocks",
@@ -3376,7 +3444,8 @@
       "publication_status": "hidden",
       "content_audit_version": "1.0",
       "content_audited_at": "2026-08-09T00:00:00Z",
-      "official_source_url": null
+      "official_source_url": null,
+      "technique": null
     },
     {
       "name": "PL I AM THE GIFT WZOR 1.1",
@@ -3434,7 +3503,8 @@
       "publication_status": "hidden",
       "content_audit_version": "1.0",
       "content_audited_at": "2026-08-09T00:00:00Z",
-      "official_source_url": null
+      "official_source_url": null,
+      "technique": null
     },
     {
       "name": "Havfrue Shawl",
@@ -3492,7 +3562,8 @@
       "publication_status": "hidden",
       "content_audit_version": "1.0",
       "content_audited_at": "2026-08-09T00:00:00Z",
-      "official_source_url": null
+      "official_source_url": null,
+      "technique": null
     },
     {
       "name": "POLSKI Venke skirt",
@@ -3522,7 +3593,8 @@
       "publication_status": "hidden",
       "content_audit_version": "1.0",
       "content_audited_at": "2026-08-09T00:00:00Z",
-      "official_source_url": null
+      "official_source_url": null,
+      "technique": null
     },
     {
       "name": "POLY-SWEATER-kingacrafts",
@@ -3564,7 +3636,8 @@
       "publication_status": "hidden",
       "content_audit_version": "1.0",
       "content_audited_at": "2026-08-09T00:00:00Z",
-      "official_source_url": null
+      "official_source_url": null,
+      "technique": null
     },
     {
       "name": "Poppy Tee",
@@ -3648,7 +3721,8 @@
       "publication_status": "hidden",
       "content_audit_version": "1.0",
       "content_audited_at": "2026-08-09T00:00:00Z",
-      "official_source_url": null
+      "official_source_url": null,
+      "technique": null
     },
     {
       "name": "Iconic Leaf Sweater",
@@ -3683,7 +3757,8 @@
       "publication_status": "hidden",
       "content_audit_version": "1.0",
       "content_audited_at": "2026-08-09T00:00:00Z",
-      "official_source_url": null
+      "official_source_url": null,
+      "technique": null
     },
     {
       "name": "Queen of Hearts Socks",
@@ -3712,7 +3787,8 @@
       "publication_status": "hidden",
       "content_audit_version": "1.0",
       "content_audited_at": "2026-08-09T00:00:00Z",
-      "official_source_url": null
+      "official_source_url": null,
+      "technique": null
     },
     {
       "name": "Sheep socks 1 1 1",
@@ -3748,7 +3824,8 @@
       "publication_status": "hidden",
       "content_audit_version": "1.0",
       "content_audited_at": "2026-08-09T00:00:00Z",
-      "official_source_url": null
+      "official_source_url": null,
+      "technique": null
     },
     {
       "name": "Silk",
@@ -3782,7 +3859,8 @@
       "publication_status": "hidden",
       "content_audit_version": "1.0",
       "content_audited_at": "2026-08-09T00:00:00Z",
-      "official_source_url": null
+      "official_source_url": null,
+      "technique": null
     },
     {
       "name": "Skarpetki tuby",
@@ -3826,7 +3904,8 @@
       "publication_status": "hidden",
       "content_audit_version": "1.0",
       "content_audited_at": "2026-08-09T00:00:00Z",
-      "official_source_url": null
+      "official_source_url": null,
+      "technique": null
     },
     {
       "name": "Skyward",
@@ -3866,7 +3945,8 @@
       "publication_status": "hidden",
       "content_audit_version": "1.0",
       "content_audited_at": "2026-08-09T00:00:00Z",
-      "official_source_url": null
+      "official_source_url": null,
+      "technique": null
     },
     {
       "name": "Sophie Scarf PL.Petiteknit",
@@ -3904,7 +3984,8 @@
       "publication_status": "hidden",
       "content_audit_version": "1.0",
       "content_audited_at": "2026-08-09T00:00:00Z",
-      "official_source_url": null
+      "official_source_url": null,
+      "technique": null
     },
     {
       "name": "The I’m So Basic Sock",
@@ -3948,7 +4029,8 @@
       "publication_status": "hidden",
       "content_audit_version": "1.0",
       "content_audited_at": "2026-08-09T00:00:00Z",
-      "official_source_url": null
+      "official_source_url": null,
+      "technique": null
     },
     {
       "name": "Space Feet Socks PL-lno7ucan",
@@ -3992,7 +4074,8 @@
       "publication_status": "hidden",
       "content_audit_version": "1.0",
       "content_audited_at": "2026-08-09T00:00:00Z",
-      "official_source_url": null
+      "official_source_url": null,
+      "technique": null
     },
     {
       "name": "Spooky sock set final",
@@ -4058,7 +4141,8 @@
       "publication_status": "hidden",
       "content_audit_version": "1.0",
       "content_audited_at": "2026-08-09T00:00:00Z",
-      "official_source_url": null
+      "official_source_url": null,
+      "technique": null
     },
     {
       "name": "Starry Night Hat PL-ljvt8ze9",
@@ -4102,7 +4186,8 @@
       "publication_status": "hidden",
       "content_audit_version": "1.0",
       "content_audited_at": "2026-08-09T00:00:00Z",
-      "official_source_url": null
+      "official_source_url": null,
+      "technique": null
     },
     {
       "name": "Starry Night Mittens PL-lo9p3u7q",
@@ -4134,7 +4219,8 @@
       "publication_status": "hidden",
       "content_audit_version": "1.0",
       "content_audited_at": "2026-08-09T00:00:00Z",
-      "official_source_url": null
+      "official_source_url": null,
+      "technique": null
     },
     {
       "name": "Starry Night Socks PL-ljvt91ie",
@@ -4184,7 +4270,8 @@
       "publication_status": "hidden",
       "content_audit_version": "1.0",
       "content_audited_at": "2026-08-09T00:00:00Z",
-      "official_source_url": null
+      "official_source_url": null,
+      "technique": null
     },
     {
       "name": "Summer",
@@ -4218,7 +4305,8 @@
       "publication_status": "hidden",
       "content_audit_version": "1.0",
       "content_audited_at": "2026-08-09T00:00:00Z",
-      "official_source_url": null
+      "official_source_url": null,
+      "technique": null
     },
     {
       "name": "SWAN TOP",
@@ -4289,7 +4377,8 @@
       "publication_status": "hidden",
       "content_audit_version": "1.0",
       "content_audited_at": "2026-08-09T00:00:00Z",
-      "official_source_url": null
+      "official_source_url": null,
+      "technique": null
     },
     {
       "name": "SWEATERNO9.LIGHT.ENG (2)",
@@ -4325,7 +4414,8 @@
       "publication_status": "hidden",
       "content_audit_version": "1.0",
       "content_audited_at": "2026-08-09T00:00:00Z",
-      "official_source_url": null
+      "official_source_url": null,
+      "technique": null
     },
     {
       "name": "SweetTreatsSocks NBielińska",
@@ -4357,7 +4447,8 @@
       "publication_status": "hidden",
       "content_audit_version": "1.0",
       "content_audited_at": "2026-08-09T00:00:00Z",
-      "official_source_url": null
+      "official_source_url": null,
+      "technique": null
     },
     {
       "name": "Sweter Kikimora Moracraft",
@@ -4390,7 +4481,8 @@
       "publication_status": "hidden",
       "content_audit_version": "1.0",
       "content_audited_at": "2026-08-09T00:00:00Z",
-      "official_source_url": null
+      "official_source_url": null,
+      "technique": null
     },
     {
       "name": "sweterek z golfem Bobbie",
@@ -4458,7 +4550,8 @@
       "publication_status": "hidden",
       "content_audit_version": "1.0",
       "content_audited_at": "2026-08-09T00:00:00Z",
-      "official_source_url": null
+      "official_source_url": null,
+      "technique": null
     },
     {
       "name": "Szal Queen of Spades Kokonki Pure",
@@ -4487,7 +4580,8 @@
       "publication_status": "hidden",
       "content_audit_version": "1.0",
       "content_audited_at": "2026-08-09T00:00:00Z",
-      "official_source_url": null
+      "official_source_url": null,
+      "technique": null
     },
     {
       "name": "TEXTURE VEST hi UK-rm07er",
@@ -4547,7 +4641,8 @@
       "publication_status": "hidden",
       "content_audit_version": "1.0",
       "content_audited_at": "2026-08-09T00:00:00Z",
-      "official_source_url": null
+      "official_source_url": null,
+      "technique": null
     },
     {
       "name": "The truth is out there Final edit",
@@ -4594,7 +4689,8 @@
       "publication_status": "hidden",
       "content_audit_version": "1.0",
       "content_audited_at": "2026-08-09T00:00:00Z",
-      "official_source_url": null
+      "official_source_url": null,
+      "technique": null
     },
     {
       "name": "Tromsø Hoodie",
@@ -4640,7 +4736,8 @@
       "publication_status": "hidden",
       "content_audit_version": "1.0",
       "content_audited_at": "2026-08-09T00:00:00Z",
-      "official_source_url": null
+      "official_source_url": null,
+      "technique": null
     },
     {
       "name": "Tropfen",
@@ -4670,7 +4767,8 @@
       "publication_status": "hidden",
       "content_audit_version": "1.0",
       "content_audited_at": "2026-08-09T00:00:00Z",
-      "official_source_url": null
+      "official_source_url": null,
+      "technique": null
     },
     {
       "name": "UNDER THE SEA SOCKS PL-ljvt9559",
@@ -4720,7 +4818,8 @@
       "publication_status": "hidden",
       "content_audit_version": "1.0",
       "content_audited_at": "2026-08-09T00:00:00Z",
-      "official_source_url": null
+      "official_source_url": null,
+      "technique": null
     },
     {
       "name": "Urth Yarns skarpetki",
@@ -4756,7 +4855,8 @@
       "publication_status": "hidden",
       "content_audit_version": "1.0",
       "content_audited_at": "2026-08-09T00:00:00Z",
-      "official_source_url": null
+      "official_source_url": null,
+      "technique": null
     },
     {
       "name": "Warm-Knit-Klara-wzor-dziewiarski-zulknh",
@@ -4793,7 +4893,8 @@
       "publication_status": "hidden",
       "content_audit_version": "1.0",
       "content_audited_at": "2026-08-09T00:00:00Z",
-      "official_source_url": null
+      "official_source_url": null,
+      "technique": null
     },
     {
       "name": "You Make Me (W)hole Cardigan - opis",
@@ -4827,7 +4928,8 @@
       "publication_status": "hidden",
       "content_audit_version": "1.0",
       "content_audited_at": "2026-08-09T00:00:00Z",
-      "official_source_url": null
+      "official_source_url": null,
+      "technique": null
     },
     {
       "name": "YouthVibeJumper nana.makes.it.all",
@@ -4865,7 +4967,8 @@
       "publication_status": "hidden",
       "content_audit_version": "1.0",
       "content_audited_at": "2026-08-09T00:00:00Z",
-      "official_source_url": null
+      "official_source_url": null,
+      "technique": null
     },
     {
       "name": "Wzór demo — Leśny kardigan",
@@ -4894,7 +4997,8 @@
       "publication_status": "hidden",
       "content_audit_version": "1.0",
       "content_audited_at": "2026-08-09T00:00:00Z",
-      "official_source_url": null
+      "official_source_url": null,
+      "technique": null
     },
     {
       "name": "Wzór demo — Bawełniany top",
@@ -4923,7 +5027,8 @@
       "publication_status": "hidden",
       "content_audit_version": "1.0",
       "content_audited_at": "2026-08-09T00:00:00Z",
-      "official_source_url": null
+      "official_source_url": null,
+      "technique": null
     },
     {
       "name": "Wzór demo — Moherowa chusta",
@@ -4952,7 +5057,1658 @@
       "publication_status": "hidden",
       "content_audit_version": "1.0",
       "content_audited_at": "2026-08-09T00:00:00Z",
-      "official_source_url": null
+      "official_source_url": null,
+      "technique": null
+    },
+    {
+      "source_filename": "day-date-cardigan.web.json",
+      "name": "Day Date Cardigan",
+      "description": "Kardigon oversize wykonany z dwóch heksagonalnych płatów łączonych z przodu.",
+      "project_type": "cardigan",
+      "materials": [
+        "bawełna",
+        "len"
+      ],
+      "meters_per_100g": 180,
+      "yarn_requirements": [
+        {
+          "role": "główna",
+          "yarn_name": "Lion Brand Touch of Linen",
+          "yarn_weight": "4/medium",
+          "materials": [
+            "bawełna",
+            "len"
+          ],
+          "meters_per_100g": 180,
+          "skein_weight_grams": 100,
+          "skein_length_meters": 180,
+          "data_source": "strona wzoru (nawój i klasa włóczki); skład z katalogu producenta",
+          "source_url": "https://makeanddocrew.com/day-date-easy-crochet-sweater-pattern/",
+          "quantity_note": "8 (9, 9, 10, 10, 11) motków, ok. 800–1080 g wg rozmiaru"
+        }
+      ],
+      "matching_requirements": {
+        "version": 2,
+        "variants": [
+          {
+            "id": "xs-s",
+            "label": "XS/S (obwód 76–86 cm)",
+            "size": "XS/S",
+            "requirements": [
+              {
+                "role": "główna",
+                "measurement_basis": "grams",
+                "grams_min": 800,
+                "meters_min": 1440,
+                "skeins_min": 8,
+                "materials": [
+                  "bawełna",
+                  "len"
+                ],
+                "material_match": "all",
+                "color_mode": "same",
+                "weight_classes": [
+                  "worsted"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "m-l",
+            "label": "M/L (obwód 91–102 cm)",
+            "size": "M/L",
+            "requirements": [
+              {
+                "role": "główna",
+                "measurement_basis": "grams",
+                "grams_min": 860,
+                "meters_min": 1620,
+                "skeins_min": 9,
+                "materials": [
+                  "bawełna",
+                  "len"
+                ],
+                "material_match": "all",
+                "color_mode": "same",
+                "weight_classes": [
+                  "worsted"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "l-xl",
+            "label": "L/XL (obwód 107–117 cm)",
+            "size": "L/XL",
+            "requirements": [
+              {
+                "role": "główna",
+                "measurement_basis": "grams",
+                "grams_min": 890,
+                "meters_min": 1620,
+                "skeins_min": 9,
+                "materials": [
+                  "bawełna",
+                  "len"
+                ],
+                "material_match": "all",
+                "color_mode": "same",
+                "weight_classes": [
+                  "worsted"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "2x-3x",
+            "label": "2X/3X (obwód 122–132 cm)",
+            "size": "2X/3X",
+            "requirements": [
+              {
+                "role": "główna",
+                "measurement_basis": "grams",
+                "grams_min": 940,
+                "meters_min": 1800,
+                "skeins_min": 10,
+                "materials": [
+                  "bawełna",
+                  "len"
+                ],
+                "material_match": "all",
+                "color_mode": "same",
+                "weight_classes": [
+                  "worsted"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "4x-5x",
+            "label": "4X/5X (obwód 142–152 cm)",
+            "size": "4X/5X",
+            "requirements": [
+              {
+                "role": "główna",
+                "measurement_basis": "grams",
+                "grams_min": 1000,
+                "meters_min": 1800,
+                "skeins_min": 10,
+                "materials": [
+                  "bawełna",
+                  "len"
+                ],
+                "material_match": "all",
+                "color_mode": "same",
+                "weight_classes": [
+                  "worsted"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "6x-7x",
+            "label": "6X/7X (obwód 157–168 cm)",
+            "size": "6X/7X",
+            "requirements": [
+              {
+                "role": "główna",
+                "measurement_basis": "grams",
+                "grams_min": 1080,
+                "meters_min": 1980,
+                "skeins_min": 11,
+                "materials": [
+                  "bawełna",
+                  "len"
+                ],
+                "material_match": "all",
+                "color_mode": "same",
+                "weight_classes": [
+                  "worsted"
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "source_language": "en",
+      "needs_review": false,
+      "publication_status": "published",
+      "content_audit_version": "1.0",
+      "content_audited_at": "2026-08-24T00:00:00Z",
+      "official_source_url": "https://makeanddocrew.com/day-date-easy-crochet-sweater-pattern/",
+      "technique": "crochet"
+    },
+    {
+      "source_filename": "campfire-cardigan.web.json",
+      "name": "Campfire Cardigan",
+      "description": "Kardigon ze ściegu babuszynowego z dwóch heksagonów, wydłużany rzędami w czterech kolorach.",
+      "project_type": "cardigan",
+      "materials": [
+        "dowolny materiał"
+      ],
+      "meters_per_100g": null,
+      "yarn_requirements": [
+        {
+          "role": "wszystkie kolory",
+          "yarn_name": "Lion Brand New Basic 175 lub podobna wełna grubość 4",
+          "yarn_weight": "4/medium",
+          "materials": [
+            "dowolny materiał"
+          ],
+          "meters_per_100g": 160,
+          "skein_weight_grams": 100,
+          "skein_length_meters": 160,
+          "data_source": "strona wzoru",
+          "source_url": "https://makeanddocrew.com/campfire-cardigan-free-crochet-sweater-pattern/",
+          "quantity_note": "łącznie 8–13 motków w czterech kolorach zależnie od rozmiaru"
+        }
+      ],
+      "matching_requirements": {
+        "version": 2,
+        "variants": [
+          {
+            "id": "sm",
+            "label": "S/M",
+            "size": "S/M",
+            "requirements": [
+              {
+                "role": "kolor A – Cafe Au Lait",
+                "measurement_basis": "meters",
+                "meters_min": 480,
+                "grams_min": 300,
+                "skeins_min": 3,
+                "materials": [],
+                "material_match": "any_material",
+                "color_mode": "same",
+                "distinct_color_group": "campfire-colors",
+                "weight_classes": [
+                  "worsted"
+                ]
+              },
+              {
+                "role": "kolor B – Juniper",
+                "measurement_basis": "meters",
+                "meters_min": 160,
+                "grams_min": 100,
+                "skeins_min": 1,
+                "materials": [],
+                "material_match": "any_material",
+                "color_mode": "same",
+                "distinct_color_group": "campfire-colors",
+                "weight_classes": [
+                  "worsted"
+                ]
+              },
+              {
+                "role": "kolor C – Thyme",
+                "measurement_basis": "meters",
+                "meters_min": 320,
+                "grams_min": 200,
+                "skeins_min": 2,
+                "materials": [],
+                "material_match": "any_material",
+                "color_mode": "same",
+                "distinct_color_group": "campfire-colors",
+                "weight_classes": [
+                  "worsted"
+                ]
+              },
+              {
+                "role": "kolor D – Camel",
+                "measurement_basis": "meters",
+                "meters_min": 320,
+                "grams_min": 200,
+                "skeins_min": 2,
+                "materials": [],
+                "material_match": "any_material",
+                "color_mode": "same",
+                "distinct_color_group": "campfire-colors",
+                "weight_classes": [
+                  "worsted"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "ml",
+            "label": "M/L",
+            "size": "M/L",
+            "requirements": [
+              {
+                "role": "kolor A – Cafe Au Lait",
+                "measurement_basis": "meters",
+                "meters_min": 640,
+                "grams_min": 400,
+                "skeins_min": 4,
+                "materials": [],
+                "material_match": "any_material",
+                "color_mode": "same",
+                "distinct_color_group": "campfire-colors",
+                "weight_classes": [
+                  "worsted"
+                ]
+              },
+              {
+                "role": "kolor B – Juniper",
+                "measurement_basis": "meters",
+                "meters_min": 320,
+                "grams_min": 200,
+                "skeins_min": 2,
+                "materials": [],
+                "material_match": "any_material",
+                "color_mode": "same",
+                "distinct_color_group": "campfire-colors",
+                "weight_classes": [
+                  "worsted"
+                ]
+              },
+              {
+                "role": "kolor C – Thyme",
+                "measurement_basis": "meters",
+                "meters_min": 480,
+                "grams_min": 300,
+                "skeins_min": 3,
+                "materials": [],
+                "material_match": "any_material",
+                "color_mode": "same",
+                "distinct_color_group": "campfire-colors",
+                "weight_classes": [
+                  "worsted"
+                ]
+              },
+              {
+                "role": "kolor D – Camel",
+                "measurement_basis": "meters",
+                "meters_min": 480,
+                "grams_min": 300,
+                "skeins_min": 3,
+                "materials": [],
+                "material_match": "any_material",
+                "color_mode": "same",
+                "distinct_color_group": "campfire-colors",
+                "weight_classes": [
+                  "worsted"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "l-xl",
+            "label": "L/XL",
+            "size": "L/XL",
+            "requirements": [
+              {
+                "role": "kolor A – Cafe Au Lait",
+                "measurement_basis": "meters",
+                "meters_min": 640,
+                "grams_min": 400,
+                "skeins_min": 4,
+                "materials": [],
+                "material_match": "any_material",
+                "color_mode": "same",
+                "distinct_color_group": "campfire-colors",
+                "weight_classes": [
+                  "worsted"
+                ]
+              },
+              {
+                "role": "kolor B – Juniper",
+                "measurement_basis": "meters",
+                "meters_min": 320,
+                "grams_min": 200,
+                "skeins_min": 2,
+                "materials": [],
+                "material_match": "any_material",
+                "color_mode": "same",
+                "distinct_color_group": "campfire-colors",
+                "weight_classes": [
+                  "worsted"
+                ]
+              },
+              {
+                "role": "kolor C – Thyme",
+                "measurement_basis": "meters",
+                "meters_min": 480,
+                "grams_min": 300,
+                "skeins_min": 3,
+                "materials": [],
+                "material_match": "any_material",
+                "color_mode": "same",
+                "distinct_color_group": "campfire-colors",
+                "weight_classes": [
+                  "worsted"
+                ]
+              },
+              {
+                "role": "kolor D – Camel",
+                "measurement_basis": "meters",
+                "meters_min": 480,
+                "grams_min": 300,
+                "skeins_min": 3,
+                "materials": [],
+                "material_match": "any_material",
+                "color_mode": "same",
+                "distinct_color_group": "campfire-colors",
+                "weight_classes": [
+                  "worsted"
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "source_language": "en",
+      "needs_review": false,
+      "publication_status": "published",
+      "content_audit_version": "1.0",
+      "content_audited_at": "2026-08-24T00:00:00Z",
+      "official_source_url": "https://makeanddocrew.com/campfire-cardigan-free-crochet-sweater-pattern/",
+      "technique": "crochet"
+    },
+    {
+      "source_filename": "habitat-cardigan.web.json",
+      "name": "Habitat Cardigan",
+      "description": "Sweter dla początkujących z prostych prostokątów, o luźnym fasonie i wyrazistej fakturze.",
+      "project_type": "cardigan",
+      "materials": [
+        "akryl"
+      ],
+      "meters_per_100g": 162,
+      "yarn_requirements": [
+        {
+          "role": "główna",
+          "yarn_name": "Lion Brand Heartland",
+          "yarn_weight": "4/medium",
+          "materials": [
+            "akryl"
+          ],
+          "meters_per_100g": 162,
+          "skein_weight_grams": 142,
+          "skein_length_meters": 230,
+          "data_source": "strona wzoru i katalog producenta",
+          "source_url": "https://makeanddocrew.com/habitat-cardigan-beginner-crochet-sweater-part-1/",
+          "quantity_note": "6 (6, 7, 7, 8) motków koloru Grand Canyon"
+        }
+      ],
+      "matching_requirements": {
+        "version": 2,
+        "variants": [
+          {
+            "id": "sm",
+            "label": "S/M (obwód 84–91 cm)",
+            "size": "S/M",
+            "requirements": [
+              {
+                "role": "główna",
+                "measurement_basis": "meters",
+                "meters_min": 1380,
+                "grams_min": 852,
+                "skeins_min": 6,
+                "materials": [
+                  "akryl"
+                ],
+                "material_match": "all",
+                "color_mode": "same",
+                "weight_classes": [
+                  "worsted"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "ml",
+            "label": "M/L (obwód 91–103 cm)",
+            "size": "M/L",
+            "requirements": [
+              {
+                "role": "główna",
+                "measurement_basis": "meters",
+                "meters_min": 1380,
+                "grams_min": 852,
+                "skeins_min": 6,
+                "materials": [
+                  "akryl"
+                ],
+                "material_match": "all",
+                "color_mode": "same",
+                "weight_classes": [
+                  "worsted"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "l-xl",
+            "label": "L/XL (obwód 103–113 cm)",
+            "size": "L/XL",
+            "requirements": [
+              {
+                "role": "główna",
+                "measurement_basis": "meters",
+                "meters_min": 1610,
+                "grams_min": 994,
+                "skeins_min": 7,
+                "materials": [
+                  "akryl"
+                ],
+                "material_match": "all",
+                "color_mode": "same",
+                "weight_classes": [
+                  "worsted"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "xl-2xl",
+            "label": "XL/2XL (obwód 113–123 cm)",
+            "size": "XL/2XL",
+            "requirements": [
+              {
+                "role": "główna",
+                "measurement_basis": "meters",
+                "meters_min": 1610,
+                "grams_min": 994,
+                "skeins_min": 7,
+                "materials": [
+                  "akryl"
+                ],
+                "material_match": "all",
+                "color_mode": "same",
+                "weight_classes": [
+                  "worsted"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "2xl-3xl",
+            "label": "2XL/3XL (obwód 123–130 cm)",
+            "size": "2XL/3XL",
+            "requirements": [
+              {
+                "role": "główna",
+                "measurement_basis": "meters",
+                "meters_min": 1840,
+                "grams_min": 1136,
+                "skeins_min": 8,
+                "materials": [
+                  "akryl"
+                ],
+                "material_match": "all",
+                "color_mode": "same",
+                "weight_classes": [
+                  "worsted"
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "source_language": "en",
+      "needs_review": false,
+      "publication_status": "published",
+      "content_audit_version": "1.0",
+      "content_audited_at": "2026-08-24T00:00:00Z",
+      "official_source_url": "https://makeanddocrew.com/habitat-cardigan-beginner-crochet-sweater-part-1/",
+      "technique": "crochet"
+    },
+    {
+      "source_filename": "staycation-cardigan.web.json",
+      "name": "Staycation Cardigan",
+      "description": "Oversize'owy kardigon z kieszeniami, długimi rękawami i teksturowanym ściegiem.",
+      "project_type": "cardigan",
+      "materials": [
+        "dowolny materiał"
+      ],
+      "meters_per_100g": null,
+      "yarn_requirements": [
+        {
+          "role": "główna",
+          "yarn_name": "Lion Brand Touch of Alpaca Bonus Bundle",
+          "yarn_weight": "4/medium",
+          "materials": [
+            "dowolny materiał"
+          ],
+          "meters_per_100g": 190,
+          "skein_weight_grams": 200,
+          "skein_length_meters": 379,
+          "data_source": "strona wzoru",
+          "source_url": "https://makeanddocrew.com/staycation-womens-crochet-cardigan-pattern/",
+          "quantity_note": "5 (5, 6, 6, 7, 7) motków, szacunkowo 850–1270 g wg rozmiaru"
+        }
+      ],
+      "matching_requirements": {
+        "version": 2,
+        "variants": [
+          {
+            "id": "s",
+            "label": "S (obwód 81–86 cm)",
+            "size": "S",
+            "requirements": [
+              {
+                "role": "główna",
+                "measurement_basis": "grams",
+                "grams_min": 850,
+                "meters_min": 1895,
+                "skeins_min": 5,
+                "materials": [],
+                "material_match": "any_material",
+                "color_mode": "same",
+                "weight_classes": [
+                  "worsted"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "m",
+            "label": "M (obwód 91–97 cm)",
+            "size": "M",
+            "requirements": [
+              {
+                "role": "główna",
+                "measurement_basis": "grams",
+                "grams_min": 925,
+                "meters_min": 1895,
+                "skeins_min": 5,
+                "materials": [],
+                "material_match": "any_material",
+                "color_mode": "same",
+                "weight_classes": [
+                  "worsted"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "l",
+            "label": "L (obwód 102–107 cm)",
+            "size": "L",
+            "requirements": [
+              {
+                "role": "główna",
+                "measurement_basis": "grams",
+                "grams_min": 1110,
+                "meters_min": 2274,
+                "skeins_min": 6,
+                "materials": [],
+                "material_match": "any_material",
+                "color_mode": "same",
+                "weight_classes": [
+                  "worsted"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "xl",
+            "label": "XL (obwód 112–117 cm)",
+            "size": "XL",
+            "requirements": [
+              {
+                "role": "główna",
+                "measurement_basis": "grams",
+                "grams_min": 1120,
+                "meters_min": 2274,
+                "skeins_min": 6,
+                "materials": [],
+                "material_match": "any_material",
+                "color_mode": "same",
+                "weight_classes": [
+                  "worsted"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "2xl",
+            "label": "2XL (obwód 122–127 cm)",
+            "size": "2XL",
+            "requirements": [
+              {
+                "role": "główna",
+                "measurement_basis": "grams",
+                "grams_min": 1180,
+                "meters_min": 2653,
+                "skeins_min": 7,
+                "materials": [],
+                "material_match": "any_material",
+                "color_mode": "same",
+                "weight_classes": [
+                  "worsted"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "3xl",
+            "label": "3XL (obwód 132–137 cm)",
+            "size": "3XL",
+            "requirements": [
+              {
+                "role": "główna",
+                "measurement_basis": "grams",
+                "grams_min": 1270,
+                "meters_min": 2653,
+                "skeins_min": 7,
+                "materials": [],
+                "material_match": "any_material",
+                "color_mode": "same",
+                "weight_classes": [
+                  "worsted"
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "source_language": "en",
+      "needs_review": false,
+      "publication_status": "published",
+      "content_audit_version": "1.0",
+      "content_audited_at": "2026-08-24T00:00:00Z",
+      "official_source_url": "https://makeanddocrew.com/staycation-womens-crochet-cardigan-pattern/",
+      "technique": "crochet"
+    },
+    {
+      "source_filename": "chunky-cocoon-cardigan.web.json",
+      "name": "Chunky Cocoon Sweater",
+      "description": "Gruby kardigon-kokon o swobodnym kroju, wykonywany z pojedynczego płata.",
+      "project_type": "cardigan",
+      "materials": [
+        "dowolny materiał"
+      ],
+      "meters_per_100g": null,
+      "yarn_requirements": [
+        {
+          "role": "główna",
+          "yarn_name": "Lion Brand Wool-Ease Tonal",
+          "yarn_weight": "5/bulky",
+          "materials": [
+            "dowolny materiał"
+          ],
+          "meters_per_100g": 100,
+          "skein_weight_grams": 113,
+          "skein_length_meters": 113,
+          "data_source": "strona wzoru",
+          "source_url": "https://makeanddocrew.com/chunky-crochet-cocoon-cardigan-pattern/",
+          "quantity_note": "7 (9, 10) motków koloru Smoke"
+        }
+      ],
+      "matching_requirements": {
+        "version": 2,
+        "variants": [
+          {
+            "id": "sm",
+            "label": "S/M (obwód 86–98 cm)",
+            "size": "S/M",
+            "requirements": [
+              {
+                "role": "główna",
+                "measurement_basis": "meters",
+                "meters_min": 791,
+                "grams_min": 791,
+                "skeins_min": 7,
+                "materials": [],
+                "material_match": "any_material",
+                "color_mode": "same",
+                "weight_classes": [
+                  "bulky"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "l-xl",
+            "label": "L/XL (obwód 99–113 cm)",
+            "size": "L/XL",
+            "requirements": [
+              {
+                "role": "główna",
+                "measurement_basis": "meters",
+                "meters_min": 1017,
+                "grams_min": 1017,
+                "skeins_min": 9,
+                "materials": [],
+                "material_match": "any_material",
+                "color_mode": "same",
+                "weight_classes": [
+                  "bulky"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "2xl-3xl",
+            "label": "2XL/3XL (obwód 114–127 cm)",
+            "size": "2XL/3XL",
+            "requirements": [
+              {
+                "role": "główna",
+                "measurement_basis": "meters",
+                "meters_min": 1130,
+                "grams_min": 1130,
+                "skeins_min": 10,
+                "materials": [],
+                "material_match": "any_material",
+                "color_mode": "same",
+                "weight_classes": [
+                  "bulky"
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "source_language": "en",
+      "needs_review": false,
+      "publication_status": "published",
+      "content_audit_version": "1.0",
+      "content_audited_at": "2026-08-24T00:00:00Z",
+      "official_source_url": "https://makeanddocrew.com/chunky-crochet-cocoon-cardigan-pattern/",
+      "technique": "crochet"
+    },
+    {
+      "source_filename": "slice-of-nice-raglan.web.json",
+      "name": "Slice of Nice Raglan",
+      "description": "Bezszwowy sweter raglanowy szydełkowy wykonywany od góry, w czterech kolorach.",
+      "project_type": "sweater",
+      "materials": [
+        "wełna"
+      ],
+      "meters_per_100g": 280,
+      "yarn_requirements": [
+        {
+          "role": "wszystkie kolory",
+          "yarn_name": "Lion Brand Superwash Merino",
+          "yarn_weight": "sport/light (3)",
+          "materials": [
+            "wełna"
+          ],
+          "meters_per_100g": 280,
+          "skein_weight_grams": 100,
+          "skein_length_meters": 280,
+          "data_source": "strona wzoru (nawój i klasa wg autora) i katalog producenta (skład)",
+          "source_url": "https://makeanddocrew.com/top-down-crochet-sweater-pattern/",
+          "quantity_note": "autor podaje zużycie jako zakres 424–506 yd (kolor A) oraz 217–305 yd (kolory B–D)"
+        }
+      ],
+      "matching_requirements": {
+        "version": 2,
+        "variants": [
+          {
+            "id": "s-3xl-zakres",
+            "label": "S–3XL — przyjęta górna granica zużycia wg autora",
+            "size": "S–3XL",
+            "requirements": [
+              {
+                "role": "kolor A – Citron",
+                "measurement_basis": "meters",
+                "meters_min": 463,
+                "grams_min": 200,
+                "skeins_min": 2,
+                "materials": [
+                  "wełna"
+                ],
+                "material_match": "all",
+                "color_mode": "same",
+                "distinct_color_group": "nice-colors",
+                "weight_classes": [
+                  "sport",
+                  "dk"
+                ]
+              },
+              {
+                "role": "kolor B – Coral",
+                "measurement_basis": "meters",
+                "meters_min": 225,
+                "grams_min": 100,
+                "skeins_min": 1,
+                "materials": [
+                  "wełna"
+                ],
+                "material_match": "all",
+                "color_mode": "same",
+                "distinct_color_group": "nice-colors",
+                "weight_classes": [
+                  "sport",
+                  "dk"
+                ]
+              },
+              {
+                "role": "kolor C – Peony",
+                "measurement_basis": "meters",
+                "meters_min": 279,
+                "grams_min": 100,
+                "skeins_min": 1,
+                "materials": [
+                  "wełna"
+                ],
+                "material_match": "all",
+                "color_mode": "same",
+                "distinct_color_group": "nice-colors",
+                "weight_classes": [
+                  "sport",
+                  "dk"
+                ]
+              },
+              {
+                "role": "kolor D – Wisteria",
+                "measurement_basis": "meters",
+                "meters_min": 279,
+                "grams_min": 100,
+                "skeins_min": 1,
+                "materials": [
+                  "wełna"
+                ],
+                "material_match": "all",
+                "color_mode": "same",
+                "distinct_color_group": "nice-colors",
+                "weight_classes": [
+                  "sport",
+                  "dk"
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "source_language": "en",
+      "needs_review": false,
+      "publication_status": "published",
+      "content_audit_version": "1.0",
+      "content_audited_at": "2026-08-24T00:00:00Z",
+      "official_source_url": "https://makeanddocrew.com/top-down-crochet-sweater-pattern/",
+      "technique": "crochet"
+    },
+    {
+      "source_filename": "canyonlands-top.web.json",
+      "name": "Canyonlands Boho Top",
+      "description": "Luźny letni top z ażurowymi wachlarzami i dużym pozytywnym luzem.",
+      "project_type": "top",
+      "materials": [
+        "bawełna",
+        "wiskoza"
+      ],
+      "meters_per_100g": 224,
+      "yarn_requirements": [
+        {
+          "role": "główna",
+          "yarn_name": "LB Collection Cotton Bamboo",
+          "yarn_weight": "3/light",
+          "materials": [
+            "bawełna",
+            "wiskoza"
+          ],
+          "meters_per_100g": 224,
+          "skein_weight_grams": 100,
+          "skein_length_meters": 224,
+          "data_source": "strona wzoru i katalog producenta",
+          "source_url": "https://makeanddocrew.com/canyonlands-boho-crochet-top-free-pattern/",
+          "quantity_note": "3 (5, 6) motków koloru Magnolia"
+        }
+      ],
+      "matching_requirements": {
+        "version": 2,
+        "variants": [
+          {
+            "id": "sm",
+            "label": "S/M (obwód 81–91 cm)",
+            "size": "S/M",
+            "requirements": [
+              {
+                "role": "główna",
+                "measurement_basis": "meters",
+                "meters_min": 672,
+                "grams_min": 300,
+                "skeins_min": 3,
+                "materials": [
+                  "bawełna",
+                  "wiskoza"
+                ],
+                "material_match": "all",
+                "color_mode": "same",
+                "weight_classes": [
+                  "dk"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "l-xl",
+            "label": "L/XL (obwód 94–104 cm)",
+            "size": "L/XL",
+            "requirements": [
+              {
+                "role": "główna",
+                "measurement_basis": "meters",
+                "meters_min": 1120,
+                "grams_min": 500,
+                "skeins_min": 5,
+                "materials": [
+                  "bawełna",
+                  "wiskoza"
+                ],
+                "material_match": "all",
+                "color_mode": "same",
+                "weight_classes": [
+                  "dk"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "2xl-3xl",
+            "label": "2XL/3XL (obwód 107–119 cm)",
+            "size": "2XL/3XL",
+            "requirements": [
+              {
+                "role": "główna",
+                "measurement_basis": "meters",
+                "meters_min": 1344,
+                "grams_min": 600,
+                "skeins_min": 6,
+                "materials": [
+                  "bawełna",
+                  "wiskoza"
+                ],
+                "material_match": "all",
+                "color_mode": "same",
+                "weight_classes": [
+                  "dk"
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "source_language": "en",
+      "needs_review": false,
+      "publication_status": "published",
+      "content_audit_version": "1.0",
+      "content_audited_at": "2026-08-24T00:00:00Z",
+      "official_source_url": "https://makeanddocrew.com/canyonlands-boho-crochet-top-free-pattern/",
+      "technique": "crochet"
+    },
+    {
+      "source_filename": "summer-poncho-top.web.json",
+      "name": "Poncho-Style Summer Top",
+      "description": "Letni top w stylu poncho z dwóch prostokątów noszonych luźno na ramionach.",
+      "project_type": "top",
+      "materials": [
+        "bawełna",
+        "wiskoza"
+      ],
+      "meters_per_100g": 224,
+      "yarn_requirements": [
+        {
+          "role": "główna",
+          "yarn_name": "LB Collection Cotton Bamboo",
+          "yarn_weight": "3/light",
+          "materials": [
+            "bawełna",
+            "wiskoza"
+          ],
+          "meters_per_100g": 224,
+          "skein_weight_grams": 100,
+          "skein_length_meters": 224,
+          "data_source": "strona wzoru i katalog producenta",
+          "source_url": "https://makeanddocrew.com/summer-crochet-top-free-pattern/",
+          "quantity_note": "5 (5, 6, 6, 6, 7) motków koloru Magnolia, ok. 400–600 g wg rozmiaru"
+        }
+      ],
+      "matching_requirements": {
+        "version": 2,
+        "variants": [
+          {
+            "id": "s",
+            "label": "S (obwód 81–91 cm)",
+            "size": "S",
+            "requirements": [
+              {
+                "role": "główna",
+                "measurement_basis": "grams",
+                "grams_min": 400,
+                "meters_min": 1120,
+                "skeins_min": 5,
+                "materials": [
+                  "bawełna",
+                  "wiskoza"
+                ],
+                "material_match": "all",
+                "color_mode": "same",
+                "weight_classes": [
+                  "dk"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "m",
+            "label": "M (obwód 91–102 cm)",
+            "size": "M",
+            "requirements": [
+              {
+                "role": "główna",
+                "measurement_basis": "grams",
+                "grams_min": 440,
+                "meters_min": 1120,
+                "skeins_min": 5,
+                "materials": [
+                  "bawełna",
+                  "wiskoza"
+                ],
+                "material_match": "all",
+                "color_mode": "same",
+                "weight_classes": [
+                  "dk"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "l",
+            "label": "L (obwód 102–112 cm)",
+            "size": "L",
+            "requirements": [
+              {
+                "role": "główna",
+                "measurement_basis": "grams",
+                "grams_min": 480,
+                "meters_min": 1344,
+                "skeins_min": 6,
+                "materials": [
+                  "bawełna",
+                  "wiskoza"
+                ],
+                "material_match": "all",
+                "color_mode": "same",
+                "weight_classes": [
+                  "dk"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "xl",
+            "label": "XL (obwód 112–122 cm)",
+            "size": "XL",
+            "requirements": [
+              {
+                "role": "główna",
+                "measurement_basis": "grams",
+                "grams_min": 520,
+                "meters_min": 1344,
+                "skeins_min": 6,
+                "materials": [
+                  "bawełna",
+                  "wiskoza"
+                ],
+                "material_match": "all",
+                "color_mode": "same",
+                "weight_classes": [
+                  "dk"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "2x",
+            "label": "2X (obwód 122–132 cm)",
+            "size": "2X",
+            "requirements": [
+              {
+                "role": "główna",
+                "measurement_basis": "grams",
+                "grams_min": 560,
+                "meters_min": 1344,
+                "skeins_min": 6,
+                "materials": [
+                  "bawełna",
+                  "wiskoza"
+                ],
+                "material_match": "all",
+                "color_mode": "same",
+                "weight_classes": [
+                  "dk"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "3x",
+            "label": "3X (obwód 132–142 cm)",
+            "size": "3X",
+            "requirements": [
+              {
+                "role": "główna",
+                "measurement_basis": "grams",
+                "grams_min": 600,
+                "meters_min": 1568,
+                "skeins_min": 7,
+                "materials": [
+                  "bawełna",
+                  "wiskoza"
+                ],
+                "material_match": "all",
+                "color_mode": "same",
+                "weight_classes": [
+                  "dk"
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "source_language": "en",
+      "needs_review": false,
+      "publication_status": "published",
+      "content_audit_version": "1.0",
+      "content_audited_at": "2026-08-24T00:00:00Z",
+      "official_source_url": "https://makeanddocrew.com/summer-crochet-top-free-pattern/",
+      "technique": "crochet"
+    },
+    {
+      "source_filename": "andie-top.web.json",
+      "name": "The Andie Top",
+      "description": "Dopasowany top z krótkim rękawkiem, dwukolorowy: jaśniejszy karczek i ciemniejszy korpus.",
+      "project_type": "top",
+      "materials": [
+        "bawełna"
+      ],
+      "meters_per_100g": 199,
+      "yarn_requirements": [
+        {
+          "role": "kolor A (karczek)",
+          "yarn_name": "LB Collection Cotton Jeans",
+          "yarn_weight": "3/light",
+          "materials": [
+            "bawełna"
+          ],
+          "meters_per_100g": 199,
+          "skein_weight_grams": 100,
+          "skein_length_meters": 199,
+          "data_source": "strona wzoru i katalog producenta",
+          "source_url": "https://makeanddocrew.com/lightweight-crochet-top-free-pattern/",
+          "quantity_note": "karczek: 300–490 yd zależnie od rozmiaru"
+        },
+        {
+          "role": "kolor B (korpus)",
+          "yarn_name": "LB Collection Cotton Jeans",
+          "yarn_weight": "3/light",
+          "materials": [
+            "bawełna"
+          ],
+          "meters_per_100g": 199,
+          "skein_weight_grams": 100,
+          "skein_length_meters": 199,
+          "data_source": "strona wzoru i katalog producenta",
+          "source_url": "https://makeanddocrew.com/lightweight-crochet-top-free-pattern/",
+          "quantity_note": "korpus: 953–1441 yd zależnie od rozmiaru"
+        }
+      ],
+      "matching_requirements": {
+        "version": 2,
+        "variants": [
+          {
+            "id": "xs",
+            "label": "XS (szer. ok. 41 cm)",
+            "size": "XS",
+            "requirements": [
+              {
+                "role": "kolor A – karczek",
+                "measurement_basis": "meters",
+                "meters_min": 274,
+                "materials": [
+                  "bawełna"
+                ],
+                "material_match": "all",
+                "color_mode": "same",
+                "weight_classes": [
+                  "dk"
+                ]
+              },
+              {
+                "role": "kolor B – korpus",
+                "measurement_basis": "meters",
+                "meters_min": 872,
+                "materials": [
+                  "bawełna"
+                ],
+                "material_match": "all",
+                "color_mode": "same",
+                "weight_classes": [
+                  "dk"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "s",
+            "label": "S (szer. ok. 46 cm)",
+            "size": "S",
+            "requirements": [
+              {
+                "role": "kolor A – karczek",
+                "measurement_basis": "meters",
+                "meters_min": 297,
+                "materials": [
+                  "bawełna"
+                ],
+                "material_match": "all",
+                "color_mode": "same",
+                "weight_classes": [
+                  "dk"
+                ]
+              },
+              {
+                "role": "kolor B – korpus",
+                "measurement_basis": "meters",
+                "meters_min": 923,
+                "materials": [
+                  "bawełna"
+                ],
+                "material_match": "all",
+                "color_mode": "same",
+                "weight_classes": [
+                  "dk"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "m",
+            "label": "M (szer. ok. 50 cm)",
+            "size": "M",
+            "requirements": [
+              {
+                "role": "kolor A – karczek",
+                "measurement_basis": "meters",
+                "meters_min": 343,
+                "materials": [
+                  "bawełna"
+                ],
+                "material_match": "all",
+                "color_mode": "same",
+                "weight_classes": [
+                  "dk"
+                ]
+              },
+              {
+                "role": "kolor B – korpus",
+                "measurement_basis": "meters",
+                "meters_min": 945,
+                "materials": [
+                  "bawełna"
+                ],
+                "material_match": "all",
+                "color_mode": "same",
+                "weight_classes": [
+                  "dk"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "l",
+            "label": "L (szer. ok. 53 cm)",
+            "size": "L",
+            "requirements": [
+              {
+                "role": "kolor A – karczek",
+                "measurement_basis": "meters",
+                "meters_min": 366,
+                "materials": [
+                  "bawełna"
+                ],
+                "material_match": "all",
+                "color_mode": "same",
+                "weight_classes": [
+                  "dk"
+                ]
+              },
+              {
+                "role": "kolor B – korpus",
+                "measurement_basis": "meters",
+                "meters_min": 1094,
+                "materials": [
+                  "bawełna"
+                ],
+                "material_match": "all",
+                "color_mode": "same",
+                "weight_classes": [
+                  "dk"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "xl",
+            "label": "XL (szer. ok. 56 cm)",
+            "size": "XL",
+            "requirements": [
+              {
+                "role": "kolor A – karczek",
+                "measurement_basis": "meters",
+                "meters_min": 393,
+                "materials": [
+                  "bawełna"
+                ],
+                "material_match": "all",
+                "color_mode": "same",
+                "weight_classes": [
+                  "dk"
+                ]
+              },
+              {
+                "role": "kolor B – korpus",
+                "measurement_basis": "meters",
+                "meters_min": 1147,
+                "materials": [
+                  "bawełna"
+                ],
+                "material_match": "all",
+                "color_mode": "same",
+                "weight_classes": [
+                  "dk"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "2xl",
+            "label": "2XL (szer. ok. 60 cm)",
+            "size": "2XL",
+            "requirements": [
+              {
+                "role": "kolor A – karczek",
+                "measurement_basis": "meters",
+                "meters_min": 421,
+                "materials": [
+                  "bawełna"
+                ],
+                "material_match": "all",
+                "color_mode": "same",
+                "weight_classes": [
+                  "dk"
+                ]
+              },
+              {
+                "role": "kolor B – korpus",
+                "measurement_basis": "meters",
+                "meters_min": 1223,
+                "materials": [
+                  "bawełna"
+                ],
+                "material_match": "all",
+                "color_mode": "same",
+                "weight_classes": [
+                  "dk"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "3xl",
+            "label": "3XL (szer. ok. 64 cm)",
+            "size": "3XL",
+            "requirements": [
+              {
+                "role": "kolor A – karczek",
+                "measurement_basis": "meters",
+                "meters_min": 448,
+                "materials": [
+                  "bawełna"
+                ],
+                "material_match": "all",
+                "color_mode": "same",
+                "weight_classes": [
+                  "dk"
+                ]
+              },
+              {
+                "role": "kolor B – korpus",
+                "measurement_basis": "meters",
+                "meters_min": 1318,
+                "materials": [
+                  "bawełna"
+                ],
+                "material_match": "all",
+                "color_mode": "same",
+                "weight_classes": [
+                  "dk"
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "source_language": "en",
+      "needs_review": false,
+      "publication_status": "published",
+      "content_audit_version": "1.0",
+      "content_audited_at": "2026-08-24T00:00:00Z",
+      "official_source_url": "https://makeanddocrew.com/lightweight-crochet-top-free-pattern/",
+      "technique": "crochet"
+    },
+    {
+      "source_filename": "hooded-crochet-sweater.web.json",
+      "name": "Hooded Crochet Sweater",
+      "description": "Prosty sweter szydełkowy z kapturem w swobodnym fasonie.",
+      "project_type": "sweater",
+      "materials": [
+        "dowolny materiał"
+      ],
+      "meters_per_100g": null,
+      "yarn_requirements": [
+        {
+          "role": "główna",
+          "yarn_name": "Lion Brand Cupcake",
+          "yarn_weight": "3/light",
+          "materials": [
+            "dowolny materiał"
+          ],
+          "meters_per_100g": 360,
+          "skein_weight_grams": 150,
+          "skein_length_meters": 540,
+          "data_source": "strona wzoru",
+          "source_url": "https://makeanddocrew.com/free-crochet-sweater-pattern-with-hood/",
+          "quantity_note": "5 (5, 6, 6, 7, 7) motków, szacunkowo 590–945 g wg rozmiaru"
+        }
+      ],
+      "matching_requirements": {
+        "version": 2,
+        "variants": [
+          {
+            "id": "s",
+            "label": "S (obwód 81–91 cm)",
+            "size": "S",
+            "requirements": [
+              {
+                "role": "główna",
+                "measurement_basis": "grams",
+                "grams_min": 590,
+                "meters_min": 2700,
+                "skeins_min": 5,
+                "materials": [],
+                "material_match": "any_material",
+                "color_mode": "same",
+                "weight_classes": [
+                  "dk"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "m",
+            "label": "M (obwód 91–102 cm)",
+            "size": "M",
+            "requirements": [
+              {
+                "role": "główna",
+                "measurement_basis": "grams",
+                "grams_min": 670,
+                "meters_min": 2700,
+                "skeins_min": 5,
+                "materials": [],
+                "material_match": "any_material",
+                "color_mode": "same",
+                "weight_classes": [
+                  "dk"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "l",
+            "label": "L (obwód 102–112 cm)",
+            "size": "L",
+            "requirements": [
+              {
+                "role": "główna",
+                "measurement_basis": "grams",
+                "grams_min": 750,
+                "meters_min": 3240,
+                "skeins_min": 6,
+                "materials": [],
+                "material_match": "any_material",
+                "color_mode": "same",
+                "weight_classes": [
+                  "dk"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "1x",
+            "label": "1X (obwód 112–122 cm)",
+            "size": "1X",
+            "requirements": [
+              {
+                "role": "główna",
+                "measurement_basis": "grams",
+                "grams_min": 795,
+                "meters_min": 3240,
+                "skeins_min": 6,
+                "materials": [],
+                "material_match": "any_material",
+                "color_mode": "same",
+                "weight_classes": [
+                  "dk"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "2x",
+            "label": "2X (obwód 122–132 cm)",
+            "size": "2X",
+            "requirements": [
+              {
+                "role": "główna",
+                "measurement_basis": "grams",
+                "grams_min": 900,
+                "meters_min": 3780,
+                "skeins_min": 7,
+                "materials": [],
+                "material_match": "any_material",
+                "color_mode": "same",
+                "weight_classes": [
+                  "dk"
+                ]
+              }
+            ]
+          },
+          {
+            "id": "3x",
+            "label": "3X (obwód 132–142 cm)",
+            "size": "3X",
+            "requirements": [
+              {
+                "role": "główna",
+                "measurement_basis": "grams",
+                "grams_min": 945,
+                "meters_min": 3780,
+                "skeins_min": 7,
+                "materials": [],
+                "material_match": "any_material",
+                "color_mode": "same",
+                "weight_classes": [
+                  "dk"
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "source_language": "en",
+      "needs_review": false,
+      "publication_status": "published",
+      "content_audit_version": "1.0",
+      "content_audited_at": "2026-08-24T00:00:00Z",
+      "official_source_url": "https://makeanddocrew.com/free-crochet-sweater-pattern-with-hood/",
+      "technique": "crochet"
     }
   ],
   "audit": [
@@ -5863,6 +7619,76 @@
       "source_filename": "motek-demo-moherowa-chusta.synthetic.json",
       "manual_override": false,
       "synthetic_demo": true,
+      "review_reasons": [],
+      "review_notes": []
+    },
+    {
+      "source_filename": "day-date-cardigan.web.json",
+      "manual_override": false,
+      "web_source": true,
+      "review_reasons": [],
+      "review_notes": []
+    },
+    {
+      "source_filename": "campfire-cardigan.web.json",
+      "manual_override": false,
+      "web_source": true,
+      "review_reasons": [],
+      "review_notes": []
+    },
+    {
+      "source_filename": "habitat-cardigan.web.json",
+      "manual_override": false,
+      "web_source": true,
+      "review_reasons": [],
+      "review_notes": []
+    },
+    {
+      "source_filename": "staycation-cardigan.web.json",
+      "manual_override": false,
+      "web_source": true,
+      "review_reasons": [],
+      "review_notes": []
+    },
+    {
+      "source_filename": "chunky-cocoon-cardigan.web.json",
+      "manual_override": false,
+      "web_source": true,
+      "review_reasons": [],
+      "review_notes": []
+    },
+    {
+      "source_filename": "slice-of-nice-raglan.web.json",
+      "manual_override": false,
+      "web_source": true,
+      "review_reasons": [],
+      "review_notes": []
+    },
+    {
+      "source_filename": "canyonlands-top.web.json",
+      "manual_override": false,
+      "web_source": true,
+      "review_reasons": [],
+      "review_notes": []
+    },
+    {
+      "source_filename": "summer-poncho-top.web.json",
+      "manual_override": false,
+      "web_source": true,
+      "review_reasons": [],
+      "review_notes": []
+    },
+    {
+      "source_filename": "andie-top.web.json",
+      "manual_override": false,
+      "web_source": true,
+      "review_reasons": [],
+      "review_notes": []
+    },
+    {
+      "source_filename": "hooded-crochet-sweater.web.json",
+      "manual_override": false,
+      "web_source": true,
       "review_reasons": [],
       "review_notes": []
     }
