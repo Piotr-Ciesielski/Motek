@@ -73,11 +73,12 @@ Macierz ręczna obejmuje 32 kombinacje: 4 widoki × 2 motywy × 4 szerokości. D
 | Bezpieczne przytrzymanie przycisku hasła | `test/password-reveal-dom.test.js` |
 | Dostępne podsumowanie stronicowanego katalogu | `test/catalog-pagination-dom.test.js` |
 | Kontrolery Katalogu i Auth oraz obsługa focusu | `test/catalog-controller.test.js`, `test/auth-controller.test.js` |
+| Panel aktywnego projektu i sesja | `test/project-panel-session.test.js` |
 
 Minimalne polecenie:
 
 ```powershell
-node --test test/design-regression.test.js test/design-layout.test.js test/theme-policy.test.js test/dom-utils.test.js test/password-reveal-dom.test.js test/catalog-pagination-dom.test.js test/catalog-controller.test.js test/auth-controller.test.js
+node --test test/design-regression.test.js test/design-layout.test.js test/theme-policy.test.js test/dom-utils.test.js test/password-reveal-dom.test.js test/catalog-pagination-dom.test.js test/catalog-controller.test.js test/auth-controller.test.js test/project-panel-session.test.js
 ```
 
 Testy DOM nie zastępują ręcznej kontroli 1440/1024/768/390 ani sprawdzenia kontrastu w przeglądarce.
