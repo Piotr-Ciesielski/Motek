@@ -1547,17 +1547,18 @@ function renderInventoryMap(yarns) {
   const selected = visibleYarns.find((yarn) => String(yarn.id) === selectedInventoryYarnId)
     || visibleYarns[0];
   const nodes = visibleYarns.map((yarn, index) => {
+    const paletteName = inventoryPalette[index % inventoryPalette.length];
     const button = document.createElement("button");
     const image = document.createElement("img");
     const label = document.createElement("strong");
     const amount = document.createElement("span");
 
     button.className = "inventory-yarn-node";
-    button.classList.add(`inventory-yarn-node--${inventoryPalette[index % inventoryPalette.length]}`);
+    button.classList.add(`inventory-yarn-node--${paletteName}`);
     button.type = "button";
     button.dataset.id = yarn.id;
     button.setAttribute("aria-pressed", "false");
-    image.src = index % 2
+    image.src = paletteName === "plum"
       ? "assets/yarn-ball-plum.v1.webp"
       : "assets/yarn-ball-lavender.v1.webp";
     image.alt = "";

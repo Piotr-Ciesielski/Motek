@@ -98,10 +98,22 @@ test("ds1 keeps the stash on a centered canvas and gives each map yarn a deliber
     "the hero artwork belongs on the right side of the composition",
   );
   assert.match(
+    stylesCss,
+    /#inventoryView \.inventory-layout__visual\s*\{[\s\S]*?width:\s*min\(74%, 1040px\);/,
+    "the cat artwork overlaps the hero instead of leaving a blank half-page",
+  );
+  assert.match(
+    stylesCss,
+    /#inventoryView \.inventory-heading__actions\s*\{[\s\S]*?right:\s*190px;/,
+    "the full-stash action keeps clear of theme and logout controls",
+  );
+  assert.match(
     appJs,
     /const inventoryPalette = \["peach", "lavender", "cobalt", "oat", "navy", "pumpkin", "coral", "plum"\];/,
   );
-  assert.match(appJs, /button\.classList\.add\(`inventory-yarn-node--\$\{inventoryPalette\[index % inventoryPalette\.length\]\}`\);/);
+  assert.match(appJs, /const paletteName = inventoryPalette\[index % inventoryPalette\.length\];/);
+  assert.match(appJs, /button\.classList\.add\(`inventory-yarn-node--\$\{paletteName\}`\);/);
+  assert.match(appJs, /paletteName === "plum"[\s\S]*?"assets\/yarn-ball-plum\.v1\.webp"[\s\S]*?"assets\/yarn-ball-lavender\.v1\.webp"/);
   for (const color of ["peach", "lavender", "cobalt", "oat", "navy", "pumpkin", "coral", "plum"]) {
     assert.match(stylesCss, new RegExp(`inventory-yarn-node--${color} img`));
   }
