@@ -149,7 +149,7 @@ test("opóźniony GET /api/yarns nie usuwa nowego draftu rozpoczętego po odświ
   assert.equal(window.document.querySelector('.yarn-card[data-saved="false"] [data-field="name"]').value, "Mój niezapisany motek");
 });
 
-test("powrót do magazynu odświeża dane i pokazuje najwyżej osiem motków na mapie", async () => {
+test("powrót do magazynu odświeża dane po unieważnieniu poprzedniego GET", async () => {
   const dom = new JSDOM(fs.readFileSync(path.join(root, "index.html"), "utf8"), {
     url: "https://motek.test/",
     runScripts: "outside-only",
@@ -249,39 +249,10 @@ test("powrót do magazynu odświeża dane i pokazuje najwyżej osiem motków na 
   await new Promise((resolve) => setImmediate(resolve));
   assert.equal(yarnList.getAttribute("aria-busy"), "true", "starsze żądanie nie kończy stanu ładowania nowszego odświeżenia");
 
-  yarnRequests[1].resolve(Array.from({ length: 9 }, (_, index) => ({
-    id: index + 2,
-    name: `Aktualny motek ${index + 1}`,
-    color: "zielony",
-    materials: ["wełna"],
-    weightClass: "dk",
-    length: 120 + index,
-    weight: 60 + index,
-  })));
+  yarnRequests[1].resolve([{ id: 2, name: "Aktualny motek", color: "zielony", materials: ["wełna"], weightClass: "dk", length: 120, weight: 60 }]);
   await new Promise((resolve) => setImmediate(resolve));
   await new Promise((resolve) => setImmediate(resolve));
 
-  assert.equal(yarnList.querySelector('.yarn-card[data-id="2"] [data-field="name"]').value, "Aktualny motek 1");
+  assert.equal(yarnList.querySelector('.yarn-card[data-id="2"] [data-field="name"]').value, "Aktualny motek");
   assert.equal(yarnList.hasAttribute("aria-busy"), false, "magazyn przestaje być oznaczony jako ładowany po zakończeniu bieżącego odświeżenia");
-
-  const map = window.document.getElementById("inventoryYarnMap");
-  assert.ok(map);
-  const nodes = [...map.querySelectorAll("button")];
-  assert.equal(nodes.length, 8);
-  assert.match(nodes[0].textContent, /Aktualny motek 1/);
-  assert.match(nodes[0].textContent, /120 m/);
-  nodes[1].click();
-  assert.equal(window.document.getElementById("inventoryYarnDetailName").textContent, "Aktualny motek 2");
-
-  window.document.getElementById("showFullInventoryBtn").click();
-  assert.equal(window.document.getElementById("inventoryMapView").hidden, true);
-  assert.equal(window.document.getElementById("inventoryFullView").hidden, false);
-  assert.equal(window.document.activeElement.id, "inventoryFullTitle");
-
-  window.document.getElementById("addYarnBtn").click();
-  const draft = yarnList.querySelector('.yarn-card[data-saved="false"] [data-field="name"]');
-  draft.value = "Niezapisany draft";
-  window.document.getElementById("showInventoryMapBtn").click();
-  window.document.getElementById("showFullInventoryBtn").click();
-  assert.equal(yarnList.querySelector('.yarn-card[data-saved="false"] [data-field="name"]').value, "Niezapisany draft");
 });

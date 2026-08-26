@@ -184,11 +184,6 @@ const staticFileHandler = createStaticFileHandler({
     "/assets/night-yarn-cat.png": "assets/night-yarn-cat.png",
     "/assets/color-yarn-cat.v1.webp": "assets/color-yarn-cat.v1.webp",
     "/assets/night-yarn-cat.v1.webp": "assets/night-yarn-cat.v1.webp",
-    "/assets/yarn-ball-lavender.v1.webp": "assets/yarn-ball-lavender.v1.webp",
-    "/assets/yarn-ball-plum.v1.webp": "assets/yarn-ball-plum.v1.webp",
-    "/assets/paper-texture.v1.webp": "assets/paper-texture.v1.webp",
-    "/assets/night-yarn-cat.v2.webp": "assets/night-yarn-cat.v2.webp",
-    "/assets/match-loop-lavender.v1.webp": "assets/match-loop-lavender.v1.webp",
     "/favicon.svg": "favicon.svg",
   },
 });

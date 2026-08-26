@@ -40,11 +40,7 @@ function waitFor(check, message = "Oczekiwany stan nie nastąpił.") {
   });
 }
 
-function boot({
-  getProjectResponse,
-  startProjectResponse = { project: activeProjectPayload },
-  matchesResponse = [],
-} = {}) {
+function boot({ getProjectResponse, startProjectResponse = { project: activeProjectPayload } } = {}) {
   const dom = new JSDOM(fs.readFileSync(path.join(root, "index.html"), "utf8"), {
     url: "https://motek.test/",
     runScripts: "outside-only",
@@ -91,7 +87,6 @@ function boot({
           if (pathname === "/api/projects" && options.method === "POST") {
             return { ...startProjectResponse.project };
           }
-          if (pathname === "/api/matches") return matchesResponse;
           if (pathname === "/api/auth/session") {
             return {
               authenticated: true,
@@ -260,72 +255,4 @@ test("204 po braku projektu nie blokuje rozpoczęcia nowego projektu", async () 
     /Projekt rozpoczęty\./,
     "po 204 można rozpocząć projekt",
   );
-});
-
-test("kontrolki postępu zachowują etykiety i cel co najmniej 44 na 44 px", async () => {
-  const window = await bootWithVisiblePanel();
-  const style = window.document.createElement("style");
-  style.textContent = fs.readFileSync(path.join(root, "styles.css"), "utf8");
-  window.document.head.appendChild(style);
-  const minus = window.document.querySelector('[aria-label="Zmniejsz postęp o jeden"]');
-  const plus = window.document.querySelector('[aria-label="Zwiększ postęp o jeden"]');
-
-  assert.equal(minus.textContent, "−1");
-  assert.equal(plus.textContent, "+1");
-  for (const button of [minus, plus]) {
-    const computed = window.getComputedStyle(button);
-    assert.equal(computed.minWidth, "44px");
-    assert.equal(computed.minHeight, "44px");
-  }
-});
-
-test("pierwsze dopasowanie jest dominującym arkuszem, a kolejne lekkimi alternatywami", async () => {
-  const match = (patternId, name, total) => ({
-    total,
-    allocation: [[]],
-    pattern: {
-      id: `${patternId}:m`,
-      patternId,
-      variantId: "m",
-      variantLabel: "Rozmiar M",
-      name,
-      baseName: name,
-      description: `Opis ${name}`,
-      requirements: [{}],
-    },
-  });
-  const window = boot({
-    getProjectResponse: () => ({ status: 204 }),
-    matchesResponse: [
-      match(1, "Lawendowy szal", 96),
-      match(2, "Ciepła czapka", 88),
-      match(3, "Proste mitenki", 81),
-    ],
-  });
-
-  await waitFor(() => window.motekProjectRequestCount() >= 1);
-  window.document.getElementById("findBtn").click();
-  await waitFor(() => window.document.querySelectorAll("#results .result-card").length === 3);
-
-  const cards = [...window.document.querySelectorAll("#results .result-card")];
-  assert.ok(cards[0].classList.contains("result-card--featured"));
-  assert.equal(cards.slice(1).every((card) => card.classList.contains("result-card--alternative")), true);
-  assert.equal(cards[0].querySelector("h3").textContent, "Lawendowy szal");
-  assert.equal(cards[0].querySelector(".score-pill__text").textContent, "Najlepiej 96%");
-  assert.equal(cards[0].querySelector(".score-pill img").getAttribute("src"), "assets/match-loop-lavender.v1.webp");
-  assert.equal(cards[0].querySelectorAll(".button:not(.button--ghost)").length, 1);
-
-  const alternative = cards[1];
-  const summary = alternative.querySelector(":scope > summary");
-  assert.equal(alternative.tagName, "DETAILS");
-  assert.equal(alternative.open, false);
-  assert.equal(summary.querySelector("h3").textContent, "Ciepła czapka");
-  assert.equal(summary.querySelector(".result-card__row-score").textContent, "Najlepiej 88%");
-  assert.equal(summary.querySelector("img"), null, "zwarty wiersz nie pokazuje pętli");
-  assert.equal(summary.contains(alternative.querySelector(".result-card__desc")), false);
-
-  alternative.open = true;
-  assert.ok(alternative.querySelector(".score-pill img"), "po rozwinięciu pętla pozostaje dostępna");
-  assert.ok(alternative.querySelector(".match-variant__start"), "po rozwinięciu akcja projektu pozostaje dostępna");
-  assert.ok(alternative.querySelector(".result-card__catalog-link"), "po rozwinięciu link katalogu pozostaje dostępny");
 });

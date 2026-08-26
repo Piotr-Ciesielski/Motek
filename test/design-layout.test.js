@@ -37,16 +37,13 @@ test("mobile reading order keeps hero actions and artwork before each workspace"
   const inventoryHeading = inventoryHero.querySelector(".inventory-heading");
   const inventoryArtwork = inventoryHero.querySelector(".inventory-layout__visual");
   const inventoryStats = document.querySelector("#inventoryStats");
-  const inventoryMap = document.querySelector("#inventoryMapView");
   const inventoryStock = document.querySelector("#inventoryView .inventory-stock");
 
   assert.ok(inventoryHeading.contains(document.querySelector("#inventoryMatchBtn")));
-  assert.ok(inventoryMap.contains(document.querySelector("#inventoryAddYarnBtn")));
+  assert.ok(inventoryHeading.contains(document.querySelector("#inventoryAddYarnBtn")));
   assert.ok(precedes(inventoryHeading, inventoryArtwork));
-  assert.ok(inventoryHeading.contains(inventoryStats));
-  assert.ok(precedes(inventoryStats, inventoryArtwork));
-  assert.ok(precedes(inventoryStats, inventoryMap));
-  assert.ok(precedes(inventoryMap, inventoryStock));
+  assert.ok(precedes(inventoryArtwork, inventoryStats));
+  assert.ok(precedes(inventoryStats, inventoryStock));
 
   const matchesHero = document.querySelector("#matchesView .matches-hero");
   const matchesCopy = matchesHero.querySelector(".matches-hero__copy");
@@ -69,100 +66,7 @@ test("inventory keeps the selected design composition", () => {
   assert.match(indexHtml, /id="inventoryStats"/);
   assert.match(indexHtml, /id="inventoryAddYarnBtn"/);
   assert.match(indexHtml, /data-light-src="assets\/color-yarn-cat\.v1\.webp"/);
-  assert.match(indexHtml, /id="inventoryThemeImage"[\s\S]*?data-dark-src="assets\/night-yarn-cat\.v2\.webp"/);
-});
-
-test("inventory follows the ds1 editorial composition", () => {
-  const document = new JSDOM(indexHtml).window.document;
-  const hero = document.querySelector("#inventoryView .inventory-hero");
-  const title = document.getElementById("inventoryTitle");
-  const stats = document.getElementById("inventoryStats");
-  const map = document.getElementById("inventoryMapView");
-
-  assert.equal(title.textContent.trim(), "Mój schowek");
-  assert.ok(hero.contains(stats), "summary belongs to the editorial hero");
-  assert.ok(hero.compareDocumentPosition(map) & hero.DOCUMENT_POSITION_FOLLOWING);
-  assert.equal(document.getElementById("inventoryMatchBtn").hidden, true);
-  assert.equal(document.getElementById("showFullInventoryBtn").textContent.trim(), "Pokaż cały schowek →");
-});
-
-test("ds1 keeps the stash on a centered canvas and gives each map yarn a deliberate color", () => {
-  assert.match(
-    stylesCss,
-    /#inventoryView \.inventory-layout\s*\{[\s\S]*?max-width:\s*1440px;/,
-    "the map must not spread across an unbounded viewport",
-  );
-  assert.match(
-    stylesCss,
-    /#inventoryView \.inventory-layout__visual\s*\{[\s\S]*?left:\s*auto;[\s\S]*?right:\s*0;/,
-    "the hero artwork belongs on the right side of the composition",
-  );
-  assert.match(
-    stylesCss,
-    /#inventoryView \.inventory-layout__visual\s*\{[\s\S]*?width:\s*min\(74%, 1040px\);/,
-    "the cat artwork overlaps the hero instead of leaving a blank half-page",
-  );
-  assert.match(
-    stylesCss,
-    /#inventoryView \.inventory-heading__actions\s*\{[\s\S]*?right:\s*190px;/,
-    "the full-stash action keeps clear of theme and logout controls",
-  );
-  assert.match(
-    appJs,
-    /const inventoryPalette = \["peach", "lavender", "cobalt", "oat", "navy", "pumpkin", "coral", "plum"\];/,
-  );
-  assert.match(appJs, /const paletteName = inventoryPalette\[index % inventoryPalette\.length\];/);
-  assert.match(appJs, /button\.classList\.add\(`inventory-yarn-node--\$\{paletteName\}`\);/);
-  assert.match(appJs, /paletteName === "plum"[\s\S]*?"assets\/yarn-ball-plum\.v1\.webp"[\s\S]*?"assets\/yarn-ball-lavender\.v1\.webp"/);
-  for (const color of ["peach", "lavender", "cobalt", "oat", "navy", "pumpkin", "coral", "plum"]) {
-    assert.match(stylesCss, new RegExp(`inventory-yarn-node--${color} img`));
-  }
-});
-
-test("ds1 dark mode is a genuinely dark canvas, not the light paper texture", () => {
-  assert.match(
-    stylesCss,
-    /\[data-theme="dark"\] body:has\(#inventoryView:not\(\[hidden\]\)\)\s*\{[\s\S]*?background:\s*#0c101c;/,
-  );
-  assert.match(
-    stylesCss,
-    /\[data-theme="dark"\] #inventoryView \.inventory-map-view\s*\{[\s\S]*?background:\s*#0c101c;/,
-  );
-});
-
-test("inventory map keeps one detail sheet, the full list and protected hooks", () => {
-  const document = new JSDOM(indexHtml).window.document;
-  const mapView = document.getElementById("inventoryMapView");
-  const fullView = document.getElementById("inventoryFullView");
-
-  assert.ok(mapView);
-  assert.ok(fullView);
-  assert.ok(mapView.contains(document.getElementById("inventoryYarnMap")));
-  assert.ok(mapView.contains(document.getElementById("inventoryYarnDetails")));
-  assert.ok(mapView.contains(document.getElementById("inventoryAddYarnBtn")));
-  assert.equal(document.querySelectorAll("#inventoryYarnDetails").length, 1);
-  assert.equal(document.getElementById("showFullInventoryBtn").textContent.trim(), "Pokaż cały schowek →");
-  assert.ok(fullView.contains(document.getElementById("showInventoryMapBtn")));
-  assert.ok(fullView.contains(document.getElementById("yarnList")));
-  assert.equal(document.getElementById("addYarnBtn").hidden, true);
-  for (const id of ["inventoryView", "inventoryStats", "yarnList", "inventoryAddYarnBtn", "addYarnBtn", "onboarding"]) {
-    assert.ok(document.getElementById(id), `brak chronionego hooka #${id}`);
-  }
-  assert.match(stylesCss, /@media \(max-width: 768px\)[\s\S]*?\.inventory-yarn-map[\s\S]*?grid-template-columns:\s*1fr;/);
-});
-
-test("inventory add node ends the yarn path without overlaying its content", () => {
-  const document = new JSDOM(indexHtml).window.document;
-  const addNode = document.getElementById("inventoryAddYarnBtn");
-  const path = addNode.parentElement;
-  const addRule = stylesCss.match(/\.inventory-map-add\s*\{([\s\S]*?)\n\}/)?.[1] || "";
-
-  assert.ok(path.classList.contains("inventory-map-path"));
-  assert.equal(path.lastElementChild, addNode);
-  assert.ok(path.contains(document.getElementById("inventoryYarnMap")));
-  assert.doesNotMatch(addRule, /position:\s*absolute/);
-  assert.match(addRule, /min-width:\s*(?:56|\d{3,})px;/);
-  assert.match(addRule, /min-height:\s*(?:56|\d{3,})px;/);
+  assert.match(indexHtml, /data-dark-src="assets\/night-yarn-cat\.v1\.webp"/);
 });
 
 test("niezalogowane Konto pokazuje pełną grafikę kota w obu motywach i biały tekst w dark", () => {
@@ -173,7 +77,7 @@ test("niezalogowane Konto pokazuje pełną grafikę kota w obu motywach i biały
   assert.ok(document.body.classList.contains("auth-logged-out"));
   assert.ok(accountView.classList.contains("account-view"));
   assert.equal(image.dataset.lightSrc, "assets/color-yarn-cat.v1.webp");
-  assert.equal(image.dataset.darkSrc, "assets/night-yarn-cat.v2.webp");
+  assert.equal(image.dataset.darkSrc, "assets/night-yarn-cat.v1.webp");
   assert.match(
     stylesCss,
     /\.auth-logged-out #accountView \.auth-visual > \.auth-visual__image\s*\{[\s\S]*?opacity:\s*1;/,
@@ -186,79 +90,7 @@ test("niezalogowane Konto pokazuje pełną grafikę kota w obu motywach i biały
     stylesCss,
     /\[data-theme="dark"\] \.auth-logged-out #accountView \.auth-visual h1[\s\S]*?color:\s*#fff;/,
   );
-});
-
-test("Konto zachowuje jeden arkusz, jednego kota i wszystkie chronione formularze", () => {
-  const dom = new JSDOM(indexHtml, { pretendToBeVisual: true });
-  const { document } = dom.window;
-  const account = document.getElementById("accountView");
-  const layout = account.querySelector(".auth-layout");
-  const sheet = account.querySelector(".account-sheet");
-  const visual = account.querySelector(".auth-visual");
-  const style = document.createElement("style");
-  style.textContent = stylesCss;
-  document.head.appendChild(style);
-
-  assert.equal(account.querySelectorAll(".account-sheet").length, 1);
-  assert.equal(account.querySelectorAll("img").length, 1);
-  assert.equal(layout.children[0], visual);
-  assert.equal(layout.children[1], sheet);
-  for (const id of [
-    "authForms",
-    "passwordResetForm",
-    "passwordUpdateForm",
-    "authLoggedIn",
-    "idleSessionWarning",
-    "authMessage",
-  ]) {
-    assert.ok(sheet.contains(document.getElementById(id)), `#${id} pozostaje w arkuszu`);
-  }
-
-  account.classList.add("is-authenticated");
-  assert.notEqual(dom.window.getComputedStyle(visual).display, "none");
-  assert.ok(
-    document.getElementById("legalAcceptanceGate").compareDocumentPosition(
-      document.getElementById("authProfileSummary"),
-    ) & visual.DOCUMENT_POSITION_FOLLOWING,
-    "legal gate poprzedza tożsamość",
-  );
-  assert.deepEqual(
-    [...account.querySelectorAll(".account-legal-links a")].map((link) => link.getAttribute("href")),
-    [
-      "/informacje-prawne#regulamin",
-      "/informacje-prawne#prywatnosc",
-      "/informacje-prawne#prawa-autorskie",
-    ],
-  );
-  assert.equal(document.getElementById("deleteAccountDisclosure").open, false);
-
-  const contracts = [
-    ["loginForm", "post", "/api/auth/login"],
-    ["registerForm", "post", "/api/auth/register"],
-    ["passwordResetForm", "post", "/api/auth/password-reset-request"],
-    ["passwordUpdateForm", "post", "/api/auth/password"],
-    ["legalAcceptanceForm", "post", "/api/legal/acceptance"],
-    ["changePasswordForm", "post", "/api/auth/password/change"],
-    ["deleteAccountForm", "post", "/api/account"],
-  ];
-  for (const [id, method, action] of contracts) {
-    const form = document.getElementById(id);
-    assert.equal(form.method, method);
-    assert.equal(form.getAttribute("action"), action);
-  }
-  assert.deepEqual(
-    [...account.querySelectorAll(".auth-captcha")].map((captcha) => captcha.dataset.turnstileFor),
-    ["login", "register", "passwordReset", "passwordChange", "deleteAccount"],
-  );
-  assert.equal(document.getElementById("login-password").autocomplete, "current-password");
-  assert.equal(document.getElementById("register-password").autocomplete, "new-password");
-  assert.equal(document.getElementById("update-password").autocomplete, "new-password");
-  assert.equal(document.getElementById("change-current-password").name, "currentPassword");
-  assert.equal(document.getElementById("change-password-confirmation").name, "passwordConfirmation");
-  assert.equal(document.getElementById("account-delete-password").autocomplete, "current-password");
-  assert.equal(document.getElementById("account-delete-confirmation").name, "confirmation");
-  assert.match(document.getElementById("deleteAccountForm").textContent, /USUŃ KONTO/);
-  dom.window.close();
+  assert.match(stylesCss, /#accountView\.is-authenticated \.auth-visual\s*\{[\s\S]*?display:\s*none;/);
 });
 
 test("hero zachowują tylko wskazane nagłówki, akcje i grafiki", () => {
@@ -281,17 +113,17 @@ test("hero zachowują tylko wskazane nagłówki, akcje i grafiki", () => {
   );
   assert.doesNotMatch(normalizeText(accountHero), /Zacznij w Motku/);
   assert.equal(document.getElementById("accountThemeImage").dataset.lightSrc, "assets/color-yarn-cat.v1.webp");
-  assert.equal(document.getElementById("accountThemeImage").dataset.darkSrc, "assets/night-yarn-cat.v2.webp");
+  assert.equal(document.getElementById("accountThemeImage").dataset.darkSrc, "assets/night-yarn-cat.v1.webp");
 
-  assert.equal(matchesCopy.querySelector("#matchesPageTitle").textContent.trim(), "To pasuje do Twoich motków");
+  assert.equal(matchesCopy.querySelector("#matchesPageTitle").textContent.trim(), "Dopasuj włóczkę");
   assert.equal(matchesCopy.querySelector(".eyebrow"), null);
   assert.equal(matchesCopy.querySelector(".page-heading > div > p"), null);
   assert.doesNotMatch(normalizeText(matchesCopy), /Pomysły z Twojego zapasu/);
   assert.doesNotMatch(normalizeText(matchesCopy), /Ustaw kryteria i zobacz pasujące wzory na żywo\./);
   assert.equal(matchesCopy.querySelector("#backToInventoryBtn").textContent.trim(), "Wróć do magazynu");
-  assert.equal(document.getElementById("matchesThemeImage").dataset.darkSrc, "assets/night-yarn-cat.v2.webp");
+  assert.equal(document.getElementById("matchesThemeImage").dataset.darkSrc, "assets/night-yarn-cat.v1.webp");
 
-  assert.equal(catalogCopy.querySelector("#catalogTitle").textContent.trim(), "Wzory, które zjadają zapasy");
+  assert.equal(catalogCopy.querySelector("#catalogTitle").textContent.trim(), "Katalog wzorów");
   assert.equal(catalogCopy.querySelector(".eyebrow"), null);
   assert.equal(catalogCopy.querySelector("p"), null);
   assert.doesNotMatch(normalizeText(catalogCopy), /Biblioteka inspiracji/);
@@ -300,18 +132,17 @@ test("hero zachowują tylko wskazane nagłówki, akcje i grafiki", () => {
     /Znajdź wzór, który pasuje do Twojej włóczki i kolejnego projektu\./,
   );
   assert.equal(document.getElementById("catalogThemeImage").dataset.lightSrc, "assets/color-yarn-cat.v1.webp");
-  assert.equal(document.getElementById("catalogThemeImage").dataset.darkSrc, "assets/night-yarn-cat.v2.webp");
+  assert.equal(document.getElementById("catalogThemeImage").dataset.darkSrc, "assets/night-yarn-cat.v1.webp");
 });
 
-test("wszystkie ekrany używają zaakceptowanego ciemnego kadru v2", () => {
-  const document = new JSDOM(indexHtml).window.document;
-  const themedImages = [...document.querySelectorAll("img[data-dark-src]")];
-
-  assert.equal(themedImages.length, 4);
-  assert.equal(
-    themedImages.every((image) => image.dataset.darkSrc === "assets/night-yarn-cat.v2.webp"),
-    true,
-  );
+test("main navigation uses text labels without decorative symbols", () => {
+  const navigation = indexHtml.match(/<nav class="app-nav"[\s\S]*?<\/nav>/)?.[0] || "";
+  assert.match(navigation, />Magazyn<\/span>/);
+  assert.match(navigation, />Dopasowanie<\/span>/);
+  assert.match(navigation, />Katalog<\/span>/);
+  assert.match(navigation, />Konto<\/span>/);
+  assert.doesNotMatch(navigation, /aria-hidden="true"/);
+  assert.doesNotMatch(navigation, /[⌂✦▦○]/);
 });
 
 test("nagłówek zachowuje produkcyjny przycisk logowania i wylogowania", () => {
@@ -648,9 +479,8 @@ test("theme artwork uses optimized immutable assets", () => {
   );
   assert.equal(
     (indexHtml.match(/data-dark-src="assets\/night-yarn-cat\.v1\.webp"/g) || []).length,
-    0,
+    4,
   );
-  assert.equal((indexHtml.match(/data-dark-src="assets\/night-yarn-cat\.v2\.webp"/g) || []).length, 4);
   assert.match(staticFilesJs, /"\.webp": "image\/webp"/);
   assert.match(staticFilesJs, /public, max-age=31536000, immutable/);
 });
