@@ -7,6 +7,7 @@ const { JSDOM } = require("jsdom");
 const indexHtml = readFileSync(path.join(__dirname, "..", "index.html"), "utf8");
 const appJs = readFileSync(path.join(__dirname, "..", "app.js"), "utf8");
 const stylesCss = readFileSync(path.join(__dirname, "..", "styles.css"), "utf8");
+const serverJs = readFileSync(path.join(__dirname, "..", "server.js"), "utf8");
 
 function createDocument() {
   return new JSDOM(indexHtml).window.document;
@@ -36,12 +37,111 @@ test("design changes preserve text-only navigation destinations", () => {
   }));
 
   assert.deepEqual(navigation, [
-    { target: "inventory", label: "Magazyn" },
-    { target: "matches", label: "Dopasowanie" },
-    { target: "catalog", label: "Katalog" },
+    { target: "inventory", label: "Moje włóczki" },
+    { target: "matches", label: "Dopasowania" },
+    { target: "catalog", label: "Wzory" },
     { target: "account", label: "Konto" },
   ]);
   assert.ok(navigation.every(({ label }) => label.length > 0));
+  assert.equal(document.querySelector(".app-nav [aria-hidden='true']"), null);
+});
+
+test("shared shell exposes the Rysia brand and SPEC 1.2 visual contract", () => {
+  const document = createDocument();
+  const brand = document.querySelector(".brand-button");
+
+  assert.match(document.title, /^Rysia the Stashbuster\b/);
+  assert.equal(brand.textContent.replace(/\s+/g, " ").trim(), "Rysia the Stashbuster");
+  assert.equal(brand.dataset.viewTarget, "inventory");
+  assert.match(stylesCss, /\.shell\s*\{[^}]*max-width:\s*1360px;/s);
+  assert.match(stylesCss, /\.app-header__inner\s*\{[^}]*max-width:\s*1360px;/s);
+  assert.match(stylesCss, /--font-display:\s*"Fraunces",\s*Georgia,\s*serif;/);
+  assert.match(stylesCss, /--font-ui:\s*"Inter",\s*Arial,\s*sans-serif;/);
+  assert.match(stylesCss, /--surface-soft:\s*#f3eaf8;/i);
+  assert.match(stylesCss, /--plum:\s*#5b294d;/i);
+});
+
+test("every explicit keyboard focus offset follows the 3px plus 2px contract", () => {
+  const focusOffsets = [...stylesCss.matchAll(/outline-offset:\s*([^;]+);/g)]
+    .map((match) => match[1].trim());
+
+  assert.ok(focusOffsets.length > 0);
+  assert.ok(focusOffsets.every((offset) => offset === "2px"));
+});
+
+test("success styles consume the SPEC forest token in both themes", () => {
+  const lightTheme = stylesCss.match(/:root,\s*\[data-theme="light"\]\s*\{([\s\S]*?)\n\}/)?.[1] || "";
+  const darkTheme = stylesCss.match(/\[data-theme="dark"\]\s*\{([\s\S]*?)\n\}/)?.[1] || "";
+  const token = (theme, name) => theme.match(new RegExp(`--${name}:\\s*(#[0-9a-f]{6});`, "i"))?.[1];
+  const luminance = (hex) => {
+    const channels = hex.slice(1).match(/../g).map((value) => {
+      const channel = Number.parseInt(value, 16) / 255;
+      return channel <= 0.04045 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4;
+    });
+    return 0.2126 * channels[0] + 0.7152 * channels[1] + 0.0722 * channels[2];
+  };
+  const contrast = (foreground, background) => {
+    const values = [luminance(foreground), luminance(background)].sort((a, b) => b - a);
+    return (values[0] + 0.05) / (values[1] + 0.05);
+  };
+
+  assert.match(lightTheme, /--forest:\s*#2d765d;/i);
+  assert.match(darkTheme, /--forest:\s*#2e563f;/i);
+  assert.match(lightTheme, /--good:\s*var\(--forest\);/);
+  assert.match(darkTheme, /--good:\s*var\(--forest\);/);
+  for (const theme of [lightTheme, darkTheme]) {
+    const foreground = token(theme, "good-text");
+    const background = token(theme, "surface");
+    assert.ok(foreground);
+    assert.ok(contrast(foreground, background) >= 4.5);
+  }
+  assert.doesNotMatch(stylesCss, /(?:^|\n)\s*color:\s*var\(--good\);/);
+  assert.match(stylesCss, /(?:^|\n)\s*color:\s*var\(--good-text\);/);
+});
+
+test("yarn save text keeps WCAG contrast against its forest background", () => {
+  const lightTheme = stylesCss.match(/:root,\s*\[data-theme="light"\]\s*\{([\s\S]*?)\n\}/)?.[1] || "";
+  const darkTheme = stylesCss.match(/\[data-theme="dark"\]\s*\{([\s\S]*?)\n\}/)?.[1] || "";
+  const buttonRule = stylesCss.match(/(?:^|\n)\.button\s*\{([\s\S]*?)\n\}/)?.[1] || "";
+  const yarnSaveRule = stylesCss.match(/(?:^|\n)\.yarn-save\s*\{([\s\S]*?)\n\}/)?.[1] || "";
+  const declaration = (rule, property) =>
+    rule.match(new RegExp(`(?:^|\\n)\\s*${property}:\\s*([^;]+);`))?.[1].trim();
+  const resolveColor = (theme, value) => {
+    const variable = value.match(/^var\(--([^)]+)\)$/)?.[1];
+    if (!variable) return value;
+    return resolveColor(theme, theme.match(new RegExp(`--${variable}:\\s*([^;]+);`))?.[1].trim());
+  };
+  const luminance = (hex) => {
+    const channels = hex.slice(1).match(/../g).map((value) => {
+      const channel = Number.parseInt(value, 16) / 255;
+      return channel <= 0.04045 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4;
+    });
+    return 0.2126 * channels[0] + 0.7152 * channels[1] + 0.0722 * channels[2];
+  };
+  const contrast = (foreground, background) => {
+    const values = [luminance(foreground), luminance(background)].sort((a, b) => b - a);
+    return (values[0] + 0.05) / (values[1] + 0.05);
+  };
+  const color = declaration(yarnSaveRule, "color") || declaration(buttonRule, "color");
+  const background = declaration(yarnSaveRule, "background");
+
+  for (const theme of [lightTheme, darkTheme]) {
+    assert.ok(contrast(resolveColor(theme, color), resolveColor(theme, background)) >= 4.5);
+  }
+});
+
+test("Fraunces loads and uses only the approved display weights", () => {
+  const document = createDocument();
+  const fontHref = document.querySelector('link[rel="stylesheet"][href*="fonts.googleapis.com"]')?.href || "";
+  const style = document.createElement("style");
+  style.textContent = stylesCss;
+  document.head.append(style);
+  const headingRule = [...style.sheet.cssRules]
+    .find((rule) => rule.selectorText === "h1, h2, h3");
+
+  assert.match(fontHref, /Fraunces:opsz,wght@9\.\.144,500;9\.\.144,600;9\.\.144,650&family=Inter/);
+  assert.doesNotMatch(stylesCss, /font:\s*700[^;]*Fraunces/);
+  assert.equal(headingRule.style.fontWeight, "600");
 });
 
 test("design changes preserve the compact authentication header contract", () => {
@@ -86,7 +186,7 @@ test("design changes preserve accessible theme control and paired artwork source
   for (const image of themedImages) {
     assert.ok(image.dataset.darkSrc, `missing dark source for ${image.id}`);
     assert.match(image.dataset.lightSrc, /^assets\/color-yarn-cat\.v1\.webp$/);
-    assert.match(image.dataset.darkSrc, /^assets\/night-yarn-cat\.v1\.webp$/);
+    assert.equal(image.dataset.darkSrc, "assets/night-yarn-cat.v2.webp");
   }
 
   assert.match(appJs, /window\.MotekThemePolicy/);
@@ -145,6 +245,21 @@ test("design changes preserve hooks used by inventory, catalog and account logic
   assert.match(indexHtml, /client\/catalog-controller\.js/);
   assert.match(appJs, /catalogController/);
   assert.match(appJs, /inventoryAddYarnBtn\.addEventListener/);
+});
+
+test("inventory map uses approved raster assets exposed by the server", () => {
+  for (const asset of [
+    "yarn-ball-lavender.v1.webp",
+    "yarn-ball-plum.v1.webp",
+    "paper-texture.v1.webp",
+    "night-yarn-cat.v2.webp",
+  ]) {
+    assert.match(serverJs, new RegExp(`"/assets/${asset.replaceAll(".", "\\.")}"`));
+  }
+  assert.match(appJs, /slice\(0,\s*8\)/);
+  assert.match(appJs, /assets\/yarn-ball-lavender\.v1\.webp/);
+  assert.match(appJs, /assets\/yarn-ball-plum\.v1\.webp/);
+  assert.match(stylesCss, /assets\/paper-texture\.v1\.webp/);
 });
 
 test("design changes keep the icon control touch-safe and respect reduced motion", () => {

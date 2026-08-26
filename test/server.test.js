@@ -1013,7 +1013,14 @@ test("serwer Motek działa bezpiecznie", async (t) => {
       );
       assert.match(await techniquePolicyResponse.text(), /MotekTechniquePolicy/);
 
-      for (const assetName of ["color-yarn-cat.v1.webp", "night-yarn-cat.v1.webp"]) {
+      for (const assetName of [
+        "color-yarn-cat.v1.webp",
+        "night-yarn-cat.v2.webp",
+        "paper-texture.v1.webp",
+        "yarn-ball-lavender.v1.webp",
+        "yarn-ball-plum.v1.webp",
+        "match-loop-lavender.v1.webp",
+      ]) {
         const assetResponse = await fetch(`${baseUrl}/assets/${assetName}`);
         assert.equal(assetResponse.status, 200);
         assert.match(assetResponse.headers.get("content-type"), /^image\/webp/);

@@ -88,6 +88,16 @@ const appViews = [...document.querySelectorAll(".app-view")];
 const viewButtons = [...document.querySelectorAll("[data-view-target]")];
 const inventoryMatchBtn = document.getElementById("inventoryMatchBtn");
 const inventoryAddYarnBtn = document.getElementById("inventoryAddYarnBtn");
+const inventoryMapView = document.getElementById("inventoryMapView");
+const inventoryFullView = document.getElementById("inventoryFullView");
+const inventoryYarnMap = document.getElementById("inventoryYarnMap");
+const inventoryYarnDetails = document.getElementById("inventoryYarnDetails");
+const inventoryYarnDetailName = document.getElementById("inventoryYarnDetailName");
+const inventoryYarnDetailMeta = document.getElementById("inventoryYarnDetailMeta");
+const inventoryYarnDetailAmount = document.getElementById("inventoryYarnDetailAmount");
+const inventoryFullTitle = document.getElementById("inventoryFullTitle");
+const showFullInventoryBtn = document.getElementById("showFullInventoryBtn");
+const showInventoryMapBtn = document.getElementById("showInventoryMapBtn");
 const backToInventoryBtn = document.getElementById("backToInventoryBtn");
 const networkStatus = document.getElementById("networkStatus");
 const copyrightNotice = document.getElementById("copyrightNotice");
@@ -215,6 +225,8 @@ let yarnVersion = null;
 let projectVersion = null;
 let activeProject = null;
 let onboardingDismissed = false;
+let inventoryDisplay = "map";
+let selectedInventoryYarnId = null;
 let yarnFormSequence = 0;
 let activeView = "account";
 let catalogDisplayLimit = 12;
@@ -1505,6 +1517,65 @@ function renderOnboarding(yarns) {
   onboarding.hidden = !isAuthenticated || yarns.length > 0 || onboardingDismissed;
 }
 
+function setInventoryDisplay(display, { focus = false } = {}) {
+  inventoryDisplay = display === "list" ? "list" : "map";
+  inventoryMapView.hidden = inventoryDisplay !== "map";
+  inventoryFullView.hidden = inventoryDisplay !== "list";
+  if (focus) {
+    const heading = inventoryDisplay === "list" ? inventoryFullTitle : document.getElementById("inventoryMapTitle");
+    heading.focus({ preventScroll: true });
+    heading.scrollIntoView({ behavior: scrollBehavior, block: "start" });
+  }
+}
+
+function selectInventoryYarn(yarn) {
+  selectedInventoryYarnId = String(yarn.id);
+  inventoryYarnMap.querySelectorAll(".inventory-yarn-node").forEach((node) => {
+    node.setAttribute("aria-pressed", String(node.dataset.id === selectedInventoryYarnId));
+  });
+  inventoryYarnDetailName.textContent = yarn.name;
+  inventoryYarnDetailMeta.textContent = `${yarn.color} · ${formatYarnMaterials(yarn.materials)} · ${yarn.weightClass}`;
+  inventoryYarnDetailAmount.textContent = `${formatNumber(yarn.length)} m · ${formatNumber(yarn.weight)} g`;
+  inventoryYarnDetails.hidden = false;
+}
+
+function renderInventoryMap(yarns) {
+  const visibleYarns = yarns.slice(0, 8);
+  const selected = visibleYarns.find((yarn) => String(yarn.id) === selectedInventoryYarnId)
+    || visibleYarns[0];
+  const nodes = visibleYarns.map((yarn, index) => {
+    const button = document.createElement("button");
+    const image = document.createElement("img");
+    const label = document.createElement("strong");
+    const amount = document.createElement("span");
+
+    button.className = "inventory-yarn-node";
+    button.type = "button";
+    button.dataset.id = yarn.id;
+    button.setAttribute("aria-pressed", "false");
+    image.src = index % 2
+      ? "assets/yarn-ball-plum.v1.webp"
+      : "assets/yarn-ball-lavender.v1.webp";
+    image.alt = "";
+    image.loading = "lazy";
+    label.textContent = yarn.name;
+    amount.textContent = `${formatNumber(yarn.weight)} g · ${formatNumber(yarn.length)} m`;
+    button.append(image, label, amount);
+    button.addEventListener("click", () => selectInventoryYarn(yarn));
+    return button;
+  });
+
+  inventoryYarnMap.replaceChildren(...nodes);
+  showFullInventoryBtn.hidden = yarns.length === 0;
+  if (selected) {
+    selectInventoryYarn(selected);
+  } else {
+    selectedInventoryYarnId = null;
+    inventoryYarnDetails.hidden = true;
+    setInventoryDisplay("map");
+  }
+}
+
 async function deleteYarn(id) {
   if (!isAuthenticated) {
     throw new Error("Zaloguj się, aby zmieniać swój magazyn włóczek.");
@@ -1869,12 +1940,6 @@ function formatPatternName(value) {
   return name || "Wzór bez nazwy";
 }
 
-function formatPatternLanguage(value) {
-  if (value === "pl") return "Wzór po polsku";
-  if (value === "en") return "Wzór po angielsku";
-  return "Język nieustalony";
-}
-
 function formatProjectType(value) {
   return getProjectTypeLabel(value);
 }
@@ -2031,7 +2096,7 @@ function renderPatternCatalog() {
     return;
   }
 
-  visiblePatterns.forEach((pattern) => {
+  visiblePatterns.forEach((pattern, index) => {
     const card = patternTemplate.content.firstElementChild.cloneNode(true);
     const requirements = Array.isArray(pattern.yarnRequirements)
       ? pattern.yarnRequirements
@@ -2039,13 +2104,21 @@ function renderPatternCatalog() {
     const materials = Array.isArray(pattern.materials) ? pattern.materials : [];
     const title = card.querySelector("h3");
 
+    if (index === 0) card.classList.add("pattern-card--featured");
+    else if (index <= 3) card.classList.add("pattern-card--compact");
+
     title.textContent = formatPatternName(pattern.name);
     title.title = pattern.name || "";
     card
       .querySelector(".pattern-card__details summary")
       .setAttribute("aria-label", `Parametry włóczki: ${formatPatternName(pattern.name)}`);
-    card.querySelector(".pattern-card__kicker").textContent =
-      `${formatProjectType(pattern.projectType)} · ${formatPatternLanguage(pattern.sourceLanguage)}`;
+    card.querySelector(".pattern-card__kicker").textContent = `${formatProjectType(pattern.projectType)} · ${
+      pattern.technique === "crochet"
+        ? "Szydełko"
+        : pattern.technique === "knitting"
+          ? "Druty"
+          : "Technika nieustalona"
+    }`;
     const description = card.querySelector(".pattern-card__description");
     description.textContent = pattern.description?.trim() || "";
     description.hidden = !description.textContent;
@@ -2054,8 +2127,9 @@ function renderPatternCatalog() {
         const sourceUrl = new URL(pattern.officialSourceUrl, window.location.origin);
         if (sourceUrl.protocol === "https:") {
           const sourceLink = document.createElement("a");
-          sourceLink.className = "pattern-card__source";
-          sourceLink.textContent = "Oficjalne źródło";
+          sourceLink.className = "button pattern-card__source";
+          sourceLink.textContent = "Zobacz wzór";
+          sourceLink.setAttribute("aria-label", `Zobacz wzór: ${formatPatternName(pattern.name)}`);
           sourceLink.href = sourceUrl.href;
           sourceLink.target = "_blank";
           sourceLink.rel = "noopener noreferrer";
@@ -2067,6 +2141,7 @@ function renderPatternCatalog() {
     }
     card.querySelector(".pattern-card__facts").textContent =
       formatPatternYarnFact(pattern, formatRatio);
+    card.querySelector(".pattern-card__details").open = index === 0;
 
     const status = card.querySelector(".status-pill");
     status.textContent = pattern.needsReview ? "Do sprawdzenia" : "Zweryfikowany";
@@ -2211,24 +2286,42 @@ async function renderResults() {
       results.appendChild(heading);
     }
 
-    groupMatchesByPattern(matches).forEach((group) => {
+    groupMatchesByPattern(matches).forEach((group, groupIndex) => {
       const card = resultTemplate.content.firstElementChild.cloneNode(true);
+      const featured = groupIndex === 0;
       const variantCount = group.variants.length;
       const bestScore = Math.max(...group.variants.map((item) => item.total));
+      card.classList.add(featured ? "result-card--featured" : "result-card--alternative");
       card.querySelector("h3").textContent = group.name;
       card.querySelector("h3").title = group.name;
       card.querySelector(".result-card__meta").textContent = formatVariantCount(variantCount);
       card.querySelector(".result-card__desc").textContent = group.description;
-      card.querySelector(".score-pill").textContent = `Najlepiej ${bestScore}%`;
+      card.querySelector(".score-pill__text").textContent = `Najlepiej ${bestScore}%`;
       const catalogLink = card.querySelector(".result-card__catalog-link");
       catalogLink.setAttribute("aria-label", `Zobacz ${group.name} w katalogu`);
       catalogLink.addEventListener("click", () => showPatternInCatalog(group.name));
       card
         .querySelector(".match-variants")
         .replaceChildren(
-          ...group.variants.map((item, index) => createMatchVariant(item, index === 0))
+          ...group.variants.map((item, index) => createMatchVariant(item, featured && index === 0))
         );
-      results.appendChild(card);
+      if (featured) {
+        card.querySelector(".match-variant__start")?.classList.remove("button--ghost");
+        results.appendChild(card);
+        return;
+      }
+
+      const row = document.createElement("details");
+      const rowSummary = document.createElement("summary");
+      const rowScore = document.createElement("span");
+      row.className = "result-card result-card--alternative";
+      rowSummary.className = "result-card__row";
+      rowScore.className = "result-card__row-score";
+      rowScore.textContent = `Najlepiej ${bestScore}%`;
+      rowSummary.append(card.querySelector("h3"), rowScore);
+      card.className = "result-card__expanded";
+      row.append(rowSummary, card);
+      results.appendChild(row);
     });
 
     const possible = diagnostics.filter(({ status }) => status === "possible_unknown_material");
@@ -2254,10 +2347,12 @@ async function renderSummary(loadedYarns = null) {
   if (!isAuthenticated) {
     summary.textContent = "Twój prywatny magazyn pojawi się tutaj po zalogowaniu.";
     inventoryStats?.setAttribute("aria-busy", "false");
+    renderInventoryMap([]);
     return;
   }
 
   const yarns = loadedYarns || await loadYarns();
+  renderInventoryMap(yarns);
   const totalLength = yarns.reduce((sum, yarn) => sum + yarn.length, 0);
   const totalWeight = yarns.reduce((sum, yarn) => sum + yarn.weight, 0);
   const colorCount = new Set(yarns.map((yarn) => yarn.color).filter(Boolean)).size;
@@ -3124,6 +3219,7 @@ addPatternRequirementBtn.addEventListener("click", () => {
 patternAddForm.addEventListener("submit", saveNewPattern);
 
 addYarnBtn.addEventListener("click", () => {
+  setInventoryDisplay("list");
   yarnRefreshGeneration += 1;
   const { card, created } = ensureSingleNewYarnCard(
     yarnList.querySelectorAll(".yarn-card"),
@@ -3143,6 +3239,14 @@ addYarnBtn.addEventListener("click", () => {
 
 inventoryAddYarnBtn.addEventListener("click", () => {
   addYarnBtn.click();
+});
+
+showFullInventoryBtn.addEventListener("click", () => {
+  setInventoryDisplay("list", { focus: true });
+});
+
+showInventoryMapBtn.addEventListener("click", () => {
+  setInventoryDisplay("map", { focus: true });
 });
 
 onboardingAddYarnBtn.addEventListener("click", () => {

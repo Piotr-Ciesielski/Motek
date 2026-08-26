@@ -3,34 +3,33 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Motek - dobierz wzór do włóczek</title>
+    <title>Rysia the Stashbuster — dobierz wzór do włóczek</title>
     <link rel="icon" href="favicon.svg" type="image/svg+xml" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Inter:wght@400;500;600;700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,650&family=Inter:wght@400;500;600;700&display=swap"
       rel="stylesheet"
     />
     <script src="theme-policy.js?v=2.0.0-alpha.39"></script>
-    <link rel="stylesheet" href="styles.css?v=2.0.0-alpha.39&rev=d644b6e" />
+    <link rel="stylesheet" href="styles.css?v=2.0.0-alpha.39&rev=876e7b5" />
   </head>
   <body class="auth-logged-out">
     <a class="skip-link" href="#main-content">Przejdź do głównej treści</a>
     <header class="app-header">
       <div class="app-header__inner">
-        <button class="brand-button" type="button" data-view-target="inventory" aria-label="Przejdź do magazynu">
-          <span class="brand-mark" aria-hidden="true">M</span>
-          <span>Motek</span>
+        <button class="brand-button" type="button" data-view-target="inventory" aria-label="Przejdź do moich włóczek">
+          <span>Rysia the Stashbuster</span>
         </button>
         <nav class="app-nav" aria-label="Główna nawigacja">
           <button class="app-nav__button" type="button" data-view-target="inventory">
-            <span>Magazyn</span>
+            <span>Moje włóczki</span>
           </button>
           <button class="app-nav__button" type="button" data-view-target="matches">
-            <span>Dopasowanie</span>
+            <span>Dopasowania</span>
           </button>
           <button class="app-nav__button" type="button" data-view-target="catalog">
-            <span>Katalog</span>
+            <span>Wzory</span>
           </button>
           <button class="app-nav__button" type="button" data-view-target="account">
             <span>Konto</span>
@@ -57,11 +56,11 @@
             class="auth-visual__image"
             src="assets/color-yarn-cat.v1.webp"
             data-light-src="assets/color-yarn-cat.v1.webp"
-            data-dark-src="assets/night-yarn-cat.v1.webp"
+            data-dark-src="assets/night-yarn-cat.v2.webp"
             alt="Kolorowe włóczki i kot w pracowni"
           />
         </aside>
-      <section class="panel auth-panel" aria-labelledby="authTitle">
+      <section class="panel auth-panel account-sheet" aria-labelledby="authTitle">
         <div class="panel__header">
           <div>
             <p class="eyebrow">Konto</p>
@@ -172,8 +171,6 @@
         </form>
 
         <div id="authLoggedIn" class="auth-logged-in" hidden>
-          <p id="authProfileSummary">Zalogowano jako:</p>
-          <p class="field-hint"><a href="/informacje-prawne#regulamin">Przeczytaj regulamin, prywatność i prawa autorskie.</a></p>
           <section id="legalAcceptanceGate" class="legal-acceptance-gate" hidden aria-labelledby="legalAcceptanceTitle">
             <h3 id="legalAcceptanceTitle">Potwierdź aktualny regulamin</h3>
             <p>Przed dalszym korzystaniem z prywatnych funkcji przeczytaj aktualne informacje prawne.</p>
@@ -190,6 +187,12 @@
               <a href="#logoutBtn">Wyloguj się</a> lub <a id="legalDeleteAccountLink" href="#deleteAccountForm">usuń konto</a>, jeśli nie chcesz zaakceptować zmian.
             </p>
           </section>
+          <p id="authProfileSummary">Zalogowano jako:</p>
+          <nav class="account-legal-links" aria-label="Dokumenty konta">
+            <a href="/informacje-prawne#regulamin">Regulamin</a>
+            <a href="/informacje-prawne#prywatnosc">Prywatność</a>
+            <a href="/informacje-prawne#prawa-autorskie">Prawa autorskie</a>
+          </nav>
           <section class="account-security-zone" aria-labelledby="changePasswordTitle">
             <div class="account-security-zone__header">
               <div>
@@ -294,7 +297,6 @@
               </div>
               <div class="inventory-heading__actions">
                 <button id="inventoryMatchBtn" class="button" type="button">Dobierz wzór <span aria-hidden="true">→</span></button>
-                <button id="inventoryAddYarnBtn" class="button button--ghost" type="button">＋ Dodaj motek</button>
               </div>
             </div>
             <figure class="inventory-layout__visual">
@@ -302,7 +304,7 @@
                 id="inventoryThemeImage"
                 src="assets/color-yarn-cat.v1.webp"
                 data-light-src="assets/color-yarn-cat.v1.webp"
-                data-dark-src="assets/night-yarn-cat.v1.webp"
+                data-dark-src="assets/night-yarn-cat.v2.webp"
                 alt="Kolorowe włóczki i kot w pracowni"
               />
             </figure>
@@ -349,20 +351,55 @@
               </div>
             </section>
 
-            <section class="inventory-stock">
+            <section id="inventoryMapView" class="inventory-map-view" aria-labelledby="inventoryMapTitle">
+              <div class="inventory-map-view__header">
+                <div>
+                  <p class="eyebrow">Twój zapas</p>
+                  <h2 id="inventoryMapTitle" tabindex="-1">Schowek włóczek</h2>
+                </div>
+                <button id="showFullInventoryBtn" class="link-button" type="button">Pokaż cały schowek</button>
+              </div>
+              <div class="inventory-map-workspace">
+                <span class="inventory-map-thread" aria-hidden="true"></span>
+                <div class="inventory-map-path">
+                  <div id="inventoryYarnMap" class="inventory-yarn-map" aria-label="Reprezentatywne motki w schowku"></div>
+                  <button id="inventoryAddYarnBtn" class="inventory-map-add" type="button">
+                    <span aria-hidden="true">+</span>
+                    Dodaj motek
+                  </button>
+                </div>
+                <article id="inventoryYarnDetails" class="inventory-yarn-details" aria-labelledby="inventoryYarnDetailName" hidden>
+                  <p class="eyebrow">Wybrany motek</p>
+                  <h3 id="inventoryYarnDetailName"></h3>
+                  <p id="inventoryYarnDetailMeta"></p>
+                  <p id="inventoryYarnDetailAmount"></p>
+                </article>
+              </div>
+            </section>
+
+            <section id="inventoryFullView" class="inventory-full-view" aria-labelledby="inventoryFullTitle" hidden>
+              <div class="inventory-full-view__header">
+                <div>
+                  <p class="eyebrow">Pełna lista</p>
+                  <h2 id="inventoryFullTitle" tabindex="-1">Cały schowek</h2>
+                </div>
+                <button id="showInventoryMapBtn" class="link-button" type="button">Wróć do mapy</button>
+              </div>
+              <section class="inventory-stock">
               <article class="panel inventory-panel">
                 <div class="panel__header">
                   <div>
                     <h2>Twój zapas</h2>
                     <p>Zapisane motki są pokazane w zwartej formie. Rozwiń tylko ten, który chcesz zmienić.</p>
                   </div>
-                  <button id="addYarnBtn" class="button button--ghost" type="button">
+                  <button id="addYarnBtn" class="button button--ghost" type="button" hidden>
                     + Dodaj motek
                   </button>
                 </div>
                 <div id="yarnList" class="yarn-list"></div>
                 <div id="storageMessage" class="storage-message" role="status" aria-live="polite"></div>
               </article>
+              </section>
             </section>
           </div>
         </div>
@@ -373,7 +410,7 @@
           <div class="matches-hero__copy">
             <div class="page-heading">
               <div>
-                <h1 id="matchesPageTitle">Dopasuj włóczkę</h1>
+                <h1 id="matchesPageTitle">To pasuje do Twoich motków</h1>
               </div>
               <button id="backToInventoryBtn" class="button button--ghost" type="button">Wróć do magazynu</button>
             </div>
@@ -383,7 +420,7 @@
               id="matchesThemeImage"
               src="assets/color-yarn-cat.v1.webp"
               data-light-src="assets/color-yarn-cat.v1.webp"
-              data-dark-src="assets/night-yarn-cat.v1.webp"
+              data-dark-src="assets/night-yarn-cat.v2.webp"
               alt="Kolorowe włóczki i kot w pracowni"
             />
           </figure>
@@ -433,14 +470,14 @@
       <section class="catalog-panel">
         <div class="catalog-hero">
           <div class="catalog-hero__copy">
-            <h1 id="catalogTitle">Katalog wzorów</h1>
+            <h1 id="catalogTitle">Wzory, które zjadają zapasy</h1>
           </div>
           <figure class="catalog-theme-visual">
             <img
               id="catalogThemeImage"
               src="assets/color-yarn-cat.v1.webp"
               data-light-src="assets/color-yarn-cat.v1.webp"
-              data-dark-src="assets/night-yarn-cat.v1.webp"
+              data-dark-src="assets/night-yarn-cat.v2.webp"
               alt="Kolorowe włóczki i kot w pracowni"
             />
           </figure>
@@ -726,7 +763,10 @@
             <h3></h3>
             <p class="result-card__meta"></p>
           </div>
-          <div class="score-pill"></div>
+          <div class="score-pill">
+            <img src="assets/match-loop-lavender.v1.webp" alt="" />
+            <span class="score-pill__text"></span>
+          </div>
         </div>
         <p class="result-card__desc"></p>
         <div class="match-variants"></div>
@@ -841,6 +881,6 @@
     <script src="client/dom-utils.js"></script>
     <script src="client/catalog-controller.js?v=2.0.0-alpha.39&rev=ed496cd"></script>
     <script src="client/idle-session-controller.js"></script>
-    <script src="app.js?v=2.0.0-alpha.39&rev=09156c2"></script>
+    <script src="app.js?v=2.0.0-alpha.39&rev=a9a3444"></script>
   </body>
 </html>

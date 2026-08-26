@@ -208,3 +208,64 @@ test('przycisk doładowania podaje liczbę kart, które pokaże', async () => {
   assert.equal(dom.window.document.getElementById('loadMorePatternsBtn').textContent, 'Pokaż 3 kolejne wzory');
   dom.window.close();
 });
+
+test('katalog wyróżnia pierwszy wzór i najwyżej trzy kolejne lekkie karty', async () => {
+  const patterns = Array.from({ length: 5 }, (_, index) => ({
+    id: `featured-${index}`,
+    name: `Wzór ${index}`,
+    description: `Opis ${index}`,
+    projectType: 'sweater',
+    sourceLanguage: 'pl',
+    technique: 'knitting',
+    needsReview: false,
+    officialSourceUrl: `https://example.test/pattern-${index}`,
+    materials: ['wełna'],
+    yarnRequirements: [{ yarn_name: 'Merino', role: 'główna' }],
+  }));
+  const dom = loadApp(patterns);
+  await new Promise((resolve) => dom.window.setTimeout(resolve, 20));
+
+  try {
+    const cards = [...dom.window.document.querySelectorAll('#patternCatalog .pattern-card')];
+    assert.equal(cards.length, 5);
+    assert.equal(cards.filter((card) => card.classList.contains('pattern-card--featured')).length, 1);
+    assert.equal(cards.filter((card) => card.classList.contains('pattern-card--compact')).length, 3);
+    assert.ok(cards[0].classList.contains('pattern-card--featured'));
+    assert.equal(cards[4].classList.contains('pattern-card--compact'), false);
+    assert.equal(cards[0].querySelector('.pattern-card__details').open, true);
+    assert.match(cards[0].querySelector('.pattern-card__kicker').textContent, /Sweter · Druty/);
+    assert.equal(cards[0].querySelector('.pattern-card__source').textContent, 'Zobacz wzór');
+    assert.ok(cards[0].querySelector('.pattern-card__source').classList.contains('button'));
+    assert.equal(cards.some((card) => card.querySelector('img')), false);
+  } finally {
+    dom.window.close();
+  }
+});
+
+test('akcje wzorów zachowują krótki tekst i rozróżniają nazwy dla czytnika ekranu', async () => {
+  const patterns = ['Atlas', 'Północ'].map((name, index) => ({
+    id: `action-${index}`,
+    name,
+    description: 'Opis',
+    projectType: 'sweater',
+    sourceLanguage: 'pl',
+    technique: 'knitting',
+    needsReview: false,
+    officialSourceUrl: `https://example.test/${index}`,
+    materials: [],
+    yarnRequirements: [],
+  }));
+  const dom = loadApp(patterns);
+  await new Promise((resolve) => dom.window.setTimeout(resolve, 20));
+
+  try {
+    const links = [...dom.window.document.querySelectorAll('#patternCatalog .pattern-card__source')];
+    assert.deepEqual(links.map((link) => link.textContent), ['Zobacz wzór', 'Zobacz wzór']);
+    assert.deepEqual(links.map((link) => link.getAttribute('aria-label')), [
+      'Zobacz wzór: Atlas',
+      'Zobacz wzór: Północ',
+    ]);
+  } finally {
+    dom.window.close();
+  }
+});
