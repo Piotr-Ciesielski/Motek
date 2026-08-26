@@ -86,6 +86,27 @@ test("inventory follows the ds1 editorial composition", () => {
   assert.equal(document.getElementById("showFullInventoryBtn").textContent.trim(), "Pokaż cały schowek →");
 });
 
+test("ds1 keeps the stash on a centered canvas and gives each map yarn a deliberate color", () => {
+  assert.match(
+    stylesCss,
+    /#inventoryView \.inventory-layout\s*\{[\s\S]*?max-width:\s*1440px;/,
+    "the map must not spread across an unbounded viewport",
+  );
+  assert.match(
+    stylesCss,
+    /#inventoryView \.inventory-layout__visual\s*\{[\s\S]*?left:\s*auto;[\s\S]*?right:\s*0;/,
+    "the hero artwork belongs on the right side of the composition",
+  );
+  assert.match(
+    appJs,
+    /const inventoryPalette = \["peach", "lavender", "cobalt", "oat", "navy", "pumpkin", "coral", "plum"\];/,
+  );
+  assert.match(appJs, /button\.classList\.add\(`inventory-yarn-node--\$\{inventoryPalette\[index % inventoryPalette\.length\]\}`\);/);
+  for (const color of ["peach", "lavender", "cobalt", "oat", "navy", "pumpkin", "coral", "plum"]) {
+    assert.match(stylesCss, new RegExp(`inventory-yarn-node--${color} img`));
+  }
+});
+
 test("inventory map keeps one detail sheet, the full list and protected hooks", () => {
   const document = new JSDOM(indexHtml).window.document;
   const mapView = document.getElementById("inventoryMapView");

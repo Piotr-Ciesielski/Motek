@@ -13,7 +13,9 @@
 - Tytuł „Mój schowek” i podsumowanie zostały przeniesione do redakcyjnego hero.
 - Usunięto widoczną, zdublowaną akcję „Dobierz wzór”.
 - „Pokaż cały schowek” jest akcją w górnej części widoku.
+- Kompozycja jest ograniczona do centralnego płótna 1440 px; stare reguły magazynu nie sterują już pozycjami hero i mapy.
 - Kot, mapa motków, pojedynczy arkusz szczegółów i węzeł dodawania tworzą jedną kompozycję.
+- Motki dostają osiem powtarzalnych wariantów barwnych zgodnych z jasnym ds1, a arkusz szczegółów udostępnia działające akcje „Modyfikuj” i „Dobierz wzór”.
 - Zachowano produkcyjne hooki, obsługę danych, oba motywy i pionową ścieżkę mobilną.
 
 ## Bramka wizualna

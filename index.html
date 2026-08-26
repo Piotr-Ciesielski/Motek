@@ -12,7 +12,7 @@
       rel="stylesheet"
     />
     <script src="theme-policy.js?v=2.0.0-alpha.39"></script>
-    <link rel="stylesheet" href="styles.css?v=2.0.0-alpha.39&rev=ef0f43f" />
+    <link rel="stylesheet" href="styles.css?v=2.0.0-alpha.39&rev=2d97193" />
   </head>
   <body class="auth-logged-out">
     <a class="skip-link" href="#main-content">Przejdź do głównej treści</a>
@@ -372,6 +372,10 @@
                   <h3 id="inventoryYarnDetailName"></h3>
                   <p id="inventoryYarnDetailMeta"></p>
                   <p id="inventoryYarnDetailAmount"></p>
+                  <div class="inventory-yarn-details__actions">
+                    <button id="inventoryEditSelectedBtn" class="button button--ghost" type="button">Modyfikuj</button>
+                    <button id="inventoryDetailsMatchBtn" class="button" type="button">Dobierz wzór <span aria-hidden="true">→</span></button>
+                  </div>
                 </article>
               </div>
             </section>
@@ -880,6 +884,6 @@
     <script src="client/dom-utils.js"></script>
     <script src="client/catalog-controller.js?v=2.0.0-alpha.39&rev=ed496cd"></script>
     <script src="client/idle-session-controller.js"></script>
-    <script src="app.js?v=2.0.0-alpha.39&rev=a9a3444"></script>
+    <script src="app.js?v=2.0.0-alpha.39&rev=d6833c9"></script>
   </body>
 </html>

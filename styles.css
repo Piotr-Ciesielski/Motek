@@ -4990,3 +4990,259 @@ body:has(#inventoryView:not([hidden])) .shell {
     height: 150px;
   }
 }
+
+/* ds1 correction — one bounded composition, isolated from earlier inventory layouts. */
+body:has(#inventoryView:not([hidden])) .app-header__inner {
+  max-width: 1440px;
+  padding-inline: 24px;
+}
+
+#inventoryView .inventory-layout {
+  display: block;
+  width: calc(100% - 48px);
+  max-width: 1440px;
+  min-height: 0;
+  margin: 0 auto;
+  padding-bottom: 48px;
+}
+
+#inventoryView .inventory-hero {
+  display: block;
+  min-height: 405px;
+  overflow: visible;
+}
+
+#inventoryView .inventory-heading {
+  display: block;
+  width: 100%;
+  max-width: none;
+  min-height: 405px;
+  margin: 0;
+  padding: 132px 0 0;
+}
+
+#inventoryView .inventory-heading__copy,
+#inventoryView .inventory-heading > div:first-child {
+  max-width: 48%;
+  padding: 0;
+  transform: none;
+}
+
+#inventoryView .inventory-heading h1 {
+  max-width: none;
+  font: 500 clamp(3.5rem, 5.3vw, 5.25rem) / 0.94 var(--font-display);
+  letter-spacing: -0.05em;
+  text-wrap: nowrap;
+}
+
+#inventoryView .inventory-heading__actions {
+  position: absolute;
+  top: 28px;
+  right: 0;
+  display: block;
+  margin: 0;
+}
+
+#inventoryView .inventory-stats {
+  gap: 0;
+  margin-top: 17px;
+}
+
+#inventoryView .inventory-stat strong,
+#inventoryView .inventory-stat small {
+  font-family: var(--font-display);
+  font-size: 1.14rem;
+  font-weight: 500;
+}
+
+#inventoryView .inventory-layout__visual {
+  position: absolute;
+  top: 44px;
+  left: auto;
+  right: 0;
+  width: min(53%, 720px);
+  height: 322px;
+  min-height: 0;
+  border: 0;
+  border-radius: 0;
+  -webkit-mask-image: linear-gradient(to right, transparent 0, #000 24%, #000 100%), linear-gradient(to bottom, #000 0, #000 74%, transparent 100%);
+  mask-image: linear-gradient(to right, transparent 0, #000 24%, #000 100%), linear-gradient(to bottom, #000 0, #000 74%, transparent 100%);
+}
+
+#inventoryView .inventory-layout__visual img {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  object-position: 60% 48%;
+}
+
+#inventoryView .inventory-layout__content {
+  display: block;
+  max-width: none;
+  margin: -18px 0 0;
+}
+
+#inventoryView .inventory-map-view {
+  min-height: 655px;
+  padding: 0 36px 148px;
+}
+
+#inventoryView .inventory-map-view::after {
+  right: 0;
+  bottom: -4px;
+  left: 0;
+  height: 150px;
+  background-position: center 100%;
+  background-size: 100% auto;
+}
+
+#inventoryView .inventory-map-workspace {
+  min-height: 500px;
+}
+
+#inventoryView .inventory-map-thread {
+  display: none;
+}
+
+#inventoryView .inventory-yarn-map {
+  height: 500px;
+}
+
+#inventoryView .inventory-yarn-node {
+  width: 138px;
+  min-height: 138px;
+  padding: 4px;
+}
+
+#inventoryView .inventory-yarn-node:nth-child(1) { top: 8px; left: 0; }
+#inventoryView .inventory-yarn-node:nth-child(2) { top: 0; left: 23%; }
+#inventoryView .inventory-yarn-node:nth-child(3) { top: 42px; left: 51%; }
+#inventoryView .inventory-yarn-node:nth-child(4) { top: 82px; right: 0; left: auto; }
+#inventoryView .inventory-yarn-node:nth-child(5) { top: 252px; left: 1%; }
+#inventoryView .inventory-yarn-node:nth-child(6) { top: 342px; left: 27%; }
+#inventoryView .inventory-yarn-node:nth-child(7) { top: 350px; left: 52%; }
+#inventoryView .inventory-yarn-node:nth-child(8) { top: 320px; right: 2%; left: auto; }
+
+#inventoryView .inventory-yarn-node img {
+  width: 96px;
+  height: 96px;
+}
+
+#inventoryView .inventory-yarn-node--peach img { filter: hue-rotate(316deg) saturate(1.35) brightness(1.15) drop-shadow(0 6px 8px rgb(21 19 52 / 18%)); }
+#inventoryView .inventory-yarn-node--lavender img { filter: drop-shadow(0 6px 8px rgb(21 19 52 / 18%)); }
+#inventoryView .inventory-yarn-node--cobalt img { filter: hue-rotate(137deg) saturate(1.75) brightness(0.84) drop-shadow(0 6px 8px rgb(21 19 52 / 18%)); }
+#inventoryView .inventory-yarn-node--oat img { filter: sepia(0.7) saturate(0.45) brightness(1.3) drop-shadow(0 6px 8px rgb(21 19 52 / 18%)); }
+#inventoryView .inventory-yarn-node--navy img { filter: hue-rotate(144deg) saturate(1.5) brightness(0.58) drop-shadow(0 6px 8px rgb(21 19 52 / 18%)); }
+#inventoryView .inventory-yarn-node--pumpkin img { filter: hue-rotate(304deg) saturate(1.65) brightness(1.08) drop-shadow(0 6px 8px rgb(21 19 52 / 18%)); }
+#inventoryView .inventory-yarn-node--coral img { filter: hue-rotate(326deg) saturate(1.45) brightness(1.16) drop-shadow(0 6px 8px rgb(21 19 52 / 18%)); }
+#inventoryView .inventory-yarn-node--plum img { filter: brightness(0.72) saturate(1.22) drop-shadow(0 6px 8px rgb(21 19 52 / 18%)); }
+
+#inventoryView .inventory-yarn-node[aria-pressed="true"] {
+  border-color: var(--lavender);
+  background: rgb(255 253 248 / 74%);
+  box-shadow: 0 0 0 4px rgb(168 139 232 / 22%);
+}
+
+#inventoryView .inventory-yarn-node strong {
+  font: 500 1rem / 1.05 var(--font-display);
+}
+
+#inventoryView .inventory-yarn-node span {
+  margin-top: 4px;
+  font-size: 0.78rem;
+}
+
+#inventoryView .inventory-yarn-details {
+  top: 165px;
+  left: 39%;
+  width: 350px;
+  padding: 28px 30px 24px;
+  border-color: rgb(216 197 161 / 72%);
+  border-radius: 14px;
+  background: var(--surface) url("assets/paper-texture.v1.webp") repeat;
+  box-shadow: 0 18px 34px rgb(21 19 52 / 14%);
+}
+
+#inventoryView .inventory-yarn-details h3 {
+  margin-top: 10px;
+  font: 500 2rem / 1 var(--font-display);
+}
+
+#inventoryView .inventory-yarn-details__actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+#inventoryView .inventory-yarn-details__actions .button {
+  min-height: 38px;
+  padding: 8px 12px;
+  font-size: 0.78rem;
+}
+
+#inventoryView .inventory-map-add {
+  right: 1%;
+  bottom: 8px;
+  width: 102px;
+  min-width: 102px;
+  min-height: 102px;
+  background-color: var(--surface);
+  box-shadow: 0 6px 18px rgb(21 19 52 / 10%);
+}
+
+@media (max-width: 767px) {
+  #inventoryView .inventory-layout {
+    width: 100%;
+    padding-bottom: 28px;
+  }
+
+  #inventoryView .inventory-heading {
+    min-height: 415px;
+    padding: 102px 22px 0;
+  }
+
+  #inventoryView .inventory-heading__copy,
+  #inventoryView .inventory-heading > div:first-child {
+    max-width: 100%;
+  }
+
+  #inventoryView .inventory-heading h1 {
+    font-size: clamp(3rem, 14vw, 4rem);
+    text-wrap: balance;
+  }
+
+  #inventoryView .inventory-heading__actions {
+    top: 50px;
+    right: 22px;
+  }
+
+  #inventoryView .inventory-layout__visual {
+    top: 180px;
+    right: 0;
+    width: 100%;
+    height: 250px;
+  }
+
+  #inventoryView .inventory-layout__content {
+    margin-top: -4px;
+  }
+
+  #inventoryView .inventory-map-view {
+    min-height: 0;
+    padding: 0 18px 150px;
+  }
+
+  #inventoryView .inventory-yarn-map {
+    height: auto;
+  }
+
+  #inventoryView .inventory-yarn-node,
+  #inventoryView .inventory-yarn-node:nth-child(n) {
+    width: 100%;
+    min-height: 96px;
+  }
+
+  #inventoryView .inventory-yarn-details {
+    width: 100%;
+  }
+}

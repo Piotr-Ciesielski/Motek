@@ -95,6 +95,8 @@ const inventoryYarnDetails = document.getElementById("inventoryYarnDetails");
 const inventoryYarnDetailName = document.getElementById("inventoryYarnDetailName");
 const inventoryYarnDetailMeta = document.getElementById("inventoryYarnDetailMeta");
 const inventoryYarnDetailAmount = document.getElementById("inventoryYarnDetailAmount");
+const inventoryEditSelectedBtn = document.getElementById("inventoryEditSelectedBtn");
+const inventoryDetailsMatchBtn = document.getElementById("inventoryDetailsMatchBtn");
 const inventoryFullTitle = document.getElementById("inventoryFullTitle");
 const showFullInventoryBtn = document.getElementById("showFullInventoryBtn");
 const showInventoryMapBtn = document.getElementById("showInventoryMapBtn");
@@ -1540,6 +1542,7 @@ function selectInventoryYarn(yarn) {
 }
 
 function renderInventoryMap(yarns) {
+  const inventoryPalette = ["peach", "lavender", "cobalt", "oat", "navy", "pumpkin", "coral", "plum"];
   const visibleYarns = yarns.slice(0, 8);
   const selected = visibleYarns.find((yarn) => String(yarn.id) === selectedInventoryYarnId)
     || visibleYarns[0];
@@ -1550,6 +1553,7 @@ function renderInventoryMap(yarns) {
     const amount = document.createElement("span");
 
     button.className = "inventory-yarn-node";
+    button.classList.add(`inventory-yarn-node--${inventoryPalette[index % inventoryPalette.length]}`);
     button.type = "button";
     button.dataset.id = yarn.id;
     button.setAttribute("aria-pressed", "false");
@@ -3247,6 +3251,16 @@ showFullInventoryBtn.addEventListener("click", () => {
 
 showInventoryMapBtn.addEventListener("click", () => {
   setInventoryDisplay("map", { focus: true });
+});
+
+inventoryEditSelectedBtn.addEventListener("click", () => {
+  setInventoryDisplay("list", { focus: true });
+  const card = yarnList.querySelector(`.yarn-card[data-id="${selectedInventoryYarnId}"]`);
+  card?.querySelector(".yarn-edit")?.click();
+});
+
+inventoryDetailsMatchBtn.addEventListener("click", () => {
+  inventoryMatchBtn.click();
 });
 
 onboardingAddYarnBtn.addEventListener("click", () => {
