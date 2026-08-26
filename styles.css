@@ -4991,6 +4991,58 @@ body:has(#inventoryView:not([hidden])) .shell {
   }
 }
 
+/* ds1 dark surface — the reference is a dark canvas edge to edge. */
+[data-theme="dark"] body:has(#inventoryView:not([hidden])) {
+  background: #0c101c;
+  color: #f3eadc;
+}
+
+[data-theme="dark"] body:has(#inventoryView:not([hidden])) .app-header {
+  color: #f3eadc;
+  background: transparent;
+}
+
+[data-theme="dark"] body:has(#inventoryView:not([hidden])) .brand-button,
+[data-theme="dark"] body:has(#inventoryView:not([hidden])) .app-nav__button {
+  color: #f3eadc;
+}
+
+[data-theme="dark"] body:has(#inventoryView:not([hidden])) .app-nav__button.is-active {
+  color: #f2c96b;
+  border-bottom-color: #f2c96b;
+}
+
+[data-theme="dark"] #inventoryView .inventory-map-view,
+[data-theme="dark"] #inventoryView .inventory-full-view {
+  background: #0c101c;
+  border-color: #3e3345;
+  box-shadow: none;
+}
+
+[data-theme="dark"] #inventoryView .inventory-yarn-details {
+  color: #f3eadc;
+  background: #111827;
+  border-color: #8d6a3c;
+}
+
+[data-theme="dark"] #inventoryView .inventory-yarn-details p:not(.eyebrow),
+[data-theme="dark"] #inventoryView .inventory-yarn-node span {
+  color: #c9baa7;
+}
+
+[data-theme="dark"] #inventoryView .inventory-yarn-node[aria-pressed="true"] {
+  border-color: #f2c96b;
+  background: rgb(91 41 77 / 42%);
+  box-shadow: 0 0 0 4px rgb(242 201 107 / 18%);
+}
+
+[data-theme="dark"] #inventoryView .inventory-map-add {
+  border-color: #f2c96b;
+  color: #f3eadc;
+  background-color: #111827;
+}
+
+
 /* ds1 correction — one bounded composition, isolated from earlier inventory layouts. */
 body:has(#inventoryView:not([hidden])) .app-header__inner {
   max-width: 1440px;

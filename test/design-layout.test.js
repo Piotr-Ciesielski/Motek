@@ -119,6 +119,17 @@ test("ds1 keeps the stash on a centered canvas and gives each map yarn a deliber
   }
 });
 
+test("ds1 dark mode is a genuinely dark canvas, not the light paper texture", () => {
+  assert.match(
+    stylesCss,
+    /\[data-theme="dark"\] body:has\(#inventoryView:not\(\[hidden\]\)\)\s*\{[\s\S]*?background:\s*#0c101c;/,
+  );
+  assert.match(
+    stylesCss,
+    /\[data-theme="dark"\] #inventoryView \.inventory-map-view\s*\{[\s\S]*?background:\s*#0c101c;/,
+  );
+});
+
 test("inventory map keeps one detail sheet, the full list and protected hooks", () => {
   const document = new JSDOM(indexHtml).window.document;
   const mapView = document.getElementById("inventoryMapView");
