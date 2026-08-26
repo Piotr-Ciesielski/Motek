@@ -12,14 +12,14 @@
       rel="stylesheet"
     />
     <script src="theme-policy.js?v=2.0.0-alpha.39"></script>
-    <link rel="stylesheet" href="styles.css?v=2.0.0-alpha.39&rev=876e7b5" />
+    <link rel="stylesheet" href="styles.css?v=2.0.0-alpha.39&rev=ef0f43f" />
   </head>
   <body class="auth-logged-out">
     <a class="skip-link" href="#main-content">Przejdź do głównej treści</a>
     <header class="app-header">
       <div class="app-header__inner">
         <button class="brand-button" type="button" data-view-target="inventory" aria-label="Przejdź do moich włóczek">
-          <span>Rysia the Stashbuster</span>
+          <span class="brand-button__name"><span>Rysia</span> the<br /> Stashbuster</span>
         </button>
         <nav class="app-nav" aria-label="Główna nawigacja">
           <button class="app-nav__button" type="button" data-view-target="inventory">
@@ -292,11 +292,34 @@
         <div class="inventory-layout">
           <section class="inventory-hero">
             <div class="page-heading inventory-heading">
-              <div>
-                <h1 id="inventoryTitle">Magazyn włóczek</h1>
+              <div class="inventory-heading__copy">
+                <h1 id="inventoryTitle">Mój schowek</h1>
+                <section id="inventoryStats" class="inventory-stats" aria-label="Podsumowanie magazynu">
+                  <div class="inventory-stat inventory-stat--coral">
+                    <span>Motki</span>
+                    <strong id="inventoryStatYarns">—</strong>
+                    <small>motków</small>
+                  </div>
+                  <div class="inventory-stat inventory-stat--lavender">
+                    <span>Łączna długość</span>
+                    <strong id="inventoryStatLength">—</strong>
+                    <small>m</small>
+                  </div>
+                  <div class="inventory-stat inventory-stat--blue">
+                    <span>Łączna waga</span>
+                    <strong id="inventoryStatWeight">—</strong>
+                    <small>g</small>
+                  </div>
+                  <div class="inventory-stat inventory-stat--apricot">
+                    <span>Kolory</span>
+                    <strong id="inventoryStatColors">—</strong>
+                    <small>kolorów</small>
+                  </div>
+                </section>
               </div>
               <div class="inventory-heading__actions">
-                <button id="inventoryMatchBtn" class="button" type="button">Dobierz wzór <span aria-hidden="true">→</span></button>
+                <button id="showFullInventoryBtn" class="link-button" type="button">Pokaż cały schowek <span aria-hidden="true">→</span></button>
+                <button id="inventoryMatchBtn" class="button" type="button" hidden>Dobierz wzór</button>
               </div>
             </div>
             <figure class="inventory-layout__visual">
@@ -328,36 +351,12 @@
               </div>
             </section>
 
-            <section id="inventoryStats" class="inventory-stats" aria-label="Podsumowanie magazynu">
-              <div class="inventory-stat inventory-stat--coral">
-                <span>Motki</span>
-                <strong id="inventoryStatYarns">—</strong>
-                <small>w magazynie</small>
-              </div>
-              <div class="inventory-stat inventory-stat--lavender">
-                <span>Łączna długość</span>
-                <strong id="inventoryStatLength">—</strong>
-                <small>metrów</small>
-              </div>
-              <div class="inventory-stat inventory-stat--blue">
-                <span>Łączna waga</span>
-                <strong id="inventoryStatWeight">—</strong>
-                <small>gramów</small>
-              </div>
-              <div class="inventory-stat inventory-stat--apricot">
-                <span>Kolory</span>
-                <strong id="inventoryStatColors">—</strong>
-                <small>w palecie</small>
-              </div>
-            </section>
-
             <section id="inventoryMapView" class="inventory-map-view" aria-labelledby="inventoryMapTitle">
               <div class="inventory-map-view__header">
                 <div>
                   <p class="eyebrow">Twój zapas</p>
                   <h2 id="inventoryMapTitle" tabindex="-1">Schowek włóczek</h2>
                 </div>
-                <button id="showFullInventoryBtn" class="link-button" type="button">Pokaż cały schowek</button>
               </div>
               <div class="inventory-map-workspace">
                 <span class="inventory-map-thread" aria-hidden="true"></span>

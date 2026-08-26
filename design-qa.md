@@ -1,35 +1,38 @@
-# Design QA — Rysia the Stashbuster
+# Design QA — checkpoint ds1
 
-## Źródła
+## Porównanie
 
-- `Designs/ds1.png` — Schowek
-- `Designs/ds2.png` — Dopasowania
-- `Designs/ds3.png` — Wzory
-- `Designs/ds4.png` — Konto
-- `Designs/SPEC-Design.md`
+- Źródło wizualne: `D:\Projekty\Motek\Designs\ds1.png`.
+- Źródło: 1488 × 1058 px, dwa warianty motywu obok siebie; aplikacja pokazuje jeden motyw naraz.
+- Docelowy viewport implementacji: 1440 × 1024 CSS px, device scale factor 1.
+- Stan: zalogowany użytkownik, widok „Moje włóczki”, mapa ośmiu reprezentatywnych motków.
+- Screenshot implementacji: niedostępny.
 
-## Sprawdzone warianty
+## Wykonana zmiana
 
-- Desktop 1440 × 1024: cztery widoki, light i dark.
-- Tablet 834 × 1194: cztery widoki.
-- Mobile 390 × 844: cztery widoki.
-- Konto wylogowane; pozostałe widoki i Konto zalogowane z lokalnymi danymi demonstracyjnymi przechowywanymi wyłącznie w pamięci przeglądarki.
-- Nawigacja, przełączanie motywu, zwijane alternatywy, filtry, karta główna, aktywny projekt i mapa włóczek.
+- Tytuł „Mój schowek” i podsumowanie zostały przeniesione do redakcyjnego hero.
+- Usunięto widoczną, zdublowaną akcję „Dobierz wzór”.
+- „Pokaż cały schowek” jest akcją w górnej części widoku.
+- Kot, mapa motków, pojedynczy arkusz szczegółów i węzeł dodawania tworzą jedną kompozycję.
+- Zachowano produkcyjne hooki, obsługę danych, oba motywy i pionową ścieżkę mobilną.
 
-## Wynik porównania
+## Bramka wizualna
 
-- Hierarchia, typografia, paleta i asymetryczne arkusze odpowiadają wybranym mockom.
-- Schowek zachowuje jeden detal i maksymalnie osiem reprezentatywnych motków.
-- Dopasowania mają jeden dominujący wynik i zwarte, natywnie zwijane alternatywy.
-- Wzory mają wyszukiwanie przed filtrami, jedną dominantę i trzy lekkie kolejne karty.
-- Konto ma jeden arkusz i jeden kadr kota w obu stanach.
-- Brak poziomego przepełnienia na 390 px, 834 px i 1440 px.
-- Konsola nie zgłosiła błędów renderowania w sesji z danymi demonstracyjnymi.
-- Sekcja G i zdjęcia wzorów zostały świadomie pominięte.
+Nie wykonano prawidłowego porównania obrazu referencyjnego z renderem. Wbudowana przeglądarka zablokowała lokalne adresy `127.0.0.1`, `localhost` oraz adres LAN, a połączenie z Chrome nie jest dostępne. Zgodnie z procedurą nie zastępuję tego oceną samego kodu ani testami DOM.
 
-## Pozostałe uwagi
+Do sprawdzenia po otrzymaniu renderu:
 
-- Statyczny podgląd bez backendu pokazuje oczekiwany komunikat o braku połączenia na ekranie logowania.
-- Pełne zachowanie sieciowe i bezpieczeństwo są weryfikowane przez testy automatyczne, nie przez dane demonstracyjne.
+- font i zawijanie nagłówka;
+- proporcje hero oraz kadrowanie kota;
+- położenie motków, nici i arkusza;
+- kolory oraz czytelność obu motywów;
+- zawartość pierwszego kadru przy 1440 × 1024;
+- pionowy układ przy 390 × 844.
 
-final result: passed
+## Sprawdzenia bez obrazu
+
+- Kontrakt DOM ds1: przechodzi.
+- Chronione akcje i hooki aplikacji: przechodzą.
+- Screenshot, konsola i interakcje w przeglądarce: zablokowane.
+
+final result: blocked

@@ -43,7 +43,8 @@ test("mobile reading order keeps hero actions and artwork before each workspace"
   assert.ok(inventoryHeading.contains(document.querySelector("#inventoryMatchBtn")));
   assert.ok(inventoryMap.contains(document.querySelector("#inventoryAddYarnBtn")));
   assert.ok(precedes(inventoryHeading, inventoryArtwork));
-  assert.ok(precedes(inventoryArtwork, inventoryStats));
+  assert.ok(inventoryHeading.contains(inventoryStats));
+  assert.ok(precedes(inventoryStats, inventoryArtwork));
   assert.ok(precedes(inventoryStats, inventoryMap));
   assert.ok(precedes(inventoryMap, inventoryStock));
 
@@ -71,6 +72,20 @@ test("inventory keeps the selected design composition", () => {
   assert.match(indexHtml, /id="inventoryThemeImage"[\s\S]*?data-dark-src="assets\/night-yarn-cat\.v2\.webp"/);
 });
 
+test("inventory follows the ds1 editorial composition", () => {
+  const document = new JSDOM(indexHtml).window.document;
+  const hero = document.querySelector("#inventoryView .inventory-hero");
+  const title = document.getElementById("inventoryTitle");
+  const stats = document.getElementById("inventoryStats");
+  const map = document.getElementById("inventoryMapView");
+
+  assert.equal(title.textContent.trim(), "Mój schowek");
+  assert.ok(hero.contains(stats), "summary belongs to the editorial hero");
+  assert.ok(hero.compareDocumentPosition(map) & hero.DOCUMENT_POSITION_FOLLOWING);
+  assert.equal(document.getElementById("inventoryMatchBtn").hidden, true);
+  assert.equal(document.getElementById("showFullInventoryBtn").textContent.trim(), "Pokaż cały schowek →");
+});
+
 test("inventory map keeps one detail sheet, the full list and protected hooks", () => {
   const document = new JSDOM(indexHtml).window.document;
   const mapView = document.getElementById("inventoryMapView");
@@ -82,7 +97,7 @@ test("inventory map keeps one detail sheet, the full list and protected hooks", 
   assert.ok(mapView.contains(document.getElementById("inventoryYarnDetails")));
   assert.ok(mapView.contains(document.getElementById("inventoryAddYarnBtn")));
   assert.equal(document.querySelectorAll("#inventoryYarnDetails").length, 1);
-  assert.equal(document.getElementById("showFullInventoryBtn").textContent.trim(), "Pokaż cały schowek");
+  assert.equal(document.getElementById("showFullInventoryBtn").textContent.trim(), "Pokaż cały schowek →");
   assert.ok(fullView.contains(document.getElementById("showInventoryMapBtn")));
   assert.ok(fullView.contains(document.getElementById("yarnList")));
   assert.equal(document.getElementById("addYarnBtn").hidden, true);
