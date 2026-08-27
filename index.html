@@ -3,42 +3,45 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Motek - dobierz wzór do włóczek</title>
+    <title>Rysia the Stashbuster — dobierz wzór do włóczek</title>
     <link rel="icon" href="favicon.svg" type="image/svg+xml" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Inter:wght@400;500;600;700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap"
       rel="stylesheet"
     />
     <script src="theme-policy.js?v=2.0.0-alpha.39"></script>
-    <link rel="stylesheet" href="styles.css?v=2.0.0-alpha.39&rev=d644b6e" />
+    <link rel="stylesheet" href="styles.css?v=2.0.0-alpha.39&rev=ebb4485" />
   </head>
   <body class="auth-logged-out">
     <a class="skip-link" href="#main-content">Przejdź do głównej treści</a>
     <header class="app-header">
       <div class="app-header__inner">
-        <button class="brand-button" type="button" data-view-target="inventory" aria-label="Przejdź do magazynu">
-          <span class="brand-mark" aria-hidden="true">M</span>
-          <span>Motek</span>
+        <button class="brand-button" type="button" data-view-target="inventory" aria-label="Przejdź do moich włóczek">
+          <span class="brand-name">Rysia <span>the</span></span>
+          <span class="brand-tagline">Stashbuster</span>
         </button>
         <nav class="app-nav" aria-label="Główna nawigacja">
           <button class="app-nav__button" type="button" data-view-target="inventory">
-            <span>Magazyn</span>
+            <span>Moje włóczki</span>
           </button>
           <button class="app-nav__button" type="button" data-view-target="matches">
-            <span>Dopasowanie</span>
+            <span>Dopasowania</span>
           </button>
           <button class="app-nav__button" type="button" data-view-target="catalog">
-            <span>Katalog</span>
+            <span>Wzory</span>
           </button>
           <button class="app-nav__button" type="button" data-view-target="account">
             <span>Konto</span>
           </button>
+          <button id="inventoryStockToggle" class="inventory-stock-toggle" type="button" aria-controls="inventoryStock" aria-expanded="false" hidden>
+            Pokaż cały schowek
+          </button>
         </nav>
         <div class="app-header__actions">
           <button id="themeToggle" class="theme-toggle" type="button" aria-pressed="false" aria-label="Włącz tryb ciemny">
-            <span class="theme-toggle__icon" aria-hidden="true">☾</span>
+            <span class="theme-toggle__icon theme-toggle__label" aria-hidden="true">Tryb</span>
           </button>
           <button id="headerAuthAction" class="header-auth-action" type="button">Zaloguj</button>
         </div>
@@ -290,11 +293,11 @@
           <section class="inventory-hero">
             <div class="page-heading inventory-heading">
               <div>
-                <h1 id="inventoryTitle">Magazyn włóczek</h1>
+                <h1 id="inventoryTitle">Mój schowek</h1>
               </div>
-              <div class="inventory-heading__actions">
-                <button id="inventoryMatchBtn" class="button" type="button">Dobierz wzór <span aria-hidden="true">→</span></button>
-                <button id="inventoryAddYarnBtn" class="button button--ghost" type="button">＋ Dodaj motek</button>
+              <div class="inventory-heading__actions" hidden>
+                <button id="inventoryMatchBtn" class="button" type="button">Dobierz wzór</button>
+                <button id="inventoryAddYarnBtn" class="button button--ghost" type="button">Dodaj motek</button>
               </div>
             </div>
             <figure class="inventory-layout__visual">
@@ -306,6 +309,24 @@
                 alt="Kolorowe włóczki i kot w pracowni"
               />
             </figure>
+            <section id="inventoryStats" class="inventory-stats" aria-label="Podsumowanie schowka">
+              <div class="inventory-stat inventory-stat--coral">
+                <strong id="inventoryStatYarns">—</strong>
+                <span>motków</span>
+              </div>
+              <div class="inventory-stat inventory-stat--lavender">
+                <strong id="inventoryStatLength">—</strong>
+                <span>metrów</span>
+              </div>
+              <div class="inventory-stat inventory-stat--blue inventory-stat--weight">
+                <strong id="inventoryStatWeight">—</strong>
+                <span>gramów</span>
+              </div>
+              <div class="inventory-stat inventory-stat--apricot">
+                <strong id="inventoryStatColors">—</strong>
+                <span>kolorów</span>
+              </div>
+            </section>
           </section>
 
           <div class="inventory-layout__content">
@@ -326,30 +347,39 @@
               </div>
             </section>
 
-            <section id="inventoryStats" class="inventory-stats" aria-label="Podsumowanie magazynu">
-              <div class="inventory-stat inventory-stat--coral">
-                <span>Motki</span>
-                <strong id="inventoryStatYarns">—</strong>
-                <small>w magazynie</small>
+            <section id="inventoryMap" class="inventory-map" aria-label="Mapa motków w schowku">
+              <div class="inventory-map__thread" aria-hidden="true">
+                <img class="inventory-asset--light" src="assets/stash/thread-route-light.png" alt="" />
+                <img class="inventory-asset--dark" src="assets/stash/thread-route-dark.png" alt="" />
               </div>
-              <div class="inventory-stat inventory-stat--lavender">
-                <span>Łączna długość</span>
-                <strong id="inventoryStatLength">—</strong>
-                <small>metrów</small>
-              </div>
-              <div class="inventory-stat inventory-stat--blue">
-                <span>Łączna waga</span>
-                <strong id="inventoryStatWeight">—</strong>
-                <small>gramów</small>
-              </div>
-              <div class="inventory-stat inventory-stat--apricot">
-                <span>Kolory</span>
-                <strong id="inventoryStatColors">—</strong>
-                <small>w palecie</small>
-              </div>
+              <div id="inventoryMapNodes" class="inventory-map__nodes"></div>
+              <article id="inventoryYarnDetail" class="inventory-yarn-detail" aria-live="polite" hidden>
+                <div class="inventory-yarn-detail__art" aria-hidden="true">
+                  <img class="inventory-yarn-detail__image inventory-asset--light" src="assets/stash/hank-lavender.png" alt="" />
+                  <img class="inventory-yarn-detail__image inventory-asset--dark" src="assets/stash/hank-plum.png" alt="" />
+                </div>
+                <div class="inventory-yarn-detail__copy">
+                  <p id="inventoryYarnDetailColor" class="inventory-yarn-detail__eyebrow"></p>
+                  <h2 id="inventoryYarnDetailName"></h2>
+                  <dl class="inventory-yarn-detail__facts">
+                    <div><dt>Skład</dt><dd id="inventoryYarnDetailMaterial"></dd></div>
+                    <div><dt>Grubość</dt><dd id="inventoryYarnDetailWeightClass"></dd></div>
+                    <div><dt>Długość</dt><dd id="inventoryYarnDetailLength"></dd></div>
+                  </dl>
+                  <div class="inventory-yarn-detail__actions">
+                    <button id="inventoryYarnEditBtn" class="button button--ghost" type="button">Modyfikuj</button>
+                    <button id="inventoryYarnMatchBtn" class="button" type="button">Dobierz wzór</button>
+                  </div>
+                </div>
+              </article>
+              <button id="inventoryMapAddBtn" class="inventory-map__add" type="button">
+                <img class="inventory-map__add-image inventory-asset--light" src="assets/stash/yarn-oat.png" alt="" />
+                <img class="inventory-map__add-image inventory-asset--dark" src="assets/stash/yarn-graphite.png" alt="" />
+                <span>Dodaj motek</span>
+              </button>
             </section>
 
-            <section class="inventory-stock">
+            <section id="inventoryStock" class="inventory-stock" hidden>
               <article class="panel inventory-panel">
                 <div class="panel__header">
                   <div>
@@ -841,6 +871,6 @@
     <script src="client/dom-utils.js"></script>
     <script src="client/catalog-controller.js?v=2.0.0-alpha.39&rev=ed496cd"></script>
     <script src="client/idle-session-controller.js"></script>
-    <script src="app.js?v=2.0.0-alpha.39&rev=09156c2"></script>
+    <script src="app.js?v=2.0.0-alpha.39&rev=4d9db23"></script>
   </body>
 </html>

@@ -36,9 +36,9 @@ test("design changes preserve text-only navigation destinations", () => {
   }));
 
   assert.deepEqual(navigation, [
-    { target: "inventory", label: "Magazyn" },
-    { target: "matches", label: "Dopasowanie" },
-    { target: "catalog", label: "Katalog" },
+    { target: "inventory", label: "Moje włóczki" },
+    { target: "matches", label: "Dopasowania" },
+    { target: "catalog", label: "Wzory" },
     { target: "account", label: "Konto" },
   ]);
   assert.ok(navigation.every(({ label }) => label.length > 0));

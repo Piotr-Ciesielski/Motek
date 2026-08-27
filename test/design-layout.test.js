@@ -69,6 +69,22 @@ test("inventory keeps the selected design composition", () => {
   assert.match(indexHtml, /data-dark-src="assets\/night-yarn-cat\.v1\.webp"/);
 });
 
+test("schowek udostępnia mapę motków, arkusz szczegółów i pełną listę na żądanie", () => {
+  const document = new JSDOM(indexHtml).window.document;
+  const inventory = document.getElementById("inventoryView");
+  const map = inventory.querySelector("#inventoryMap");
+  const details = inventory.querySelector("#inventoryYarnDetail");
+  const stock = inventory.querySelector("#inventoryStock");
+  const toggle = document.getElementById("inventoryStockToggle");
+
+  assert.ok(map);
+  assert.ok(map.querySelector("#inventoryMapNodes"));
+  assert.ok(details);
+  assert.equal(toggle.getAttribute("aria-controls"), "inventoryStock");
+  assert.equal(toggle.getAttribute("aria-expanded"), "false");
+  assert.equal(stock.hidden, true);
+});
+
 test("niezalogowane Konto pokazuje pełną grafikę kota w obu motywach i biały tekst w dark", () => {
   const document = new JSDOM(indexHtml).window.document;
   const accountView = document.getElementById("accountView");
@@ -137,9 +153,9 @@ test("hero zachowują tylko wskazane nagłówki, akcje i grafiki", () => {
 
 test("main navigation uses text labels without decorative symbols", () => {
   const navigation = indexHtml.match(/<nav class="app-nav"[\s\S]*?<\/nav>/)?.[0] || "";
-  assert.match(navigation, />Magazyn<\/span>/);
-  assert.match(navigation, />Dopasowanie<\/span>/);
-  assert.match(navigation, />Katalog<\/span>/);
+  assert.match(navigation, />Moje włóczki<\/span>/);
+  assert.match(navigation, />Dopasowania<\/span>/);
+  assert.match(navigation, />Wzory<\/span>/);
   assert.match(navigation, />Konto<\/span>/);
   assert.doesNotMatch(navigation, /aria-hidden="true"/);
   assert.doesNotMatch(navigation, /[⌂✦▦○]/);
@@ -492,7 +508,7 @@ test("inventory artwork keeps the prototype crop and focal point", () => {
   );
   assert.match(
     stylesCss,
-    /#inventoryView \.inventory-layout__visual img[\s\S]*?object-position: 72% center;/,
+    /#inventoryView \.inventory-layout__visual img[\s\S]*?object-position: 69% 54%;/,
   );
   assert.doesNotMatch(
     stylesCss,

@@ -31,7 +31,7 @@ class RequestError extends Error {
   }
 }
 
-function createApiClient(captcha = { enabled: false, provider: null, siteKey: null }) {
+function createApiClient(captcha = { enabled: false, provider: null, siteKey: null }, yarns = []) {
   return {
     async request(pathname) {
       const url = new URL(pathname);
@@ -47,7 +47,7 @@ function createApiClient(captcha = { enabled: false, provider: null, siteKey: nu
         case "/api/patterns":
           return { items: [], total: 0, hasMore: false };
         case "/api/yarns":
-          return [];
+          return yarns;
         default:
           throw new ApiError(`Nieoczekiwane wywołanie ${url.pathname}`, 500);
       }
@@ -63,7 +63,7 @@ function isResponseEnvelope(value) {
   );
 }
 
-async function createAppWindow({ captchaEnabled = false, delayedCaptchaMs = 0 } = {}) {
+async function createAppWindow({ captchaEnabled = false, delayedCaptchaMs = 0, yarns = [] } = {}) {
   const dom = new JSDOM(indexHtml, {
     url: "http://localhost/",
     pretendToBeVisual: true,
@@ -98,7 +98,7 @@ async function createAppWindow({ captchaEnabled = false, delayedCaptchaMs = 0 } 
   window.MotekApiClient = {
     createApiClient: () => createApiClient(captchaEnabled
       ? { enabled: true, provider: "turnstile", siteKey: "test-site-key" }
-      : undefined),
+      : undefined, yarns),
     ApiError,
     RequestError,
     isResponseEnvelope,
@@ -152,6 +152,30 @@ async function createAppWindow({ captchaEnabled = false, delayedCaptchaMs = 0 } 
 
   return window;
 }
+
+test("mapa schowka wybiera motek i rozwija pełną listę", async () => {
+  const yarns = Array.from({ length: 10 }, (_, index) => ({
+    id: index + 1,
+    name: `Motek ${index + 1}`,
+    color: `Kolor ${index + 1}`,
+    materials: ["wool"],
+    weightClass: "dk",
+    length: 200 + index,
+    weight: 50,
+  }));
+  const window = await createAppWindow({ yarns });
+  const document = window.document;
+  const nodes = [...document.querySelectorAll(".inventory-yarn-node")];
+
+  assert.equal(nodes.length, 8);
+  nodes[1].click();
+  assert.equal(document.querySelectorAll('.inventory-yarn-node[aria-pressed="true"]').length, 1);
+  assert.equal(document.querySelector('.inventory-yarn-node[aria-pressed="true"]'), nodes[1]);
+  assert.equal(document.getElementById("inventoryYarnDetailName").textContent, "Motek 2");
+  document.getElementById("inventoryStockToggle").click();
+  assert.equal(document.getElementById("inventoryStock").hidden, false);
+  assert.equal(document.querySelectorAll("#inventoryStock .yarn-card").length, 10);
+});
 
 async function openMaterialPicker() {
   const window = await createAppWindow();

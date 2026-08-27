@@ -88,6 +88,18 @@ const appViews = [...document.querySelectorAll(".app-view")];
 const viewButtons = [...document.querySelectorAll("[data-view-target]")];
 const inventoryMatchBtn = document.getElementById("inventoryMatchBtn");
 const inventoryAddYarnBtn = document.getElementById("inventoryAddYarnBtn");
+const inventoryMapNodes = document.getElementById("inventoryMapNodes");
+const inventoryYarnDetail = document.getElementById("inventoryYarnDetail");
+const inventoryYarnDetailColor = document.getElementById("inventoryYarnDetailColor");
+const inventoryYarnDetailName = document.getElementById("inventoryYarnDetailName");
+const inventoryYarnDetailMaterial = document.getElementById("inventoryYarnDetailMaterial");
+const inventoryYarnDetailWeightClass = document.getElementById("inventoryYarnDetailWeightClass");
+const inventoryYarnDetailLength = document.getElementById("inventoryYarnDetailLength");
+const inventoryYarnEditBtn = document.getElementById("inventoryYarnEditBtn");
+const inventoryYarnMatchBtn = document.getElementById("inventoryYarnMatchBtn");
+const inventoryMapAddBtn = document.getElementById("inventoryMapAddBtn");
+const inventoryStock = document.getElementById("inventoryStock");
+const inventoryStockToggle = document.getElementById("inventoryStockToggle");
 const backToInventoryBtn = document.getElementById("backToInventoryBtn");
 const networkStatus = document.getElementById("networkStatus");
 const copyrightNotice = document.getElementById("copyrightNotice");
@@ -108,6 +120,17 @@ const REQUEST_TIMEOUT_MS = 12_000;
 const scrollBehavior = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches
   ? "auto"
   : "smooth";
+const inventoryYarnAssets = [
+  ["assets/stash/yarn-coral.png", "assets/stash/yarn-plum.png"],
+  ["assets/stash/yarn-lavender.png", "assets/stash/yarn-gold.png"],
+  ["assets/stash/yarn-cobalt.png", "assets/stash/yarn-forest.png"],
+  ["assets/stash/yarn-oat.png", "assets/stash/yarn-ink.png"],
+  ["assets/stash/yarn-pumpkin.png", "assets/stash/yarn-burgundy.png"],
+  ["assets/stash/yarn-lavender.png", "assets/stash/yarn-graphite.png"],
+  ["assets/stash/yarn-coral.png", "assets/stash/yarn-gold.png"],
+  ["assets/stash/yarn-cobalt.png", "assets/stash/yarn-plum.png"],
+];
+let selectedInventoryYarnId = null;
 const catalogFilterDisclosure = typeof window.createCatalogFilterDisclosure === "function"
   ? window.createCatalogFilterDisclosure({
     toggle: catalogFiltersToggle,
@@ -378,6 +401,7 @@ function setActiveView(requestedView, { focus = true } = {}) {
   const enteringMatchesView = view === "matches" && activeView !== "matches";
   yarnRefreshGeneration += 1;
   activeView = view;
+  inventoryStockToggle.hidden = view !== "inventory" || !isAuthenticated;
   appViews.forEach((candidate) => {
     candidate.hidden = candidate !== target;
   });
@@ -415,7 +439,7 @@ function renderThemeToggle() {
   themeToggle.setAttribute("aria-label", state.label);
 
   if (themeToggleIcon) {
-    themeToggleIcon.textContent = state.nextTheme === "dark" ? "☾" : "☀";
+    themeToggleIcon.textContent = "Tryb";
   }
 
   const isDark = currentTheme === "dark";
@@ -642,6 +666,71 @@ function createRequirement(text) {
 function formatNumber(value) {
   const number = Number(value);
   return Number.isFinite(number) ? numberFormatter.format(number) : "0";
+}
+
+function setInventoryStockExpanded(expanded) {
+  inventoryStock.hidden = !expanded;
+  inventoryStockToggle.setAttribute("aria-expanded", String(expanded));
+  inventoryStockToggle.textContent = expanded ? "Ukryj pełny schowek" : "Pokaż cały schowek";
+}
+
+function createInventoryYarnImage(src, theme) {
+  const image = document.createElement("img");
+  image.className = `inventory-yarn-node__image inventory-asset--${theme}`;
+  image.src = src;
+  image.alt = "";
+  return image;
+}
+
+function renderInventoryYarnDetail(yarn) {
+  inventoryYarnDetail.hidden = !yarn;
+  if (!yarn) return;
+  inventoryYarnDetailColor.textContent = yarn.color || "Kolor nieopisany";
+  inventoryYarnDetailName.textContent = yarn.name || "Motek bez nazwy";
+  inventoryYarnDetailMaterial.textContent = formatYarnMaterials(yarn.materials);
+  inventoryYarnDetailWeightClass.textContent = String(yarn.weightClass || "—").toUpperCase();
+  inventoryYarnDetailLength.textContent = `${formatNumber(yarn.length)} m / ${formatNumber(yarn.weight)} g`;
+}
+
+function renderInventoryMap(yarns) {
+  const visibleYarns = yarns.slice(0, 8);
+  if (!visibleYarns.some((yarn) => String(yarn.id) === selectedInventoryYarnId)) {
+    const defaultYarn = visibleYarns[1] || visibleYarns[0];
+    selectedInventoryYarnId = defaultYarn ? String(defaultYarn.id) : null;
+  }
+
+  inventoryMapNodes.replaceChildren(...visibleYarns.map((yarn, index) => {
+    const button = document.createElement("button");
+    const [lightAsset, darkAsset] = inventoryYarnAssets[index];
+    const selected = String(yarn.id) === selectedInventoryYarnId;
+    const name = document.createElement("strong");
+    const color = document.createElement("span");
+    button.type = "button";
+    button.className = "inventory-yarn-node";
+    button.dataset.slot = String(index + 1);
+    button.dataset.yarnId = String(yarn.id);
+    button.setAttribute("aria-pressed", String(selected));
+    button.setAttribute("aria-label", `Pokaż szczegóły: ${yarn.name}`);
+    name.textContent = yarn.name || "Motek bez nazwy";
+    color.textContent = yarn.color || "Kolor nieopisany";
+    button.append(
+      createInventoryYarnImage(lightAsset, "light"),
+      createInventoryYarnImage(darkAsset, "dark"),
+      name,
+      color,
+    );
+    button.addEventListener("click", () => {
+      selectedInventoryYarnId = String(yarn.id);
+      inventoryMapNodes.querySelectorAll(".inventory-yarn-node").forEach((candidate) => {
+        candidate.setAttribute("aria-pressed", String(candidate.dataset.yarnId === selectedInventoryYarnId));
+      });
+      renderInventoryYarnDetail(yarn);
+    });
+    return button;
+  }));
+
+  const selectedYarn = visibleYarns.find((yarn) => String(yarn.id) === selectedInventoryYarnId);
+  renderInventoryYarnDetail(selectedYarn);
 }
 
 function groupMatchesByPattern(matches) {
@@ -2254,6 +2343,7 @@ async function renderSummary(loadedYarns = null) {
   if (!isAuthenticated) {
     summary.textContent = "Twój prywatny magazyn pojawi się tutaj po zalogowaniu.";
     inventoryStats?.setAttribute("aria-busy", "false");
+    renderInventoryMap([]);
     return;
   }
 
@@ -2274,6 +2364,7 @@ async function renderSummary(loadedYarns = null) {
     inventoryStats.querySelector(".inventory-stat--blue"),
     inventoryStats.querySelector(".inventory-stat--apricot"),
   );
+  renderInventoryMap(yarns);
 
   const yarnCount = document.createElement("strong");
   yarnCount.textContent = formatNumber(yarns.length);
@@ -3124,6 +3215,7 @@ addPatternRequirementBtn.addEventListener("click", () => {
 patternAddForm.addEventListener("submit", saveNewPattern);
 
 addYarnBtn.addEventListener("click", () => {
+  setInventoryStockExpanded(true);
   yarnRefreshGeneration += 1;
   const { card, created } = ensureSingleNewYarnCard(
     yarnList.querySelectorAll(".yarn-card"),
@@ -3143,6 +3235,31 @@ addYarnBtn.addEventListener("click", () => {
 
 inventoryAddYarnBtn.addEventListener("click", () => {
   addYarnBtn.click();
+});
+
+inventoryMapAddBtn.addEventListener("click", () => {
+  addYarnBtn.click();
+});
+
+inventoryStockToggle.addEventListener("click", () => {
+  const expanded = inventoryStockToggle.getAttribute("aria-expanded") === "true";
+  if (expanded && hasUnsavedYarnChanges()) {
+    setStorageMessage("Najpierw zapisz lub anuluj rozpoczęte zmiany.", "warning");
+    return;
+  }
+  setInventoryStockExpanded(!expanded);
+});
+
+inventoryYarnEditBtn.addEventListener("click", () => {
+  setInventoryStockExpanded(true);
+  const card = [...yarnList.querySelectorAll(".yarn-card")]
+    .find((candidate) => candidate.dataset.id === selectedInventoryYarnId);
+  card?.querySelector(".yarn-edit")?.click();
+  card?.scrollIntoView({ behavior: scrollBehavior, block: "center" });
+});
+
+inventoryYarnMatchBtn.addEventListener("click", () => {
+  inventoryMatchBtn.click();
 });
 
 onboardingAddYarnBtn.addEventListener("click", () => {
